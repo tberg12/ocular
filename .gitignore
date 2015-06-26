@@ -1,0 +1,32 @@
+/font/
+/lm/
+/train_output/
+/transcribe_output/
+/project/
+/test_img/
+/texts/
+
+*.class
+*.log
+
+/lib
+
+# sbt specific
+build.sbt
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.project
+.classpath
+.cache
+.cache-main
+.settings/
+.worksheet
+
+/bin/
