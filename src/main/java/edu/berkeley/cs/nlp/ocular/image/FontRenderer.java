@@ -1,5 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.image;
 
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import indexer.Indexer;
 
 import java.awt.Color;
@@ -16,12 +18,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.unescapeChar;
 
 public class FontRenderer {
 	
-	public static Set<String> OUTLAWED_FONTS;
+	private static Set<String> OUTLAWED_FONTS;
 	static {
 		OUTLAWED_FONTS = new HashSet<String>();
 		OUTLAWED_FONTS.add("Vemana2000");
@@ -98,36 +99,206 @@ public class FontRenderer {
 		OUTLAWED_FONTS.add("Rachana");
 		OUTLAWED_FONTS.add("rsfs10");
 		OUTLAWED_FONTS.add("wasy10");
+		
+		OUTLAWED_FONTS.add("Academy Engraved LET");
+		OUTLAWED_FONTS.add("Bodoni Ornaments ITC TT");
+		OUTLAWED_FONTS.add("Bordeaux Roman Bold LET");
+		OUTLAWED_FONTS.add("Braggadocio");
+		OUTLAWED_FONTS.add("Curlz MT");
+		OUTLAWED_FONTS.add("Didot");
+		OUTLAWED_FONTS.add("Desdemona");
+		OUTLAWED_FONTS.add("Engravers MT");
+		OUTLAWED_FONTS.add("Princetown LET");
+		OUTLAWED_FONTS.add("Type Embellishments One LET");
+		OUTLAWED_FONTS.add("Wide Latin");
+		OUTLAWED_FONTS.add("Wingdings");
+		OUTLAWED_FONTS.add("Wingdings 2");
+		OUTLAWED_FONTS.add("Wingdings 3");
+		OUTLAWED_FONTS.add("Zapf Dingbats");
+		OUTLAWED_FONTS.add("Zapfino");
+
+		OUTLAWED_FONTS.add("Al Tarikh");
+		OUTLAWED_FONTS.add("Apple Chancery");
+		OUTLAWED_FONTS.add("Apple LiGothic");
+		OUTLAWED_FONTS.add("Apple LiSung");
+		OUTLAWED_FONTS.add("Apple Symbols");
+		OUTLAWED_FONTS.add("AppleMyungjo");
+		OUTLAWED_FONTS.add("Avenir Next");
+		OUTLAWED_FONTS.add("Avenir Next Condensed");
+		OUTLAWED_FONTS.add("Ayuthaya");
+		OUTLAWED_FONTS.add("Bank Gothic");
+		OUTLAWED_FONTS.add("Baoli SC");
+		OUTLAWED_FONTS.add("Baskerville Old Face");
+		OUTLAWED_FONTS.add("Batang");
+		OUTLAWED_FONTS.add("Bauhaus 93");
+		OUTLAWED_FONTS.add("Bell MT");
+		OUTLAWED_FONTS.add("Bernard MT Condensed");
+		OUTLAWED_FONTS.add("BiauKai");
+		OUTLAWED_FONTS.add("Bodoni SvtyTwo ITC TT");
+		OUTLAWED_FONTS.add("Bodoni SvtyTwo OS ITC TT");
+		OUTLAWED_FONTS.add("Bodoni SvtyTwo SC ITC TT");
+		OUTLAWED_FONTS.add("Book Antiqua");
+		OUTLAWED_FONTS.add("Bookman Old Style");
+		OUTLAWED_FONTS.add("Bookshelf Symbol 7");
+		OUTLAWED_FONTS.add("Britannic Bold");
+		OUTLAWED_FONTS.add("Brush Script MT");
+		OUTLAWED_FONTS.add("Calisto MT");
+		OUTLAWED_FONTS.add("Cambria");
+		OUTLAWED_FONTS.add("Cambria Math");
+		OUTLAWED_FONTS.add("Capitals");
+		OUTLAWED_FONTS.add("Century");
+		OUTLAWED_FONTS.add("Century Gothic");
+		OUTLAWED_FONTS.add("Century Schoolbook");
+		OUTLAWED_FONTS.add("Chalkboard");
+		OUTLAWED_FONTS.add("Chalkboard SE");
+		OUTLAWED_FONTS.add("Chalkduster");
+		OUTLAWED_FONTS.add("Cochin");
+		OUTLAWED_FONTS.add("Colonna MT");
+		OUTLAWED_FONTS.add("Comic Sans MS");
+		OUTLAWED_FONTS.add("Consolas");
+		OUTLAWED_FONTS.add("Constantia");
+		OUTLAWED_FONTS.add("Cooper Black");
+		OUTLAWED_FONTS.add("Copperplate");
+		OUTLAWED_FONTS.add("Copperplate Gothic Bold");
+		OUTLAWED_FONTS.add("Copperplate Gothic Light");
+		OUTLAWED_FONTS.add("Corsiva Hebrew");
+		OUTLAWED_FONTS.add("Courier New");
+		OUTLAWED_FONTS.add("Damascus");
+		OUTLAWED_FONTS.add("Devanagari MT");
+		OUTLAWED_FONTS.add("DIN Alternate");
+		OUTLAWED_FONTS.add("DIN Condensed");
+		OUTLAWED_FONTS.add("Edwardian Script ITC");
+		OUTLAWED_FONTS.add("Eurostile");
+		OUTLAWED_FONTS.add("Footlight MT Light");
+		OUTLAWED_FONTS.add("Garamond");
+		OUTLAWED_FONTS.add("Gloucester MT Extra Condensed");
+		OUTLAWED_FONTS.add("Goudy Old Style");
+		OUTLAWED_FONTS.add("Gujarati MT");
+		OUTLAWED_FONTS.add("Gulim");
+		OUTLAWED_FONTS.add("GungSeo");
+		OUTLAWED_FONTS.add("Gurmukhi MN");
+		OUTLAWED_FONTS.add("Haettenschweiler");
+		OUTLAWED_FONTS.add("Hannotate SC");
+		OUTLAWED_FONTS.add("Hannotate TC");
+		OUTLAWED_FONTS.add("HanziPen SC");
+		OUTLAWED_FONTS.add("HanziPen TC");
+		OUTLAWED_FONTS.add("Harrington");
+		OUTLAWED_FONTS.add("HeadLineA");
+		OUTLAWED_FONTS.add("Heiti SC");
+		OUTLAWED_FONTS.add("Heiti TC");
+		OUTLAWED_FONTS.add("Helvetica CY");
+		OUTLAWED_FONTS.add("Helvetica Neue");
+		OUTLAWED_FONTS.add("Herculanum");
+		OUTLAWED_FONTS.add("Hiragino Kaku Gothic Pro");
+		OUTLAWED_FONTS.add("Hiragino Kaku Gothic ProN");
+		OUTLAWED_FONTS.add("Hiragino Kaku Gothic Std");
+		OUTLAWED_FONTS.add("Hiragino Kaku Gothic StdN");
+		OUTLAWED_FONTS.add("Hiragino Maru Gothic Pro");
+		OUTLAWED_FONTS.add("Hiragino Maru Gothic ProN");
+		OUTLAWED_FONTS.add("Hiragino Mincho Pro");
+		OUTLAWED_FONTS.add("Hiragino Mincho ProN");
+		OUTLAWED_FONTS.add("Hoefler Text");
+		OUTLAWED_FONTS.add("Impact");
+		OUTLAWED_FONTS.add("Imprint MT Shadow");
+		OUTLAWED_FONTS.add("InaiMathi");
+		OUTLAWED_FONTS.add("Jazz LET");
+		OUTLAWED_FONTS.add("Kai");
+		OUTLAWED_FONTS.add("Kaiti SC");
+		OUTLAWED_FONTS.add("Kaiti TC");
+		OUTLAWED_FONTS.add("Kannada MN");
+		OUTLAWED_FONTS.add("Khmer MN");
+		OUTLAWED_FONTS.add("Kino MT");
+		OUTLAWED_FONTS.add("Kokonor");
+		OUTLAWED_FONTS.add("Krungthep");
+		OUTLAWED_FONTS.add("Lao MN");
+		OUTLAWED_FONTS.add("Libian SC");
+		OUTLAWED_FONTS.add("LiSong Pro");
+		OUTLAWED_FONTS.add("Lucida Blackletter");
+		OUTLAWED_FONTS.add("Lucida Bright");
+		OUTLAWED_FONTS.add("Lucida Calligraphy");
+		OUTLAWED_FONTS.add("Lucida Fax");
+		OUTLAWED_FONTS.add("Lucida Handwriting");
+		OUTLAWED_FONTS.add("Lucida Sans Typewriter");
+		OUTLAWED_FONTS.add("Malayalam MN");
+		OUTLAWED_FONTS.add("Marion");
+		OUTLAWED_FONTS.add("Marlett");
+		OUTLAWED_FONTS.add("Matura MT Script Capitals");
+		OUTLAWED_FONTS.add("Meiryo");
+		OUTLAWED_FONTS.add("Menlo");
+		OUTLAWED_FONTS.add("Microsoft Himalaya");
+		OUTLAWED_FONTS.add("Microsoft Yi Baiti");
+		OUTLAWED_FONTS.add("MingLiU");
+		OUTLAWED_FONTS.add("MingLiU-ExtB");
+		OUTLAWED_FONTS.add("MingLiU_HKSCS");
+		OUTLAWED_FONTS.add("MingLiU_HKSCS-ExtB");
+		OUTLAWED_FONTS.add("Mistral");
+		OUTLAWED_FONTS.add("Modern No. 20");
+		OUTLAWED_FONTS.add("Mona Lisa Solid ITC TT");
+		OUTLAWED_FONTS.add("Mongolian Baiti");
+		OUTLAWED_FONTS.add("Monospaced");
+		OUTLAWED_FONTS.add("Monotype Corsiva");
+		OUTLAWED_FONTS.add("MS Gothic");
+		OUTLAWED_FONTS.add("MS Mincho");
+		OUTLAWED_FONTS.add("MS PGothic");
+		OUTLAWED_FONTS.add("MS PMincho");
+		OUTLAWED_FONTS.add("MS Reference Sans Serif");
+		OUTLAWED_FONTS.add("Mshtakan");
+		OUTLAWED_FONTS.add("Myanmar MN");
+		OUTLAWED_FONTS.add("Nanum Brush Script");
+		OUTLAWED_FONTS.add("Nanum Myeongjo");
+		OUTLAWED_FONTS.add("Nanum Pen Script");
+		OUTLAWED_FONTS.add("Noteworthy");
+		OUTLAWED_FONTS.add("Onyx");
+		OUTLAWED_FONTS.add("Optima");
+		OUTLAWED_FONTS.add("Oriya MN");
+		OUTLAWED_FONTS.add("Oriya Sangam MN");
+		OUTLAWED_FONTS.add("Palatino");
+		OUTLAWED_FONTS.add("Palatino Linotype");
+		OUTLAWED_FONTS.add("Papyrus");
+		OUTLAWED_FONTS.add("Party LET");
+		OUTLAWED_FONTS.add("PCMyungjo");
+		OUTLAWED_FONTS.add("Perpetua");
+		OUTLAWED_FONTS.add("Perpetua Titling MT");
+		OUTLAWED_FONTS.add("PilGi");
+		OUTLAWED_FONTS.add("Plantagenet Cherokee");
+		OUTLAWED_FONTS.add("Playbill");
+		OUTLAWED_FONTS.add("PMingLiU");
+		OUTLAWED_FONTS.add("PMingLiU-ExtB");
+		OUTLAWED_FONTS.add("PortagoITC TT");
+		OUTLAWED_FONTS.add("PT Serif");
+		OUTLAWED_FONTS.add("PT Serif Caption");
+		OUTLAWED_FONTS.add("Rockwell");
+		OUTLAWED_FONTS.add("Rockwell Extra Bold");
+		OUTLAWED_FONTS.add("Santa Fe LET");
+		OUTLAWED_FONTS.add("Savoye LET");
+		OUTLAWED_FONTS.add("SchoolHouse Cursive B");
+		OUTLAWED_FONTS.add("SchoolHouse Printed A");
+		OUTLAWED_FONTS.add("Seravek");
+		OUTLAWED_FONTS.add("Serif");
+		OUTLAWED_FONTS.add("Sinhala MN");
+		OUTLAWED_FONTS.add("Snell Roundhand");
+		OUTLAWED_FONTS.add("Songti SC");
+		OUTLAWED_FONTS.add("Songti TC");
+		OUTLAWED_FONTS.add("Stencil");
+		OUTLAWED_FONTS.add("STFangsong");
+		OUTLAWED_FONTS.add("STHeiti");
+		OUTLAWED_FONTS.add("STKaiti");
+		OUTLAWED_FONTS.add("STSong");
+		OUTLAWED_FONTS.add("Superclarendon");
+		OUTLAWED_FONTS.add("Synchro LET");
+		OUTLAWED_FONTS.add("Tahoma");
+		OUTLAWED_FONTS.add("Tamil MN");
+		OUTLAWED_FONTS.add("Tamil Sangam MN");
+		OUTLAWED_FONTS.add("Telugu MN");
+		OUTLAWED_FONTS.add("Times");
+		OUTLAWED_FONTS.add("Times New Roman");
+		OUTLAWED_FONTS.add("Wawati SC");
+		OUTLAWED_FONTS.add("Wawati TC");
+		OUTLAWED_FONTS.add("Xingkai SC");
+		OUTLAWED_FONTS.add("YuGothicYuMincho");
 	}
 
-	public static void main(String[] args) {
-		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-	    for (String fontName : ge.getAvailableFontFamilyNames()) {
-	    	if (!OUTLAWED_FONTS.contains(fontName)) {
-	    		System.out.println(fontName);
-	    		PixelType[][] data = renderString(fontName, "W", 30, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-	    		StringBuffer buf = new StringBuffer();
-	    		if (data.length > 0) {
-	    			for (int j=0; j<data[0].length; ++j) {
-	    				for (int i=0; i<data.length; ++i) {
-	    					PixelType val = data[i][j];
-	    					if (val == PixelType.WHITE) {
-	    						buf.append(". ");
-	    					} else if (val == PixelType.BLACK) {
-	    						buf.append("O ");
-	    					} else if (val == PixelType.OBSCURED) {
-	    						buf.append("X ");
-	    					}
-	    				}
-	    				buf.append("\n");
-	    			}
-	    		}
-	    		System.out.println(buf.toString());
-	    	}
-	    }
-	}
-	
-	public static PixelType[][][][] getRenderedFont(Indexer<String> charIndexer, int height) {
+	private static List<String> getAllowedFonts() {
 		List<String> allowedFonts = new ArrayList<String>();
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		for (String fontName : ge.getAvailableFontFamilyNames()) {
@@ -135,21 +306,47 @@ public class FontRenderer {
 				allowedFonts.add(fontName);
 			}
 		}
-		
+		return allowedFonts;
+	}
+	
+	public static void main(String[] args) {
+		for (String fontName : getAllowedFonts()) {
+			System.out.println(fontName);
+			PixelType[][] data = renderString(fontName, "q̃", 30, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+			StringBuffer buf = new StringBuffer();
+			if (data.length > 0) {
+				for (int j = 0; j < data[0].length; ++j) {
+					for (int i = 0; i < data.length; ++i) {
+						PixelType val = data[i][j];
+						if (val == PixelType.WHITE)
+							buf.append(". ");
+						else if (val == PixelType.BLACK) 
+							buf.append("O ");
+						else if (val == PixelType.OBSCURED) 
+							buf.append("X ");
+					}
+					buf.append("\n");
+				}
+			}
+			System.out.println(buf.toString());
+		}
+	}
+	
+	public static PixelType[][][][] getRenderedFont(Indexer<String> charIndexer, int height) {
 		StringBuffer alphabetStr = new StringBuffer();
 		for (int c=0; c<charIndexer.size(); ++c) {
-			alphabetStr.append(charIndexer.getObject(c));
+			alphabetStr.append(unescapeChar(charIndexer.getObject(c)));
 		}
 		
 		PixelType[][][][] result = new PixelType[charIndexer.size()][][][];
 		for (int c=0; c<charIndexer.size(); ++c) {
 			List<PixelType[][]> rendered = new ArrayList<ImageUtils.PixelType[][]>();
-			for (int f=0; f<allowedFonts.size(); ++f) {
-				PixelType[][] renderedChar = renderString(allowedFonts.get(f), charIndexer.getObject(c), height, alphabetStr.toString());
+			for (String font : getAllowedFonts()) {
+				PixelType[][] renderedChar = renderString(font, unescapeChar(charIndexer.getObject(c)), height, alphabetStr.toString());
 				if (renderedChar.length > 0) rendered.add(renderedChar);
 				else {
 					if (!Charset.SPACE.equals(charIndexer.getObject(c))) { 
-						System.out.println("Ignoring empty character rendering: "+allowedFonts.get(f)+", "+charIndexer.getObject(c));
+						System.out.println("Ignoring empty character rendering: " + font +", " + charIndexer.getObject(c));
 					}
 				}
 			}
