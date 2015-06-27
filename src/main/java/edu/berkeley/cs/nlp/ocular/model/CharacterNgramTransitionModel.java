@@ -213,9 +213,10 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 			return type;
 		}
 		
+		public String getLanguage() {
+			return null;
+		}
 	}
-	
-	public static enum TransitionStateType {TMPL, LMRGN, LMRGN_HPHN, RMRGN, RMRGN_HPHN_INIT, RMRGN_HPHN};
 	
 	public static final double LINE_MRGN_PROB = 0.5;
 	public static final double LINE_END_HYPHEN_PROB = 1e-8;
