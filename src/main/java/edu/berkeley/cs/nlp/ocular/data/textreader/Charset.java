@@ -227,12 +227,12 @@ public class Charset {
 		Pair<String, Integer> letterAndLength = readCharAt(s, 0);
 		String c = letterAndLength.getFirst();
 		int length = letterAndLength.getSecond();
-		if (s.length() - length != 0) throw new RuntimeException("Could not encode [" + s + "] because it contains more than one character ("+StringHelper.toUnicode(s)+")");
+		if (s.length() - length != 0) throw new RuntimeException("Could not escape [" + s + "] because it contains more than one character ("+StringHelper.toUnicode(s)+")");
 		return c;
 	}
 
 	/**
-	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader.encode
+	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.Charset.escapeChar
 	 * 
 	 * @param line	A line of text possibly containing characters with diacritics
 	 * composed, precomposed, or escaped.
