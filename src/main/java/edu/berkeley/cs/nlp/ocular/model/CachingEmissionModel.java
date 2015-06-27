@@ -41,6 +41,9 @@ public class CachingEmissionModel implements EmissionModel {
 		this.padMinWidth = padMinWidth;
 		this.padMaxWidth = padMaxWidth;
 		
+		for (int c=0; c<charIndexer.size(); ++c) 
+			if (templates[c] == null) throw new RuntimeException("template for template["+c+"] ("+charIndexer.getObject(c)+") is null!"); 
+
 		this.whiteObservations = new float[observations.length][];
 		this.blackObservations = new float[observations.length][];
 		for (int d=0; d<observations.length; ++d) {
