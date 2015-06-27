@@ -1,8 +1,5 @@
 package edu.berkeley.cs.nlp.ocular.preprocessing;
 
-import java.io.File;
-
-import fileio.f;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 
 public class Binarizer {

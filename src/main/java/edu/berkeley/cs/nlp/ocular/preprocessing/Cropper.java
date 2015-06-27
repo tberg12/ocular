@@ -1,9 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.preprocessing;
 
-import fileio.f;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 
-import java.io.File;
 import java.util.Arrays;
 
 import arrays.a;

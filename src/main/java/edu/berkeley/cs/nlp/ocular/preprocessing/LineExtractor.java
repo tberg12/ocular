@@ -45,10 +45,10 @@ public class LineExtractor {
 			double[][] cropLevels = Cropper.crop(rotLevels, 0.12);
 			Binarizer.binarizeGlobal(0.12, cropLevels);
 //			ImageUtils.display(ImageUtils.makeImage(cropLevels));
-			List<double[][]> lines = extractLines(cropLevels);
-			for (double[][] line : lines) {
+//			List<double[][]> lines = extractLines(cropLevels);
+//			for (double[][] line : lines) {
 //				ImageUtils.display(ImageUtils.makeImage(line));
-			}
+//			}
 		}
 	}
 	

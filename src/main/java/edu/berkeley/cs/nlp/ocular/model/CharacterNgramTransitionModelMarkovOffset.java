@@ -9,9 +9,6 @@ import arrays.a;
 import tuple.Pair;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.Main;
-import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel.CharacterNgramTransitionState;
-import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel.TransitionStateType;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 
 public class CharacterNgramTransitionModelMarkovOffset implements SparseTransitionModel {
 	
