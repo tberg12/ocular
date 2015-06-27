@@ -276,6 +276,27 @@ public class Charset {
 	}
 	
 
+	/**
+	 * Convert diacritic escape sequences on a character into unicode precomposed and combining characters
+	 */
+	public static String unescapeChar(String c) {
+		String e = escapeChar(c); // use escapes only (and make sure it's a valid character)
+
+		if (c.length() == 1) return c; // no diacritics
+
+		StringBuilder b = new StringBuilder();
+		// Attempt to make a precomposed letter, falling back to composed otherwise
+		String last = e.substring(e.length() - 3); // last escape + letter
+		String precomposed = ESCAPED_TO_PRECOMPOSED_MAP.get(last);
+		b.append((precomposed != null ? precomposed : last.substring(2) + escapeToCombining(last.substring(0, 2))));
+
+		for (int i = e.length() - 5; i >= 0; i -= 2) {
+			String esc = e.substring(i, i + 2);
+			b.append(escapeToCombining(esc));
+		}
+		return b.toString();
+	}
+
 	public static String removeAnyDiacriticFromChar(String c) {
 		return StringHelper.last(escapeChar(c));
 	}
