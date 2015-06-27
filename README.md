@@ -37,7 +37,7 @@ It is described in the following publications:
     
 2. Train a language model:
 
-  Put some text in a file called `texts/test.txt`.  (Or download some off the web: http://www.gutenberg.org/cache/epub/2600/pg2600.txt).  It must contain every character used by the system: `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz &.,;:"'!?()-` (but you can just copy and paste that string in).
+  Put some text in a file called `texts/test.txt`.  (Or download some off the web: http://www.gutenberg.org/cache/epub/2600/pg2600.txt).
     
       edu.berkeley.cs.nlp.ocular.main.LMTrainMain -lmPath lm/my_lm.lmser -textPath texts/test.txt -useLongS false
     
