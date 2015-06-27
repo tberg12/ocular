@@ -12,6 +12,8 @@ public interface SparseTransitionModel {
 		public Collection<Pair<TransitionState,Double>> forwardTransitions();
 		public Collection<Pair<TransitionState,Double>> nextLineStartStates();
 		public double endLogProb();
+		public TransitionStateType getType();
+		public String getLanguage();
 	}
 	public Collection<Pair<TransitionState,Double>> startStates(int d);
 }
