@@ -230,7 +230,7 @@ public class Evaluator {
 		for (int i=0; i<str.length(); ++i) {
 			String c = str.substring(i,i+1);
 			boolean found = false;
-			for (String p : Main.PUNC) {
+			for (String p : Charset.PUNC) {
 				if (p.equals(c)) found = true;
 			}
 			if (!found) buf.append(c);

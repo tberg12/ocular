@@ -82,7 +82,7 @@ public class CharacterTemplate implements Serializable {
 		this.character = character;
 		this.templateWidthCounts = new float[templateWidthProbs.length];
 		
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			this.templateWeights = new float[templateMaxWidth][LINE_HEIGHT];
 			for (int i=0; i<templateMaxWidth; ++i) {
 				Arrays.fill(templateWeights[i], 0.0f);
@@ -132,7 +132,7 @@ public class CharacterTemplate implements Serializable {
 	}
 	
 	public void initializeAndSetPriorFromFontData(PixelType[][][] fontData) {
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			System.out.println("Initializing "+character+" from font data...");
 			clearEmissionCounts();
 			clearWidthCounts();
@@ -162,7 +162,7 @@ public class CharacterTemplate implements Serializable {
 	
 	public float[][] blackProbs(int exposure, int offset, int width) {
 		float[][] result = new float[width][LINE_HEIGHT];
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			for (int i=0; i<width; ++i) {
 				for (int j=0; j<LINE_HEIGHT; ++j) {
 					result[i][j] = (float) Math.exp(templateLogProbs(width, exposure, true)[i][Math.min(LINE_HEIGHT-1, Math.max(0, j+offset))]);
@@ -180,7 +180,7 @@ public class CharacterTemplate implements Serializable {
 	
 	public float[][] logBlackProbs(int exposure, int offset, int width) {
 		float[][] result = new float[width][LINE_HEIGHT];
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			for (int i=0; i<width; ++i) {
 				for (int j=0; j<LINE_HEIGHT; ++j) {
 					result[i][j] = (float) templateLogProbs(width, exposure, true)[i][Math.min(LINE_HEIGHT-1, Math.max(0, j+offset))];
@@ -198,7 +198,7 @@ public class CharacterTemplate implements Serializable {
 	
 	public float[][] logWhiteProbs(int exposure, int offset, int width) {
 		float[][] result = new float[width][LINE_HEIGHT];
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			for (int i=0; i<width; ++i) {
 				for (int j=0; j<LINE_HEIGHT; ++j) {
 					result[i][j] = (float) templateLogProbs(width, exposure, false)[i][Math.min(LINE_HEIGHT-1, Math.max(0, j+offset))];
@@ -232,7 +232,7 @@ public class CharacterTemplate implements Serializable {
 	}
 	
 	private float pixelEmissionLogProb(int exposure, int offset, int width, int pos, int j, PixelType observation) {
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			if (observation == PixelType.BLACK) {
 				return templateLogProbs(width, exposure, true)[pos][Math.min(LINE_HEIGHT-1, Math.max(0, j+offset))];
 			} if (observation == PixelType.WHITE) {
@@ -339,7 +339,7 @@ public class CharacterTemplate implements Serializable {
 	}
 
 	private void updateWidthParameters(float widthMinVar, float widthStdThresh) {
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			if (a.sum(templateWidthCounts) > 0.0) {
 				float mean = 0.0f;
 				float totalCount = a.sum(templateWidthCounts);
@@ -368,7 +368,7 @@ public class CharacterTemplate implements Serializable {
 	}
 
 	private void clearEmissionCounts() {
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			for (int e=0; e<EXP_GAINS.length; ++e) {
 				Arrays.fill(templateCountSparsity[e], false);
 				for (int w=0; w<interpolationWeights[e].length; ++w) {
@@ -382,7 +382,7 @@ public class CharacterTemplate implements Serializable {
 	}
 
 	private void incrementEmissionCounts(int exposure, int offset, int width, int pos, float count, PixelType[] observation) {
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			synchronized (templateBlackCounts[exposure][width-templateMinWidth()][pos]) {
 				for (int j=0; j<observation.length; ++j) {
 					if (observation[j] == PixelType.BLACK) {
@@ -397,7 +397,7 @@ public class CharacterTemplate implements Serializable {
 	}
 	
 	private void updateEmissionParameters(float lbfgsTol, int iters) {
-		if (!character.equals(Main.SPACE)) {
+		if (!character.equals(Charset.SPACE)) {
 			Minimizer minimizer = new LBFGSMinimizer(lbfgsTol, iters);
 			double[] finalParams = minimizer.minimize(new NegExpectedLogLikelihoodFunc(), a.toDouble(getParamVector()), false, null);
 			setParamVector(a.toFloat(finalParams));

@@ -1,5 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import indexer.HashMapIndexer;
@@ -55,10 +56,11 @@ public class FontInitMain implements Runnable {
 	public void run() {
 		final Indexer<String> charIndexer = new HashMapIndexer<String>();
 		List<String> vocab = new ArrayList<String>();
-		for (String c : Main.ALPHABET) vocab.add(c);
-		vocab.add(Main.LONGS);
-		for (String c : Main.PUNC) vocab.add(c);
-		vocab.add(Main.SPACE);
+		for (String c : Charset.ALPHABET) vocab.add(c);
+		for (String c : Charset.DIGITS) vocab.add(c);
+		vocab.add(Charset.LONG_S);
+		for (String c : Charset.PUNC) vocab.add(c);
+		vocab.add(Charset.SPACE);
 		for (String c : vocab) {
 			charIndexer.getIndex(c);
 		}
@@ -68,15 +70,15 @@ public class FontInitMain implements Runnable {
 		final PixelType[][][] fAndBarFontPixelData = buildFAndBarFontPixelData(charIndexer, fontPixelData);
 		BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer c, Object ignore){
 			String currChar = charIndexer.getObject(c);
-			if (!currChar.equals(Main.SPACE)) {
+			if (!currChar.equals(Charset.SPACE)) {
 				templates[c] = new CharacterTemplate(currChar, (float) templateMaxWidthFraction, (float) templateMinWidthFraction);
-				if (currChar.equals(Main.LONGS)) {
+				if (currChar.equals(Charset.LONG_S)) {
 					templates[c].initializeAndSetPriorFromFontData(fAndBarFontPixelData);
 				} else {
 					templates[c].initializeAndSetPriorFromFontData(fontPixelData[c]);
 				}
 			} else {
-				templates[c] = new CharacterTemplate(Main.SPACE, (float) spaceMaxWidthFraction, (float) spaceMinWidthFraction);
+				templates[c] = new CharacterTemplate(Charset.SPACE, (float) spaceMaxWidthFraction, (float) spaceMinWidthFraction);
 			}
 		}};
 		BetterThreader<Integer,Object> threader = new BetterThreader<Integer,Object>(func, numFontInitThreads);

@@ -27,7 +27,7 @@ public class DenseBigramTransitionModel {
 				this.forwardTrans[prevC][c] = Math.log(lm.getCharNgramProb(new int[] {prevC}, c));
 			}
 		}
-		int spaceIndex = lm.getCharacterIndexer().getIndex(Main.SPACE);
+		int spaceIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);
 		a.scalei(this.forwardTrans[spaceIndex], (1.0 - SPC_TO_SPC_SMOOTH));
 		this.forwardTrans[spaceIndex][spaceIndex] += SPC_TO_SPC_SMOOTH;
 		

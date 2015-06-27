@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel.LMType;
 import fig.Option;
@@ -50,10 +51,11 @@ public class LMTrainMain implements Runnable {
 	public void run() {
 		Indexer<String>charIndexer = new HashMapIndexer<String>();
 		List<String> vocab = new ArrayList<String>();
-		for (String c : Main.ALPHABET) vocab.add(c);
-		if (useLongS) vocab.add(Main.LONGS);
-		for (String c : Main.PUNC) vocab.add(c);
-		vocab.add(Main.SPACE);
+		for (String c : Charset.ALPHABET) vocab.add(c);
+		for (String c : Charset.DIGITS) vocab.add(c);
+		if (useLongS) vocab.add(Charset.LONG_S);
+		for (String c : Charset.PUNC) vocab.add(c);
+		vocab.add(Charset.SPACE);
 		for (String c : vocab) {
 			charIndexer.getIndex(c);
 		}

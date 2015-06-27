@@ -229,11 +229,11 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 	public CharacterNgramTransitionModel(LanguageModel lm, int n) {
 		this.lm = lm;
 		this.n = n;
-		this.spaceCharIndex = lm.getCharacterIndexer().getIndex(Main.SPACE);
+		this.spaceCharIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);
 		this.hyphenCharIndex = lm.getCharacterIndexer().getIndex(Main.HYPHEN);
 		this.isPunc = new boolean[lm.getCharacterIndexer().size()];
 		Arrays.fill(this.isPunc, false);
-		for (String c : Main.PUNC) {
+		for (String c : Charset.PUNC) {
 			isPunc[lm.getCharacterIndexer().getIndex(c)] = true;
 		}
 	}

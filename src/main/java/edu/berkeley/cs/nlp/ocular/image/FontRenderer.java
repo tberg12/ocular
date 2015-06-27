@@ -148,7 +148,7 @@ public class FontRenderer {
 				PixelType[][] renderedChar = renderString(allowedFonts.get(f), charIndexer.getObject(c), height, alphabetStr.toString());
 				if (renderedChar.length > 0) rendered.add(renderedChar);
 				else {
-					if (!Main.SPACE.equals(charIndexer.getObject(c))) { 
+					if (!Charset.SPACE.equals(charIndexer.getObject(c))) { 
 						System.out.println("Ignoring empty character rendering: "+allowedFonts.get(f)+", "+charIndexer.getObject(c));
 					}
 				}

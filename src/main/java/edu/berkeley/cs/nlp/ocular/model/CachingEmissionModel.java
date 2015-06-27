@@ -34,7 +34,7 @@ public class CachingEmissionModel implements EmissionModel {
 		this.innerLoop = innerLoop;
 		
 		this.charIndexer = charIndexer;
-		this.spaceIndex = charIndexer.getIndex(Main.SPACE);
+		this.spaceIndex = charIndexer.getIndex(Charset.SPACE);
 		this.templates = templates;
 		this.observations = observations;
 		this.padMinWidth = padMinWidth;

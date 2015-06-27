@@ -1,5 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.SPACE;
+
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
@@ -102,12 +105,6 @@ public class ExperimentsMain implements Runnable {
 	
 	public static enum EmissionCacheInnerLoopType {DEFAULT, OPENCL, CUDA};
 
-	public static final String SPACE = " ";
-	public static final String HYPHEN = "-";
-	public static final String LONGS = "|";
-	public static final String[] PUNC = new String[] {"&", ".", ",", ";", ":", "\"", "'", "!", "?", "(", ")", HYPHEN}; 
-	public static final String[] ALPHABET = new String[] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",  "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}; 
-	
 	public static void main(String[] args) {
 		ExperimentsMain main = new ExperimentsMain();
 		Execution.run(args, main);
@@ -281,7 +278,7 @@ public class ExperimentsMain implements Runnable {
 					for (int i=0; i<templateBlackProbs.length; ++i) {
 						pixelsBlackProbsLists[d].add(templateBlackProbs[i]);
 					}
-					double[][] padBlackProbs = a.toDouble(templates[charIndexer.getIndex(ExperimentsMain.SPACE)].blackProbs(e, offset, pw));
+					double[][] padBlackProbs = a.toDouble(templates[charIndexer.getIndex(SPACE)].blackProbs(e, offset, pw));
 					for (int i=0; i<padBlackProbs.length; ++i) {
 						pixelsBlackProbsLists[d].add(padBlackProbs[i]);
 					}
