@@ -80,7 +80,10 @@ public class NgramLanguageModel implements SingleLanguageModel {
 	}
 
 	public boolean containsContext(int[] context) {
-		return allContextsSet.contains(new LongArrWrapper(LongNgram.convertToLong(context)));
+		if (context.length == 0)
+			return true;
+		else
+			return allContextsSet.contains(new LongArrWrapper(LongNgram.convertToLong(context)));
 	}
 
 	public double getCharNgramProb(int[] context, int c) {
