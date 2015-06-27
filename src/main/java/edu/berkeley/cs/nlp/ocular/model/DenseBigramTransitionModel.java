@@ -1,8 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
-import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
+import arrays.a;
 
 public class DenseBigramTransitionModel {
 	private static double SPC_TO_SPC_SMOOTH = 1e-2;
@@ -11,7 +11,7 @@ public class DenseBigramTransitionModel {
 	private double[][] forwardTrans;
 	private double[][] backwardTrans;
 	
-	public DenseBigramTransitionModel(NgramLanguageModel lm) {
+	public DenseBigramTransitionModel(LanguageModel lm) {
 		assert lm.getMaxOrder() >= 2;
 		
 		int numC = lm.getCharacterIndexer().size();
