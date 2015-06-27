@@ -56,6 +56,11 @@ public class Visualizer {
 		return ImageUtils.makeRgbImage(combineLinesRGB(rgbSpacedLines));
 	}
 	
+	public static BufferedImage renderLineExtraction(PixelType[][] line) {
+		int[][] rgbLine = convertToThresholdedRgb(new PixelType[][][]{ line }, Color.BLACK.getRGB(), Color.GRAY.getRGB(), Color.WHITE.getRGB())[0];
+		return ImageUtils.makeRgbImage(rgbLine);
+	}
+	
 	public static BufferedImage renderLineExtraction(double[][] levels, VerticalSegmentation segmentation) {
 		int[][] rgbImage = new int[levels.length][levels[0].length];
 		for (int i = 0; i < levels.length; i++) {
