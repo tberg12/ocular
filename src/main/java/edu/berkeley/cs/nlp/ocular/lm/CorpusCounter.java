@@ -3,10 +3,17 @@ package edu.berkeley.cs.nlp.ocular.lm;
 import indexer.Indexer;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
+import edu.berkeley.cs.nlp.ocular.data.FileUtil;
+import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 
 public class CorpusCounter {
 
@@ -23,6 +30,8 @@ public class CorpusCounter {
   public final int[] INITIAL_CHAR_DB_SIZES = { 100, 6000, 60000, 300000, 1 * MILLION, 3 * MILLION, 6 * MILLION, 10 * MILLION, 20 * MILLION,
                                                40 * MILLION, 60 * MILLION, 80 * MILLION };
 
+  public final Set<Integer> activeCharacters;
+  
   public CorpusCounter(int maxNgramOrder) {
     this.counts = new CountDbBig[maxNgramOrder];
     int[] dbSizes = new int[maxNgramOrder];
@@ -40,51 +49,69 @@ public class CorpusCounter {
     this.counts[maxNgramOrder - 1] = new CountDbBig(dbSizes[maxNgramOrder - 1], 1);
     this.maxNgramOrder = maxNgramOrder;
     this.tokenCount = 0;
+    
+    this.activeCharacters = new TreeSet<Integer>();
   }
 
   public CountDbBig[] getCounts() {
     return counts;
   }
   
-  public void count(String fileName, int maxNumLines, Indexer<String> charIndexer, boolean useLongS) {
+  /**
+   * Count either a file or all the files/subdirectories recursively in a directory
+   */
+  public void countRecursive(String name, int maxNumLines, Indexer<String> charIndexer, TextReader textReader) {
+	  System.out.println("CorpusCounter.countRecursive: "+name);
+	  for(File file : FileUtil.recursiveFiles(name)) {
+		  System.out.println("    CorpusCounter.countRecursive: "+file);
+		  count(file.getPath(), maxNumLines, charIndexer, textReader);
+	  }
+  }
+
+  public void count(String fileName, int maxNumLines, Indexer<String> charIndexer, TextReader textReader) {
     try {
-      BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+    	BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
       int lineNumber = 0;
       while (in.ready()) {
         if (lineNumber >= maxNumLines) {
           break;
         }
         String line = in.readLine();
-        line = line.replaceAll("``", "\"");
-        line = line.replaceAll("''", "\"");
-        if (useLongS) {
-        	line = convertLongS(line);
-        }
-        int[] indexedLine = new int[line.length()];
-        for (int t=0; t<line.length(); ++t) {
-          String currChar = line.substring(t, t+1);
-          if (charIndexer.locked() && !charIndexer.contains(currChar)) {
-            // TODO: Change if we want to use UNK instead of -1
-            indexedLine[t] = -1; // charIndexer.getIndex("UNK");
-          } else {
-            indexedLine[t] = charIndexer.getIndex(currChar);
-          }
-        }
-        countLine(indexedLine, lineNumber);
+        countLine(line, charIndexer, textReader, lineNumber);
         lineNumber++;
       }
       in.close();
-      printStats(lineNumber);
+      //printStats(lineNumber);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void countLine(String line, Indexer<String> charIndexer, TextReader textReader, int lineNumber) {
+      List<String> chars = textReader.readCharacters(line);
+      countChars(chars, charIndexer, lineNumber);
+  }
+
+  public void countChars(List<String> chars, Indexer<String> charIndexer, int lineNumber) {
+      int[] indexedLine = new int[chars.size()];
+      int t = 0;
+      for (String currChar : chars) {
+        if (charIndexer.locked() && !charIndexer.contains(currChar)) {
+          // TODO: Change if we want to use UNK instead of -1
+          indexedLine[t++] = -1; // charIndexer.getIndex("UNK");
+  	    //throw new AssertionError("Found unknown character `"+currChar+"` in file `"+fileName+"`");
+        } else {
+          indexedLine[t++] = charIndexer.getIndex(currChar);
+        }
+      }
+      countLine(indexedLine, lineNumber);
   }
 
   public void count(int[][] text) {
     for (int i = 0; i < text.length; i++) {
       countLine(text[i], i);
     }
-    printStats(text.length);
+    //printStats(text.length);
   }
   
   /**
@@ -93,9 +120,9 @@ public class CorpusCounter {
    * @param lineIdx
    */
   public void countLine(int[] line, int lineIdx) {
-    if (lineIdx % 100000 == 0) {
-      printStats(lineIdx);
-    }
+//    if (lineIdx % 100000 == 0) {
+//      printStats(lineIdx);
+//    }
     // Put in two start of sentence tokens
     int[] ngramArr = new int[maxNgramOrder];
     Arrays.fill(ngramArr, -1);
@@ -108,6 +135,8 @@ public class CorpusCounter {
       // drops by one for every eaten position; this is correct.
       if (line[charIdx] != -1) {
         incrementCounts(ngramArr, maxNgramOrder - (firstMinusOneLookingBack(ngramArr) + 1));
+        
+        this.activeCharacters.add(line[charIdx]);
       }
       tokenCount++;
       for (int i = 0; i < counts.length; i++) {
@@ -126,7 +155,7 @@ public class CorpusCounter {
     return -1;
   }
   
-  private void printStats(int lineIdx) {
+  public void printStats(int lineIdx) {
     System.out.println("=============================================");
     System.out.println("Line " + lineIdx);
     System.out.println("Number of tokens: train: " + tokenCount);
@@ -164,12 +193,8 @@ public class CorpusCounter {
     }
   }
   
-  public static String convertLongS(String line) {
-    String pattern = "s([a-z])";
-    return line.replaceAll("\\|", "/").replaceAll(pattern, "|$1"); 
+  public long getTokenCount() {
+	  return tokenCount;
   }
-
-  public static void main(String[] args) {
-    System.out.println(convertLongS("ing the || | follies of those, who either by their own idle or extravagant living are forced to seek out those ways and means, which either are"));
-  }
+  
 }

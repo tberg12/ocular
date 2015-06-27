@@ -2,29 +2,32 @@ package edu.berkeley.cs.nlp.ocular.lm;
 
 import indexer.Indexer;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class NgramLanguageModel implements LanguageModel, Serializable {
-	private static final long serialVersionUID = -4591712208091374518L;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+
+public class NgramLanguageModel implements SingleLanguageModel {
+	private static final long serialVersionUID = 873286328149782L;
 
 	private Indexer<String> charIndexer;
 	private CountDbBig[] countDbs;
 	private int maxOrder;
 	private LMType type;
 	private double lmPower;
-	private boolean useLongS;
 
 	private Set<LongArrWrapper> allContextsSet;
 	private List<int[]> allContexts;
 
 	public static enum LMType { MLE, ABS_DISC, KNESER_NEY }
+	
+	private Set<Integer> activeCharacters;
+	public Set<Integer> getActiveCharacters() { return activeCharacters; }
 
-	public NgramLanguageModel(Indexer<String> charIndexer, CountDbBig[] countDbs, LMType type, double lmPower, boolean useLongS) {
-		this.useLongS = useLongS;
+	public NgramLanguageModel(Indexer<String> charIndexer, CountDbBig[] countDbs, Set<Integer> activeCharacters, LMType type, double lmPower) {
 		this.charIndexer = charIndexer;
 		this.countDbs = countDbs;
 		this.maxOrder = countDbs.length;
@@ -40,24 +43,26 @@ public class NgramLanguageModel implements LanguageModel, Serializable {
 				}
 			}
 		}
+		
+		if (activeCharacters == null) throw new RuntimeException("activeCharacters is null!"); 
+		this.activeCharacters = activeCharacters;
+		for (String c : Charset.UNIV_PUNC) this.activeCharacters.add(charIndexer.getIndex(c));
 	}
 
 	public static NgramLanguageModel buildFromText(int[][] text, Indexer<String> charIndexer, int maxOrder, LMType type, double lmPower) {
 		CorpusCounter counter = new CorpusCounter(maxOrder);
 		counter.count(text);
-		return new NgramLanguageModel(charIndexer, counter.getCounts(), type, lmPower, false);
+
+		return new NgramLanguageModel(charIndexer, counter.getCounts(), counter.activeCharacters, type, lmPower);
 	}
 
-	public static NgramLanguageModel buildFromText(String fileName, int maxNumLines, Indexer<String> charIndexer, int maxOrder, LMType type, double lmPower, boolean useLongS) {
+	public static NgramLanguageModel buildFromText(String fileName, int maxNumLines, Indexer<String> charIndexer, int maxOrder, LMType type, double lmPower, TextReader textReader) {
 		CorpusCounter counter = new CorpusCounter(maxOrder);
-		counter.count(fileName, maxNumLines, charIndexer, useLongS);
-		return new NgramLanguageModel(charIndexer, counter.getCounts(), type, lmPower, useLongS);
+		counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
+		//counter.printStats(-1);
+		return new NgramLanguageModel(charIndexer, counter.getCounts(), counter.activeCharacters, type, lmPower);
 	}
 
-	public boolean useLongS() {
-		return useLongS;
-	}
-	
 	public void checkNormalizes(int[] context) {
 		double totalProb = 0;
 		for (int i = 0; i < charIndexer.size(); i++) {
@@ -113,4 +118,5 @@ public class NgramLanguageModel implements LanguageModel, Serializable {
 		}
 		return Math.pow(prob, lmPower);
 	}
+	
 }
