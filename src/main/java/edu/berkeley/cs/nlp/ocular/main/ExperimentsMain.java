@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import arrays.a;
-import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
@@ -130,7 +130,7 @@ public class ExperimentsMain implements Runnable {
 
 		for (Document doc : documents) {
 			System.out.println("Loading LM..");
-			final LanguageModel lm = (doc.useLongS() ? LMTrainMain.readLM(lmDir+"/"+lmBaseName+"_longs.lmser") : LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser"));
+			final NgramLanguageModel lm = (doc.useLongS() ? LMTrainMain.readLM(lmDir+"/"+lmBaseName+"_longs.lmser") : LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser"));
 			final Indexer<String> charIndexer = lm.getCharacterIndexer();
 			
 			System.out.println("Loading font initializer..");

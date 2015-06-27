@@ -8,7 +8,7 @@ import java.util.List;
 import tuple.Pair;
 import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 
 public class CharacterNgramTransitionModel implements SparseTransitionModel {
 	
@@ -222,12 +222,12 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 	public static final double LINE_END_HYPHEN_PROB = 1e-8;
 	
 	private int n;
-	private LanguageModel lm;
+	private NgramLanguageModel lm;
 	private int spaceCharIndex;
 	private int hyphenCharIndex;
 	private boolean[] isPunc;
 
-	public CharacterNgramTransitionModel(LanguageModel lm, int n) {
+	public CharacterNgramTransitionModel(NgramLanguageModel lm, int n) {
 		this.lm = lm;
 		this.n = n;
 		this.spaceCharIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);

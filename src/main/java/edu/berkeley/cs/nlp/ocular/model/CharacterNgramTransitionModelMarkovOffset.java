@@ -8,7 +8,7 @@ import java.util.List;
 import tuple.Pair;
 import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 
 public class CharacterNgramTransitionModelMarkovOffset implements SparseTransitionModel {
 	
@@ -300,12 +300,12 @@ public class CharacterNgramTransitionModelMarkovOffset implements SparseTransiti
 	}
 	
 	private int n;
-	private LanguageModel lm;
+	private NgramLanguageModel lm;
 	private int spaceCharIndex;
 	private int hyphenCharIndex;
 	private boolean[] isPunc;
 
-	public CharacterNgramTransitionModelMarkovOffset(LanguageModel lm, int n) {
+	public CharacterNgramTransitionModelMarkovOffset(NgramLanguageModel lm, int n) {
 		this.lm = lm;
 		this.n = n;
 		this.spaceCharIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);

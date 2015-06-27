@@ -15,8 +15,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
-import edu.berkeley.cs.nlp.ocular.lm.LanguageModel.LMType;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import fig.Option;
 import fig.OptionsParser;
 
@@ -60,12 +60,12 @@ public class LMTrainMain implements Runnable {
 			charIndexer.getIndex(c);
 		}
 		charIndexer.lock();
-		LanguageModel lm = LanguageModel.buildFromText(textPath, maxLines, charIndexer, charN, LMType.KNESER_NEY, power, useLongS);
+		NgramLanguageModel lm = NgramLanguageModel.buildFromText(textPath, maxLines, charIndexer, charN, LMType.KNESER_NEY, power, useLongS);
 		writeLM(lm, lmPath);
 	}
 	
-	public static LanguageModel readLM(String lmPath) {
-		LanguageModel lm = null;
+	public static NgramLanguageModel readLM(String lmPath) {
+		NgramLanguageModel lm = null;
 		try {
 			File file = new File(lmPath);
 			if (!file.exists()) {
@@ -74,7 +74,7 @@ public class LMTrainMain implements Runnable {
 			}
 			FileInputStream fileIn = new FileInputStream(file);
 			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
-			lm = (LanguageModel) in.readObject();
+			lm = (NgramLanguageModel) in.readObject();
 			in.close();
 			fileIn.close();
 		} catch(Exception e) {
@@ -83,7 +83,7 @@ public class LMTrainMain implements Runnable {
 		return lm;
 	}
 
-	public static void writeLM(LanguageModel lm, String lmPath) {
+	public static void writeLM(NgramLanguageModel lm, String lmPath) {
 		try {
       new File(lmPath).getParentFile().mkdirs();
 			FileOutputStream fileOut = new FileOutputStream(lmPath);

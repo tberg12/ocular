@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
@@ -130,7 +130,7 @@ public class Main implements Runnable {
 		}
 
 		System.out.println("Loading LM..");
-		final LanguageModel lm = LMTrainMain.readLM(lmPath);
+		final NgramLanguageModel lm = LMTrainMain.readLM(lmPath);
 		DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 		SparseTransitionModel forwardTransitionModel = null;
 		if (markovVerticalOffset) {
