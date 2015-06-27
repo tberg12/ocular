@@ -1,15 +1,16 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
+import gpu.CudaUtil;
+import indexer.Indexer;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import edu.berkeley.cs.nlp.ocular.main.Main;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import threading.BetterThreader;
-import gpu.CudaUtil;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import indexer.Indexer;
+import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 
 public class CachingEmissionModel implements EmissionModel {
 	

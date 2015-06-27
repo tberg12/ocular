@@ -9,9 +9,9 @@ import java.util.Map;
 
 import counter.Counter;
 import counter.CounterMap;
-import edu.berkeley.cs.nlp.ocular.main.Main;
 import tuple.Pair;
 import util.Iterators;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
 
 

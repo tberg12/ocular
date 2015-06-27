@@ -1,8 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
 import arrays.a;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
-import edu.berkeley.cs.nlp.ocular.main.Main;
 
 public class DenseBigramTransitionModel {
 	private static double SPC_TO_SPC_SMOOTH = 1e-2;

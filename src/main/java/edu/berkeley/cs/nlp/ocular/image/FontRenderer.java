@@ -1,6 +1,5 @@
 package edu.berkeley.cs.nlp.ocular.image;
 
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import indexer.Indexer;
 
 import java.awt.Color;
@@ -17,7 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.berkeley.cs.nlp.ocular.main.Main;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
 public class FontRenderer {
 	

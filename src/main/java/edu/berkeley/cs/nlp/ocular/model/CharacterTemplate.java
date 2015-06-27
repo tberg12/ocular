@@ -1,6 +1,5 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import indexer.Indexer;
 import indexer.IntArrayIndexer;
 
@@ -9,13 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import math.m;
 import opt.DifferentiableFunction;
 import opt.LBFGSMinimizer;
 import opt.Minimizer;
-import edu.berkeley.cs.nlp.ocular.main.Main;
-import math.m;
 import tuple.Pair;
 import arrays.a;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
 public class CharacterTemplate implements Serializable {
 	private static final long serialVersionUID = 2L;

@@ -5,10 +5,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import arrays.a;
 import tuple.Pair;
+import arrays.a;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
-import edu.berkeley.cs.nlp.ocular.main.Main;
 
 public class CharacterNgramTransitionModel implements SparseTransitionModel {
 	
@@ -230,7 +230,7 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 		this.lm = lm;
 		this.n = n;
 		this.spaceCharIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);
-		this.hyphenCharIndex = lm.getCharacterIndexer().getIndex(Main.HYPHEN);
+		this.hyphenCharIndex = lm.getCharacterIndexer().getIndex(Charset.HYPHEN);
 		this.isPunc = new boolean[lm.getCharacterIndexer().size()];
 		Arrays.fill(this.isPunc, false);
 		for (String c : Charset.PUNC) {
