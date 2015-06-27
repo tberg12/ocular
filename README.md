@@ -1,6 +1,31 @@
-# ocular
+[Taylor Berg-Kirkpatrick]: http://www.eecs.berkeley.edu/~tberg/
+[Greg Durrett]: http://www.eecs.berkeley.edu/~gdurrett/
+[Dan Klein]: http://www.eecs.berkeley.edu/~klein/
+[Dan Garrette]: http://www.dhgarrette.com
+[Hannah Alpert-Abrams]: http://www.halperta.com/
+
+
+
+# Ocular
 
 Ocular is a state-of-the-art historical OCR system.
+
+It is described in the following publications:
+
+> Unsupervised Transcription of Historical Documents [[pdf]](https://aclweb.org/anthology/P/P13/P13-1021.pdf)    
+> [Taylor Berg-Kirkpatrick], [Greg Durrett], and [Dan Klein]  
+> ACL 2013
+
+> Improved Typesetting Models for Historical OCR [[pdf]](http://www.aclweb.org/anthology/P/P14/P14-2020.pdf)    
+> [Taylor Berg-Kirkpatrick] and [Dan Klein]  
+> ACL 2014
+
+> Unsupervised Code-Switching for Multilingual Historical Document Transcription [[pdf]](http://www.aclweb.org/anthology/N15-1109)    
+> [Dan Garrette], [Hannah Alpert-Abrams], [Taylor Berg-Kirkpatrick], and [Dan Klein]  
+> NAACL 2015
+
+
+
 
 
 
