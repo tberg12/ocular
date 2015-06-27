@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import edu.berkeley.cs.nlp.ocular.model.LanguageTransitionPriors;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 
 /**
