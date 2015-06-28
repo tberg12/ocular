@@ -58,14 +58,14 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.)")
 	public static double pKeepSameLanguage = 0.999999;
 
-	@Option(gloss = "Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: \"english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser\".  If spaces are used, be sure to wrap the whole string with \"quotes\".)")
+	@Option(gloss = "Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: \"english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser\".  If spaces are used, be sure to wrap the whole string with \"quotes\".")
 	public static String textPaths = "texts/test.txt";
 	
-	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".)")
+	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".")
 	public static String languagePriors = null;
 	
-	@Option(gloss = "Alternate Spelling Replacement file suffix (or null): data/replacements/<language>SUFFIX")
-	public static String alternateSpellingReplacements = null;
+	@Option(gloss = "Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". If spaces are used, be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
+	public static String alternateSpellingReplacementPaths = null;
 	
 	@Option(gloss = "Use separate character type for long s.")
 	public static boolean useLongS = false;
@@ -97,9 +97,15 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	}
 
 	public void run() {
-		Indexer<String> charIndexer = new HashMapIndexer<String>();
+		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = makePathsReadersAndPriors();
 
-		Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> lmsAndPriors = makeLMsAndPriors(charIndexer);
+		Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> lmsAndPriors;
+		Indexer<String> charIndexer = new HashMapIndexer<String>();
+		if (codeSwitch)
+			lmsAndPriors = makeMultipleSubLMs(pathsReadersAndPriors, charIndexer);
+		else
+			lmsAndPriors = makeSingleSubLM(pathsReadersAndPriors, charIndexer);
+		charIndexer.lock();
 
 		System.out.println("pKeepSameLanguage = " + pKeepSameLanguage);
 		System.out.println("charN = " + charN);
@@ -109,7 +115,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		writeLM(codeSwitchLM, lmPath);
 	}
 
-	public Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> makeLMsAndPriors(Indexer<String> charIndexer) {
+	public Map<String, Tuple2<Tuple2<String, TextReader>, Double>> makePathsReadersAndPriors() {
 		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = new HashMap<String, Tuple2<Tuple2<String, TextReader>, Double>>();
 
 		String textPathString = textPaths;
@@ -117,18 +123,17 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		Map<String, String> languagePathMap = new HashMap<String, String>();
 		for (String part : textPathString.split(",")) {
 			String[] subparts = part.trim().split("->");
-			if (subparts.length != 3) throw new IllegalArgumentException("malformed lmPath argument: comma-separated part must be of the form \"LANGUAGE->PATH\", was: " + part);
+			if (subparts.length != 2) throw new IllegalArgumentException("malformed lmPath argument: comma-separated part must be of the form \"LANGUAGE->PATH\", was: " + part);
 			String language = subparts[0].trim();
 			String filepath = subparts[1].trim();
 			languagePathMap.put(language, filepath);
 		}
 
-		String languagePriorsString = languagePriors;
 		Map<String, Double> languagePriorMap = new HashMap<String, Double>();
-		if (languagePriorsString != null) {
-			for (String part : textPathString.split(",")) {
+		if (languagePriors != null) {
+			for (String part : languagePriors.split(",")) {
 				String[] subparts = part.trim().split("->");
-				if (subparts.length != 3) throw new IllegalArgumentException("malformed languagePriors argument: comma-separated part must be of the form \"LANGUAGE->PRIOR\", was: " + part);
+				if (subparts.length != 2) throw new IllegalArgumentException("malformed languagePriors argument: comma-separated part must be of the form \"LANGUAGE->PRIOR\", was: " + part);
 				String language = subparts[0].trim();
 				Double prior = Double.parseDouble(subparts[1].trim());
 				languagePriorMap.put(language, prior);
@@ -141,34 +146,42 @@ public class CodeSwitchLMTrainMain implements Runnable {
 				languagePriorMap.put(language, 1.0);
 		}
 		
+		Map<String, String> languageAltSpellPathMap = new HashMap<String, String>();
+		if (alternateSpellingReplacementPaths != null) {
+			for (String part : alternateSpellingReplacementPaths.split(",")) {
+				String[] subparts = part.trim().split("->");
+				if (subparts.length != 2) throw new IllegalArgumentException("malformed languagePriors argument: comma-separated part must be of the form \"LANGUAGE->PRIOR\", was: " + part);
+				String language = subparts[0].trim();
+				String replacementsPath = subparts[1].trim();
+				if (!languagePathMap.keySet().contains(language)) throw new RuntimeException("Language '"+language+"' appears in the alternateSpellingReplacementPaths argument but not in xxx ("+languagePathMap.keySet()+")");
+				languageAltSpellPathMap.put(language, replacementsPath);
+			}
+		}
+		
 		for (String language : languagePathMap.keySet()) {
-			TextReader textReader = new BasicTextReader();
-			textReader = handleReplacementRulesOption(textReader, language);
-			if (useLongS) textReader = new ConvertLongSTextReader(textReader);
-			if (!keepDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 			String filepath = languagePathMap.get(language);
 			Double prior = languagePriorMap.get(language);
+			System.out.println("For language '" + language + "', using text in " + filepath + ", prior=" + prior
+					+ (languageAltSpellPathMap.keySet().contains(language) ? languageAltSpellPathMap.get(language) : ""));
+			
+			TextReader textReader = new BasicTextReader();
+			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
+			if (useLongS) textReader = new ConvertLongSTextReader(textReader);
+			if (!keepDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+			
 			pathsReadersAndPriors.put(language, makeTuple2(makeTuple2(filepath, textReader), prior));
 		}
 
-		if (codeSwitch)
-			return makeMultipleSubLMs(pathsReadersAndPriors, charIndexer);
-		else
-			return makeSingleSubLM(pathsReadersAndPriors, charIndexer);
+		return pathsReadersAndPriors;
 	}
 	
-	private TextReader handleReplacementRulesOption(TextReader textReader, String language) {
-		if (alternateSpellingReplacements != null && !alternateSpellingReplacements.equals("none") && !alternateSpellingReplacements.equals("null") && !alternateSpellingReplacements.equals("false")) {
-			File replacementsFile = new File("data/replacements/" + language + alternateSpellingReplacements);
-			if (!replacementsFile.exists()) throw new RuntimeException("replacementsFile [" + replacementsFile + "] does not exist");
-			List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> rules = ReplaceSomeTextReader.loadRulesFromFile(replacementsFile.getPath());
-			System.out.println("Performing alternate spelling replacements from [" + replacementsFile + "]:");
-			for (Tuple2<Tuple2<List<String>, List<String>>, Integer> rule : rules)
-				System.out.println("    " + rule);
-			return new ReplaceSomeTextReader(rules, textReader);
-		}
-		else
-			return textReader;
+	private TextReader handleReplacementRulesOption(TextReader textReader, String replacementsFilePath) {
+		File replacementsFile = new File(replacementsFilePath);
+		if (!replacementsFile.exists()) throw new RuntimeException("replacementsFile [" + replacementsFilePath + "] does not exist");
+		List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> rules = ReplaceSomeTextReader.loadRulesFromFile(replacementsFilePath);
+		for (Tuple2<Tuple2<List<String>, List<String>>, Integer> rule : rules)
+			System.out.println("    " + rule);
+		return new ReplaceSomeTextReader(rules, textReader);
 	}
 
 	private Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> makeMultipleSubLMs(Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors, Indexer<String> charIndexer) {
@@ -258,6 +271,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 			//counter.printStats(-1);
 			System.out.println("Characters counted so far: " + counter.getTokenCount());
 		}
+		charIndexer.lock();
 
 		List<String> languages = makeList(pathsReadersAndPriors.keySet());
 		Collections.sort(languages);
