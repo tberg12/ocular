@@ -1,9 +1,5 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import indexer.HashMapIndexer;
 import indexer.Indexer;
 
 import java.io.File;
@@ -20,11 +16,18 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import threading.BetterThreader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
 import fig.OptionsParser;
 
 public class FontInitMain implements Runnable {
+
+	@Option(gloss = "Path to the language model file.")
+	public static String lmPath = "lm/my_lm.lmser";
 
 	@Option(gloss = "Output font file path.")
 	public static String fontPath = "font/init.fontser";
@@ -54,17 +57,8 @@ public class FontInitMain implements Runnable {
 	}
 
 	public void run() {
-		final Indexer<String> charIndexer = new HashMapIndexer<String>();
-		List<String> vocab = new ArrayList<String>();
-		for (String c : Charset.ALPHABET) vocab.add(c);
-		for (String c : Charset.DIGITS) vocab.add(c);
-		vocab.add(Charset.LONG_S);
-		for (String c : Charset.PUNC) vocab.add(c);
-		vocab.add(Charset.SPACE);
-		for (String c : vocab) {
-			charIndexer.getIndex(c);
-		}
-		charIndexer.lock();
+		final NgramLanguageModel lm = LMTrainMain.readLM(lmPath);
+		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		final PixelType[][][][] fontPixelData = FontRenderer.getRenderedFont(charIndexer, CharacterTemplate.LINE_HEIGHT);
 		final PixelType[][][] fAndBarFontPixelData = buildFAndBarFontPixelData(charIndexer, fontPixelData);

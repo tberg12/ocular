@@ -33,7 +33,7 @@ public class ConvertLongSTextReader implements TextReader {
 				if (t > 0 && chars.get(t - 1).equals(Charset.LONG_S) && nextWithoutDiacritics == 'i') {
 					// "|si": do nothing
 				}
-				else if (Character.isLetter(nextWithoutDiacritics)) { // if its a letter
+				else if (Character.isAlphabetic(nextWithoutDiacritics)) {
 					chars.set(t, Charset.LONG_S);
 				}
 			}

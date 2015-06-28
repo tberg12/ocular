@@ -1,5 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.lm;
 
+import indexer.HashMapIndexer;
 import indexer.Indexer;
 
 import java.util.ArrayList;
@@ -49,16 +50,11 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		for (String c : Charset.UNIV_PUNC) this.activeCharacters.add(charIndexer.getIndex(c));
 	}
 
-	public static NgramLanguageModel buildFromText(int[][] text, Indexer<String> charIndexer, int maxOrder, LMType type, double lmPower) {
+	public static NgramLanguageModel buildFromText(String fileName, int maxNumLines, int maxOrder, LMType type, double lmPower, TextReader textReader) {
 		CorpusCounter counter = new CorpusCounter(maxOrder);
-		counter.count(text);
-
-		return new NgramLanguageModel(charIndexer, counter.getCounts(), counter.activeCharacters, type, lmPower);
-	}
-
-	public static NgramLanguageModel buildFromText(String fileName, int maxNumLines, Indexer<String> charIndexer, int maxOrder, LMType type, double lmPower, TextReader textReader) {
-		CorpusCounter counter = new CorpusCounter(maxOrder);
+		Indexer<String> charIndexer = new HashMapIndexer<String>();
 		counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
+		charIndexer.lock();
 		//counter.printStats(-1);
 		return new NgramLanguageModel(charIndexer, counter.getCounts(), counter.activeCharacters, type, lmPower);
 	}

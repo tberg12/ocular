@@ -229,11 +229,7 @@ public class Evaluator {
 		StringBuffer buf = new StringBuffer();
 		for (int i=0; i<str.length(); ++i) {
 			String c = str.substring(i,i+1);
-			boolean found = false;
-			for (String p : Charset.PUNC) {
-				if (p.equals(c)) found = true;
-			}
-			if (!found) buf.append(c);
+			if (!Charset.isPunctuation(c)) buf.append(c);
 		}
 		String result = buf.toString();
 		result = result.replaceAll("\\s+", " ");

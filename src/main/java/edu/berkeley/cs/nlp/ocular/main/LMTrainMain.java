@@ -1,21 +1,15 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import indexer.HashMapIndexer;
-import indexer.Indexer;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
@@ -56,21 +50,10 @@ public class LMTrainMain implements Runnable {
 	}
 
 	public void run() {
-		Indexer<String>charIndexer = new HashMapIndexer<String>();
-		List<String> vocab = new ArrayList<String>();
-		for (String c : Charset.ALPHABET) vocab.add(c);
-		for (String c : Charset.DIGITS) vocab.add(c);
-		if (useLongS) vocab.add(Charset.LONG_S);
-		for (String c : Charset.PUNC) vocab.add(c);
-		vocab.add(Charset.SPACE);
-		for (String c : vocab) {
-			charIndexer.getIndex(c);
-		}
-		charIndexer.lock();
 		TextReader textReader = new BasicTextReader();
 		if(useLongS) textReader = new ConvertLongSTextReader(textReader);
 		if(!keepDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
-		NgramLanguageModel lm = NgramLanguageModel.buildFromText(textPath, maxLines, charIndexer, charN, LMType.KNESER_NEY, power, textReader);
+		NgramLanguageModel lm = NgramLanguageModel.buildFromText(textPath, maxLines, charN, LMType.KNESER_NEY, power, textReader);
 		writeLM(lm, lmPath);
 	}
 	

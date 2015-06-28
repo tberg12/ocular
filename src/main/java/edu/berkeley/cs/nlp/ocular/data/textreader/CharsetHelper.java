@@ -22,7 +22,7 @@ public class CharsetHelper {
 			}
 			else {
 				String ec = Charset.escapeChar(c);
-				if (Charset.PUNC.contains(ec)) {
+				if (Charset.isPunctuation(ec)) {
 					if (wordBuffer.length() > 0) {
 						puncBuffer.append(ec);
 					}

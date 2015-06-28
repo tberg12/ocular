@@ -3,14 +3,11 @@ package edu.berkeley.cs.nlp.ocular.data.textreader;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.getOrElse;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import tuple.Pair;
-import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 
 /**
@@ -28,13 +25,17 @@ public class Charset {
 	 */
 	public static final Set<String> UNIV_PUNC = makeSet("&", ".", ",", "[", "]", HYPHEN, "*", "§", "¶");
 	/**
-	 * Punctuation symbols that may be language-specific. 
+	 * Punctuation is anything that is not alphabetic or a digit.
 	 */
-	public static final Set<String> PUNC = CollectionHelper.setUnion(UNIV_PUNC, makeSet(";", ":", "\"", "'", "!", "?", "(", ")", "«", "»", "¡", "¿"));
-	public static final List<String> DIGITS = Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
-	public static final List<String> ALPHABET = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
-	public static final List<String> LIGATURES = Arrays.asList("Æ", "æ", "Œ", "œ");
-
+	public static boolean isPunctuation(char c) {
+		return !Character.isAlphabetic(c) && !Character.isDigit(c);
+	}
+	public static boolean isPunctuation(String s) {
+		for (char c: removeAnyDiacriticFromChar(s).toCharArray())
+			if (!isPunctuation(c)) return false;
+		return true;
+	}
+	
 	public static final String GRAVE_COMBINING = "\u0300";
 	public static final String ACUTE_COMBINING = "\u0301";
 	public static final String CIRCUMFLEX_COMBINING = "\u0302";
@@ -294,11 +295,17 @@ public class Charset {
 			String esc = e.substring(i, i + 2);
 			b.append(escapeToCombining(esc));
 		}
+		
 		return b.toString();
 	}
 
 	public static String removeAnyDiacriticFromChar(String c) {
-		return StringHelper.last(escapeChar(c));
+		String escaped = escapeChar(c);
+		while (escaped.charAt(0) == '\\') {
+		  escaped = escaped.substring(2);
+		}
+		if (escaped.isEmpty()) throw new RuntimeException("Character contains only escape codes!");
+		return escaped;
 	}
 
 }
