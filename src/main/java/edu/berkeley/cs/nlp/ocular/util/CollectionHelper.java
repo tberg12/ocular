@@ -67,6 +67,22 @@ public class CollectionHelper {
 		}
 	}
 
+	public static <A> Set<A> setDiff(Set<A> a, Set<A> b) {
+		Set<A> set = new HashSet<A>();
+		for (A x : a)
+			if (!b.contains(x)) 
+				set.add(x);
+		return set;
+	}
+
+	public static <A> Set<A> setIntersection(Set<A> a, Set<A> b) {
+		Set<A> set = new HashSet<A>();
+		for (A x : a)
+			if (b.contains(x)) 
+				set.add(x);
+		return set;
+	}
+
 	public static <A> List<A> listCat(List<A>... lists) {
 		if (lists.length == 0)
 			return Collections.<A> emptyList();
@@ -128,4 +144,10 @@ public class CollectionHelper {
 		return result;
 	}
 
+	public static List<Integer> intArrayToList(int[] a) {
+		List<Integer> l = new ArrayList<Integer>(a.length);
+		for (int x: a) l.add(x);
+		return l;
+	}
+	
 }
