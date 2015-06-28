@@ -1,8 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 import indexer.HashMapIndexer;
 import indexer.Indexer;
 
@@ -15,10 +13,8 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -35,11 +31,7 @@ import edu.berkeley.cs.nlp.ocular.lm.CorpusCounter;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
-import edu.berkeley.cs.nlp.ocular.lm.UniformLanguageModel;
-import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
-import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
@@ -50,11 +42,8 @@ import fileio.f;
 public class CodeSwitchLMTrainMain implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")
-	public static String lmPath = "lm/my_lm.lmser";
+	public static String lmPath = "lm/cs_lm.lmser";
 	
-	@Option(gloss = "Make a code-switching model?")
-	public static boolean codeSwitch = true;
-
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.)")
 	public static double pKeepSameLanguage = 0.999999;
 
@@ -85,13 +74,10 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.")
 	public static long lmCharCount = -1;
 
-	@Option(gloss = "Ignore the training data and just return a uniform model?")
-	public static boolean uniform = false;
-
 	public static void main(String[] args) {
 		CodeSwitchLMTrainMain main = new CodeSwitchLMTrainMain();
 		OptionsParser parser = new OptionsParser();
-		parser.doRegisterAll(new Object[] {main});
+		parser.doRegisterAll(new Object[] { main });
 		if (!parser.doParse(args)) System.exit(1);
 		main.run();
 	}
@@ -99,12 +85,8 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	public void run() {
 		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = makePathsReadersAndPriors();
 
-		Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> lmsAndPriors;
 		Indexer<String> charIndexer = new HashMapIndexer<String>();
-		if (codeSwitch)
-			lmsAndPriors = makeMultipleSubLMs(pathsReadersAndPriors, charIndexer);
-		else
-			lmsAndPriors = makeSingleSubLM(pathsReadersAndPriors, charIndexer);
+		Map<String, Tuple2<SingleLanguageModel, Double>> lmsAndPriors = makeMultipleSubLMs(pathsReadersAndPriors, charIndexer);
 		charIndexer.lock();
 
 		System.out.println("pKeepSameLanguage = " + pKeepSameLanguage);
@@ -153,7 +135,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 				if (subparts.length != 2) throw new IllegalArgumentException("malformed languagePriors argument: comma-separated part must be of the form \"LANGUAGE->PRIOR\", was: " + part);
 				String language = subparts[0].trim();
 				String replacementsPath = subparts[1].trim();
-				if (!languagePathMap.keySet().contains(language)) throw new RuntimeException("Language '"+language+"' appears in the alternateSpellingReplacementPaths argument but not in xxx ("+languagePathMap.keySet()+")");
+				if (!languagePathMap.keySet().contains(language)) throw new RuntimeException("Language '"+language+"' appears in the alternateSpellingReplacementPaths argument but not in textPaths ("+languagePathMap.keySet()+")");
 				languageAltSpellPathMap.put(language, replacementsPath);
 			}
 		}
@@ -184,9 +166,8 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		return new ReplaceSomeTextReader(rules, textReader);
 	}
 
-	private Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> makeMultipleSubLMs(Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors, Indexer<String> charIndexer) {
-		Map<String, CorpusCounter> lmCounters = new HashMap<String, CorpusCounter>();
-		Map<String, Set<String>> wordLists = new HashMap<String, Set<String>>();
+	private Map<String, Tuple2<SingleLanguageModel, Double>> makeMultipleSubLMs(Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors, Indexer<String> charIndexer) {
+		Map<String, Tuple2<SingleLanguageModel, Double>> lmsAndPriors = new HashMap<String, Tuple2<SingleLanguageModel, Double>>();
 		for (Map.Entry<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReaderAndPrior : pathsReadersAndPriors.entrySet()) {
 			String language = pathsReaderAndPrior.getKey();
 			String filepath = pathsReaderAndPrior.getValue()._1._1;
@@ -194,102 +175,24 @@ public class CodeSwitchLMTrainMain implements Runnable {
 			System.out.println(language + " text reader: " + textReader);
 
 			CorpusCounter counter = new CorpusCounter(charN);
-			//counter.countRecursive(filepath, maxLines, charIndexer, textReader);
 			Tuple2<List<String>, List<String>> charsAndWords = readFileChars(filepath, textReader, lmCharCount > 0 ? lmCharCount : Long.MAX_VALUE);
 			List<String> chars = charsAndWords._1;
 			System.out.println("  using " + chars.size() + " characters for " + language + " read from " + filepath);
 			counter.countChars(chars, charIndexer, 0);
 
-			lmCounters.put(language, counter);
-			wordLists.put(language, CollectionHelper.makeSet(charsAndWords._2));
-		}
-		charIndexer.lock();
-
-		Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> lmsAndPriors = new HashMap<String, Tuple3<SingleLanguageModel, Set<String>, Double>>();
-		for (Map.Entry<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReaderAndPrior : pathsReadersAndPriors.entrySet()) {
-			String language = pathsReaderAndPrior.getKey();
 			Double prior = pathsReaderAndPrior.getValue()._2;
 
-			CorpusCounter counter = lmCounters.get(language);
-
-			List<String> chars = new ArrayList<String>();
-			for (int i : counter.activeCharacters)
-				chars.add(charIndexer.getObject(i));
+			List<String> langChars = new ArrayList<String>();
+			for (int i : counter.getActiveCharacters())
+				langChars.add(charIndexer.getObject(i));
 			Collections.sort(chars);
-			System.out.println(language + ": " + chars);
+			System.out.println(language + ": " + langChars);
 
-			SingleLanguageModel lm = constructSingleLM(charIndexer, counter, counter.activeCharacters);
-			lmsAndPriors.put(language, makeTuple3(lm, wordLists.get(language), prior));
-		}
-		return lmsAndPriors;
-	}
-
-	private Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> makeSingleSubLM(Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors, Indexer<String> charIndexer) {
-		//Map<String, Long> languageCharCounts = new HashMap<String, Long>();
-		long maxCharCount = -1;
-		double maxCharCountLanguagePrior = Double.NEGATIVE_INFINITY;
-		double charCountLanguagePriorZ = 0.0;
-		for (Map.Entry<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReaderAndPrior : pathsReadersAndPriors.entrySet()) {
-			//String language = pathsReaderAndPrior.getKey();
-			String filepath = pathsReaderAndPrior.getValue()._1._1;
-			TextReader textReader = pathsReaderAndPrior.getValue()._1._2;
-			double prior = pathsReaderAndPrior.getValue()._2;
-			long charCount = readFileChars(filepath, textReader)._1.size();
-			if (charCount > maxCharCount) {
-				maxCharCount = charCount;
-				maxCharCountLanguagePrior = prior;
-			}
-			charCountLanguagePriorZ += prior;
-		}
-
-		//if lmcharcountprior is not -1, then make maxcharcount that number * prior; otherwise don't.
-		if (lmCharCount > 0) {
-			maxCharCount = (long) (lmCharCount * maxCharCountLanguagePrior / charCountLanguagePriorZ);
-			System.out.println("lmCharCount=" + lmCharCount + ", maxCharCountLanguagePrior=" + maxCharCountLanguagePrior + ", maxCharCount=" + maxCharCount);
-		}
-
-		CorpusCounter counter = new CorpusCounter(charN);
-		Set<String> wordList = new HashSet<String>();
-		for (Map.Entry<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReaderAndPrior : pathsReadersAndPriors.entrySet()) {
-			String language = pathsReaderAndPrior.getKey();
-			String filepath = pathsReaderAndPrior.getValue()._1._1;
-			TextReader textReader = pathsReaderAndPrior.getValue()._1._2;
-			double prior = pathsReaderAndPrior.getValue()._2;
-			Tuple2<List<String>, List<String>> charsAndWords = readFileChars(filepath, textReader);
-			List<String> chars = charsAndWords._1;
-			wordList.addAll(charsAndWords._2);
-			long charCount = chars.size();
-			double multiplier = (prior / maxCharCountLanguagePrior) * maxCharCount / charCount;
-			int wholeMultiplier = (int) multiplier;
-			long remainderCharCount = (long) ((multiplier - wholeMultiplier) * charCount);
-			for (int i = 0; i < wholeMultiplier; ++i)
-				counter.countChars(chars, charIndexer, 0);
-
-			System.out.println("For language " + language + ", multiplying " + charCount + " characters by " + multiplier + " for " + (charCount * wholeMultiplier + remainderCharCount) + " total characters");
-
-			counter.countChars(CollectionHelper.take(chars, long2int(remainderCharCount)), charIndexer, 0);
-			//counter.printStats(-1);
-			System.out.println("Characters counted so far: " + counter.getTokenCount());
+			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, power);
+			lmsAndPriors.put(language, makeTuple2(lm, prior));
 		}
 		charIndexer.lock();
-
-		List<String> languages = makeList(pathsReadersAndPriors.keySet());
-		Collections.sort(languages);
-		String language = (languages.size() == 1 ? languages.get(0) : "mixed-" + StringHelper.join(languages, "-"));
-
-		SingleLanguageModel lm = constructSingleLM(charIndexer, counter, counter.activeCharacters);
-		return Collections.singletonMap(language, makeTuple3(lm, wordList, 1.0));
-	}
-
-	private SingleLanguageModel constructSingleLM(Indexer<String> charIndexer, CorpusCounter counter, Set<Integer> activeCharacters) {
-		if (!uniform)
-			return new NgramLanguageModel(charIndexer, counter.getCounts(), activeCharacters, LMType.KNESER_NEY, power);
-		else
-			return new UniformLanguageModel(activeCharacters, charIndexer, counter.maxNgramOrder);
-	}
-
-	private Tuple2<List<String>, List<String>> readFileChars(String filepath, TextReader textReader) {
-		return readFileChars(filepath, textReader, Long.MAX_VALUE);
+		return lmsAndPriors;
 	}
 
 	private Tuple2<List<String>, List<String>> readFileChars(String filepath, TextReader textReader, long charsToTake) {
@@ -307,13 +210,6 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		return makeTuple2(allChars, allWords);
 	}
 	
-	private int long2int(long l) {
-		if(l > Integer.MAX_VALUE) 
-			return Integer.MAX_VALUE;
-		else 
-			return (int)l;
-	}
-
 	public static CodeSwitchLanguageModel readLM(String lmPath) {
 		CodeSwitchLanguageModel lm = null;
 		try {
