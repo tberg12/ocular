@@ -12,11 +12,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import tuple.Pair;
 import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -91,11 +92,11 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			return 1013 * ctxHash + 1009 * typeHash + 1007 * langHash;
 		}
 
-		private void addTransitionsToTmpl(List<Pair<TransitionState, Double>> result, int[] context) {
+		private void addTransitionsToTmpl(List<Tuple2<TransitionState, Double>> result, int[] context) {
 			addTransitionsToTmpl(result, context, 0.0, false);
 		}
 
-		private void addTransitionsToTmpl(List<Pair<TransitionState, Double>> result, int[] context, double prevScore, boolean clearContext) {
+		private void addTransitionsToTmpl(List<Tuple2<TransitionState, Double>> result, int[] context, double prevScore, boolean clearContext) {
 			if (this.language == null) { // there is no current language
 				for (String destLanguage : languages) { // no current language, can switch to any language
 					SingleLanguageModel destLM = codeSwitchLM.get(destLanguage);
@@ -183,11 +184,11 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			}
 		}
 
-		public Collection<Pair<TransitionState, Double>> nextLineStartStates() {
+		public Collection<Tuple2<TransitionState, Double>> nextLineStartStates() {
 			TransitionStateType type = getType();
 			int[] context = getContext();
 			SingleLanguageModel thisLM = codeSwitchLM.get(this.language);
-			List<Pair<TransitionState, Double>> result = new ArrayList<Pair<TransitionState, Double>>();
+			List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 
 			if (type == TransitionStateType.TMPL) {
 				// transition from letter to space (left margin)
@@ -247,11 +248,11 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		/**
 		 * Calculate forward transitions
 		 */
-		public Collection<Pair<TransitionState, Double>> forwardTransitions() {
+		public Collection<Tuple2<TransitionState, Double>> forwardTransitions() {
 			TransitionStateType type = getType();
 			int[] context = getContext();
 			SingleLanguageModel thisLM = codeSwitchLM.get(this.language);
-			List<Pair<TransitionState, Double>> result = new ArrayList<Pair<TransitionState, Double>>();
+			List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 
 			if (type == TransitionStateType.LMRGN) {
 				{
@@ -335,9 +336,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 	}
 
-	private void addState(List<Pair<TransitionState, Double>> result, int[] stateContext, TransitionStateType stateType, String stateLanguage, double stateTransitionScore) {
+	private void addState(List<Tuple2<TransitionState, Double>> result, int[] stateContext, TransitionStateType stateType, String stateLanguage, double stateTransitionScore) {
 		if (stateTransitionScore != Double.NEGATIVE_INFINITY) {
-			result.add(Pair.makePair((TransitionState) new CodeSwitchTransitionState(stateContext, stateType, stateLanguage), stateTransitionScore));
+			result.add(makeTuple2((TransitionState) new CodeSwitchTransitionState(stateContext, stateType, stateLanguage), stateTransitionScore));
 		}
 	}
 
@@ -353,17 +354,15 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private Set<String> languages;
 	private CodeSwitchLanguageModel codeSwitchLM;
 	private boolean allowLanguageSwitchOnPunct;
-	private boolean allowDigitsInWords;
 
 	//private Indexer<String> charIndexer;
 
 	/**
 	 * @param languageModelsAndPriors 	<Language, <LM, PriorOfLanguage>>
 	 */
-	public CodeSwitchTransitionModel(CodeSwitchLanguageModel codeSwitchLM, boolean allowLanguageSwitchOnPunct, boolean allowDigitsInWords) {
+	public CodeSwitchTransitionModel(CodeSwitchLanguageModel codeSwitchLM, boolean allowLanguageSwitchOnPunct) {
 		this.codeSwitchLM = codeSwitchLM;
 		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
-		this.allowDigitsInWords = allowDigitsInWords;
 
 		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
@@ -388,8 +387,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 *   
 	 * @param d		unused
 	 */
-	public Collection<Pair<TransitionState, Double>> startStates(int d) {
-		List<Pair<TransitionState, Double>> result = new ArrayList<Pair<TransitionState, Double>>();
+	public Collection<Tuple2<TransitionState, Double>> startStates(int d) {
+		List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 		/*
 		 * Don't force a language choice.
 		 */

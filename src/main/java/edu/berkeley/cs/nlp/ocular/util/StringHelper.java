@@ -52,4 +52,11 @@ public class StringHelper {
 		return sb.delete(sb.length() - sepLen, sb.length()).toString();
 	}
 
+	public static boolean equals(String a, String b) {
+		if (a == null)
+			return b == null;
+		else
+			return a.equals(b);
+	}
+	
 }

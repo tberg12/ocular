@@ -161,4 +161,12 @@ public class CollectionHelper {
 		return l;
 	}
 	
+	public static int[] intListToArray(List<Integer> l) {
+		int[] a = new int[l.size()];
+		for (int i = 0; i < a.length; i++) {
+			a[i] = l.get(i);
+		}
+		return a;
+	}
+	
 }

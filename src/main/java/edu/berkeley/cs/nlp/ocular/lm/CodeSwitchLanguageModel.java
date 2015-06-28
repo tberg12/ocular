@@ -19,6 +19,6 @@ public interface CodeSwitchLanguageModel extends LanguageModel, Serializable {
 
 	public Double languageTransitionPrior(String fromLanguage, String destinationLanguage);
 	
-	public Set<String> wordList(String language);
-
+	public double getProbKeepSameLanguage();
+	
 }

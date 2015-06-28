@@ -56,7 +56,7 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
 		charIndexer.lock();
 		//counter.printStats(-1);
-		return new NgramLanguageModel(charIndexer, counter.getCounts(), counter.activeCharacters, type, lmPower);
+		return new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), type, lmPower);
 	}
 
 	public void checkNormalizes(int[] context) {

@@ -2,10 +2,6 @@ package edu.berkeley.cs.nlp.ocular.main;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.SPACE;
-
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import indexer.Indexer;
 
 import java.io.File;
@@ -14,29 +10,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import threading.BetterThreader;
 import arrays.a;
+import edu.berkeley.cs.nlp.ocular.data.ImageLoader;
+import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
+import edu.berkeley.cs.nlp.ocular.data.TextAndLineImagesLoader;
+import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
+import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.BeamingSemiMarkovDP;
-import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModelExplicitOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModelMarkovOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.EmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
-import threading.BetterThreader;
-import tuple.Pair;
-import edu.berkeley.cs.nlp.ocular.data.TextAndLineImagesLoader;
-import edu.berkeley.cs.nlp.ocular.data.DatasetLoader;
-import edu.berkeley.cs.nlp.ocular.data.DatasetLoader.Document;
-import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
-import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Execution;
 import fig.Option;
 import fileio.f;
@@ -123,9 +122,9 @@ public class ExperimentsMain implements Runnable {
 			emissionInnerLoop = new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
 		}
 		
-		List<Pair<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Pair<String,Map<String,EvalSuffStats>>>();
+		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 		
-		DatasetLoader loader =  new TextAndLineImagesLoader(inputPath, CharacterTemplate.LINE_HEIGHT);
+		ImageLoader loader =  new TextAndLineImagesLoader(inputPath, CharacterTemplate.LINE_HEIGHT);
 		List<Document> documents = loader.readDataset();
 
 		for (Document doc : documents) {
@@ -167,10 +166,10 @@ public class ExperimentsMain implements Runnable {
 				double logJointProb = Double.NEGATIVE_INFINITY;
 				long nanoTime = System.nanoTime();
 				BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
-				Pair<Pair<TransitionState[][],int[][]>,Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
-				logJointProb = decodeStatesAndWidthsAndJointLogProb.getSecond();
-				final TransitionState[][] decodeStates = decodeStatesAndWidthsAndJointLogProb.getFirst().getFirst();
-				final int[][] decodeWidths = decodeStatesAndWidthsAndJointLogProb.getFirst().getSecond();
+				Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
+				logJointProb = decodeStatesAndWidthsAndJointLogProb._2;
+				final TransitionState[][] decodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
+				final int[][] decodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 				System.out.println("Compute marginals and decode: " + (System.nanoTime() - nanoTime)/1000000 + "ms");
 				System.gc();
 				System.gc();
@@ -215,13 +214,13 @@ public class ExperimentsMain implements Runnable {
 		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime)/1e9 + "s");
 	}
 	
-	public static void printEvaluation(List<Pair<String,Map<String,EvalSuffStats>>> allEvals) {
+	public static void printEvaluation(List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals) {
 		Map<String,EvalSuffStats> totalSuffStats = new HashMap<String,EvalSuffStats>();
 		StringBuffer buf = new StringBuffer();
 		buf.append("All evals:\n");
-		for (Pair<String,Map<String,EvalSuffStats>> docNameAndEvals : allEvals) {
-			String docName = docNameAndEvals.getFirst();
-			Map<String,EvalSuffStats> evals = docNameAndEvals.getSecond();
+		for (Tuple2<String,Map<String,EvalSuffStats>> docNameAndEvals : allEvals) {
+			String docName = docNameAndEvals._1;
+			Map<String,EvalSuffStats> evals = docNameAndEvals._2;
 			buf.append("Document: "+docName+"\n");
 			buf.append(Evaluator.renderEval(evals)+"\n");
 			for (String evalType : evals.keySet()) {
@@ -243,7 +242,7 @@ public class ExperimentsMain implements Runnable {
 		System.out.println(buf.toString());
 	}
 	
-	private static void printTranscription(int iter, int numIters, Document doc, List<Pair<String,Map<String,EvalSuffStats>>> allEvals, PixelType[][][] pixels, String[][] text, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, CharacterTemplate[] templates, EmissionModel emissionModel) {
+	private static void printTranscription(int iter, int numIters, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, PixelType[][][] pixels, String[][] text, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, CharacterTemplate[] templates, EmissionModel emissionModel) {
 		if (evaluate || writeVisuals || popupVisuals) {
 			List<Integer>[] segmentBoundaries = new List[pixels.length];
 			List<String>[] viterbiChars = new List[pixels.length];
@@ -338,7 +337,7 @@ public class ExperimentsMain implements Runnable {
 
 				Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
 				if (iter == ExperimentsMain.numEMIters-1) {
-					allEvals.add(Pair.makePair(doc.baseName(), evals));
+					allEvals.add(Tuple2.makeTuple2(doc.baseName(), evals));
 				}
 				System.out.println(guessAndGoldOut.toString()+Evaluator.renderEval(evals));
 

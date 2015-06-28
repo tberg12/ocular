@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import edu.berkeley.cs.nlp.ocular.util.Tuple3;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
  * TODO: Move some of the probability calculations from CodeSwitchTransitionModel to here?
@@ -26,11 +26,6 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	private Map<String, SingleLanguageModel> subModels;
 
 	/**
-	 * Map[destinationLanguage -> destinationLM]
-	 */
-	private Map<String, Set<String>> wordLists;
-
-	/**
 	 * Map[destinationLanguage -> "prior prob of seeing destinationLanguage"]
 	 */
 	private Map<String, Double> languagePriors;
@@ -42,6 +37,7 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 
 	private Indexer<String> charIndexer;
 	private int maxOrder;
+	private double pKeepSameLanguage;
 
 	public Set<String> languages() {
 		return languages;
@@ -59,10 +55,6 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 		return languageTransitionPriors.get(destinationLanguage).get(fromLanguage);
 	}
 
-	public Set<String> wordList(String language) {
-		return wordLists.get(language);
-	}
-
 	public Indexer<String> getCharacterIndexer() {
 		return charIndexer;
 	}
@@ -71,14 +63,18 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 		return maxOrder;
 	}
 
-	public BasicCodeSwitchLanguageModel(Map<String, Tuple3<SingleLanguageModel, Set<String>, Double>> subModelsAndPriors, Indexer<String> charIndexer, double pKeepSameLanguage, int maxOrder) {
+	public double getProbKeepSameLanguage() {
+		return pKeepSameLanguage;
+	}
+
+	public BasicCodeSwitchLanguageModel(Map<String, Tuple2<SingleLanguageModel, Double>> subModelsAndPriors, Indexer<String> charIndexer, double pKeepSameLanguage, int maxOrder) {
 		if (subModelsAndPriors.isEmpty()) throw new IllegalArgumentException("languageModelsAndPriors may not be empty");
 		if (pKeepSameLanguage <= 0.0 || pKeepSameLanguage >= 1.0) throw new IllegalArgumentException("pKeepSameLanguage on must be between 0 and 1 (it's " + pKeepSameLanguage + ")");
 
 		// Total prob, for normalizing
 		double languagePriorSum = 0.0;
-		for (Map.Entry<String, Tuple3<SingleLanguageModel, Set<String>, Double>> lmAndPrior : subModelsAndPriors.entrySet()) {
-			double prior = lmAndPrior.getValue()._3;
+		for (Map.Entry<String, Tuple2<SingleLanguageModel, Double>> lmAndPrior : subModelsAndPriors.entrySet()) {
+			double prior = lmAndPrior.getValue()._2;
 			if (prior <= 0.0) throw new IllegalArgumentException("prior on " + lmAndPrior.getKey() + " is not positive (it's " + prior + ")");
 			languagePriorSum += prior;
 		}
@@ -88,19 +84,17 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 		
 		this.subModels = new HashMap<String, SingleLanguageModel>();
 		this.languagePriors = new HashMap<String, Double>();
-		this.wordLists = new HashMap<String, Set<String>>();
-		for (Map.Entry<String, Tuple3<SingleLanguageModel, Set<String>, Double>> lmAndPrior : subModelsAndPriors.entrySet()) {
+		for (Map.Entry<String, Tuple2<SingleLanguageModel, Double>> lmAndPrior : subModelsAndPriors.entrySet()) {
 			String language = lmAndPrior.getKey();
 			this.subModels.put(language, lmAndPrior.getValue()._1);
-			this.languagePriors.put(language, lmAndPrior.getValue()._3 / languagePriorSum);
-			this.wordLists.put(language, lmAndPrior.getValue()._2);
+			this.languagePriors.put(language, lmAndPrior.getValue()._2 / languagePriorSum);
 		}
-		
 
 		this.languageTransitionPriors = makeLanguageTransitionPriors(languagePriors, pKeepSameLanguage);
 
 		this.charIndexer = charIndexer;
 		this.maxOrder = maxOrder;
+		this.pKeepSameLanguage = pKeepSameLanguage;
 	}
 
 	/**

@@ -1,9 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
-
-import edu.berkeley.cs.nlp.ocular.image.Visualizer;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import indexer.Indexer;
 
 import java.io.File;
@@ -12,28 +9,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import threading.BetterThreader;
+import edu.berkeley.cs.nlp.ocular.data.ImageLoader;
+import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
+import edu.berkeley.cs.nlp.ocular.data.RawImageLoader;
+import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
+import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.BeamingSemiMarkovDP;
-import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModelExplicitOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModelMarkovOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.EmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
-import threading.BetterThreader;
-import tuple.Pair;
-import edu.berkeley.cs.nlp.ocular.data.RawImageLoader;
-import edu.berkeley.cs.nlp.ocular.data.DatasetLoader;
-import edu.berkeley.cs.nlp.ocular.data.DatasetLoader.Document;
-import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
-import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
@@ -119,9 +118,9 @@ public class Main implements Runnable {
 			outputDir.mkdirs();
 		}
 		
-		List<Pair<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Pair<String,Map<String,EvalSuffStats>>>();
+		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 
-		DatasetLoader loader =  new RawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, numMstepThreads);
+		ImageLoader loader =  new RawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, numMstepThreads);
 		List<Document> documents = loader.readDataset();
 		for (Document doc : documents) {
 			final PixelType[][][] pixels = doc.loadLineImages();
@@ -198,9 +197,9 @@ public class Main implements Runnable {
 
 					long nanoTime = System.nanoTime();
 					BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
-					Pair<Pair<TransitionState[][],int[][]>,Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
-					final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb.getFirst().getFirst();
-					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb.getFirst().getSecond();
+					Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
+					final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
+					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 					System.out.println("Decode: " + (System.nanoTime() - nanoTime)/1000000 + "ms");
 
 					if (iter < numEMIters-1) {
@@ -256,13 +255,13 @@ public class Main implements Runnable {
 		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime)/1e9 + "s");
 	}
 
-	public static void printEvaluation(List<Pair<String,Map<String,EvalSuffStats>>> allEvals) {
+	public static void printEvaluation(List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals) {
 		Map<String,EvalSuffStats> totalSuffStats = new HashMap<String,EvalSuffStats>();
 		StringBuffer buf = new StringBuffer();
 		buf.append("All evals:\n");
-		for (Pair<String,Map<String,EvalSuffStats>> docNameAndEvals : allEvals) {
-			String docName = docNameAndEvals.getFirst();
-			Map<String,EvalSuffStats> evals = docNameAndEvals.getSecond();
+		for (Tuple2<String,Map<String,EvalSuffStats>> docNameAndEvals : allEvals) {
+			String docName = docNameAndEvals._1;
+			Map<String,EvalSuffStats> evals = docNameAndEvals._2;
 			buf.append("Document: "+docName+"\n");
 			buf.append(Evaluator.renderEval(evals)+"\n");
 			for (String evalType : evals.keySet()) {
@@ -284,7 +283,7 @@ public class Main implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, int numIters, Document doc, List<Pair<String,Map<String,EvalSuffStats>>> allEvals, String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer) {
+	private static void printTranscription(int iter, int numIters, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer) {
 		List<String>[] viterbiChars = new List[decodeStates.length];
 		for (int line=0; line<decodeStates.length; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
@@ -320,7 +319,7 @@ public class Main implements Runnable {
 
 			Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
 			if (iter == Main.numEMIters-1) {
-				allEvals.add(Pair.makePair(doc.baseName(), evals));
+				allEvals.add(Tuple2.makeTuple2(doc.baseName(), evals));
 			}
 			System.out.println(guessAndGoldOut.toString()+Evaluator.renderEval(evals));
 

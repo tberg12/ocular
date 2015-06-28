@@ -2,18 +2,18 @@ package edu.berkeley.cs.nlp.ocular.model;
 
 import java.util.Collection;
 
-import tuple.Pair;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 public interface SparseTransitionModel {
 	public static interface TransitionState {
 		public int getCharIndex();
 		public int getOffset();
 		public int getExposure();
-		public Collection<Pair<TransitionState,Double>> forwardTransitions();
-		public Collection<Pair<TransitionState,Double>> nextLineStartStates();
+		public Collection<Tuple2<TransitionState,Double>> forwardTransitions();
+		public Collection<Tuple2<TransitionState,Double>> nextLineStartStates();
 		public double endLogProb();
 		public TransitionStateType getType();
 		public String getLanguage();
 	}
-	public Collection<Pair<TransitionState,Double>> startStates(int d);
+	public Collection<Tuple2<TransitionState,Double>> startStates(int d);
 }

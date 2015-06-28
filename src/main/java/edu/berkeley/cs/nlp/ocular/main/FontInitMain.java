@@ -26,7 +26,7 @@ import fig.OptionsParser;
 
 public class FontInitMain implements Runnable {
 
-	@Option(gloss = "Path to the language model file.")
+	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
 	public static String lmPath = "lm/my_lm.lmser";
 
 	@Option(gloss = "Output font file path.")

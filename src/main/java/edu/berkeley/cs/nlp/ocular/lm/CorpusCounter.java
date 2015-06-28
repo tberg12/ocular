@@ -30,9 +30,9 @@ public class CorpusCounter {
   public final int[] INITIAL_CHAR_DB_SIZES = { 100, 6000, 60000, 300000, 1 * MILLION, 3 * MILLION, 6 * MILLION, 10 * MILLION, 20 * MILLION,
                                                40 * MILLION, 60 * MILLION, 80 * MILLION };
 
-  public final Set<Integer> activeCharacters;
+  private final Set<Integer> activeCharacters;
   
-  public CorpusCounter(int maxNgramOrder) {
+	public CorpusCounter(int maxNgramOrder) {
     this.counts = new CountDbBig[maxNgramOrder];
     int[] dbSizes = new int[maxNgramOrder];
     for (int i = 0; i < dbSizes.length; i++) {
@@ -197,4 +197,8 @@ public class CorpusCounter {
 	  return tokenCount;
   }
   
+  public Set<Integer> getActiveCharacters() {
+		return activeCharacters;
+	}
+
 }

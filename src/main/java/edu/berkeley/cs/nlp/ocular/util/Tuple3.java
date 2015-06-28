@@ -89,7 +89,7 @@ public class Tuple3<A1, A2, A3> implements Serializable {
 			if (_2Compare != 0) {
 				return _2Compare;
 			}
-			return y._3.compareTo(y._3);
+			return x._3.compareTo(y._3);
 		}
 
 	}
