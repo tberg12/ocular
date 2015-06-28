@@ -42,13 +42,13 @@ import fileio.f;
 public class CodeSwitchLMTrainMain implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")
-	public static String lmPath = "lm/cs_lm.lmser";
+	public static String lmPath = null; //"lm/cs_lm.lmser";
 	
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.)")
 	public static double pKeepSameLanguage = 0.999999;
 
 	@Option(gloss = "Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: \"english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser\".  If spaces are used, be sure to wrap the whole string with \"quotes\".")
-	public static String textPaths = "texts/test.txt";
+	public static String textPaths = null; //"texts/test.txt";
 	
 	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".")
 	public static String languagePriors = null;
@@ -83,6 +83,9 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	}
 
 	public void run() {
+		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
+		if (textPaths == null) throw new IllegalArgumentException("-textPaths not set");
+		
 		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = makePathsReadersAndPriors();
 
 		Indexer<String> charIndexer = new HashMapIndexer<String>();

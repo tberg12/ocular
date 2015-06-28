@@ -40,20 +40,20 @@ import fileio.f;
 public class Main implements Runnable {
 
 	@Option(gloss = "Path of the directory that contains the input document images.")
-	public static String inputPath = "test_img";
+	public static String inputPath = null; //"test_img";
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
-	public static String outputPath = "output_dir";
+	public static String outputPath = null; //"output_dir";
 
 	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
-	public static String outputFontPath = "font/trained.fontser";
+	public static String outputFontPath = null; //"font/trained.fontser";
 
 
 	@Option(gloss = "Path to the language model file.")
-	public static String lmPath = "lm/my_lm.lmser";
+	public static String lmPath = null; //"lm/my_lm.lmser";
 
 	@Option(gloss = "Path of the font initializer file.")
-	public static String initFontPath = "font/init.fontser";
+	public static String initFontPath = null; //"font/init.fontser";
 
 
 	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
@@ -110,6 +110,12 @@ public class Main implements Runnable {
 	}
 
 	public void run() {
+		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
+		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
+		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
+		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
+		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
+		
 		long overallNanoTime = System.nanoTime();
 		long overallEmissionCacheNanoTime = 0;
 

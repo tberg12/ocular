@@ -27,10 +27,10 @@ import fig.OptionsParser;
 public class FontInitMain implements Runnable {
 
 	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
-	public static String lmPath = "lm/my_lm.lmser";
+	public static String lmPath = null; //"lm/my_lm.lmser";
 
 	@Option(gloss = "Output font file path.")
-	public static String fontPath = "font/init.fontser";
+	public static String fontPath = null; //"font/init.fontser";
 
 	@Option(gloss = "Number of threads to use.")
 	public static int numFontInitThreads = 8;
@@ -57,6 +57,9 @@ public class FontInitMain implements Runnable {
 	}
 
 	public void run() {
+		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
+		if (fontPath == null) throw new IllegalArgumentException("-fontPath not set");
+		
 		final NgramLanguageModel lm = LMTrainMain.readLM(lmPath);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
