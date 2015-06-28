@@ -4,7 +4,7 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
 import java.util.List;
 
-public interface DatasetLoader {
+public interface ImageLoader {
 	
 	public static interface Document {
 		public String baseName();

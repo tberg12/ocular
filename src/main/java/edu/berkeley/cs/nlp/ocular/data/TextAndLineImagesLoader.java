@@ -8,9 +8,9 @@ import fileio.f;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
-public class TextAndLineImagesLoader implements DatasetLoader {
+public class TextAndLineImagesLoader implements ImageLoader {
 	
-	public static class TextAndLineImagesDocument implements DatasetLoader.Document {
+	public static class TextAndLineImagesDocument implements ImageLoader.Document {
 		private final String imgPathPrefix;
 		private final String imgNameSuffix;
 		private final String textPath;
