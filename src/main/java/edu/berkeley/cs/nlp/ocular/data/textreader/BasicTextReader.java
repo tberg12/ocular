@@ -3,7 +3,7 @@ package edu.berkeley.cs.nlp.ocular.data.textreader;
 import java.util.ArrayList;
 import java.util.List;
 
-import tuple.Pair;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -29,9 +29,9 @@ public class BasicTextReader implements TextReader {
 		List<String> escapedChars = new ArrayList<String>();
 		int i = 0;
 		while (i < line.length()) {
-			Pair<String, Integer> escapedCharAndLength = Charset.readCharAt(line, i);
-			String c = escapedCharAndLength.getFirst();
-			int length = escapedCharAndLength.getSecond();
+			Tuple2<String, Integer> escapedCharAndLength = Charset.readCharAt(line, i);
+			String c = escapedCharAndLength._1;
+			int length = escapedCharAndLength._2;
 			escapedChars.add(c);
 			i += length; // advance to the next character
 		}

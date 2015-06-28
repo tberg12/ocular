@@ -44,4 +44,12 @@ public class StringHelper {
 		return sb.toString();
 	}
 
+	public static String join(List<String> xs, String sep) {
+		int sepLen = sep.length();
+		StringBuilder sb = new StringBuilder();
+		for (String x : xs)
+			sb.append(x).append(sep);
+		return sb.delete(sb.length() - sepLen, sb.length()).toString();
+	}
+
 }

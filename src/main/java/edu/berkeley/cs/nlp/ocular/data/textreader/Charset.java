@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import tuple.Pair;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -225,9 +225,9 @@ public class Charset {
 	 * (potentially composed or escaped) character.
 	 */
 	public static String escapeChar(String s) {
-		Pair<String, Integer> letterAndLength = readCharAt(s, 0);
-		String c = letterAndLength.getFirst();
-		int length = letterAndLength.getSecond();
+		Tuple2<String, Integer> letterAndLength = readCharAt(s, 0);
+		String c = letterAndLength._1;
+		int length = letterAndLength._2;
 		if (s.length() - length != 0) throw new RuntimeException("Could not escape [" + s + "] because it contains more than one character ("+StringHelper.toUnicode(s)+")");
 		return c;
 	}
@@ -244,7 +244,7 @@ public class Charset {
 	 * return the length in the ORIGINAL string of the span used to produce this 
 	 * escaped character (to use as an offset when scanning through the string).
 	 */
-	public static Pair<String, Integer> readCharAt(String line, int offset) {
+	public static Tuple2<String, Integer> readCharAt(String line, int offset) {
 		StringBuilder sb = new StringBuilder();
 		int lineLen = line.length();
 
@@ -273,7 +273,7 @@ public class Charset {
 		}
 
 		sb.append(getOrElse(Charset.PRECOMPOSED_TO_ESCAPED_MAP, letter, letter)); // turn any precomposed letters into escaped letters
-		return Pair.makePair(sb.toString(), i - offset);
+		return Tuple2.makeTuple2(sb.toString(), i - offset);
 	}
 	
 

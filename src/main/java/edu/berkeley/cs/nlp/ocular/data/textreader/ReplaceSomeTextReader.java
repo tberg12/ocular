@@ -1,14 +1,13 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
-import static tuple.Pair.makePair;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import tuple.Pair;
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import fileio.f;
 
 /**
@@ -16,7 +15,7 @@ import fileio.f;
  */
 public class ReplaceSomeTextReader implements TextReader {
 
-	private final List<Pair<Pair<List<String>, List<String>>, Integer>> rules;
+	private final List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> rules;
 	private final TextReader delegate;
 	private final int[] occurrences;
 
@@ -24,7 +23,7 @@ public class ReplaceSomeTextReader implements TextReader {
 	 * @param delegate
 	 * @param rules	<<input, output>, each> Replace `input` by `output` every `each` occurrences 
 	 */
-	public ReplaceSomeTextReader(List<Pair<Pair<List<String>, List<String>>, Integer>> rules, TextReader delegate) {
+	public ReplaceSomeTextReader(List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> rules, TextReader delegate) {
 		this.rules = rules;
 		this.delegate = delegate;
 		this.occurrences = new int[rules.size()];
@@ -33,10 +32,10 @@ public class ReplaceSomeTextReader implements TextReader {
 	public List<String> readCharacters(String line) {
 		List<String> result = delegate.readCharacters(line);
 		for (int i = 0; i < rules.size(); ++i) {
-			Pair<Pair<List<String>, List<String>>, Integer> r = rules.get(i);
-			List<String> input = r.getFirst().getFirst();
-			List<String> output = r.getFirst().getSecond();
-			int each = r.getSecond();
+			Tuple2<Tuple2<List<String>, List<String>>, Integer> r = rules.get(i);
+			List<String> input = r._1._1;
+			List<String> output = r._1._2;
+			int each = r._2;
 			List<String> newResult = new ArrayList<String>();
 			for (int j = 0; j < input.size() - 1; ++j) {
 				// add some buffer to the end so sliding goes to the end
@@ -67,14 +66,14 @@ public class ReplaceSomeTextReader implements TextReader {
 		return result;
 	}
 
-	public static List<Pair<Pair<List<String>, List<String>>, Integer>> loadRulesFromFile(String path) {
+	public static List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> loadRulesFromFile(String path) {
 		TextReader tr = new BasicTextReader();
-		List<Pair<Pair<List<String>, List<String>>, Integer>> result = new ArrayList<Pair<Pair<List<String>, List<String>>, Integer>>();
+		List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> result = new ArrayList<Tuple2<Tuple2<List<String>, List<String>>, Integer>>();
 		for (String line : f.readLines(path)) {
 			if (!line.trim().isEmpty()) {
 				String[] parts = line.split("\t");
 				if (parts.length != 3) throw new RuntimeException("line does not contain 3 parts.  found: " + Arrays.asList(parts));
-				result.add(makePair(makePair(tr.readCharacters(parts[0]), tr.readCharacters(parts[1])), Integer.valueOf(parts[2])));
+				result.add(makeTuple2(makeTuple2(tr.readCharacters(parts[0]), tr.readCharacters(parts[1])), Integer.valueOf(parts[2])));
 			}
 		}
 		return result;

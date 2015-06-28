@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,26 +10,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import tuple.Pair;
-
 public class CollectionHelper {
 
 	public static <K, V> Map<K, V> map1(K key, V value) {
 		return Collections.singletonMap(key, value);
 	}
 
-	public static <K, V> Map<K, V> makeMap(Pair<K, V>... pairs) {
-		if (pairs.length == 0) {
+	public static <K, V> Map<K, V> makeMap(Tuple2<K, V>... tuples) {
+		if (tuples.length == 0) {
 			return Collections.<K, V> emptyMap();
 		}
-		else if (pairs.length == 1) {
-			Pair<K, V> p = pairs[0];
-			return Collections.singletonMap(p.getFirst(), p.getSecond());
+		else if (tuples.length == 1) {
+			Tuple2<K, V> p = tuples[0];
+			return Collections.singletonMap(p._1, p._2);
 		}
 		else {
 			Map<K, V> m = new HashMap<K, V>();
-			for (Pair<K, V> pair : pairs) {
-				m.put(pair.getFirst(), pair.getSecond());
+			for (Tuple2<K, V> tuple : tuples) {
+				m.put(tuple._1, tuple._2);
 			}
 			return m;
 		}
@@ -83,6 +82,18 @@ public class CollectionHelper {
 		return set;
 	}
 
+	public static <A> List<A> makeList(Collection<? extends A> c) {
+		List<A> l = new ArrayList<A>();
+		l.addAll(c);
+		return l;
+	}
+	
+	public static <A> Set<A> makeSet(Collection<? extends A> c) {
+		Set<A> l = new HashSet<A>();
+		l.addAll(c);
+		return l;
+	}
+	
 	public static <A> List<A> listCat(List<A>... lists) {
 		if (lists.length == 0)
 			return Collections.<A> emptyList();
