@@ -2,7 +2,9 @@
 /lm/
 /train_output/
 /transcribe_output/
+/cs_train_lineex/
 /cs_train_output/
+/cs_transcribe_lineex/
 /cs_transcribe_output/
 /project/
 /test_img/
