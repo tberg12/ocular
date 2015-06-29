@@ -64,6 +64,9 @@ public class MultilingualMain implements Runnable {
 	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
 	public static String outputFontPath = null; //"font/trained.fontser";
 
+	@Option(gloss = "Path of the directory where the line-extraction images should be written.  If ignored, no images will be written.")
+	public static String lineExtractionOutputPath = null;
+
 	@Option(gloss = "Path to the language model file.")
 	public static String initLmPath = null; //"lm/cs_lm.lmser";
 
@@ -253,7 +256,7 @@ public class MultilingualMain implements Runnable {
 						decodeCharStates[i][j] = (TransitionState) decodeStates[i][j];
 				}
 
-				printTranscription(iter, learnFont, "", doc, allEvals, decodeCharStates, charIndexer, outputPath, lm, languageCounts);
+				printTranscription(iter, learnFont, doc, allEvals, decodeCharStates, charIndexer, outputPath, lm, languageCounts);
 			}
 
 			// m-step
@@ -359,7 +362,7 @@ public class MultilingualMain implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, boolean learnFont, String nameAdj, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, String outputPath, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
+	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, String outputPath, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
 		final String[][] text = doc.loadLineText();
 		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
 
@@ -412,7 +415,9 @@ public class MultilingualMain implements Runnable {
 
 		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), lm, languageCounts);
 		System.out.println(outputBuffer.toString());
-		f.writeString(outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + "." + (learnFont ? "iter-" + iter : "") + nameAdj + ".html", outputBuffer.toString());
+		String outputFilename = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (learnFont ? "_iter-" + iter : "") + ".html";
+		new File(outputFilename).getParentFile().mkdirs();
+		f.writeString(outputFilename, outputBuffer.toString());
 	}
 
 	private static void printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, StringBuffer outputBuffer, String imgFilename, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
@@ -454,10 +459,16 @@ public class MultilingualMain implements Runnable {
 			outputBuffer.append("<table><tr><td>\n");
 			outputBuffer.append("<font face=\"courier\"> \n");
 			outputBuffer.append("</br></br></br></br></br>\n");
+			outputBuffer.append("</br></br>\n\n");
+
 			String[] colors = new String[] { "Black", "Red", "Blue", "Olive", "Orange", "Magenta", "Lime", "Cyan", "Purple", "Green", "Brown" };
 			Map<String, String> langColor = new HashMap<String, String>();
 			langColor.put(null, colors[0]);
-			outputBuffer.append("</br></br>\n\n");
+			List<String> allLanguages = makeList(lm.languages());
+			Collections.sort(allLanguages);
+			for (String language: allLanguages) {
+				langColor.put(language, colors[langColor.size()]);
+			}
 
 			List<String>[] csViterbiChars = new List[decodeStates.length];
 			String prevLanguage = null;
@@ -491,8 +502,6 @@ public class MultilingualMain implements Runnable {
 				outputBuffer.append("<font color=\"" + c.getValue() + "\">" + c.getKey() + "</font></br>\n");
 			}
 
-			// pl_blac_047_00037-1000.jpg
-			// pl_blac_047_00037-1000-line_extract.jpg
 			String leImgFilename = FileUtil.withoutExtension(imgFilename) + "-line_extract." + FileUtil.extension(imgFilename);
 			outputBuffer.append("</td><td><img src=\"" + leImgFilename + "\">\n");
 			outputBuffer.append("</td></tr></table>\n");
@@ -510,7 +519,7 @@ public class MultilingualMain implements Runnable {
 	}
 
 	private List<Document> loadDocuments() {
-		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, crop);
+		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, crop, lineExtractionOutputPath);
 		List<Document> documents = new ArrayList<Document>();
 
 		List<Document> lazyDocs = loader.readDataset();

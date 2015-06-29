@@ -4,6 +4,7 @@ import fileio.f;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
+import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
 import java.io.BufferedReader;
@@ -22,9 +23,8 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
 
 public class LazyRawImageLoader implements ImageLoader {
 
-	public static class RawImageDocument implements ImageLoader.Document {
-		private final String inputPath;
-		private final String baseName;
+	public static class LazyRawImageDocument implements ImageLoader.Document {
+		private final File file;
 		private final int lineHeight;
 		private final double binarizeThreshold;
 		private final boolean crop;
@@ -33,20 +33,21 @@ public class LazyRawImageLoader implements ImageLoader {
 		private String[][] text = null;
 		
 		private TextReader textReader = new BasicTextReader();
+		
+		private String lineExtractionImageOutputPath = null;
 
-		public RawImageDocument(String inputPath, String baseName, int lineHeight, double binarizeThreshold, boolean crop) {
-			this.inputPath = inputPath;
-			this.baseName = baseName;
+	  public LazyRawImageDocument(File file, int lineHeight, double binarizeThreshold, boolean crop, String lineExtractionImageOutputPath) {
+			this.file = file;
 			this.lineHeight = lineHeight;
 			this.binarizeThreshold = binarizeThreshold;
 			this.crop = crop;
+			this.lineExtractionImageOutputPath = lineExtractionImageOutputPath;
 		}
 
 		public PixelType[][][] loadLineImages() {
 			if (observations == null) {
-				String fn = inputPath + "/" + baseName;
-				System.out.println("Extracting text line images from " + fn);
-				double[][] levels = ImageUtils.getLevels(f.readImage(fn));
+				System.out.println("Extracting text line images from " + file);
+				double[][] levels = ImageUtils.getLevels(f.readImage(file.getPath()));
 				double[][] rotLevels = Straightener.straighten(levels);
 				double[][] cropLevels = crop ? Cropper.crop(rotLevels, binarizeThreshold) : rotLevels;
 				Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
@@ -60,13 +61,23 @@ public class LazyRawImageLoader implements ImageLoader {
 						observations[i] = ImageUtils.getPixelTypes(ImageUtils.makeImage(lines.get(i)));
 					}
 				}
+				
+				if (lineExtractionImageOutputPath != null) {
+					String fileParent = file.getParent();
+					String preext = FileUtil.withoutExtension(file.getName());
+					String ext = FileUtil.extension(file.getName());
+					String lineExtractionImagePath = lineExtractionImageOutputPath+"/"+fileParent+"/"+preext + "-line_extract." + ext;
+					System.out.println("Writing line-extraction image to: " + lineExtractionImagePath);
+					new File(lineExtractionImagePath).getParentFile().mkdirs();
+				  f.writeImage(lineExtractionImagePath, Visualizer.renderLineExtraction(observations));
+				}
 			}
 			return observations;
 		}
 
 		public String[][] loadLineText() {
 			if (text == null) {
-				File textFile = new File(inputPath, baseName.replaceAll("\\.[^.]*$", ".txt"));
+				File textFile = new File(file.getPath().replaceAll("\\.[^.]*$", ".txt"));
 				if (textFile.exists()) {
 					System.out.println("Evaluation text found at " + textFile);
 					List<List<String>> textList = new ArrayList<List<String>>();
@@ -95,11 +106,7 @@ public class LazyRawImageLoader implements ImageLoader {
 		}
 
 		public String baseName() {
-			return baseName;
-		}
-
-		public boolean useLongS() {
-			return false;
+			return file.getPath();
 		}
 		
 	}
@@ -108,25 +115,31 @@ public class LazyRawImageLoader implements ImageLoader {
 	private final int lineHeight;
 	private final double binarizeThreshold;
 	private final boolean crop;
+	
+	private String lineExtractionImageOutputPath = null;
 
-	public LazyRawImageLoader(String inputPath, int lineHeight, double binarizeThreshold, boolean crop) {
+	public LazyRawImageLoader(String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String lineExtractionImageOutputPath) {
 		this.inputPath = inputPath;
 		this.lineHeight = lineHeight;
 		this.binarizeThreshold = binarizeThreshold;
 		this.crop = crop;
+		this.lineExtractionImageOutputPath = lineExtractionImageOutputPath;
 	}
 
 	public List<Document> readDataset() {
 		File dir = new File(inputPath);
 		System.out.println("Reading data from ["+dir+ "], which "+(dir.exists() ? "exists" : "does not exist"));
-		String[] dirList = dir.list(new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return !name.startsWith(".") && !name.endsWith(".txt") && !(new File(dir, name).isDirectory());
-			}
-		});
+		List<File> dirList = FileUtil.recursiveFiles(dir);
+		
+		List<File> filesToUse = new ArrayList<File>();
+		for (File f: dirList) {
+			if (f.getName().endsWith(".txt")) continue;
+			filesToUse.add(f);
+		}
+		
 		List<Document> docs = new ArrayList<Document>();
-		for (String baseName : dirList) {
-			docs.add(new RawImageDocument(inputPath, baseName, lineHeight, binarizeThreshold, crop));
+		for (File f : filesToUse) {
+			docs.add(new LazyRawImageDocument(f, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
 		}
 		return docs;
 	}
