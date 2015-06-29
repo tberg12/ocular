@@ -31,7 +31,7 @@ public class Charset {
 	public static boolean isPunctuation(char c) {
 		return !Character.isAlphabetic(c) && !Character.isDigit(c);
 	}
-	public static boolean isPunctuation(String s) {
+	public static boolean isPunctuationChar(String s) {
 		for (char c: removeAnyDiacriticFromChar(s).toCharArray())
 			if (!isPunctuation(c)) return false;
 		return true;

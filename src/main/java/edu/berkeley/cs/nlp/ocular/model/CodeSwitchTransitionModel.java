@@ -369,7 +369,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 		this.punctSet = new HashSet<Integer>();
 		for (String c : charIndexer.getObjects()) {
-			if(Charset.isPunctuation(c))
+			if(Charset.isPunctuationChar(c))
 				this.punctSet.add(charIndexer.getIndex(c));
 		}
 

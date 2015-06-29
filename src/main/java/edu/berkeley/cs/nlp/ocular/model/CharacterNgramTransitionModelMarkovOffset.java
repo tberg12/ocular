@@ -314,7 +314,7 @@ public class CharacterNgramTransitionModelMarkovOffset implements SparseTransiti
 		this.isPunc = new boolean[lm.getCharacterIndexer().size()];
 		Arrays.fill(this.isPunc, false);
 		for (String c : lm.getCharacterIndexer().getObjects()) {
-			if(Charset.isPunctuation(c))
+			if(Charset.isPunctuationChar(c))
 				isPunc[lm.getCharacterIndexer().getIndex(c)] = true;
 		}
 	}

@@ -12,14 +12,14 @@ import org.junit.Test;
 public class CharsetTests {
 
 	@Test
-	public void test_isPunctuation() {
-		assertFalse(isPunctuation("t"));
-		assertFalse(isPunctuation("q̃"));
-		assertFalse(isPunctuation("\\~q"));
-		assertFalse(isPunctuation("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
-		assertTrue(isPunctuation(";"));
-		assertTrue(isPunctuation("\\\\"));
-		try { isPunctuation(";;"); fail("no exception thrown"); } catch (RuntimeException e) { e.getMessage().contains("contains more than one character"); }
+	public void test_isPunctuationChar() {
+		assertFalse(isPunctuationChar("t"));
+		assertFalse(isPunctuationChar("q̃"));
+		assertFalse(isPunctuationChar("\\~q"));
+		assertFalse(isPunctuationChar("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
+		assertTrue(isPunctuationChar(";"));
+		assertTrue(isPunctuationChar("\\\\"));
+		try { isPunctuationChar(";;"); fail("no exception thrown"); } catch (RuntimeException e) { e.getMessage().contains("contains more than one character"); }
 	}
 
 	@Test
