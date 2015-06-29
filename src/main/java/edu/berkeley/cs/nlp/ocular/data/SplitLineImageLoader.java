@@ -105,10 +105,6 @@ public class SplitLineImageLoader {//implements DatasetLoader {
 			return baseName;
 		}
 
-		public boolean useLongS() {
-			return false;
-		}
-
 	}
 
 }

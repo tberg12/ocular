@@ -129,7 +129,8 @@ public class ExperimentsMain implements Runnable {
 
 		for (Document doc : documents) {
 			System.out.println("Loading LM..");
-			final NgramLanguageModel lm = (doc.useLongS() ? LMTrainMain.readLM(lmDir+"/"+lmBaseName+"_longs.lmser") : LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser"));
+			boolean useLongS = ((TextAndLineImagesLoader.TextAndLineImagesDocument) doc).useLongS();
+			final NgramLanguageModel lm = (useLongS ? LMTrainMain.readLM(lmDir+"/"+lmBaseName+"_longs.lmser") : LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser"));
 			final Indexer<String> charIndexer = lm.getCharacterIndexer();
 			
 			System.out.println("Loading font initializer..");

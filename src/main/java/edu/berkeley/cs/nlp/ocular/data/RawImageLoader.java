@@ -49,10 +49,6 @@ public class RawImageLoader implements ImageLoader {
 			return baseName;
 		}
 
-		public boolean useLongS() {
-			return false;
-		}
-
 	}
 	
 	private final String inputPath;
