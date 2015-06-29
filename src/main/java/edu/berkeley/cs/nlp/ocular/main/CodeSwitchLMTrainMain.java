@@ -57,7 +57,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	public static String alternateSpellingReplacementPaths = null;
 	
 	@Option(gloss = "Use separate character type for long s.")
-	public static boolean useLongS = false;
+	public static boolean insertLongS = false;
 	
 	@Option(gloss = "Keep diacritics?")
 	public static boolean keepDiacritics = true;
@@ -147,11 +147,11 @@ public class CodeSwitchLMTrainMain implements Runnable {
 			String filepath = languagePathMap.get(language);
 			Double prior = languagePriorMap.get(language);
 			System.out.println("For language '" + language + "', using text in " + filepath + ", prior=" + prior
-					+ (languageAltSpellPathMap.keySet().contains(language) ? languageAltSpellPathMap.get(language) : ""));
+					+ (languageAltSpellPathMap.keySet().contains(language) ? ", alternate spelling replacement rules in " + languageAltSpellPathMap.get(language) : ""));
 			
 			TextReader textReader = new BasicTextReader();
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
-			if (useLongS) textReader = new ConvertLongSTextReader(textReader);
+			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
 			if (!keepDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 			
 			pathsReadersAndPriors.put(language, makeTuple2(makeTuple2(filepath, textReader), prior));
@@ -178,8 +178,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 			System.out.println(language + " text reader: " + textReader);
 
 			CorpusCounter counter = new CorpusCounter(charN);
-			Tuple2<List<String>, List<String>> charsAndWords = readFileChars(filepath, textReader, lmCharCount > 0 ? lmCharCount : Long.MAX_VALUE);
-			List<String> chars = charsAndWords._1;
+			List<String> chars = readFileChars(filepath, textReader, lmCharCount > 0 ? lmCharCount : Long.MAX_VALUE);
 			System.out.println("  using " + chars.size() + " characters for " + language + " read from " + filepath);
 			counter.countChars(chars, charIndexer, 0);
 
@@ -188,7 +187,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 			List<String> langChars = new ArrayList<String>();
 			for (int i : counter.getActiveCharacters())
 				langChars.add(charIndexer.getObject(i));
-			Collections.sort(chars);
+			Collections.sort(langChars);
 			System.out.println(language + ": " + langChars);
 
 			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, power);
@@ -198,19 +197,17 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		return lmsAndPriors;
 	}
 
-	private Tuple2<List<String>, List<String>> readFileChars(String filepath, TextReader textReader, long charsToTake) {
+	private List<String> readFileChars(String filepath, TextReader textReader, long charsToTake) {
 		List<String> allChars = new ArrayList<String>();
-		List<String> allWords = new ArrayList<String>();
 		outer: 
 			for (File file : FileUtil.recursiveFiles(filepath)) {
 				for (String line : f.readLines(file.getPath())) {
 					if (allChars.size() >= charsToTake) break outer;
 					List<String> chars = textReader.readCharacters(line + " ");
 					allChars.addAll(chars);
-					allWords.addAll(CharsetHelper.splitToEncodedWords(chars));
 				}
 			}
-		return makeTuple2(allChars, allWords);
+		return allChars;
 	}
 	
 	public static CodeSwitchLanguageModel readLM(String lmPath) {

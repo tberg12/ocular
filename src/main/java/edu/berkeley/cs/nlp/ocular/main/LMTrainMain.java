@@ -27,7 +27,7 @@ public class LMTrainMain implements Runnable {
 	public static String textPath = null; //"texts/test.txt";
 	
 	@Option(gloss = "Use separate character type for long s.")
-	public static boolean useLongS = false;
+	public static boolean insertLongS = false;
 	
 	@Option(gloss = "Keep diacritics?")
 	public static boolean keepDiacritics = true;
@@ -54,7 +54,7 @@ public class LMTrainMain implements Runnable {
 		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
 		TextReader textReader = new BasicTextReader();
-		if(useLongS) textReader = new ConvertLongSTextReader(textReader);
+		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
 		if(!keepDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 		NgramLanguageModel lm = NgramLanguageModel.buildFromText(textPath, maxLines, charN, LMType.KNESER_NEY, power, textReader);
 		writeLM(lm, lmPath);
