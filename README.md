@@ -31,16 +31,16 @@ It is described in the following publications:
 
 ## Running the full system
 
-1. Initialize a font:
-
-        edu.berkeley.cs.nlp.ocular.main.FontInitMain -fontPath font/init.fontser
-    
-2. Train a language model:
+1. Train a language model:
 
   Put some text in a file called `texts/test.txt`.  (Or use, for example, `LICENSE.txt`).
     
       edu.berkeley.cs.nlp.ocular.main.LMTrainMain -lmPath lm/my_lm.lmser -textPath texts/test.txt -useLongS false
-    
+
+2. Initialize a font:
+
+        edu.berkeley.cs.nlp.ocular.main.FontInitMain -lmPath lm/my_lm.lmser -fontPath font/init.fontser
+
 3. Train a font:
 
         edu.berkeley.cs.nlp.ocular.main.Main -learnFont true -initFontPath font/init.fontser -lmPath lm/my_lm.lmser -inputPath test_img -outputFontPath font/trained.fontser -outputPath train_output
@@ -49,6 +49,6 @@ It is described in the following publications:
     
 4. Transcribe some pages:
 
-        edu.berkeley.cs.nlp.ocular.main.Main -learnFont false -initFontPath font/trained.fontser -lmPath lm/my_lm.lmser -inputPath test_img -outputPath transcribe_output 
+        edu.berkeley.cs.nlp.ocular.main.Main -initFontPath font/trained.fontser -lmPath lm/my_lm.lmser -inputPath test_img -outputPath transcribe_output 
     
 
