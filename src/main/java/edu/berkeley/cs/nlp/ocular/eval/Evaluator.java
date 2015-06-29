@@ -11,7 +11,9 @@ import counter.Counter;
 import counter.CounterMap;
 import tuple.Pair;
 import util.Iterators;
+import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
 
 
@@ -227,8 +229,8 @@ public class Evaluator {
 
 	private static String splitOutPunc(String str) {
 		StringBuffer buf = new StringBuffer();
-		for (int i=0; i<str.length(); ++i) {
-			String c = str.substring(i,i+1);
+		TextReader textReader = new BasicTextReader();
+		for (String c: textReader.readCharacters(str)) {
 			if (!Charset.isPunctuationChar(c)) buf.append(c);
 		}
 		String result = buf.toString();
