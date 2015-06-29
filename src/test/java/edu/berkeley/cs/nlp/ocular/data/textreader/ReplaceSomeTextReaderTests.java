@@ -1,16 +1,13 @@
-package edu.berkeley.cs.nlp.ocular.data;
+package edu.berkeley.cs.nlp.ocular.data.textreader;
 
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
 import org.junit.Test;
 
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
-import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.ReplaceSomeTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 
 /**

@@ -1,16 +1,13 @@
-package edu.berkeley.cs.nlp.ocular.data;
+package edu.berkeley.cs.nlp.ocular.data.textreader;
 
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.DIAERESIS_COMBINING;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.MACRON_COMBINING;
 import static org.junit.Assert.assertEquals;
-import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.*;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
-
-import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
