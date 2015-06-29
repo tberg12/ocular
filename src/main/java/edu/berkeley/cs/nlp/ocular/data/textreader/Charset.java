@@ -286,9 +286,10 @@ public class Charset {
 	 * Convert diacritic escape sequences on a character into unicode precomposed and combining characters
 	 */
 	public static String unescapeChar(String c) {
+		if (c.length() == 1) return c; // no escapes
+		if (c.equals("\\\\")) return c;
+		
 		String e = escapeChar(c); // use escapes only (and make sure it's a valid character)
-
-		if (c.length() == 1) return c; // no diacritics
 
 		StringBuilder b = new StringBuilder();
 		// Attempt to make a precomposed letter, falling back to composed otherwise

@@ -33,6 +33,8 @@ public class CharsetTests {
 		assertEquals("q" + TILDE_COMBINING, unescapeChar("q" + TILDE_COMBINING));
 		assertEquals("q" + TILDE_COMBINING, unescapeChar("\\~q"));
 		//assertEquals("ı", unescapeChar("\\ii"));
+		
+		assertEquals("\\\\", unescapeChar("\\\\"));
 	}
 
 	@Test
@@ -62,6 +64,8 @@ public class CharsetTests {
 		assertEquals("\\`\\'\\\"\\-\\~n", escapeChar("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
 		assertEquals("\\`\\'\\\"\\-\\~n", escapeChar("\\`\\'n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
 		assertEquals("\\`\\'\\\"\\-\\~q", escapeChar("\\`\\'q" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
+		
+		assertEquals("\\\\", escapeChar("\\\\"));
 	}
 
 	@Test
