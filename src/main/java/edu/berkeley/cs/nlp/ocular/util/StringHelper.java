@@ -59,4 +59,15 @@ public class StringHelper {
 			return a.equals(b);
 	}
 	
+	public static int longestCommonPrefix(String a, String b) {
+		int i = 0;
+		char[] as = a.toCharArray();
+		char[] bs = b.toCharArray();
+		int aLen = as.length;
+		int bLen = bs.length;
+		while (i < aLen && i < bLen && as[i] == bs[i])
+			++i;
+		return i;
+	}
+	
 }

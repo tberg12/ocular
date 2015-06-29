@@ -388,7 +388,7 @@ public class MultilingualMain implements Runnable {
 		outputBuffer.append("\n\n\n");
 
 		if (text != null) {
-			outputBuffer.append("MODEL OUTPUT vs. GOLD OUTPUT\n\n");
+			outputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
 			// Evaluate against gold-transcribed data (given as "text")
 			List<String>[] goldCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
@@ -413,14 +413,14 @@ public class MultilingualMain implements Runnable {
 			outputBuffer.append(Evaluator.renderEval(evals));
 		}
 
-		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), lm, languageCounts);
-		System.out.println(outputBuffer.toString());
 		String outputFilename = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (learnFont ? "_iter-" + iter : "") + ".html";
 		new File(outputFilename).getParentFile().mkdirs();
+		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), outputFilename, lm, languageCounts);
+		System.out.println(outputBuffer.toString());
 		f.writeString(outputFilename, outputBuffer.toString());
 	}
 
-	private static void printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, StringBuffer outputBuffer, String imgFilename, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
+	private static void printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, StringBuffer outputBuffer, String imgFilename, String outputFilename, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
 		outputBuffer.append("\n\n\n\n\n");
 		outputBuffer.append("===============================================");
 		outputBuffer.append("\n\n\n\n\n");
@@ -502,8 +502,7 @@ public class MultilingualMain implements Runnable {
 				outputBuffer.append("<font color=\"" + c.getValue() + "\">" + c.getKey() + "</font></br>\n");
 			}
 
-			String leImgFilename = FileUtil.withoutExtension(imgFilename) + "-line_extract." + FileUtil.extension(imgFilename);
-			outputBuffer.append("</td><td><img src=\"" + leImgFilename + "\">\n");
+			outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, outputFilename) + "\">\n");
 			outputBuffer.append("</td></tr></table>\n");
 			outputBuffer.append("</body></html>\n");
 			outputBuffer.append("\n\n\n");

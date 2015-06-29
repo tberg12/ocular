@@ -94,6 +94,13 @@ public class CollectionHelper {
 		}
 	}
 	
+	public static <A> List<A> fillList(int size, A item) {
+		List<A> l = new ArrayList<A>(size);
+		for (int i = 0; i < size; ++i)
+			l.add(item);
+		return l;
+	}
+	
 	public static <A> Set<A> makeSet(Collection<A> xs) {
 		if (xs.size() == 0)
 			return Collections.<A> emptySet();
