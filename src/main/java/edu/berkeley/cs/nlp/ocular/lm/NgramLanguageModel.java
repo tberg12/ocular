@@ -47,16 +47,17 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		
 		if (activeCharacters == null) throw new RuntimeException("activeCharacters is null!"); 
 		this.activeCharacters = activeCharacters;
-		for (String c : Charset.UNIV_PUNC) this.activeCharacters.add(charIndexer.getIndex(c));
 	}
 
 	public static NgramLanguageModel buildFromText(String fileName, int maxNumLines, int maxOrder, LMType type, double lmPower, TextReader textReader) {
 		CorpusCounter counter = new CorpusCounter(maxOrder);
+		Set<Integer> activeCharacters = counter.getActiveCharacters();
 		Indexer<String> charIndexer = new HashMapIndexer<String>();
+		for (String c : Charset.UNIV_PUNC) activeCharacters.add(charIndexer.getIndex(c));
 		counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
 		charIndexer.lock();
-		//counter.printStats(-1);
-		return new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), type, lmPower);
+		counter.printStats(-1);
+		return new NgramLanguageModel(charIndexer, counter.getCounts(), activeCharacters, type, lmPower);
 	}
 
 	public void checkNormalizes(int[] context) {
