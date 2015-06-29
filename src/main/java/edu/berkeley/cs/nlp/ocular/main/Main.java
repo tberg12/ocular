@@ -166,7 +166,7 @@ public class Main implements Runnable {
 		if (!learnFont) numEMIters = 0;
 		
 		for (int iter = 0; iter < numEMIters + 1; ++iter) {
-			if (iter < numEMIters) System.out.println("Training iteration: " + iter);
+			if (iter < numEMIters) System.out.println("Training iteration: " + (iter+1));
 			else if (learnFont) System.out.println("Done with EM ("+numEMIters+" iterations).  Now transcribing the training data...");
 			else System.out.println("Transcribing (learnFont = false).");
 

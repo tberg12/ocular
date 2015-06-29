@@ -175,7 +175,7 @@ public class MultilingualMain implements Runnable {
 		Collections.sort(languages);
 
 		for (int iter = 0; iter < numEMIters + 1; ++iter) {
-			if (iter < numEMIters) System.out.println("Training iteration: " + iter);
+			if (iter < numEMIters) System.out.println("Training iteration: " + (iter+1));
 			else if (learnFont) System.out.println("Done with EM ("+numEMIters+" iterations).  Now transcribing the training data...");
 			else System.out.println("Transcribing (learnFont = false).");
 
@@ -414,7 +414,7 @@ public class MultilingualMain implements Runnable {
 			outputBuffer.append(Evaluator.renderEval(evals));
 		}
 
-		String outputFilename = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (learnFont ? "_iter-" + iter : "") + ".html";
+		String outputFilename = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (iter < numEMIters ? "_iter-" + iter : "") + ".html";
 		new File(outputFilename).getParentFile().mkdirs();
 		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), outputFilename, lm, languageCounts);
 		System.out.println(outputBuffer.toString());
