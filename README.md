@@ -101,7 +101,7 @@ It is described in the following publications:
     
 4. Transcribe some pages:
 
-        edu.berkeley.cs.nlp.ocular.main.Main \
+        edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
           -inputPath test_img/multilingual \
           -initFontPath font/cs_trained.fontser \
           -initLmPath lm/cs_trained.lmser \
