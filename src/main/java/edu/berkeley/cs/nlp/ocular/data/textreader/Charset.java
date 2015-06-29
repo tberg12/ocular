@@ -311,9 +311,9 @@ public class Charset {
 	}
 
 	public static String removeAnyDiacriticFromChar(String c) {
+		if (c.equals("\\\\")) return c;
+
 		String escaped = escapeChar(c);
-		if (escaped.equals("\\\\")) return escaped;
-		
 		while (escaped.charAt(0) == '\\') {
 		  escaped = escaped.substring(2);
 		}

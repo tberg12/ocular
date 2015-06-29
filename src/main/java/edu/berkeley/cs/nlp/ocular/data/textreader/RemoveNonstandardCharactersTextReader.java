@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
-import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -31,7 +30,8 @@ public class RemoveNonstandardCharactersTextReader implements TextReader {
   		 * necessary to remove diacritics, the use RemoveDiacriticsTextReader
   		 * as well.
   		 */
-			if (ALL_ALLOWED.contains(StringHelper.last(c))) { 
+			String withoutDiacritic = Charset.removeAnyDiacriticFromChar(c);
+			if (ALL_ALLOWED.contains(withoutDiacritic)) { 
 				chars.add(c);
 			}
 		}
