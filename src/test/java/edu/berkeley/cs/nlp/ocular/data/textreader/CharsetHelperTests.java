@@ -1,14 +1,11 @@
-package edu.berkeley.cs.nlp.ocular.main;
+package edu.berkeley.cs.nlp.ocular.data.textreader;
 
-import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.*;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
-
-import edu.berkeley.cs.nlp.ocular.data.textreader.CharsetHelper;
 
 public class CharsetHelperTests {
 
