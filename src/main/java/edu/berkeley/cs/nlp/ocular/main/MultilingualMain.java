@@ -95,7 +95,7 @@ public class MultilingualMain implements Runnable {
 	public static boolean learnFont = false;
 
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
-	public static int numEMIters = 4;
+	public static int numEMIters = 3;
 
 	@Option(gloss = "Engine to use for inner loop of emission cache computation. DEFAULT: Uses Java on CPU, which works on any machine but is the slowest method. OPENCL: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
 	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT;
@@ -169,14 +169,15 @@ public class MultilingualMain implements Runnable {
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
-		if (!learnFont) numEMIters = 1;
+		if (!learnFont) numEMIters = 0;
 		
 		List<String> languages = makeList(lm.languages());
 		Collections.sort(languages);
 
-		for (int iter = 0; iter < numEMIters; ++iter) {
-			if (!learnFont) System.out.println("Learning iteration: " + iter);
-			else System.out.println("Transcribing (learnFont = false)");
+		for (int iter = 0; iter < numEMIters + 1; ++iter) {
+			if (iter < numEMIters) System.out.println("Training iteration: " + iter);
+			else if (learnFont) System.out.println("Done with EM ("+numEMIters+" iterations).  Now transcribing the training data...");
+			else System.out.println("Transcribing (learnFont = false).");
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 
@@ -227,7 +228,7 @@ public class MultilingualMain implements Runnable {
 					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 					System.out.println("Decode: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 
-					if (learnFont /*&& iter + 1 < numEMIters*/) {
+					if (iter < numEMIters) {
 						nanoTime = System.nanoTime();
 						BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
 							public void call(Integer line, Object ignore) {
@@ -261,7 +262,7 @@ public class MultilingualMain implements Runnable {
 
 			// m-step
 
-			if (learnFont /*&& iter + 1 < numEMIters*/) {
+			if (iter < numEMIters) {
 				long nanoTime = System.nanoTime();
 				{
 					final int iterFinal = iter;
@@ -407,7 +408,7 @@ public class MultilingualMain implements Runnable {
 			}
 
 			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
-			if (iter == MultilingualMain.numEMIters - 1) {
+			if (iter == numEMIters) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
 			}
 			outputBuffer.append(Evaluator.renderEval(evals));
