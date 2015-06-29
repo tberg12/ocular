@@ -41,18 +41,6 @@ public class CollectionHelper {
 			return def;
 	}
 
-	public static <A> Set<A> makeSet(A... xs) {
-		if (xs.length == 0)
-			return Collections.<A> emptySet();
-		else if (xs.length == 1)
-			return Collections.singleton(xs[0]);
-		else {
-			Set<A> set = new HashSet<A>(xs.length);
-			Collections.addAll(set, xs);
-			return set;
-		}
-	}
-
 	public static <A> Set<A> setUnion(Set<A>... sets) {
 		if (sets.length == 0)
 			return Collections.<A> emptySet();
@@ -82,18 +70,54 @@ public class CollectionHelper {
 		return set;
 	}
 
-	public static <A> List<A> makeList(Collection<? extends A> c) {
-		List<A> l = new ArrayList<A>();
-		l.addAll(c);
-		return l;
+	public static <A> List<A> makeList(Collection<? extends A> xs) {
+		if (xs.size() == 0)
+			return Collections.<A> emptyList();
+		else if (xs.size() == 1)
+			return Collections.singletonList(xs.iterator().next());
+		else {
+			List<A> l = new ArrayList<A>();
+			l.addAll(xs);
+			return l;
+		}
 	}
 	
-	public static <A> Set<A> makeSet(Collection<? extends A> c) {
-		Set<A> l = new HashSet<A>();
-		l.addAll(c);
-		return l;
+	public static <A> List<A> makeList(A... xs) {
+		if (xs.length == 0)
+			return Collections.<A> emptyList();
+		else if (xs.length == 1)
+			return Collections.singletonList(xs[0]);
+		else {
+			List<A> l = new ArrayList<A>();
+			Collections.addAll(l, xs);
+			return l;
+		}
 	}
 	
+	public static <A> Set<A> makeSet(Collection<A> xs) {
+		if (xs.size() == 0)
+			return Collections.<A> emptySet();
+		else if (xs.size() == 1)
+			return Collections.singleton(xs.iterator().next());
+		else {
+			Set<A> set = new HashSet<A>(xs.size());
+			set.addAll(xs);
+			return set;
+		}
+	}
+	
+	public static <A> Set<A> makeSet(A... xs) {
+		if (xs.length == 0)
+			return Collections.<A> emptySet();
+		else if (xs.length == 1)
+			return Collections.singleton(xs[0]);
+		else {
+			Set<A> set = new HashSet<A>(xs.length);
+			Collections.addAll(set, xs);
+			return set;
+		}
+	}
+
 	public static <A> List<A> listCat(List<A>... lists) {
 		if (lists.length == 0)
 			return Collections.<A> emptyList();
