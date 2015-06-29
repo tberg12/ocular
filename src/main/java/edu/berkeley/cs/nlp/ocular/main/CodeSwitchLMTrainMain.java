@@ -161,10 +161,10 @@ public class CodeSwitchLMTrainMain implements Runnable {
 					+ (languageAltSpellPathMap.keySet().contains(language) ? ", alternate spelling replacement rules in " + languageAltSpellPathMap.get(language) : ""));
 			
 			TextReader textReader = new BasicTextReader();
-			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
-			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
-			if (removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 			if (removeNonstandardChars) textReader = new RemoveNonstandardCharactersTextReader(textReader);
+			if (removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
+			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
 			
 			pathsReadersAndPriors.put(language, makeTuple2(makeTuple2(filepath, textReader), prior));
 		}

@@ -58,9 +58,10 @@ public class LMTrainMain implements Runnable {
 		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
 		TextReader textReader = new BasicTextReader();
-		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
-		if(removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 		if (removeNonstandardChars) textReader = new RemoveNonstandardCharactersTextReader(textReader);
+		if(removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
+
 		NgramLanguageModel lm = NgramLanguageModel.buildFromText(textPath, maxLines, charN, LMType.KNESER_NEY, power, textReader);
 		writeLM(lm, lmPath);
 	}

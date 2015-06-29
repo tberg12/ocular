@@ -1,7 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -15,7 +14,7 @@ public class RemoveNonstandardCharactersTextReader implements TextReader {
 
 	private TextReader delegate;
 	
-	public static final Set<String> PUNC = CollectionHelper.makeSet(";", ":", "\"", "'", "!", "?", "(", ")", "«", "»", "¡", "¿");
+	public static final Set<String> PUNC = CollectionHelper.makeSet(Charset.SPACE, ";", ":", "\"", "'", "!", "?", "(", ")", "«", "»", "¡", "¿");
 	public static final Set<String> DIGITS = CollectionHelper.makeSet("0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
 	public static final Set<String> ALPHABET = CollectionHelper.makeSet("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", Charset.LONG_S, "t", "u", "v", "w", "x", "y", "z");
 	public static final Set<String> LIGATURES = CollectionHelper.makeSet("Æ", "æ", "Œ", "œ");
