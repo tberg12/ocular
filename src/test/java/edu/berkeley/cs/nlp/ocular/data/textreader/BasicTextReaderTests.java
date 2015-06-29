@@ -36,4 +36,11 @@ public class BasicTextReaderTests {
 		assertEquals(r, tr.readCharacters(s1));
 	}
 
+	@Test
+	public void test_readCharacters_backslash() {
+		TextReader tr = new BasicTextReader();
+		List<String> r = Arrays.asList("t", "h", "i", "s", "\\\\", "t", "h", "a", "t", "\\\\", "t", "h", "e", "\\\\");
+		assertEquals(r, tr.readCharacters("this\\\\that\\\\the\\\\"));
+	}
+
 }

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -233,7 +234,7 @@ public class Charset {
 	}
 
 	/**
-	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.Charset.escapeChar
+	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.textreader.Charset.escapeChar
 	 * 
 	 * @param line	A line of text possibly containing characters with diacritics
 	 * composed, precomposed, or escaped.
@@ -245,15 +246,19 @@ public class Charset {
 	 * escaped character (to use as an offset when scanning through the string).
 	 */
 	public static Tuple2<String, Integer> readCharAt(String line, int offset) {
-		StringBuilder sb = new StringBuilder();
 		int lineLen = line.length();
+		if (offset >= lineLen) throw new RuntimeException("offset must be less than the line length");
+		
+		if (lineLen - offset >= 2 && line.substring(offset, offset + 2).equals("\\\\"))
+			return makeTuple2("\\\\", 2); // "\\" is its own character (for "\"), not an escaped diacritic
+		
+		StringBuilder sb = new StringBuilder();
 
 		// get any escape prefixes characters
 		int i = offset;
 		while (i < lineLen && line.substring(i, i + 1).equals("\\")) {
 			if (i + 1 >= lineLen) throw new RuntimeException("expected more after escape symbol, but found nothing: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 10), i) + "[" + line.substring(i) + "]");
 			String escape = line.substring(i, i + 2);
-			if (escape.equals("\\\\")) break; // "\\" is its own character (for "\"), not an escaped diacritic
 			sb.append(escape);
 			i += 2; // accept the 2-character escape sequence
 		}
@@ -273,7 +278,7 @@ public class Charset {
 		}
 
 		sb.append(getOrElse(Charset.PRECOMPOSED_TO_ESCAPED_MAP, letter, letter)); // turn any precomposed letters into escaped letters
-		return Tuple2.makeTuple2(sb.toString(), i - offset);
+		return makeTuple2(sb.toString(), i - offset);
 	}
 	
 
@@ -301,6 +306,8 @@ public class Charset {
 
 	public static String removeAnyDiacriticFromChar(String c) {
 		String escaped = escapeChar(c);
+		if (escaped.equals("\\\\")) return escaped;
+		
 		while (escaped.charAt(0) == '\\') {
 		  escaped = escaped.substring(2);
 		}
