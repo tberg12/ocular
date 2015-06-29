@@ -23,6 +23,7 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveNonstandardCharactersTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ReplaceSomeTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
@@ -59,8 +60,11 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Use separate character type for long s.")
 	public static boolean insertLongS = false;
 	
-	@Option(gloss = "Keep diacritics?")
-	public static boolean keepDiacritics = true;
+	@Option(gloss = "Remove diacritics?")
+	public static boolean removeDiacritics = false;
+
+	@Option(gloss = "Remove non-standard characters?")
+	public static boolean removeNonstandardChars = false;
 
 	@Option(gloss = "Maximum number of lines to use from corpus.")
 	public static int maxLines = 1000000;
@@ -159,7 +163,8 @@ public class CodeSwitchLMTrainMain implements Runnable {
 			TextReader textReader = new BasicTextReader();
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
 			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
-			if (!keepDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+			if (removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+			if (removeNonstandardChars) textReader = new RemoveNonstandardCharactersTextReader(textReader);
 			
 			pathsReadersAndPriors.put(language, makeTuple2(makeTuple2(filepath, textReader), prior));
 		}

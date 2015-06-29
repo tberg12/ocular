@@ -12,6 +12,7 @@ import java.util.zip.GZIPOutputStream;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveNonstandardCharactersTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
@@ -29,8 +30,11 @@ public class LMTrainMain implements Runnable {
 	@Option(gloss = "Use separate character type for long s.")
 	public static boolean insertLongS = false;
 	
-	@Option(gloss = "Keep diacritics?")
-	public static boolean keepDiacritics = true;
+	@Option(gloss = "Remove diacritics?")
+	public static boolean removeDiacritics = true;
+
+	@Option(gloss = "Remove non-standard characters?")
+	public static boolean removeNonstandardChars = false;
 
 	@Option(gloss = "Maximum number of lines to use from corpus.")
 	public static int maxLines = 1000000;
@@ -55,7 +59,8 @@ public class LMTrainMain implements Runnable {
 		
 		TextReader textReader = new BasicTextReader();
 		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
-		if(!keepDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+		if(removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+		if (removeNonstandardChars) textReader = new RemoveNonstandardCharactersTextReader(textReader);
 		NgramLanguageModel lm = NgramLanguageModel.buildFromText(textPath, maxLines, charN, LMType.KNESER_NEY, power, textReader);
 		writeLM(lm, lmPath);
 	}

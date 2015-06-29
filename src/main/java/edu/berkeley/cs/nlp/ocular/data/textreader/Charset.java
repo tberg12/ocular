@@ -18,7 +18,7 @@ public class Charset {
 
 	public static final String SPACE = " ";
 	public static final String HYPHEN = "-";
-	public static final String LONG_S = "\u017F";
+	public static final String LONG_S = "\u017F"; // ſ
 	/**
 	 * Punctuation symbols that should be made available for any language, 
 	 * regardless of whether they are seen in the language model training 
