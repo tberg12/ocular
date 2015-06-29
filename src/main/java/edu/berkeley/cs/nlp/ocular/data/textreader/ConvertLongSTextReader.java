@@ -17,7 +17,6 @@ public class ConvertLongSTextReader implements TextReader {
 	public List<String> readCharacters(String line) {
 		List<String> chars = new ArrayList<String>();
 		for (String c : delegate.readCharacters(line)) {
-			if (c.equals("|")) c = "/"; // get rid of pipe characters in preparation for use as long-s
 			chars.add(c);
 		}
 
@@ -31,7 +30,7 @@ public class ConvertLongSTextReader implements TextReader {
 				String next = chars.get(t + 1);
 				char nextWithoutDiacritics = next.charAt(next.length() - 1); // just the letter, which is the last char of the escaped string
 				if (t > 0 && chars.get(t - 1).equals(Charset.LONG_S) && nextWithoutDiacritics == 'i') {
-					// "|si": do nothing
+					// "ſsi": do nothing
 				}
 				else if (Character.isAlphabetic(nextWithoutDiacritics)) {
 					chars.set(t, Charset.LONG_S);
