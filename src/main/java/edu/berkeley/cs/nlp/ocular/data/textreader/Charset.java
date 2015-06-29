@@ -29,7 +29,7 @@ public class Charset {
 	 * Punctuation is anything that is not alphabetic or a digit.
 	 */
 	public static boolean isPunctuation(char c) {
-		return !Character.isAlphabetic(c) && !Character.isDigit(c);
+		return !Character.isWhitespace(c) && !Character.isAlphabetic(c) && !Character.isDigit(c);
 	}
 	public static boolean isPunctuationChar(String s) {
 		for (char c: removeAnyDiacriticFromChar(s).toCharArray())
