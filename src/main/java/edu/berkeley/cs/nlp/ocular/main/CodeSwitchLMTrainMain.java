@@ -20,7 +20,7 @@ import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.CharsetHelper;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ReplaceSomeTextReader;
@@ -93,6 +93,13 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		charIndexer.lock();
 
 		System.out.println("pKeepSameLanguage = " + pKeepSameLanguage);
+		double priorSum = 0.0;
+		for(String language: lmsAndPriors.keySet())
+			priorSum += lmsAndPriors.get(language)._2;
+		StringBuilder priorsSb = new StringBuilder("Language priors: ");
+		for(String language: lmsAndPriors.keySet())
+			priorsSb.append(language).append(" -> ").append(lmsAndPriors.get(language)._2 / priorSum).append(", ");
+		System.out.println(priorsSb.substring(0, priorsSb.length() - 2));
 		System.out.println("charN = " + charN);
 
 		CodeSwitchLanguageModel codeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, pKeepSameLanguage, charN);
@@ -204,6 +211,12 @@ public class CodeSwitchLMTrainMain implements Runnable {
 				for (String line : f.readLines(file.getPath())) {
 					if (allChars.size() >= charsToTake) break outer;
 					List<String> chars = textReader.readCharacters(line + " ");
+					
+					for (String c: chars) {
+						Charset.escapeChar(c);
+						Charset.unescapeChar(c);
+					}
+					
 					allChars.addAll(chars);
 				}
 			}

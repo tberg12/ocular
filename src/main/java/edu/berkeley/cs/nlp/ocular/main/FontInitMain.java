@@ -19,6 +19,7 @@ import threading.BetterThreader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
@@ -60,7 +61,7 @@ public class FontInitMain implements Runnable {
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (fontPath == null) throw new IllegalArgumentException("-fontPath not set");
 		
-		final NgramLanguageModel lm = LMTrainMain.readLM(lmPath);
+		final LanguageModel lm = readLM(lmPath);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		final PixelType[][][][] fontPixelData = FontRenderer.getRenderedFont(charIndexer, CharacterTemplate.LINE_HEIGHT);
@@ -88,6 +89,25 @@ public class FontInitMain implements Runnable {
 		FontInitMain.writeFont(font, fontPath);
 	}
 	
+	public static LanguageModel readLM(String lmPath) {
+		LanguageModel lm = null;
+		try {
+			File file = new File(lmPath);
+			if (!file.exists()) {
+				System.out.println("Serialized lm file " + lmPath + " not found");
+				return null;
+			}
+			FileInputStream fileIn = new FileInputStream(file);
+			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
+			lm = (LanguageModel) in.readObject();
+			in.close();
+			fileIn.close();
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+		return lm;
+	}
+
 	private static PixelType[][][] buildFAndBarFontPixelData(Indexer<String> charIndexer, PixelType[][][][] fontPixelData) {
 		List<PixelType[][]> fAndBarFontPixelData = new ArrayList<PixelType[][]>();
 		if (charIndexer.contains("f")) {

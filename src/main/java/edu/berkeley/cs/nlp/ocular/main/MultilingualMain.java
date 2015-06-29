@@ -83,13 +83,13 @@ public class MultilingualMain implements Runnable {
 	public static int paddingMaxWidth = 5;
 
 	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
-	public static boolean markovVerticalOffset = true;
+	public static boolean markovVerticalOffset = false;
 
 	@Option(gloss = "Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
 	public static int beamSize = 10;
 
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
-	public static boolean learnFont = true;
+	public static boolean learnFont = false;
 
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 4;
@@ -133,8 +133,7 @@ public class MultilingualMain implements Runnable {
 	public void run() {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
-		if (outputLmPath == null) throw new IllegalArgumentException("-outputLmPath not set");
-		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
+		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 		if (initLmPath == null) throw new IllegalArgumentException("-initLmPath not set");
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
 		
@@ -302,6 +301,8 @@ public class MultilingualMain implements Runnable {
 
 		if (learnFont) {
 			FontInitMain.writeFont(font, outputFontPath);
+		}
+		if (learnFont && outputLmPath != null) {
 			CodeSwitchLMTrainMain.writeLM(lm, outputLmPath);
 		}
 

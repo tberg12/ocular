@@ -61,9 +61,9 @@ public class CorpusCounter {
    * Count either a file or all the files/subdirectories recursively in a directory
    */
   public void countRecursive(String name, int maxNumLines, Indexer<String> charIndexer, TextReader textReader) {
-	  System.out.println("CorpusCounter.countRecursive: "+name);
+	  System.out.println("CorpusCounter:  Count recursive starting from "+name);
 	  for(File file : FileUtil.recursiveFiles(name)) {
-		  System.out.println("    CorpusCounter.countRecursive: "+file);
+		  System.out.println("    counting file: "+file);
 		  count(file.getPath(), maxNumLines, charIndexer, textReader);
 	  }
   }

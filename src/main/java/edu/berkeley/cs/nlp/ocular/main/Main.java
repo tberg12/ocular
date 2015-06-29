@@ -74,7 +74,7 @@ public class Main implements Runnable {
 	public static int beamSize = 10;
 
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
-	public static boolean learnFont = true;
+	public static boolean learnFont = false;
 
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 4;
@@ -112,7 +112,7 @@ public class Main implements Runnable {
 	public void run() {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
-		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
+		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
 		
