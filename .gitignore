@@ -2,9 +2,12 @@
 /lm/
 /train_output/
 /transcribe_output/
+/cs_train_output/
+/cs_transcribe_output/
 /project/
 /test_img/
 /texts/
+/replace/
 
 *.class
 *.log
@@ -26,6 +29,7 @@ project/plugins/project/
 .classpath
 .cache
 .cache-main
+.cache-tests
 .settings/
 .worksheet
 
