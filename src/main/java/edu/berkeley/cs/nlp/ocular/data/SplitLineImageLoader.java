@@ -55,7 +55,7 @@ public class SplitLineImageLoader {//implements DatasetLoader {
 						}
 					}
 					catch (Exception e) {
-						throw new RuntimeException("Couldn't read doc from: " + lineImageFile);
+						throw new RuntimeException("Couldn't read line image from: " + lineImageFile);
 					}
 				}
 				//f.writeImage("/Users/dhg/Desktop/"+(new File(lineImagePaths[0]).getName()), Visualizer.renderLineExtraction(observations));
@@ -110,25 +110,5 @@ public class SplitLineImageLoader {//implements DatasetLoader {
 		}
 
 	}
-
-	//	public SplitLineImageLoader(String inputPath, int lineHeight) {
-	//	
-	//	}
-	//
-	//	public List<Document> readDataset() {
-	//		System.out.println("Extracting text line images from dataset..");
-	//		final String[] dirList = getDocumentBaseNames();
-	//		final Document[] docs = new Document[dirList.length];
-	//		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
-	//			public void call(Integer i, Object ignore) {
-	//				docs[i] = readDocument(dirList[i]);
-	//			}
-	//		};
-	//		BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numThreads);
-	//		for (int i = 0; i < dirList.length; ++i)
-	//			threader.addFunctionArgument(i);
-	//		threader.run();
-	//		return Arrays.asList(docs);
-	//	}
 
 }

@@ -1,8 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import indexer.Indexer;
 
 import java.io.File;
@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import threading.BetterThreader;
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
+import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.SplitLineImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
@@ -43,7 +43,6 @@ import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
@@ -53,7 +52,7 @@ public class MultilingualMain implements Runnable {
 	@Option(gloss = "Path of the directory that contains the input document images.")
 	public static String inputPath = null; //"test_img";
 
-	@Option(gloss = "Number of training documents to use.")
+	@Option(gloss = "Number of training documents to use. Ignore or use -1 to use all documents.")
 	public static int numDocs = Integer.MAX_VALUE;
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
@@ -149,24 +148,24 @@ public class MultilingualMain implements Runnable {
 
 		List<Document> documents = loadDocuments();
 
-		System.out.println("Loading LM..");
+		System.out.println("Loading initial LM from " + initLmPath);
 		Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> lmAndTransModel = getForwardTransitionModel(initLmPath);
 		CodeSwitchLanguageModel lm = lmAndTransModel._1;
 		SparseTransitionModel forwardTransitionModel = lmAndTransModel._2;
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
 
-		System.out.println("Characters: " + charIndexer.getObjects());
+		List<String> allCharacters = makeList(charIndexer.getObjects());
+		Collections.sort(allCharacters);
+		System.out.println("Characters: " + allCharacters);
 		System.out.println("Num characters: " + charIndexer.size());
 
-		System.out.println("Loading font initializer..");
+		System.out.println("Loading font initializer from " + initFontPath);
 		Map<String, CharacterTemplate> font = FontInitMain.readFont(initFontPath);
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
 
 		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
-		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvalsPre = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
-		List<Tuple3<Double, String, String>> allWordPerplexities = new ArrayList<Tuple3<Double, String, String>>();
 
 		if (!learnFont) numEMIters = 1;
 		
@@ -174,10 +173,12 @@ public class MultilingualMain implements Runnable {
 		Collections.sort(languages);
 
 		for (int iter = 0; iter < numEMIters; ++iter) {
-			System.out.println("Iteration: " + iter + "");
+			if (!learnFont) System.out.println("Learning iteration: " + iter);
+			else System.out.println("Transcribing (learnFont = false)");
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 
+			// The number of characters assigned to a particular language (to re-estimate language probabilities).
 			Map<String, Integer> languageCounts = new HashMap<String, Integer>();
 			for (String l : languages)
 				languageCounts.put(l, 1); // add-one smooth
@@ -210,7 +211,9 @@ public class MultilingualMain implements Runnable {
 						batchPixels[line - startLine] = pixels[line];
 					}
 
-					final EmissionModel emissionModel = (markovVerticalOffset ? new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+					final EmissionModel emissionModel = (markovVerticalOffset ? 
+							new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : 
+							new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
 					long emissionCacheNanoTime = System.nanoTime();
 					emissionModel.rebuildCache();
 					overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
@@ -222,7 +225,7 @@ public class MultilingualMain implements Runnable {
 					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 					System.out.println("Decode: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 
-					if (iter < numEMIters - 1) {
+					if (learnFont /*&& iter + 1 < numEMIters*/) {
 						nanoTime = System.nanoTime();
 						BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
 							public void call(Integer line, Object ignore) {
@@ -251,12 +254,12 @@ public class MultilingualMain implements Runnable {
 						decodeCharStates[i][j] = (TransitionState) decodeStates[i][j];
 				}
 
-				printTranscription(iter, learnFont, "", doc, allEvals, decodeCharStates, charIndexer, outputPath, lm, allWordPerplexities, languageCounts);
+				printTranscription(iter, learnFont, "", doc, allEvals, decodeCharStates, charIndexer, outputPath, lm, languageCounts);
 			}
 
 			// m-step
 
-			if (iter < numEMIters - 1) {
+			if (learnFont /*&& iter + 1 < numEMIters*/) {
 				long nanoTime = System.nanoTime();
 				{
 					final int iterFinal = iter;
@@ -302,16 +305,9 @@ public class MultilingualMain implements Runnable {
 			CodeSwitchLMTrainMain.writeLM(lm, outputLmPath);
 		}
 
-		if (!allEvalsPre.isEmpty()) {
-			printEvaluation(allEvals, outputPath + "/eval.pre.txt");
-		}
 		if (!allEvals.isEmpty()) {
 			printEvaluation(allEvals, outputPath + "/eval.txt");
 		}
-
-		Collections.sort(allWordPerplexities, new Tuple3.DefaultLexicographicTuple3Comparator<Double, String, String>());
-		for (Tuple3<Double, String, String> t : allWordPerplexities)
-			System.out.println(t._1 + "\t" + t._2 + "\t" + t._3);
 
 		System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
 		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime) / 1e9 + "s");
@@ -319,7 +315,7 @@ public class MultilingualMain implements Runnable {
 
 	private Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> getForwardTransitionModel(String lmFilePath) {
 		CodeSwitchLanguageModel codeSwitchLM = CodeSwitchLMTrainMain.readLM(lmFilePath);
-		System.out.println("Loaded CodeSwitchLanguageModel from " + lmFilePath + "");
+		System.out.println("Loaded CodeSwitchLanguageModel from " + lmFilePath);
 		for (String lang : codeSwitchLM.languages()) {
 			List<String> chars = new ArrayList<String>();
 			for (int i : codeSwitchLM.get(lang).getActiveCharacters())
@@ -329,7 +325,7 @@ public class MultilingualMain implements Runnable {
 		}
 
 		if (markovVerticalOffset)
-			throw new RuntimeException("multilingual markov-vertical-offset transition model not supported");
+			throw new RuntimeException("Code-switching for the markov-vertical-offset transition model not currently supported.");
 		else
 			return makeTuple2(codeSwitchLM, (SparseTransitionModel) new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct));
 	}
@@ -362,7 +358,7 @@ public class MultilingualMain implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, boolean learnFont, String nameAdj, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, String outputPath, CodeSwitchLanguageModel lm, List<Tuple3<Double, String, String>> allWordPerplexities, Map<String, Integer> languageCounts) {
+	private static void printTranscription(int iter, boolean learnFont, String nameAdj, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, String outputPath, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
 		final String[][] text = doc.loadLineText();
 		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
 
@@ -381,7 +377,14 @@ public class MultilingualMain implements Runnable {
 		}
 
 		StringBuffer outputBuffer = new StringBuffer();
+		outputBuffer.append("MODEL OUTPUT\n\n");
+		for (int line = 0; line < decodeStates.length; ++line) {
+			outputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
+		}
+		outputBuffer.append("\n\n\n");
+
 		if (text != null) {
+			outputBuffer.append("MODEL OUTPUT vs. GOLD OUTPUT\n\n");
 			// Evaluate against gold-transcribed data (given as "text")
 			List<String>[] goldCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
@@ -405,18 +408,13 @@ public class MultilingualMain implements Runnable {
 			}
 			outputBuffer.append(Evaluator.renderEval(evals));
 		}
-		else {
-			for (int line = 0; line < decodeStates.length; ++line) {
-				outputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
-			}
-		}
 
-		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), lm, allWordPerplexities, languageCounts);
+		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), lm, languageCounts);
 		System.out.println(outputBuffer.toString());
 		f.writeString(outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + "." + (learnFont ? "iter-" + iter : "") + nameAdj + ".html", outputBuffer.toString());
 	}
 
-	private static void printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, StringBuffer outputBuffer, String imgFilename, CodeSwitchLanguageModel lm, List<Tuple3<Double, String, String>> allWordPerplexities, Map<String, Integer> languageCounts) {
+	private static void printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, StringBuffer outputBuffer, String imgFilename, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
 		outputBuffer.append("\n\n\n\n\n");
 		outputBuffer.append("===============================================");
 		outputBuffer.append("\n\n\n\n\n");
@@ -519,12 +517,14 @@ public class MultilingualMain implements Runnable {
 			public int compare(Document o1, Document o2) {
 				return o1.baseName().compareTo(o2.baseName());
 			}
-
 			public boolean equals(Object obj) {
 				return false;
 			}
 		});
-		for (int docNum = 0; docNum < Math.min(lazyDocs.size(), numDocs); ++docNum) {
+		
+		int numDocsToUse = Math.min(lazyDocs.size(), numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
+		System.out.println("Loading " + numDocsToUse + " documents");
+		for (int docNum = 0; docNum < numDocsToUse; ++docNum) {
 			Document lazyDoc = lazyDocs.get(docNum);
 			String baseName = lazyDoc.baseName();
 			String preext = FileUtil.withoutExtension(baseName);
@@ -533,10 +533,6 @@ public class MultilingualMain implements Runnable {
 			System.out.println("Loading data for " + inputPath + "/" + baseName);
 			if (existingExtractionsPath == null) {
 				documents.add(lazyDoc);
-				//String fullDocPath = outputPath + "/" + preext + "-line_extract." + extension;
-				//final PixelType[][][] pixels = lazyDoc.loadLineImages();
-				//System.out.println("Printing line extraction " + fullDocPath);
-				//f.writeImage(fullDocPath, Visualizer.renderLineExtraction(pixels));
 			}
 			else {
 				String existingExtractionsDir = existingExtractionsPath + "/line_extract/" + preext + "/";
@@ -554,8 +550,6 @@ public class MultilingualMain implements Runnable {
 				for (int i = 0; i < lineImageFiles.length; ++i)
 					lineImagePaths[i] = existingExtractionsDir + lineImageFiles[i].getName();
 				Document doc = new SplitLineImageLoader.SplitLineImageDocument(lineImagePaths, baseName, CharacterTemplate.LINE_HEIGHT);
-				//doc.loadLineImages();
-				//doc.loadLineText();
 				documents.add(doc);
 			}
 		}
@@ -564,7 +558,7 @@ public class MultilingualMain implements Runnable {
 
 	private CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
-		for (int c = 0; c < templates.length; ++c) {
+		for (int c = 0; c < charIndexer.size(); ++c) {
 			templates[c] = font.get(charIndexer.getObject(c));
 		}
 		return templates;
