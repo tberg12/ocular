@@ -45,7 +45,8 @@ public class Charset {
 	public static final String BREVE_COMBINING = "\u0306";
 	public static final String DIAERESIS_COMBINING = "\u0308"; // == umlaut
 	public static final String CEDILLA_COMBINING = "\u0327";
-	public static final Set<String> COMBINING_CHARS = makeSet(GRAVE_COMBINING, ACUTE_COMBINING, CIRCUMFLEX_COMBINING, TILDE_COMBINING, MACRON_COMBINING, BREVE_COMBINING, DIAERESIS_COMBINING, CEDILLA_COMBINING);
+	public static final String MACRON_BELOW_COMBINING = "\0331";
+	public static final Set<String> COMBINING_CHARS = makeSet(GRAVE_COMBINING, ACUTE_COMBINING, CIRCUMFLEX_COMBINING, TILDE_COMBINING, MACRON_COMBINING, BREVE_COMBINING, DIAERESIS_COMBINING, CEDILLA_COMBINING, MACRON_BELOW_COMBINING);
 	public static final String COMBINING_CHARS_RANGE_START = "\u0300";
 	public static final String COMBINING_CHARS_RANGE_END = "\u036F";
 
@@ -61,7 +62,8 @@ public class Charset {
 	public static final String BREVE_ESCAPE = "\\v";
 	public static final String DIAERESIS_ESCAPE = "\\\""; // == umlaut
 	public static final String CEDILLA_ESCAPE = "\\c";
-	public static final Set<String> ESCAPE_CHARS = makeSet(GRAVE_ESCAPE, ACUTE_ESCAPE, CIRCUMFLEX_ESCAPE, TILDE_ESCAPE, MACRON_ESCAPE, BREVE_ESCAPE, DIAERESIS_ESCAPE, CEDILLA_ESCAPE);
+	public static final String MACRON_BELOW_ESCAPE = "\\_";
+	public static final Set<String> ESCAPE_CHARS = makeSet(GRAVE_ESCAPE, ACUTE_ESCAPE, CIRCUMFLEX_ESCAPE, TILDE_ESCAPE, MACRON_ESCAPE, BREVE_ESCAPE, DIAERESIS_ESCAPE, CEDILLA_ESCAPE, MACRON_BELOW_ESCAPE);
 
 	public static String combiningToEscape(String combiningChar) {
 		if (GRAVE_COMBINING.equals(combiningChar))
@@ -80,6 +82,8 @@ public class Charset {
 			return DIAERESIS_ESCAPE;
 		else if (CEDILLA_COMBINING.equals(combiningChar))
 			return CEDILLA_ESCAPE;
+		else if (MACRON_BELOW_COMBINING.equals(combiningChar))
+			return MACRON_BELOW_ESCAPE;
 		else
 			throw new RuntimeException("Unrecognized combining char: [" + combiningChar + "] (" + StringHelper.toUnicode(combiningChar) + ")");
 	}
@@ -101,6 +105,8 @@ public class Charset {
 			return DIAERESIS_COMBINING;
 		else if (CEDILLA_ESCAPE.equals(escSeq))
 			return CEDILLA_COMBINING;
+		else if (MACRON_BELOW_ESCAPE.equals(escSeq))
+			return MACRON_BELOW_COMBINING;
 		else
 			throw new RuntimeException("Unrecognized escape sequence: [" + escSeq + "]");
 	}
@@ -196,7 +202,6 @@ public class Charset {
 		PRECOMPOSED_TO_ESCAPED_MAP.put("Ç", "\\cC"); // \cC
 
 		// note: superscript is marked \s as in superscript o = \so and superscript r is \sr
-		//note \_ refers to an underscore
 		//note for "breve" (u over letter) mark \va
 	}
 
