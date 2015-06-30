@@ -4,9 +4,10 @@
 /transcribe_output/
 /cs_train_lineex/
 /cs_train_output/
+/cs_train_output.txt
 /cs_transcribe_lineex/
 /cs_transcribe_output/
-/project/
+/cs_transcribe_output.txt
 /test_img/
 /texts/
 /replace/
@@ -14,10 +15,10 @@
 *.class
 *.log
 
+/ocular-*.jar
 /lib
 
 # sbt specific
-build.sbt
 dist/*
 target/
 lib_managed/
