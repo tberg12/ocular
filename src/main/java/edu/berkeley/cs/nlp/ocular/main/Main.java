@@ -165,8 +165,8 @@ public class Main implements Runnable {
 		
 		if (!learnFont) numEMIters = 0;
 		
-		for (int iter = 0; iter < numEMIters + 1; ++iter) {
-			if (iter < numEMIters) System.out.println("Training iteration: " + (iter+1));
+		for (int iter = 1; iter <= numEMIters || (iter == 1 && numEMIters == 0); ++iter) {
+			if (iter <= numEMIters) System.out.println("Training iteration: " + iter);
 			else if (learnFont) System.out.println("Done with EM ("+numEMIters+" iterations).  Now transcribing the training data...");
 			else System.out.println("Transcribing (learnFont = false).");
 
@@ -210,7 +210,7 @@ public class Main implements Runnable {
 					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 					System.out.println("Decode: " + (System.nanoTime() - nanoTime)/1000000 + "ms");
 
-					if (iter < numEMIters) {
+					if (iter <= numEMIters) {
 						nanoTime = System.nanoTime();
 						BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer line, Object ignore){
 							emissionModel.incrementCounts(line, batchDecodeStates[line], batchDecodeWidths[line]);
@@ -235,7 +235,7 @@ public class Main implements Runnable {
 
 			// m-step
 
-			if (iter < numEMIters) {
+			if (iter <= numEMIters) {
 				long nanoTime = System.nanoTime();
 				{
 					final int iterFinal = iter;
@@ -326,7 +326,7 @@ public class Main implements Runnable {
 			}
 
 			Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
-			if (iter == numEMIters) {
+			if (iter > numEMIters) {
 				allEvals.add(Tuple2.makeTuple2(doc.baseName(), evals));
 			}
 			System.out.println(guessAndGoldOut.toString()+Evaluator.renderEval(evals));

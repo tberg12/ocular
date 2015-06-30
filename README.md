@@ -52,7 +52,7 @@ There are three ways to use this repository:
  
   This creates an executable script `target/start` that can be run like:
   
-        export JAVA_OPTS="-mx7g"
+        export JAVA_OPTS="-mx7g"     # Increase the available memory
         target/start edu.berkeley.cs.nlp.ocular.main.Main [options...]
 
 3. Use a dependency management system like Maven or SBT:
@@ -98,7 +98,7 @@ There are three ways to use this repository:
           -outputFontPath font/trained.fontser \
           -outputPath train_output
     
-  Probably need `-mx7g`.  For extra speed, use `-emissionEngine OPENCL` if you have a Mac, or `-emissionEngine CUDA` if you have Cuda installed.
+  For extra speed, use `-emissionEngine OPENCL` if you have a Mac, or `-emissionEngine CUDA` if you have Cuda installed.
     
 4. Transcribe some pages:
 
