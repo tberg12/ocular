@@ -71,7 +71,7 @@ It is described in the following publications:
 
 1. Train a code-switching language model:
 
-  Put some text in a folders called `texts/spanish/`, `texts/latin/`, and `texts/nahuatl/`.
+  Put some text in a folders called `texts/spanish/`, `texts/latin/`, and `texts/nahuatl/`.  (For example, [Don Quijote](https://www.gutenberg.org/cache/epub/2000/pg2000.txt), [Meditationes de prima philosophia](https://www.gutenberg.org/cache/epub/23306/pg23306.txt), and [Ancient Nahuatl Poetry](https://www.gutenberg.org/cache/epub/12219/pg12219.txt)).
     
       edu.berkeley.cs.nlp.ocular.main.CodeSwitchLMTrainMain \
         -lmPath lm/cs_lm.lmser \
