@@ -75,7 +75,7 @@ There are three ways to use this repository:
 
 1. Train a language model:
 
-  Put some text files in a folder called `texts/english/`.  (Or use, for example, `-textPath LICENSE.txt`).
+  Put some text files in a folder called `texts/english/`.  (For example, [download a book](http://www.gutenberg.org/cache/epub/2600/pg2600.txt)).
     
       target/start edu.berkeley.cs.nlp.ocular.main.LMTrainMain \
         -lmPath lm/my_lm.lmser \

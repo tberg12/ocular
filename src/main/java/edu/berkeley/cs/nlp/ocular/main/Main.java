@@ -331,7 +331,7 @@ public class Main implements Runnable {
 			}
 			System.out.println(guessAndGoldOut.toString()+Evaluator.renderEval(evals));
 
-			f.writeString(outputPath+"/"+doc.baseName()+".iter-"+iter+".txt", guessAndGoldOut.toString()+Evaluator.renderEval(evals));
+			f.writeString(outputPath+"/"+doc.baseName()+(iter <= numEMIters ? "_iter-" + iter : "")+".txt", guessAndGoldOut.toString()+Evaluator.renderEval(evals));
 		} else {
 			StringBuffer guessOut = new StringBuffer();
 			for (int line=0; line<decodeStates.length; ++line) {
@@ -342,7 +342,7 @@ public class Main implements Runnable {
 			}
 			System.out.println(guessOut.toString());
 
-			f.writeString(outputPath+"/"+doc.baseName()+".iter-"+iter+".txt", guessOut.toString());
+			f.writeString(outputPath+"/"+doc.baseName()+(iter <= numEMIters ? "_iter-" + iter : "")+".txt", guessOut.toString());
 		}
 	}
 

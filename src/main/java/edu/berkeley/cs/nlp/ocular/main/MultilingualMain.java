@@ -414,7 +414,7 @@ public class MultilingualMain implements Runnable {
 			outputBuffer.append(Evaluator.renderEval(evals));
 		}
 
-		String outputFilename = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (iter < numEMIters ? "_iter-" + iter : "") + ".html";
+		String outputFilename = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (iter <= numEMIters ? "_iter-" + iter : "") + ".html";
 		new File(outputFilename).getParentFile().mkdirs();
 		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), outputFilename, lm, languageCounts);
 		System.out.println(outputBuffer.toString());
