@@ -38,9 +38,9 @@ There are three ways to use this repository:
         cd ocular
         ./compile.sh
 
-  This creates a jar file `ocular-0.2-SNAPSHOT_with-dependencies.jar` that can be run like:
+  This creates a jar file `ocular-0.2-SNAPSHOT-with_dependencies.jar` that can be run like:
   
-        java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.Main -jar ocular-0.2-SNAPSHOT_with-dependencies.jar [options...]
+        java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.Main -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
 
   This jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
 
@@ -48,10 +48,11 @@ There are three ways to use this repository:
 
         git clone https://github.com/tberg12/ocular.git
         cd ocular
-        sbt start-script
+        ./compile.sh
  
   This creates an executable script `target/start` that can be run like:
   
+        export JAVA_OPTS="-mx7g"
         target/start edu.berkeley.cs.nlp.ocular.main.Main [options...]
 
 3. Use a dependency management system like Maven or SBT:
@@ -70,7 +71,7 @@ There are three ways to use this repository:
 
 ### Running the full system
 
-**Note:** The following instructions assume that you used "option 2" above to create an executable script.  If, instead, you would like to use "option 1" to create a jar, simply replace `target/start MAIN-CLASS` in each stage below with `java -Done-jar.main.class=MAIN-CLASS -jar ocular-0.2-SNAPSHOT_with-dependencies.jar`.
+**Note:** The following instructions assume that you used "option 2" above to create an executable script.  If, instead, you would like to use "option 1" to create a jar, simply replace `target/start MAIN-CLASS` in each stage below with `java -Done-jar.main.class=MAIN-CLASS -jar ocular-0.2-SNAPSHOT-with_dependencies.jar`.
 
 1. Train a language model:
 
