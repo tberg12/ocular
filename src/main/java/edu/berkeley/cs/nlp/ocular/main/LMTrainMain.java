@@ -6,13 +6,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.ExplicitCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveNonstandardCharactersTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
@@ -34,7 +35,7 @@ public class LMTrainMain implements Runnable {
 	public static boolean removeDiacritics = true;
 
 	@Option(gloss = "Remove non-standard characters?")
-	public static boolean removeNonstandardChars = false;
+	public static Set<String> explicitCharacterSet = null;
 
 	@Option(gloss = "Maximum number of lines to use from corpus.")
 	public static int maxLines = 1000000;
@@ -58,7 +59,7 @@ public class LMTrainMain implements Runnable {
 		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
 		TextReader textReader = new BasicTextReader();
-		if (removeNonstandardChars) textReader = new RemoveNonstandardCharactersTextReader(textReader);
+		if (explicitCharacterSet != null) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
 		if(removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
 

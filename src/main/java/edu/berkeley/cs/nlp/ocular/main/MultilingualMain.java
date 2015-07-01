@@ -55,7 +55,7 @@ public class MultilingualMain implements Runnable {
 	@Option(gloss = "Number of training documents to use. Ignore or use -1 to use all documents.")
 	public static int numDocs = Integer.MAX_VALUE;
 
-	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
+	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 	public static String outputPath = null; //"output_dir";
 
 	@Option(gloss = "Path to write the learned language model file to. (Only if learnFont is set to true.)")
@@ -503,7 +503,7 @@ public class MultilingualMain implements Runnable {
 				outputBuffer.append("<font color=\"" + c.getValue() + "\">" + c.getKey() + "</font></br>\n");
 			}
 
-			outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, outputFilename) + "\">\n");
+			outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(outputFilename).getParent()) + "\">\n");
 			outputBuffer.append("</td></tr></table>\n");
 			outputBuffer.append("</body></html>\n");
 			outputBuffer.append("\n\n\n");

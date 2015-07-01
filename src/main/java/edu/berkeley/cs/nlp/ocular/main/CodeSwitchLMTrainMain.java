@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -22,8 +23,8 @@ import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.ExplicitCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveNonstandardCharactersTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ReplaceSomeTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
@@ -64,7 +65,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	public static boolean removeDiacritics = false;
 
 	@Option(gloss = "Remove non-standard characters?")
-	public static boolean removeNonstandardChars = false;
+	public static Set<String> explicitCharacterSet = null;
 
 	@Option(gloss = "Maximum number of lines to use from corpus.")
 	public static int maxLines = 1000000;
@@ -161,7 +162,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 					+ (languageAltSpellPathMap.keySet().contains(language) ? ", alternate spelling replacement rules in " + languageAltSpellPathMap.get(language) : ""));
 			
 			TextReader textReader = new BasicTextReader();
-			if (removeNonstandardChars) textReader = new RemoveNonstandardCharactersTextReader(textReader);
+			if (explicitCharacterSet != null) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
 			if (removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));

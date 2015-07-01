@@ -125,7 +125,7 @@ There are three ways to use this repository:
 
         target/start edu.berkeley.cs.nlp.ocular.main.FontInitMain \
           -lmPath lm/cs_lm.lmser \
-          -fontPath font/init_cs.fontser
+          -fontPath font/cs_init.fontser
 
 3. Train a font:
 
@@ -137,7 +137,8 @@ There are three ways to use this repository:
           -initLmPath lm/cs_lm.lmser \
           -outputFontPath font/cs_trained.fontser \
           -outputLmPath lm/cs_trained.lmser \
-          -outputPath cs_train_output
+          -outputPath cs_train_output \
+          -lineExtractionOutputPath cs_train_output
     
   Probably need `-mx7g`.  For extra speed, use `-emissionEngine OPENCL` if you have a Mac, or `-emissionEngine CUDA` if you have Cuda installed.
     
@@ -147,7 +148,8 @@ There are three ways to use this repository:
           -inputPath test_img/multilingual \
           -initFontPath font/cs_trained.fontser \
           -initLmPath lm/cs_trained.lmser \
-          -outputPath cs_transcribe_output 
+          -outputPath cs_transcribe_output \
+          -lineExtractionOutputPath cs_transcribe_output
 
     
 

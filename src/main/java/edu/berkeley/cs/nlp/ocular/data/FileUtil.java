@@ -61,6 +61,13 @@ public class FileUtil {
 	}
 
 
+	/**
+	 * This will produce a result such that dir/result is the same file as fn1.
+	 * 
+	 * @param fn1
+	 * @param dir
+	 * @return
+	 */
 	public static String pathRelativeTo(String fn1, String dir) {
 		try {
 			String selfPath = new File(fn1).getCanonicalPath();

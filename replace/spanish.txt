@@ -23,4 +23,5 @@ v	u	5
 \'i	i	4
 \'o	o	4
 \'u	u	4
+ae	æ	2
 oracion	o\~ron	5
