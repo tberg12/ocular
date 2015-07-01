@@ -44,17 +44,17 @@ import fileio.f;
 public class CodeSwitchLMTrainMain implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")
-	public static String lmPath = null; //"lm/cs_lm.lmser";
+	public static String lmPath = null;
 	
-	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.)")
-	public static double pKeepSameLanguage = 0.999999;
-
 	@Option(gloss = "Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: \"english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser\".  If spaces are used, be sure to wrap the whole string with \"quotes\".")
-	public static String textPaths = null; //"texts/test.txt";
+	public static String textPaths = null;
 	
 	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".")
 	public static String languagePriors = null;
 	
+	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.)")
+	public static double pKeepSameLanguage = 0.999999;
+
 	@Option(gloss = "Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". If spaces are used, be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
 	public static String alternateSpellingReplacementPaths = null;
 	
@@ -64,7 +64,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Remove diacritics?")
 	public static boolean removeDiacritics = false;
 
-	@Option(gloss = "Remove non-standard characters?")
+	@Option(gloss = "A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters.")
 	public static Set<String> explicitCharacterSet = null;
 
 	@Option(gloss = "Maximum number of lines to use from corpus.")
@@ -79,6 +79,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.")
 	public static long lmCharCount = -1;
 
+	
 	public static void main(String[] args) {
 		CodeSwitchLMTrainMain main = new CodeSwitchLMTrainMain();
 		OptionsParser parser = new OptionsParser();

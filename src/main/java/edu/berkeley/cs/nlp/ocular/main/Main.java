@@ -40,31 +40,28 @@ import fileio.f;
 public class Main implements Runnable {
 
 	@Option(gloss = "Path of the directory that contains the input document images.")
-	public static String inputPath = null; //"test_img";
-
-	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
-	public static String outputPath = null; //"output_dir";
-
-	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
-	public static String outputFontPath = null; //"font/trained.fontser";
-
+	public static String inputPath = null;
 
 	@Option(gloss = "Path to the language model file.")
-	public static String lmPath = null; //"lm/my_lm.lmser";
+	public static String lmPath = null;
 
 	@Option(gloss = "Path of the font initializer file.")
-	public static String initFontPath = null; //"font/init.fontser";
+	public static String initFontPath = null;
 
+	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
+	public static boolean learnFont = false;
+
+	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
+	public static String outputPath = null;
+
+	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
+	public static String outputFontPath = null;
+
+	@Option(gloss = "Number of iterations of EM to use for font learning.")
+	public static int numEMIters = 3;
 
 	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
 	public static double binarizeThreshold = 0.12;
-
-
-	@Option(gloss = "Min horizontal padding between characters in pixels. (Best left at default value: 1.)")
-	public static int paddingMinWidth = 1;
-
-	@Option(gloss = "Max horizontal padding between characters in pixels (Best left at default value: 5.)")
-	public static int paddingMaxWidth = 5;
 
 
 	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
@@ -72,12 +69,6 @@ public class Main implements Runnable {
 
 	@Option(gloss = "Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
 	public static int beamSize = 10;
-
-	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
-	public static boolean learnFont = false;
-
-	@Option(gloss = "Number of iterations of EM to use for font learning.")
-	public static int numEMIters = 3;
 
 
 	@Option(gloss = "Engine to use for inner loop of emission cache computation. DEFAULT: Uses Java on CPU, which works on any machine but is the slowest method. OPENCL: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
@@ -99,8 +90,16 @@ public class Main implements Runnable {
 	public static int decodeBatchSize = 32;
 
 
+	@Option(gloss = "Min horizontal padding between characters in pixels. (Best left at default value: 1.)")
+	public static int paddingMinWidth = 1;
+
+	@Option(gloss = "Max horizontal padding between characters in pixels (Best left at default value: 5.)")
+	public static int paddingMaxWidth = 5;
+
+	
 	public static enum EmissionCacheInnerLoopType {DEFAULT, OPENCL, CUDA};
 
+	
 	public static void main(String[] args) {
 		Main main = new Main();
 		OptionsParser parser = new OptionsParser();

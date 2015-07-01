@@ -20,7 +20,6 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
-import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
 import fig.OptionsParser;
@@ -28,10 +27,10 @@ import fig.OptionsParser;
 public class FontInitMain implements Runnable {
 
 	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
-	public static String lmPath = null; //"lm/my_lm.lmser";
+	public static String lmPath = null;
 
 	@Option(gloss = "Output font file path.")
-	public static String fontPath = null; //"font/init.fontser";
+	public static String fontPath = null;
 
 	@Option(gloss = "Number of threads to use.")
 	public static int numFontInitThreads = 8;

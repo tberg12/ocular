@@ -49,23 +49,11 @@ import fileio.f;
 
 public class MultilingualMain implements Runnable {
 
-	@Option(gloss = "Path of the directory that contains the input document images.")
+	@Option(gloss = "Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
 	public static String inputPath = null; //"test_img";
 
 	@Option(gloss = "Number of training documents to use. Ignore or use -1 to use all documents.")
 	public static int numDocs = Integer.MAX_VALUE;
-
-	@Option(gloss = "Path of the directory that will contain output transcriptions.")
-	public static String outputPath = null; //"output_dir";
-
-	@Option(gloss = "Path to write the learned language model file to. (Only if learnFont is set to true.)")
-	public static String outputLmPath = null; //"lm/cs_trained.lmser";
-	
-	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
-	public static String outputFontPath = null; //"font/trained.fontser";
-
-	@Option(gloss = "Path of the directory where the line-extraction images should be written.  If ignored, no images will be written.")
-	public static String lineExtractionOutputPath = null;
 
 	@Option(gloss = "Path to the language model file.")
 	public static String initLmPath = null; //"lm/cs_lm.lmser";
@@ -73,29 +61,41 @@ public class MultilingualMain implements Runnable {
 	@Option(gloss = "Path of the font initializer file.")
 	public static String initFontPath = null; //"font/init.fontser";
 
-	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
-	public static double binarizeThreshold = 0.12;
-
-	@Option(gloss = "Crop pages?")
-	public static boolean crop = false;
-
-	@Option(gloss = "Min horizontal padding between characters in pixels. (Best left at default value: 1.)")
-	public static int paddingMinWidth = 1;
-
-	@Option(gloss = "Max horizontal padding between characters in pixels (Best left at default value: 5.)")
-	public static int paddingMaxWidth = 5;
-
-	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
-	public static boolean markovVerticalOffset = false;
-
-	@Option(gloss = "Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
-	public static int beamSize = 10;
+	@Option(gloss = "If there are existing extractions (from ExtractLinesMain), where to find them.")
+	public static String existingExtractionsPath = null;
 
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
 	public static boolean learnFont = false;
 
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 3;
+
+	@Option(gloss = "Path of the directory that will contain output transcriptions.")
+	public static String outputPath = null; //"output_dir";
+
+	@Option(gloss = "Path of the directory where the line-extraction images should be written.  If ignored, no images will be written.")
+	public static String lineExtractionOutputPath = null;
+	
+	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
+	public static String outputFontPath = null; //"font/trained.fontser";
+	
+	@Option(gloss = "Path to write the learned language model file to. (Only if learnFont is set to true.)")
+	public static String outputLmPath = null; //"lm/cs_trained.lmser";
+	
+	@Option(gloss = "A language model to be used to assign diacritics to the transcription output.")
+	public static boolean allowLanguageSwitchOnPunct = true;
+
+	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
+	public static double binarizeThreshold = 0.12;
+
+	@Option(gloss = "Crop pages?")
+	public static boolean crop = false;
+
+	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
+	public static boolean markovVerticalOffset = false;
+
+	@Option(gloss = "Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
+	public static int beamSize = 10;
 
 	@Option(gloss = "Engine to use for inner loop of emission cache computation. DEFAULT: Uses Java on CPU, which works on any machine but is the slowest method. OPENCL: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
 	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT;
@@ -115,16 +115,16 @@ public class MultilingualMain implements Runnable {
 	@Option(gloss = "Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)")
 	public static int decodeBatchSize = 32;
 
-	@Option(gloss = "A language model to be used to assign diacritics to the transcription output.")
-	public static boolean allowLanguageSwitchOnPunct = true;
+	@Option(gloss = "Min horizontal padding between characters in pixels. (Best left at default value: 1.)")
+	public static int paddingMinWidth = 1;
 
-	@Option(gloss = "If there are existing extractions (from ExtractLinesMain), where to find them.")
-	public static String existingExtractionsPath = null;
+	@Option(gloss = "Max horizontal padding between characters in pixels (Best left at default value: 5.)")
+	public static int paddingMaxWidth = 5;
 
-	public static enum EmissionCacheInnerLoopType {
-		DEFAULT, OPENCL, CUDA
-	};
+	
+	public static enum EmissionCacheInnerLoopType { DEFAULT, OPENCL, CUDA };
 
+	
 	public static void main(String[] args) {
 		MultilingualMain main = new MultilingualMain();
 		OptionsParser parser = new OptionsParser();
@@ -544,6 +544,7 @@ public class MultilingualMain implements Runnable {
 			if (existingExtractionsPath == null) {
 				documents.add(lazyDoc);
 			}
+			else if (true) throw new RuntimeException("-existingExtractionsPath option not currently implemented.");
 			else {
 				String existingExtractionsDir = existingExtractionsPath + "/line_extract/" + preext + "/";
 				System.out.println("existingExtractionsDir is [" + existingExtractionsDir + "], which " + (new File(existingExtractionsDir).exists() ? "exists" : "does not exist"));

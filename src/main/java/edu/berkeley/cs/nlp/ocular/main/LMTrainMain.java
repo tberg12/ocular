@@ -23,18 +23,18 @@ import fig.OptionsParser;
 public class LMTrainMain implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")
-	public static String lmPath = null; //"lm/my_lm.lmser";
+	public static String lmPath = null;
 	
 	@Option(gloss = "Input corpus path.")
-	public static String textPath = null; //"texts/test.txt";
+	public static String textPath = null;
 	
 	@Option(gloss = "Use separate character type for long s.")
 	public static boolean insertLongS = false;
 	
 	@Option(gloss = "Remove diacritics?")
-	public static boolean removeDiacritics = true;
+	public static boolean removeDiacritics = false;
 
-	@Option(gloss = "Remove non-standard characters?")
+	@Option(gloss = "A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped.")
 	public static Set<String> explicitCharacterSet = null;
 
 	@Option(gloss = "Maximum number of lines to use from corpus.")
@@ -45,6 +45,7 @@ public class LMTrainMain implements Runnable {
 	
 	@Option(gloss = "Exponent on LM scores.")
 	public static double power = 4.0;
+	
 	
 	public static void main(String[] args) {
 		LMTrainMain main = new LMTrainMain();

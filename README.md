@@ -154,3 +154,235 @@ There are three ways to use this repository:
     
 
 
+## All Command-Line Options
+
+### LMTrainMain
+
+* `-lmPath`: Output LM file path
+Required.
+
+* `-textPath`: Input corpus path
+Required.
+
+* `-insertLongS`: Use separate character type for long s
+Default: false
+
+* `-removeDiacritics`: Remove diacritics?
+Default: false
+
+* `-explicitCharacterSet`: A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters. *Not currently implemented*.
+Default: ...
+
+* `-maxLines`: Maximum number of lines to use from corpus.
+Default: 1000000
+
+* `-charN`: LM character n-gram length.
+Default: 6
+
+* `-power`: Exponent on LM scores.
+Default: 4.0
+
+
+
+### FontInitMain
+
+* `-lmPath`: Path to the language model file (so that it knows which characters to create images for).
+Required.
+
+* `-fontPath`: Output font file path.
+Required.
+
+* `-numFontInitThreads`: Number of threads to use.
+Deafult: 8
+
+* `-templateMaxWidthFraction`: Max template width as fraction of text line height.
+Default: 1.0
+
+* `-templateMinWidthFraction`: Min template width as fraction of text line height
+Default: 0.0
+
+* `-spaceMaxWidthFraction`: Max space template width as fraction of text line height.
+Default: 1.0
+
+* `-spaceMinWidthFraction`: Min space template width as fraction of text line height
+Default: 0.0
+
+
+
+
+### Main
+
+* `-inputPath`: Path of the directory that contains the input document images
+Required.
+
+* `-lmPath`: Path to the language model file
+Required.
+
+* `-initFontPath`: Path of the font initializer file.
+Required.
+
+* `-learnFont`: Whether to learn the font from the input documents and write the font to a file.
+Default: false
+
+* `-outputPath`: Path of the directory that will contain output transcriptions and line extractions.
+Required.
+
+* `-outputFontPath`: Path to write the learned font file to. (Only if learnFont is set to true.)
+Required.
+
+* `-numEMIters`: Number of iterations of EM to use for font learning.
+Default: 4
+
+* `-binarizeThreshold`: Quantile to use for pixel value thresholding. (High values mean more black pixels.)
+Default: 0.12
+
+* `-markovVerticalOffset`: Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
+Default: true
+
+* `-beamSize`: Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
+Default: 10
+
+* `-emissionEngine`: Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
+Default: DEFAULT
+
+* `-cudaDeviceID`: GPU ID when using CUDA emission engine.
+Default: 0
+
+* `-numMstepThreads`: Number of threads to use for LFBGS during m-step.
+Default: 8
+
+* `-numEmissionCacheThreads`: Number of threads to use during emission cache compuation. (Only has affect when emissionEngine is set to DEFAULT.)
+Default: 8
+
+* `-numDecodeThreads`: Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)
+Default: 8
+
+* `-decodeBatchSize`: Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)
+Default: 32
+
+* `-paddingMinWidth`: Min horizontal padding between characters in pixels. (Best left at default value: 1.)
+Default: 1
+
+* `-paddingMaxWidth`: Max horizontal padding between characters in pixels (Best left at default value: 5.)
+Default: 5
+
+
+
+
+###CodeSwitchLMTrainMain
+
+* `-lmPath`: Output Language Model file path. 
+Required.
+
+* `-textPaths`: Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: `english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser`.  If spaces are used, be sure to wrap the whole string with "quotes". 
+Required.
+
+* `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes". 
+Default: null  (uniform priors)
+
+* `-pKeepSameLanguage`: Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.) 
+Default: 0.999999
+
+* `-alternateSpellingReplacementPaths`: Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: `english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt`. If spaces are used, be sure to wrap the whole string with "quotes". Any languages for which no replacements are needed can be safely ignored. 
+Default: null  (no replacements)
+
+* `-insertLongS`: Use separate character type for long s.
+Default: false
+
+* `-removeDiacritics`: Remove diacritics? 
+Default: false.
+
+* `-explicitCharacterSet`: A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters. *Not currently implemented*.
+Default: ...
+
+* `-maxLines`: Maximum number of lines to use from corpus.
+Default: 1000000
+
+* `-charN`: "LM character n-gram length."
+Default: 6
+
+* `-power`: exponent on LM scores.
+Default: 4.0
+
+* `-lmCharCount`: Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.
+Default: -1
+
+
+
+
+###MultilingualMain
+
+* `-inputPath`: Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
+Required.
+
+* `-numDocs`: Number of training documents to use. Ignore or use -1 to use all documents.
+Default: -1
+
+* `-initLmPath`: Path to the language model file.
+Required.
+
+* `-initFontPath`: Path of the font initializer file.
+Required.
+
+* `-existingExtractionsPath`: If there are existing extractions (from a previous `-lineExtractionOutputPath`), where to find them.  Ignore to perform new extractions.  *Not currently implemented*.
+Default: null
+
+* `-learnFont`: Whether to learn the font from the input documents and write the font to a file.
+Default: false
+
+* `-numEMIters`: Number of iterations of EM to use for font learning.
+Default: 4
+
+* `-outputPath`: Path of the directory that will contain output transcriptions and line extractions.
+Required.
+
+* `-lineExtractionOutputPath`: Path of the directory where the line-extraction images should be written.  If ignored, no images will be written.
+Default: null
+
+* `-outputFontPath`: Path to write the learned font file to. (Only if learnFont is set to true.)
+Required if learnFont=true, otherwise ignored.
+
+* `-outputLmPath`: Path to write the learned language model file to. (Only if learnFont is set to true.)
+Default: null  (Don't write out the trained LM.)
+
+* `-allowLanguageSwitchOnPunct`: A language model to be used to assign diacritics to the transcription output.
+Default: true
+
+* `-binarizeThreshold`: Quantile to use for pixel value thresholding. (High values mean more black pixels.)
+Default: 0.12
+
+* `-crop`: Crop pages?
+Default: false
+
+* `-markovVerticalOffset`: Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
+Default: false
+
+* `-beamSize`: Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
+Default: 10
+
+* `-emissionEngine`: Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
+Default: DEFAULT
+
+* `-cudaDeviceID`: GPU ID when using CUDA emission engine.
+Default: 0
+
+* `-numMstepThreads`: Number of threads to use for LFBGS during m-step.
+Default: 8
+
+* `-numEmissionCacheThreads`: Number of threads to use during emission cache compuation. (Only has affect when emissionEngine is set to DEFAULT.)
+Default: 8
+
+* `-numDecodeThreads`: Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)
+Default: 8
+
+* `-decodeBatchSize`: Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)
+Default: 32
+
+* `-paddingMinWidth`: Min horizontal padding between characters in pixels. (Best left at default value: 1.)
+Default: 1
+
+* `-paddingMaxWidth`: Max horizontal padding between characters in pixels (Best left at default value: 5.)
+Default: 5
+
+
+
