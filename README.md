@@ -71,7 +71,7 @@ There are three ways to use this repository:
 
 ### Running the full system
 
-**Note:** The following instructions assume that you used "option 2" above to create an executable script.  If, instead, you would like to use "option 1" to create a jar, simply replace `target/start MAIN-CLASS` in each stage below with `java -Done-jar.main.class=MAIN-CLASS -jar ocular-0.2-SNAPSHOT-with_dependencies.jar`.
+**Note:** The following instructions assume that you used "option 2" above to create an executable script.  If, instead, you would like to use "option 1" to create a jar, simply replace `target/start MAIN-CLASS` in each stage below with `java -Done-jar.main.class=MAIN-CLASS -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar`.
 
 1. Train a language model:
 
