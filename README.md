@@ -158,13 +158,13 @@ There are three ways to use this repository:
 
 ### LMTrainMain
 
-* `-lmPath`: Output LM file path
+* `-lmPath`: Output LM file path.
 Required.
 
-* `-textPath`: Input corpus path
+* `-textPath`: Input corpus path.
 Required.
 
-* `-insertLongS`: Use separate character type for long s
+* `-insertLongS`: Use separate character type for long s.
 Default: false
 
 * `-removeDiacritics`: Remove diacritics?
@@ -198,13 +198,13 @@ Deafult: 8
 * `-templateMaxWidthFraction`: Max template width as fraction of text line height.
 Default: 1.0
 
-* `-templateMinWidthFraction`: Min template width as fraction of text line height
+* `-templateMinWidthFraction`: Min template width as fraction of text line height.
 Default: 0.0
 
 * `-spaceMaxWidthFraction`: Max space template width as fraction of text line height.
 Default: 1.0
 
-* `-spaceMinWidthFraction`: Min space template width as fraction of text line height
+* `-spaceMinWidthFraction`: Min space template width as fraction of text line height.
 Default: 0.0
 
 
@@ -212,10 +212,10 @@ Default: 0.0
 
 ### Main
 
-* `-inputPath`: Path of the directory that contains the input document images
+* `-inputPath`: Path of the directory that contains the input document images.
 Required.
 
-* `-lmPath`: Path to the language model file
+* `-lmPath`: Path to the language model file.
 Required.
 
 * `-initFontPath`: Path of the font initializer file.
@@ -269,12 +269,12 @@ Default: 5
 
 
 
-###CodeSwitchLMTrainMain
+### CodeSwitchLMTrainMain
 
 * `-lmPath`: Output Language Model file path. 
 Required.
 
-* `-textPaths`: Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: `english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser`.  If spaces are used, be sure to wrap the whole string with "quotes". 
+* `-textPaths`: Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: `english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser`.  If spaces are used, be sure to wrap the whole string with "quotes".  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.
 Required.
 
 * `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes". 
@@ -310,7 +310,7 @@ Default: -1
 
 
 
-###MultilingualMain
+### MultilingualMain
 
 * `-inputPath`: Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
 Required.
