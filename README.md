@@ -90,7 +90,7 @@ There are three ways to use this repository:
 
 3. Train a font:
 
-  To train using the pages that are in test_img/english, run:
+  To train using the pages that are in `test_img/english`, run:
 
         target/start edu.berkeley.cs.nlp.ocular.main.Main \
           -learnFont true \
@@ -104,7 +104,7 @@ There are three ways to use this repository:
     
 4. Transcribe some pages:
 
-  To transcribe the pages that are in test_img/english, run:
+  To transcribe the pages that are in `test_img/english`, run:
 
         target/start edu.berkeley.cs.nlp.ocular.main.Main \
           -inputPath test_img/english \
@@ -133,6 +133,8 @@ There are three ways to use this repository:
 
 3. Train a font:
 
+  To train using the pages that are in `test_img/multilingual`, run:
+
         target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
           -learnFont true \
           -inputPath test_img/multilingual \
@@ -144,9 +146,11 @@ There are three ways to use this repository:
           -outputPath cs_train_output \
           -lineExtractionOutputPath cs_train_output
     
-  Probably need `-mx7g`.  For extra speed, use `-emissionEngine OPENCL` if you have a Mac, or `-emissionEngine CUDA` if you have Cuda installed.
+  For extra speed, use `-emissionEngine OPENCL` if you have a Mac with a GPU, or `-emissionEngine CUDA` if you have Cuda installed.
     
 4. Transcribe some pages:
+
+  To train using the pages that are in `test_img/multilingual`, run:
 
         target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
           -inputPath test_img/multilingual \
