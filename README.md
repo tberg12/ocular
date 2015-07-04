@@ -90,6 +90,8 @@ There are three ways to use this repository:
 
 3. Train a font:
 
+  To train using the pages that are in test_img/english, run:
+
         target/start edu.berkeley.cs.nlp.ocular.main.Main \
           -learnFont true \
           -initFontPath font/init.fontser \
@@ -98,9 +100,11 @@ There are three ways to use this repository:
           -outputFontPath font/trained.fontser \
           -outputPath train_output
     
-  For extra speed, use `-emissionEngine OPENCL` if you have a Mac, or `-emissionEngine CUDA` if you have Cuda installed.
+  For extra speed, use `-emissionEngine OPENCL` if you have a Mac with a GPU, or `-emissionEngine CUDA` if you have Cuda installed.
     
 4. Transcribe some pages:
+
+  To transcribe the pages that are in test_img/english, run:
 
         target/start edu.berkeley.cs.nlp.ocular.main.Main \
           -inputPath test_img/english \
