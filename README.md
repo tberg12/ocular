@@ -99,7 +99,7 @@ There are three ways to use this repository:
           -learnFont true \
           -initFontPath font/init.fontser \
           -lmPath lm/my_lm.lmser \
-          -inputPath test_img/english \
+          -inputPath sample_images/english \
           -outputFontPath font/trained.fontser \
           -outputPath train_output
     
@@ -110,7 +110,7 @@ There are three ways to use this repository:
   To transcribe the pages that are in `test_img/english`, run:
 
         target/start edu.berkeley.cs.nlp.ocular.main.Main \
-          -inputPath test_img/english \
+          -inputPath sample_images/english \
           -initFontPath font/trained.fontser \
           -lmPath lm/my_lm.lmser \
           -outputPath transcribe_output 
@@ -141,7 +141,7 @@ There are three ways to use this repository:
 
         target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
           -learnFont true \
-          -inputPath test_img/multilingual \
+          -inputPath sample_images/multilingual \
           -numDocs 10 \
           -initFontPath font/cs_init.fontser \
           -initLmPath lm/cs_lm.lmser \
@@ -157,7 +157,7 @@ There are three ways to use this repository:
   To train using the pages that are in `test_img/multilingual`, run:
 
         target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
-          -inputPath test_img/multilingual \
+          -inputPath sample_images/multilingual \
           -initFontPath font/cs_trained.fontser \
           -initLmPath lm/cs_trained.lmser \
           -outputPath cs_transcribe_output \
