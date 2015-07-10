@@ -70,12 +70,15 @@ There are three ways to use this repository:
 
 
 ### Running the full system
+**Note:** The following instructions allow you to run the original Ocular system as presented in Berg-Kirkpatrick et al. 2012 and 2013. This system uses a monolingual language model. For multilingual texts or documents written with high orthographic variation, consider using the multilingual system (see instructions below).
 
 **Note:** The following instructions assume that you used "option 2" above to create an executable script.  If, instead, you would like to use "option 1" to create a jar, simply replace `target/start MAIN-CLASS` in each stage below with `java -Done-jar.main.class=MAIN-CLASS -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar`.
 
+**Note:** These instructions assume a general English corpus, but you can use any language or period-specific corpus of your choice.
+
 1. Train a language model:
 
-  Put some text files in a folder called `texts/english/`.  (For example, [download a book](http://www.gutenberg.org/cache/epub/2600/pg2600.txt)).
+  Put some text files in a folder called `texts/english/`.  (For example, [download a book](http://www.gutenberg.org/cache/epub/2600/pg2600.txt)). 
     
       target/start edu.berkeley.cs.nlp.ocular.main.LMTrainMain \
         -lmPath lm/my_lm.lmser \
@@ -114,6 +117,7 @@ There are three ways to use this repository:
 
 
 ### Running the multilingual system, with a code-switching language model
+**Note:** These instructions assume a trilingual corpus in Latin, Spanish, and Nahuatl, but the code is not specific to any language or any number of languages. Folder names and language data can be changed to match your project, and arguments can be modified for any number of languages following the pattern described below.
 
 1. Train a code-switching language model:
 
