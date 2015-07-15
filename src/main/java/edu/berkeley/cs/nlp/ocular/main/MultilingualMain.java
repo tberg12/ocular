@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import threading.BetterThreader;
@@ -32,6 +33,8 @@ import edu.berkeley.cs.nlp.ocular.model.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModelExplicitOffset;
+import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModelMarkovOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.CodeSwitchTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
@@ -329,10 +332,59 @@ public class MultilingualMain implements Runnable {
 			System.out.println("    " + lang + ": " + chars);
 		}
 
-		if (markovVerticalOffset)
-			throw new RuntimeException("Code-switching for the markov-vertical-offset transition model not currently supported.");
-		else
-			return makeTuple2(codeSwitchLM, (SparseTransitionModel) new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct));
+		CodeSwitchLanguageModel lm;
+		SparseTransitionModel transitionModel;
+		if (codeSwitchLM.languages().size() > 1) {
+			lm = codeSwitchLM; 
+			if (markovVerticalOffset)
+				throw new RuntimeException("Markov vertical offset transition model not currently supported for multiple languages.");
+			else { 
+				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct);
+				System.out.println("Using CodeSwitchLanguageModel and CodeSwitchTransitionModel");
+			}
+		}
+		else { // only one language, default to original (monolingual) Ocular code because it will be faster.
+			String onlyLanguage = codeSwitchLM.languages().iterator().next();
+			SingleLanguageModel singleLm = codeSwitchLM.get(onlyLanguage);
+			lm = new OnlyOneLanguageCodeSwitchLM(onlyLanguage, singleLm);
+			if (markovVerticalOffset) {
+				transitionModel = new CharacterNgramTransitionModelMarkovOffset(singleLm, singleLm.getMaxOrder());
+				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModelMarkovOffset");
+			} else {
+				transitionModel = new CharacterNgramTransitionModel(singleLm, singleLm.getMaxOrder());
+				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModel");
+			}
+		}
+		return makeTuple2(lm, transitionModel); 
+	}
+	
+	private class OnlyOneLanguageCodeSwitchLM implements CodeSwitchLanguageModel, SingleLanguageModel {
+		private static final long serialVersionUID = 3287238927893L;
+		
+		private String language;
+		private SingleLanguageModel singleLm;
+		public OnlyOneLanguageCodeSwitchLM(String language, SingleLanguageModel singleLm) {
+			this.language = language;
+			this.singleLm = singleLm;
+		}
+
+		public double getCharNgramProb(int[] context, int c) { return singleLm.getCharNgramProb(context, c); }
+		public Indexer<String> getCharacterIndexer() { return singleLm.getCharacterIndexer(); }
+		public int getMaxOrder() { return singleLm.getMaxOrder(); }
+		public Set<Integer> getActiveCharacters() { return singleLm.getActiveCharacters(); }
+		public boolean containsContext(int[] context) { return singleLm.containsContext(context); }
+		public Set<String> languages() { return Collections.singleton(language); }
+		public double getProbKeepSameLanguage() { return 1.0; }
+		public Double languagePrior(String language) { 
+			return language.equals(this.language) ? 1.0 : 0.0;
+    }
+		public Double languageTransitionPrior(String fromLanguage, String destinationLanguage) { 
+			return fromLanguage.equals(this.language) && destinationLanguage.equals(this.language) ? 1.0 : 0.0; 
+		}
+		public SingleLanguageModel get(String language) { 
+			if (language.equals(this.language)) return singleLm; 
+			else throw new RuntimeException("No model found for language '"+language+"'.  (Only found '"+this.language+"')"); 
+		}
 	}
 
 	public static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
@@ -570,7 +622,10 @@ public class MultilingualMain implements Runnable {
 	private CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		for (int c = 0; c < charIndexer.size(); ++c) {
-			templates[c] = font.get(charIndexer.getObject(c));
+			CharacterTemplate template = font.get(charIndexer.getObject(c));
+			if (template == null)
+				throw new RuntimeException("No template found for character '"+charIndexer.getObject(c)+"'");
+			templates[c] = template;
 		}
 		return templates;
 	}
