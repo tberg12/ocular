@@ -1,25 +1,23 @@
 package edu.berkeley.cs.nlp.ocular.data;
 
-import fileio.f;
-import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
-import edu.berkeley.cs.nlp.ocular.image.Visualizer;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Binarizer;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Cropper;
 import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
+import fileio.f;
 
 public class LazyRawImageLoader implements ImageLoader {
 

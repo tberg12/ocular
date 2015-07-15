@@ -46,7 +46,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Output LM file path.")
 	public static String lmPath = null;
 	
-	@Option(gloss = "Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: \"english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser\".  If spaces are used, be sure to wrap the whole string with \"quotes\".")
+	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: \"english->lms/english/,spanish->lms/spanish/,french->lms/french/\".  If spaces are used, be sure to wrap the whole string with \"quotes\".  For each entry, the entire directory will be recursively searched for any files that do not start with `.`")
 	public static String textPaths = null;
 	
 	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".")

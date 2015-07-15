@@ -124,7 +124,7 @@ There are three ways to use this repository:
   Put some text in a folders called `texts/spanish/`, `texts/latin/`, and `texts/nahuatl/`.  (For example, [Don Quijote](https://www.gutenberg.org/cache/epub/2000/pg2000.txt), [Meditationes de prima philosophia](https://www.gutenberg.org/cache/epub/23306/pg23306.txt), and [Ancient Nahuatl Poetry](https://www.gutenberg.org/cache/epub/12219/pg12219.txt)).
     
       target/start edu.berkeley.cs.nlp.ocular.main.CodeSwitchLMTrainMain \
-        -lmPath lm/cs_lm.lmser \
+        -lmPath lm/cs_lm.cslmser \
         -textPaths "spanish->texts/spanish/,latin->texts/latin/,nahuatl->texts/nahuatl/" \
         -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
         -insertLongS true
@@ -132,7 +132,7 @@ There are three ways to use this repository:
 2. Initialize a font:
 
         target/start edu.berkeley.cs.nlp.ocular.main.FontInitMain \
-          -lmPath lm/cs_lm.lmser \
+          -lmPath lm/cs_lm.cslmser \
           -fontPath font/cs_init.fontser
 
 3. Train a font:
@@ -144,9 +144,9 @@ There are three ways to use this repository:
           -inputPath sample_images/multilingual \
           -numDocs 10 \
           -initFontPath font/cs_init.fontser \
-          -initLmPath lm/cs_lm.lmser \
+          -initLmPath lm/cs_lm.cslmser \
           -outputFontPath font/cs_trained.fontser \
-          -outputLmPath lm/cs_trained.lmser \
+          -outputLmPath lm/cs_trained.cslmser \
           -outputPath cs_train_output \
           -lineExtractionOutputPath cs_train_output
     
@@ -159,7 +159,7 @@ There are three ways to use this repository:
         target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
           -inputPath sample_images/multilingual \
           -initFontPath font/cs_trained.fontser \
-          -initLmPath lm/cs_trained.lmser \
+          -initLmPath lm/cs_trained.cslmser \
           -outputPath cs_transcribe_output \
           -lineExtractionOutputPath cs_transcribe_output
 
@@ -286,7 +286,7 @@ Default: 5
 * `-lmPath`: Output Language Model file path. 
 Required.
 
-* `-textPaths`: Path to the text files for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: `english->lms/english.lmser,spanish->lms/spanish.lmser,french->lms/french.lmser`.  If spaces are used, be sure to wrap the whole string with "quotes".  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.
+* `-textPaths`: Path to the text files (or directory hierarchies) for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: `english->lms/english/,spanish->lms/spanish/,french->lms/french/`.  If spaces are used, be sure to wrap the whole string with "quotes".  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.
 Required.
 
 * `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes". 
@@ -327,7 +327,7 @@ Default: -1
 * `-inputPath`: Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
 Required.
 
-* `-numDocs`: Number of training documents to use. Ignore or use -1 to use all documents.
+* `-numDocs`: Number of documents to use. Ignore or use -1 to use all documents.
 Default: -1
 
 * `-initLmPath`: Path to the language model file.

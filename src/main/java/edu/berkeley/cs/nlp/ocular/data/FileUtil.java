@@ -52,12 +52,11 @@ public class FileUtil {
 	}
 	
 	public static String extension(String name) {
-		String[] split = name.split("\\.");
-		return split[split.length - 1];
+		return name.substring(name.lastIndexOf(".") + 1);
 	}
 
 	public static String withoutExtension(String name) {
-		return name.replaceAll("\\.[^.]*$", "");
+		return name.substring(0, name.lastIndexOf("."));
 	}
 
 

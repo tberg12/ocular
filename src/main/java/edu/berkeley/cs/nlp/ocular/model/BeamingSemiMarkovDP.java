@@ -258,6 +258,7 @@ public class BeamingSemiMarkovDP {
 		TransitionState nextFinalTs = null;
 		TransitionState currentTs = bestFinalTs;
 		while (true) {
+			if (currentTs == null) throw new RuntimeException("No current state when following backpointers. Consider increasing -beamSize.");
 			Tuple2<Integer,TransitionState> backpointer = alphas[d][currentT].getObject(new BeamState(currentTs)).backPointer;
 			int width =  currentT - backpointer._1;
 			transStateDecodeList.add(currentTs);
