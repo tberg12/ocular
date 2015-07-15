@@ -5,6 +5,7 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -66,7 +67,11 @@ public class RawImageLoader implements ImageLoader {
 	public List<Document> readDataset() {
 		System.out.println("Extracting text line images from dataset "+inputPath);
 		File dir = new File(inputPath);
-		final String[] dirList = dir.list();
+		final String[] dirList = dir.list(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return !name.startsWith("."); // ignore hidden files
+			}
+		});
 		final Document[] docs = new Document[dirList.length]; 
 		BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer i, Object ignore){
 			String baseName = dirList[i];
