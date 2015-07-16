@@ -209,7 +209,7 @@ public class LazyRawImageLoader implements ImageLoader {
 				continue;
 			if (f.getName().endsWith(".pdf")) {
 				int numPages = PdfImageReader.numPagesInPdf(f);
-				for (int pageNumber = 0; pageNumber < numPages; ++pageNumber) {
+				for (int pageNumber = 1; pageNumber <= numPages; ++pageNumber) {
 					docs.add(new LazyRawPdfImageDocument(f, pageNumber, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
 				}
 			}

@@ -43,7 +43,7 @@ public class PdfImageReader {
 			PDFFile pdf = new PDFFile(buf);
 
 			List<BufferedImage> images = new ArrayList<BufferedImage>();
-			for (int pageNumber = 0; pageNumber < pdf.getNumPages(); ++pageNumber) {
+			for (int pageNumber = 1; pageNumber <= pdf.getNumPages(); ++pageNumber) {
 				images.add(readPage(pdf, pageNumber));
 			}
 
@@ -60,10 +60,12 @@ public class PdfImageReader {
 	 * @param pdfFile
 	 *          Path to the pdf file.
 	 * @param pageNumber
-	 *          Zero-based page number to read
+	 *          One-based page number to read
 	 * @return
 	 */
 	public static BufferedImage readPdfPageAsImage(File pdfFile, int pageNumber) {
+		if (pageNumber < 1)
+			throw new RuntimeException("page numbering starts with 1; '" + pageNumber + "' given");
 		try {
 			RandomAccessFile raf = new RandomAccessFile(pdfFile, "r");
 			FileChannel channel = raf.getChannel();
@@ -79,12 +81,14 @@ public class PdfImageReader {
 	}
 
 	private static BufferedImage readPage(PDFFile pdf, int pageNumber) {
+		double scale = 2.5; // because otherwise the image comes out really tiny
 		PDFPage page = pdf.getPage(pageNumber);
 		Rectangle rect = new Rectangle(0, 0, (int) page.getBBox().getWidth(), (int) page.getBBox().getHeight());
-		BufferedImage bufferedImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
-		Image image = page.getImage(rect.width, rect.height, rect, null, true, true);
+		BufferedImage bufferedImage = new BufferedImage((int)(rect.width * scale), (int)(rect.height * scale), BufferedImage.TYPE_INT_RGB);
+		Image image = page.getImage((int)(rect.width * scale), (int)(rect.height * scale), rect, null, true, true);
 		Graphics2D bufImageGraphics = bufferedImage.createGraphics();
 		bufImageGraphics.drawImage(image, 0, 0, null);
 		return bufferedImage;
 	}
 }
+
