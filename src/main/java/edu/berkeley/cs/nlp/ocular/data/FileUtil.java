@@ -70,8 +70,8 @@ public class FileUtil {
 	 */
 	public static Tuple2<String, String> removeCommonPathPrefix(File fn1, File fn2) {
 		try {
-			List<String> as = pathToNameList(new File(fn1.getCanonicalPath()));
-			List<String> bs = pathToNameList(new File(fn2.getCanonicalPath()));
+			List<String> as = pathToNameList(fn1.getCanonicalFile());
+			List<String> bs = pathToNameList(fn2.getCanonicalFile());
 			
 			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(as, bs);
 			
