@@ -68,16 +68,28 @@ public class FileUtil {
 	 * @param fn2
 	 * @return
 	 */
-	public static Tuple2<String, String> removeCommonPathPrefix(String fn1, String fn2) {
+	public static Tuple2<String, String> removeCommonPathPrefix(File fn1, File fn2) {
 		try {
-			List<String> as = pathToNameList(new File(new File(fn1).getCanonicalPath()));
-			List<String> bs = pathToNameList(new File(new File(fn2).getCanonicalPath()));
+			List<String> as = pathToNameList(new File(fn1.getCanonicalPath()));
+			List<String> bs = pathToNameList(new File(fn2.getCanonicalPath()));
 			
 			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(as, bs);
 			
 			String aSuffix = StringHelper.join(as.subList(longestCommonPrefix, as.size()), File.separator);
 			String bSuffix = StringHelper.join(bs.subList(longestCommonPrefix, bs.size()), File.separator);
 			return Tuple2.makeTuple2(aSuffix, bSuffix);
+		}
+		catch (IOException e) { throw new RuntimeException(e); }
+	}
+	
+	/**
+	 * @param fn1
+	 * @param fn2
+	 * @return
+	 */
+	public static Tuple2<String, String> removeCommonPathPrefixOfParents(File fn1, File fn2) {
+		try {
+			return removeCommonPathPrefix(fn1.getCanonicalFile().getParentFile(), fn2.getCanonicalFile().getParentFile());
 		}
 		catch (IOException e) { throw new RuntimeException(e); }
 	}

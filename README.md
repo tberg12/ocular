@@ -90,7 +90,7 @@ Clone this repository, and compile the project into a jar:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
-        -fontPath font/trilingual/init.fontser
+        -fontPath font/advertencias/init.fontser
 
 
 3. Train a font:
@@ -99,7 +99,7 @@ Clone this repository, and compile the project into a jar:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -learnFont true \
-        -initFontPath font/trilingual/init.fontser \
+        -initFontPath font/advertencias/init.fontser \
         -lmPath lm/trilingual.lmser \
         -inputPath sample_images/advertencias \
         -numDocs 10 \

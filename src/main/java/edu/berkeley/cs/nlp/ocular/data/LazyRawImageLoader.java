@@ -69,7 +69,7 @@ public class LazyRawImageLoader implements ImageLoader {
 				}
 
 				if (lineExtractionImageOutputPath != null) {
-					String fileParent = FileUtil.removeCommonPathPrefix(new File(inputPath).getParent(), file.getParent())._2;
+					String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), file)._2;
 					String preext = FileUtil.withoutExtension(file.getName());
 					String ext = FileUtil.extension(file.getName());
 					String lineExtractionImagePath = lineExtractionImageOutputPath + "/" + fileParent + "/" + preext + "-line_extract." + ext;
@@ -158,7 +158,7 @@ public class LazyRawImageLoader implements ImageLoader {
 				}
 
 				if (lineExtractionImageOutputPath != null) {
-					String fileParent = FileUtil.removeCommonPathPrefix(new File(inputPath).getParent(), pdfFile.getParent())._2;
+					String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), pdfFile)._2;
 					String preext = new File(baseName()).getName();
 					String ext = "jpg";
 					

@@ -434,7 +434,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			}
 		}
 
-		String fileParent = FileUtil.removeCommonPathPrefix(new File(inputPath).getParent(), new File(doc.baseName()).getParent())._2;
+		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
 		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (iter <= numEMIters ? "_iter-" + iter : "");
 		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";
