@@ -433,16 +433,23 @@ public class MultilingualMain implements Runnable {
 			}
 		}
 
-		StringBuffer outputBuffer = new StringBuffer();
-		outputBuffer.append("MODEL OUTPUT\n\n");
+		String outputFilenameBase = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (iter <= numEMIters ? "_iter-" + iter : "");
+		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";
+		String goldComparisonOutputFilename = outputFilenameBase + "_vsGold.txt";
+		String htmlOutputFilename = outputFilenameBase + ".html";
+		new File(transcriptionOutputFilename).getParentFile().mkdirs();
+		
+		StringBuffer transcriptionOutputBuffer = new StringBuffer();
 		for (int line = 0; line < decodeStates.length; ++line) {
-			outputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
+			transcriptionOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 		}
-		outputBuffer.append("\n\n\n");
+		System.out.println(transcriptionOutputBuffer.toString());
+		f.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
 
 		if (text != null) {
-			outputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
 			// Evaluate against gold-transcribed data (given as "text")
+			StringBuffer goldComparisonOutputBuffer = new StringBuffer();
+			goldComparisonOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
 			List<String>[] goldCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
 				goldCharSequences[line] = new ArrayList<String>();
@@ -454,57 +461,58 @@ public class MultilingualMain implements Runnable {
 			}
 
 			for (int line = 0; line < numLines; ++line) {
-				outputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
-				outputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
-				outputBuffer.append("\n\n");
+				goldComparisonOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
+				goldComparisonOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
+				goldComparisonOutputBuffer.append("\n\n");
 			}
 
 			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
 			if (iter > numEMIters) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
 			}
-			outputBuffer.append(Evaluator.renderEval(evals));
+			goldComparisonOutputBuffer.append(Evaluator.renderEval(evals));
+
+			System.out.println(goldComparisonOutputBuffer.toString());
+			f.writeString(goldComparisonOutputFilename, goldComparisonOutputBuffer.toString());
 		}
 
-		String outputFilename = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (iter <= numEMIters ? "_iter-" + iter : "") + ".html";
-		new File(outputFilename).getParentFile().mkdirs();
-		printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, outputBuffer, doc.baseName(), outputFilename, lm, languageCounts);
-		System.out.println(outputBuffer.toString());
-		f.writeString(outputFilename, outputBuffer.toString());
+		if (lm.languages().size() > 1) {
+			System.out.println("Multiple languages being used ("+lm.languages().size()+"), so an html file is being generated to show language switching.");
+			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, doc.baseName(), htmlOutputFilename, lm, languageCounts));
+		}
 	}
 
-	private static void printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, StringBuffer outputBuffer, String imgFilename, String outputFilename, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
-		outputBuffer.append("\n\n\n\n\n");
-		outputBuffer.append("===============================================");
-		outputBuffer.append("\n\n\n\n\n");
-		{
-			List<String>[] csViterbiChars = new List[decodeStates.length];
-			String prevLanguage = null;
-			for (int line = 0; line < decodeStates.length; ++line) {
-				csViterbiChars[line] = new ArrayList<String>();
-				if (decodeStates[line] != null) {
-					for (int i = 0; i < decodeStates[line].length; ++i) {
-						int c = decodeStates[line][i].getCharIndex();
-						if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-							String s = charIndexer.getObject(c);
-							csViterbiChars[line].add(s);
+	private static String printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, String imgFilename, String htmlOutputFilename, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
+		StringBuffer outputBuffer = new StringBuffer();
 
-							String currLanguage = decodeStates[line][i].getLanguage();
-							if (!StringHelper.equals(currLanguage, prevLanguage)) {
-								if (prevLanguage != null) {
-									outputBuffer.append("]");
-								}
-								outputBuffer.append("[" + currLanguage + " ");
-							}
-							outputBuffer.append(s);
-							prevLanguage = currLanguage;
-						}
-					}
-				}
-				outputBuffer.append("\n");
-			}
-		}
-		outputBuffer.append("\n\n\n\n\n");
+		//		{
+		//			List<String>[] csViterbiChars = new List[decodeStates.length];
+		//			String prevLanguage = null;
+		//			for (int line = 0; line < decodeStates.length; ++line) {
+		//				csViterbiChars[line] = new ArrayList<String>();
+		//				if (decodeStates[line] != null) {
+		//					for (int i = 0; i < decodeStates[line].length; ++i) {
+		//						int c = decodeStates[line][i].getCharIndex();
+		//						if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
+		//							String s = charIndexer.getObject(c);
+		//							csViterbiChars[line].add(s);
+		//
+		//							String currLanguage = decodeStates[line][i].getLanguage();
+		//							if (!StringHelper.equals(currLanguage, prevLanguage)) {
+		//								if (prevLanguage != null) {
+		//									outputBuffer.append("]");
+		//								}
+		//								outputBuffer.append("[" + currLanguage + " ");
+		//							}
+		//							outputBuffer.append(s);
+		//							prevLanguage = currLanguage;
+		//						}
+		//					}
+		//				}
+		//				outputBuffer.append("\n");
+		//			}
+		//		}
+		//		outputBuffer.append("\n\n\n\n\n");
 		{
 			outputBuffer.append("<HTML xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n");
 			outputBuffer.append("<HEAD><META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></HEAD>\n");
@@ -555,12 +563,13 @@ public class MultilingualMain implements Runnable {
 				outputBuffer.append("<font color=\"" + c.getValue() + "\">" + c.getKey() + "</font></br>\n");
 			}
 
-			outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(outputFilename).getParent()) + "\">\n");
+			outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\">\n");
 			outputBuffer.append("</td></tr></table>\n");
 			outputBuffer.append("</body></html>\n");
 			outputBuffer.append("\n\n\n");
 		}
 		outputBuffer.append("\n\n\n\n\n");
+		return outputBuffer.toString();
 	}
 
 	private EmissionCacheInnerLoop getEmissionInnerLoop() {
