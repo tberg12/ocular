@@ -42,6 +42,10 @@ Clone this repository, and compile the project into a jar:
 
   This jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
 
+  Alternatively, if you do not require the source code or sample files, the jar file can just be downloaded from here: [http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.2-SNAPSHOT/ocular-0.2-SNAPSHOT.jar].
+
+#### Other ways of obtaining Ocular
+
   The `compile.sh` script also generates an executable script `target/start` that can be run like:
   
     export JAVA_OPTS="-mx7g"     # Increase the available memory

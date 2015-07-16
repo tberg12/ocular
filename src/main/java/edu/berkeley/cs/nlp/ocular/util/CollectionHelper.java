@@ -73,8 +73,6 @@ public class CollectionHelper {
 	public static <A> List<A> makeList(Collection<? extends A> xs) {
 		if (xs.size() == 0)
 			return Collections.<A> emptyList();
-		else if (xs.size() == 1)
-			return Collections.<A> singletonList(xs.iterator().next());
 		else {
 			List<A> l = new ArrayList<A>();
 			l.addAll(xs);
@@ -85,8 +83,6 @@ public class CollectionHelper {
 	public static <A> List<A> makeList(A... xs) {
 		if (xs.length == 0)
 			return Collections.<A> emptyList();
-		else if (xs.length == 1)
-			return Collections.singletonList(xs[0]);
 		else {
 			List<A> l = new ArrayList<A>();
 			Collections.addAll(l, xs);
