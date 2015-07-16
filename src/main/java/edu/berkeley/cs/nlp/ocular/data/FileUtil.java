@@ -52,11 +52,13 @@ public class FileUtil {
 	}
 	
 	public static String extension(String name) {
-		return name.substring(name.lastIndexOf(".") + 1);
+		int dotIdx = name.lastIndexOf(".");
+		return dotIdx >= 0 ? name.substring(name.lastIndexOf(".") + 1) : name;
 	}
 
 	public static String withoutExtension(String name) {
-		return name.substring(0, name.lastIndexOf("."));
+		int dotIdx = name.lastIndexOf(".");
+		return dotIdx >= 0 ? name.substring(0, dotIdx) : null;
 	}
 
 

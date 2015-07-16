@@ -19,6 +19,12 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
 import fileio.f;
 
+/**
+ * A dataset loader that reads files only as they are needed (and then stores
+ * the contents in memory for later use).
+ * 
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class LazyRawImageLoader implements ImageLoader {
 
 	public static class LazyRawImageDocument implements ImageLoader.Document {
@@ -29,12 +35,13 @@ public class LazyRawImageLoader implements ImageLoader {
 
 		private PixelType[][][] observations = null;
 		private String[][] text = null;
-		
+
 		private TextReader textReader = new BasicTextReader();
-		
+
 		private String lineExtractionImageOutputPath = null;
 
-	  public LazyRawImageDocument(File file, int lineHeight, double binarizeThreshold, boolean crop, String lineExtractionImageOutputPath) {
+		public LazyRawImageDocument(File file, int lineHeight, double binarizeThreshold, boolean crop,
+				String lineExtractionImageOutputPath) {
 			this.file = file;
 			this.lineHeight = lineHeight;
 			this.binarizeThreshold = binarizeThreshold;
@@ -53,21 +60,23 @@ public class LazyRawImageLoader implements ImageLoader {
 				observations = new PixelType[lines.size()][][];
 				for (int i = 0; i < lines.size(); ++i) {
 					if (lineHeight >= 0) {
-						observations[i] = ImageUtils.getPixelTypes(ImageUtils.resampleImage(ImageUtils.makeImage(lines.get(i)), lineHeight));
+						observations[i] = ImageUtils.getPixelTypes(ImageUtils.resampleImage(ImageUtils.makeImage(lines.get(i)),
+								lineHeight));
 					}
 					else {
 						observations[i] = ImageUtils.getPixelTypes(ImageUtils.makeImage(lines.get(i)));
 					}
 				}
-				
+
 				if (lineExtractionImageOutputPath != null) {
 					String fileParent = file.getParent();
 					String preext = FileUtil.withoutExtension(file.getName());
 					String ext = FileUtil.extension(file.getName());
-					String lineExtractionImagePath = lineExtractionImageOutputPath+"/"+fileParent+"/"+preext + "-line_extract." + ext;
+					String lineExtractionImagePath = lineExtractionImageOutputPath + "/" + fileParent + "/" + preext
+							+ "-line_extract." + ext;
 					System.out.println("Writing line-extraction image to: " + lineExtractionImagePath);
 					new File(lineExtractionImagePath).getParentFile().mkdirs();
-				  f.writeImage(lineExtractionImagePath, Visualizer.renderLineExtraction(observations));
+					f.writeImage(lineExtractionImagePath, Visualizer.renderLineExtraction(observations));
 				}
 			}
 			return observations;
@@ -106,17 +115,82 @@ public class LazyRawImageLoader implements ImageLoader {
 		public String baseName() {
 			return file.getPath();
 		}
-		
+
+	}
+
+	public static class LazyRawPdfImageDocument implements ImageLoader.Document {
+		private final File pdfFile;
+		private final int pageNumber; // starts at zero
+		private final int lineHeight;
+		private final double binarizeThreshold;
+		private final boolean crop;
+
+		private PixelType[][][] observations = null;
+
+		private String lineExtractionImageOutputPath = null;
+
+		public LazyRawPdfImageDocument(File pdfFile, int pageNumber, int lineHeight, double binarizeThreshold,
+				boolean crop, String lineExtractionImageOutputPath) {
+			this.pdfFile = pdfFile;
+			this.pageNumber = pageNumber;
+			this.lineHeight = lineHeight;
+			this.binarizeThreshold = binarizeThreshold;
+			this.crop = crop;
+			this.lineExtractionImageOutputPath = lineExtractionImageOutputPath;
+		}
+
+		public PixelType[][][] loadLineImages() {
+			if (observations == null) {
+				System.out.println("Extracting text line images from " + pdfFile + ", page " + pageNumber);
+				double[][] levels = ImageUtils.getLevels(PdfImageReader.readPdfPageAsImage(pdfFile, pageNumber));
+				double[][] rotLevels = Straightener.straighten(levels);
+				double[][] cropLevels = crop ? Cropper.crop(rotLevels, binarizeThreshold) : rotLevels;
+				Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
+				List<double[][]> lines = LineExtractor.extractLines(cropLevels);
+				observations = new PixelType[lines.size()][][];
+				for (int i = 0; i < lines.size(); ++i) {
+					if (lineHeight >= 0) {
+						observations[i] = ImageUtils.getPixelTypes(ImageUtils.resampleImage(ImageUtils.makeImage(lines.get(i)),
+								lineHeight));
+					}
+					else {
+						observations[i] = ImageUtils.getPixelTypes(ImageUtils.makeImage(lines.get(i)));
+					}
+				}
+
+				if (lineExtractionImageOutputPath != null) {
+					String fileParent = pdfFile.getParent();
+					String preext = new File(baseName()).getName();
+					String ext = "jpg";
+					String lineExtractionImagePath = lineExtractionImageOutputPath + "/" + fileParent + "/" + preext
+							+ "-line_extract." + ext;
+					System.out.println("Writing line-extraction image to: " + lineExtractionImagePath);
+					new File(lineExtractionImagePath).getParentFile().mkdirs();
+					f.writeImage(lineExtractionImagePath, Visualizer.renderLineExtraction(observations));
+				}
+			}
+			return observations;
+		}
+
+		public String[][] loadLineText() {
+			return null;
+		}
+
+		public String baseName() {
+			return FileUtil.withoutExtension(pdfFile.getPath()) + "_pdf_page" + String.format("%04d", pageNumber);
+		}
+
 	}
 
 	private final String inputPath;
 	private final int lineHeight;
 	private final double binarizeThreshold;
 	private final boolean crop;
-	
+
 	private String lineExtractionImageOutputPath = null;
 
-	public LazyRawImageLoader(String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String lineExtractionImageOutputPath) {
+	public LazyRawImageLoader(String inputPath, int lineHeight, double binarizeThreshold, boolean crop,
+			String lineExtractionImageOutputPath) {
 		this.inputPath = inputPath;
 		this.lineHeight = lineHeight;
 		this.binarizeThreshold = binarizeThreshold;
@@ -126,18 +200,22 @@ public class LazyRawImageLoader implements ImageLoader {
 
 	public List<Document> readDataset() {
 		File dir = new File(inputPath);
-		System.out.println("Reading data from ["+dir+ "], which "+(dir.exists() ? "exists" : "does not exist"));
+		System.out.println("Reading data from [" + dir + "], which " + (dir.exists() ? "exists" : "does not exist"));
 		List<File> dirList = FileUtil.recursiveFiles(dir);
-		
-		List<File> filesToUse = new ArrayList<File>();
-		for (File f: dirList) {
-			if (f.getName().endsWith(".txt")) continue;
-			filesToUse.add(f);
-		}
-		
+
 		List<Document> docs = new ArrayList<Document>();
-		for (File f : filesToUse) {
-			docs.add(new LazyRawImageDocument(f, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
+		for (File f : dirList) {
+			if (f.getName().endsWith(".txt"))
+				continue;
+			if (f.getName().endsWith(".pdf")) {
+				int numPages = PdfImageReader.numPagesInPdf(f);
+				for (int pageNumber = 0; pageNumber < numPages; ++pageNumber) {
+					docs.add(new LazyRawPdfImageDocument(f, pageNumber, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
+				}
+			}
+			else {
+				docs.add(new LazyRawImageDocument(f, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
+			}
 		}
 		return docs;
 	}

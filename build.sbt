@@ -20,5 +20,6 @@ mainClass in oneJar := None
 
 
 libraryDependencies ++= Seq(
+  "org.swinglabs" % "pdf-renderer" % "1.0.5",
   "junit" % "junit" % "4.12" % "test",
   "com.novocode" % "junit-interface" % "0.10" % "test")
