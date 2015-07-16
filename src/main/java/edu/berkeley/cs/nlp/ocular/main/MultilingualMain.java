@@ -59,12 +59,12 @@ public class MultilingualMain implements Runnable {
 	public static int numDocs = Integer.MAX_VALUE;
 
 	@Option(gloss = "Path to the language model file.")
-	public static String initLmPath = null; //"lm/cs_lm.lmser";
+	public static String lmPath = null; //"lm/cs_lm.lmser";
 
 	@Option(gloss = "Path of the font initializer file.")
 	public static String initFontPath = null; //"font/init.fontser";
 
-	@Option(gloss = "If there are existing extractions (from ExtractLinesMain), where to find them.")
+	@Option(gloss = "If there are existing extractions, where to find them.")
 	public static String existingExtractionsPath = null;
 
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
@@ -92,7 +92,7 @@ public class MultilingualMain implements Runnable {
 	public static double binarizeThreshold = 0.12;
 
 	@Option(gloss = "Crop pages?")
-	public static boolean crop = false;
+	public static boolean crop = true;
 
 	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
 	public static boolean markovVerticalOffset = false;
@@ -140,7 +140,7 @@ public class MultilingualMain implements Runnable {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
-		if (initLmPath == null) throw new IllegalArgumentException("-initLmPath not set");
+		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
 		
 		long overallNanoTime = System.nanoTime();
@@ -153,8 +153,8 @@ public class MultilingualMain implements Runnable {
 
 		List<Document> documents = loadDocuments();
 
-		System.out.println("Loading initial LM from " + initLmPath);
-		Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> lmAndTransModel = getForwardTransitionModel(initLmPath);
+		System.out.println("Loading initial LM from " + lmPath);
+		Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> lmAndTransModel = getForwardTransitionModel(lmPath);
 		CodeSwitchLanguageModel lm = lmAndTransModel._1;
 		SparseTransitionModel forwardTransitionModel = lmAndTransModel._2;
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
@@ -624,7 +624,7 @@ public class MultilingualMain implements Runnable {
 		for (int c = 0; c < charIndexer.size(); ++c) {
 			CharacterTemplate template = font.get(charIndexer.getObject(c));
 			if (template == null)
-				throw new RuntimeException("No template found for character '"+charIndexer.getObject(c)+"'");
+				throw new RuntimeException("No template found for character '"+charIndexer.getObject(c)+"' ("+StringHelper.toUnicode(charIndexer.getObject(c))+")");
 			templates[c] = template;
 		}
 		return templates;

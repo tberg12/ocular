@@ -69,7 +69,7 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 
 	public BasicCodeSwitchLanguageModel(Map<String, Tuple2<SingleLanguageModel, Double>> subModelsAndPriors, Indexer<String> charIndexer, double pKeepSameLanguage, int maxOrder) {
 		if (subModelsAndPriors.isEmpty()) throw new IllegalArgumentException("languageModelsAndPriors may not be empty");
-		if (pKeepSameLanguage <= 0.0 || pKeepSameLanguage >= 1.0) throw new IllegalArgumentException("pKeepSameLanguage on must be between 0 and 1 (it's " + pKeepSameLanguage + ")");
+		if (pKeepSameLanguage < 0.0 || pKeepSameLanguage > 1.0) throw new IllegalArgumentException("pKeepSameLanguage must be between 0 and 1, was " + pKeepSameLanguage);
 
 		// Total prob, for normalizing
 		double languagePriorSum = 0.0;
@@ -104,7 +104,7 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	 */
 	public static Map<String, Map<String, Double>> makeLanguageTransitionPriors(Map<String, Double> languagePriors, double pKeepSameLanguage) {
 		if (languagePriors.isEmpty()) throw new IllegalArgumentException("languagePriors may not be empty");
-		if (pKeepSameLanguage <= 0.0 || pKeepSameLanguage >= 1.0) throw new IllegalArgumentException("pKeepSameLanguage must be between 0 and 1, was " + pKeepSameLanguage);
+		if (pKeepSameLanguage < 0.0 || pKeepSameLanguage > 1.0) throw new IllegalArgumentException("pKeepSameLanguage must be between 0 and 1, was " + pKeepSameLanguage);
 
 		Set<String> languages = languagePriors.keySet();
 		if (languages.size() > 1) {

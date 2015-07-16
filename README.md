@@ -144,7 +144,7 @@ There are three ways to use this repository:
           -inputPath sample_images/multilingual \
           -numDocs 10 \
           -initFontPath font/cs_init.fontser \
-          -initLmPath lm/cs_lm.cslmser \
+          -lmPath lm/cs_lm.cslmser \
           -outputFontPath font/cs_trained.fontser \
           -outputLmPath lm/cs_trained.cslmser \
           -outputPath cs_train_output \
@@ -159,7 +159,7 @@ There are three ways to use this repository:
         target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
           -inputPath sample_images/multilingual \
           -initFontPath font/cs_trained.fontser \
-          -initLmPath lm/cs_trained.cslmser \
+          -lmPath lm/cs_trained.cslmser \
           -outputPath cs_transcribe_output \
           -lineExtractionOutputPath cs_transcribe_output
 
@@ -286,13 +286,13 @@ Default: 5
 * `-lmPath`: Output Language Model file path. 
 Required.
 
-* `-textPaths`: Path to the text files (or directory hierarchies) for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: `english->lms/english/,spanish->lms/spanish/,french->lms/french/`.  If spaces are used, be sure to wrap the whole string with "quotes".  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.
+* `-textPath`: Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: `"english->texts/english/,spanish->texts/spanish/,french->texts/french/"`.  If spaces are used, be sure to wrap the whole string with "quotes".).
 Required.
 
-* `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes". 
+* `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes".  (Only relevant if multiple languges used.) 
 Default: null  (uniform priors)
 
-* `-pKeepSameLanguage`: Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.) 
+* `-pKeepSameLanguage`: Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (Only relevant if multiple languges used.) 
 Default: 0.999999
 
 * `-alternateSpellingReplacementPaths`: Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: `english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt`. If spaces are used, be sure to wrap the whole string with "quotes". Any languages for which no replacements are needed can be safely ignored. 
@@ -330,13 +330,13 @@ Required.
 * `-numDocs`: Number of documents to use. Ignore or use -1 to use all documents.
 Default: -1
 
-* `-initLmPath`: Path to the language model file.
+* `-lmPath`: Path to the language model file.
 Required.
 
 * `-initFontPath`: Path of the font initializer file.
 Required.
 
-* `-existingExtractionsPath`: If there are existing extractions (from a previous `-lineExtractionOutputPath`), where to find them.  Ignore to perform new extractions.  *Not currently implemented*.
+* `-existingExtractionsPath`: If there are existing extractions, where to find them.  Ignore to perform new extractions.  *Not currently implemented*.
 Default: null
 
 * `-learnFont`: Whether to learn the font from the input documents and write the font to a file.
@@ -364,7 +364,7 @@ Default: true
 Default: 0.12
 
 * `-crop`: Crop pages?
-Default: false
+Default: true
 
 * `-markovVerticalOffset`: Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
 Default: false

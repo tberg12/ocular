@@ -46,8 +46,8 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Output LM file path.")
 	public static String lmPath = null;
 	
-	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM. (For multiple paths for multilingual (code-switching) support, give multiple comma-separated files with language names: \"english->lms/english/,spanish->lms/spanish/,french->lms/french/\".  If spaces are used, be sure to wrap the whole string with \"quotes\".  For each entry, the entire directory will be recursively searched for any files that do not start with `.`")
-	public static String textPaths = null;
+	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  If spaces are used, be sure to wrap the whole string with \"quotes\".)")
+	public static String textPath = null;
 	
 	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".")
 	public static String languagePriors = null;
@@ -90,7 +90,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 
 	public void run() {
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
-		if (textPaths == null) throw new IllegalArgumentException("-textPaths not set");
+		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
 		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = makePathsReadersAndPriors();
 
@@ -116,11 +116,11 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	public Map<String, Tuple2<Tuple2<String, TextReader>, Double>> makePathsReadersAndPriors() {
 		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = new HashMap<String, Tuple2<Tuple2<String, TextReader>, Double>>();
 
-		String textPathString = textPaths;
-		if (!textPaths.contains("->")) textPathString = "NoLanguageGiven->" + textPaths; // repair "invalid" input
+		String textPathString = textPath;
+		if (!textPath.contains("->")) textPathString = "NoLanguageNameGiven->" + textPath; // repair "invalid" input
 		Map<String, String> languagePathMap = new HashMap<String, String>();
 		for (String part : textPathString.split(",")) {
-			String[] subparts = part.trim().split("->");
+			String[] subparts = part.split("->");
 			if (subparts.length != 2) throw new IllegalArgumentException("malformed lmPath argument: comma-separated part must be of the form \"LANGUAGE->PATH\", was: " + part);
 			String language = subparts[0].trim();
 			String filepath = subparts[1].trim();
@@ -130,7 +130,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		Map<String, Double> languagePriorMap = new HashMap<String, Double>();
 		if (languagePriors != null) {
 			for (String part : languagePriors.split(",")) {
-				String[] subparts = part.trim().split("->");
+				String[] subparts = part.split("->");
 				if (subparts.length != 2) throw new IllegalArgumentException("malformed languagePriors argument: comma-separated part must be of the form \"LANGUAGE->PRIOR\", was: " + part);
 				String language = subparts[0].trim();
 				Double prior = Double.parseDouble(subparts[1].trim());
@@ -146,13 +146,17 @@ public class CodeSwitchLMTrainMain implements Runnable {
 		
 		Map<String, String> languageAltSpellPathMap = new HashMap<String, String>();
 		if (alternateSpellingReplacementPaths != null) {
-			for (String part : alternateSpellingReplacementPaths.split(",")) {
-				String[] subparts = part.trim().split("->");
-				if (subparts.length != 2) throw new IllegalArgumentException("malformed languagePriors argument: comma-separated part must be of the form \"LANGUAGE->PRIOR\", was: " + part);
-				String language = subparts[0].trim();
-				String replacementsPath = subparts[1].trim();
-				if (!languagePathMap.keySet().contains(language)) throw new RuntimeException("Language '"+language+"' appears in the alternateSpellingReplacementPaths argument but not in textPaths ("+languagePathMap.keySet()+")");
-				languageAltSpellPathMap.put(language, replacementsPath);
+			String asrString = alternateSpellingReplacementPaths;
+			if (!asrString.contains("->")) asrString = "NoLanguageNameGiven->" + asrString; // repair "invalid" input
+			if (asrString != null) {
+				for (String part : asrString.split(",")) {
+					String[] subparts = part.split("->");
+					if (subparts.length != 2) throw new IllegalArgumentException("malformed alternateSpellingReplacementPaths argument: comma-separated part must be of the form \"LANGUAGE->PATH\", was: " + part);
+					String language = subparts[0].trim();
+					String replacementsPath = subparts[1].trim();
+					if (!languagePathMap.keySet().contains(language)) throw new RuntimeException("Language '"+language+"' appears in the alternateSpellingReplacementPaths argument but not in textPath ("+languagePathMap.keySet()+")");
+					languageAltSpellPathMap.put(language, replacementsPath);
+				}
 			}
 		}
 		
