@@ -26,160 +26,132 @@ It is described in the following publications:
 
 
 
-## Using Ocular
+## Quick-Start Guide
 
 ### Getting set up
 
-There are three ways to use this repository:
+Clone this repository, and compile the project into a jar:
 
-1. Clone this repository, and compile the project into a jar:
-
-        git clone https://github.com/tberg12/ocular.git
-        cd ocular
-        ./compile.sh
+    git clone https://github.com/tberg12/ocular.git
+    cd ocular
+    ./compile.sh
 
   This creates a jar file `ocular-0.2-SNAPSHOT-with_dependencies.jar` that can be run like:
   
-        java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.Main -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
+    java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
 
   This jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
 
-2. Clone this repository, and compile into a script:
-
-        git clone https://github.com/tberg12/ocular.git
-        cd ocular
-        ./compile.sh
- 
-  This creates an executable script `target/start` that can be run like:
+  The `compile.sh` script also generates an executable script `target/start` that can be run like:
   
-        export JAVA_OPTS="-mx7g"     # Increase the available memory
-        target/start edu.berkeley.cs.nlp.ocular.main.Main [options...]
+    export JAVA_OPTS="-mx7g"     # Increase the available memory
+    target/start [MAIN-CLASS] [options...]
 
-3. Use a dependency management system like Maven or SBT:
+  Alternatively, to incorporate Ocular into a larger project, you may use a dependency management system like Maven or SBT with the following information:
 
     * Repository location: `http://www.cs.utexas.edu/~dhg/maven-repository/snapshots`
     * Group ID: `edu.berkeley.cs.nlp`
     * Artifact ID: `ocular`
     * Version: `0.2-SNAPSHOT`
     
-  For example, in SBT, you would include the following in your `build.sbt`:
-  
-      resolvers += "dhg snapshot repo" at "http://www.cs.utexas.edu/~dhg/maven-repository/snapshots"
-      
-      libraryDependencies += "edu.berkeley.cs.nlp" % "ocular" % "0.2-SNAPSHOT"
 
 
-### Running the full system
-**Note:** The following instructions allow you to run the original Ocular system as presented in Berg-Kirkpatrick et al. 2012 and 2013. This system uses a monolingual language model. For multilingual texts or documents written with high orthographic variation, consider using the multilingual system (see instructions below).
 
-**Note:** The following instructions assume that you used "option 2" above to create an executable script.  If, instead, you would like to use "option 1" to create a jar, simply replace `target/start MAIN-CLASS` in each stage below with `java -Done-jar.main.class=MAIN-CLASS -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar`.
-
-**Note:** These instructions assume a general English corpus, but you can use any language or period-specific corpus of your choice.
+### Using Ocular
 
 1. Train a language model:
 
-  Put some text files in a folder called `texts/english/`.  (For example, [download a book](http://www.gutenberg.org/cache/epub/2600/pg2600.txt)). 
+  Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-textPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
     
-      target/start edu.berkeley.cs.nlp.ocular.main.LMTrainMain \
-        -lmPath lm/my_lm.lmser \
-        -textPath texts/english/ \
-        -insertLongS false
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -lmPath lm/english.lmser \
+        -textPath texts/pg2600.txt
 
-2. Initialize a font:
+  For a multilingual (code-switching) model, specify multiple `-textPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows.  For older texts, it might also be useful to specify `-alternateSpellingReplacementPaths` or `-insertLongS true`, as shown here:
 
-        target/start edu.berkeley.cs.nlp.ocular.main.FontInitMain \
-          -lmPath lm/my_lm.lmser \
-          -fontPath font/init.fontser
-
-3. Train a font:
-
-  To train using the pages that are in `test_img/english`, run:
-
-        target/start edu.berkeley.cs.nlp.ocular.main.Main \
-          -learnFont true \
-          -initFontPath font/init.fontser \
-          -lmPath lm/my_lm.lmser \
-          -inputPath sample_images/english \
-          -outputFontPath font/trained.fontser \
-          -outputPath train_output
-    
-  For extra speed, use `-emissionEngine OPENCL` if you have a Mac with a GPU, or `-emissionEngine CUDA` if you have Cuda installed.
-    
-4. Transcribe some pages:
-
-  To transcribe the pages that are in `test_img/english`, run:
-
-        target/start edu.berkeley.cs.nlp.ocular.main.Main \
-          -inputPath sample_images/english \
-          -initFontPath font/trained.fontser \
-          -lmPath lm/my_lm.lmser \
-          -outputPath transcribe_output 
-
-
-### Running the multilingual system, with a code-switching language model
-**Note:** These instructions assume a trilingual corpus in Latin, Spanish, and Nahuatl, but the code is not specific to any language or any number of languages. Folder names and language data can be changed to match your project, and arguments can be modified for any number of languages following the pattern described below.
-
-1. Train a code-switching language model:
-
-  Put some text in a folders called `texts/spanish/`, `texts/latin/`, and `texts/nahuatl/`.  (For example, [Don Quijote](https://www.gutenberg.org/cache/epub/2000/pg2000.txt), [Meditationes de prima philosophia](https://www.gutenberg.org/cache/epub/23306/pg23306.txt), and [Ancient Nahuatl Poetry](https://www.gutenberg.org/cache/epub/12219/pg12219.txt)).
-    
-      target/start edu.berkeley.cs.nlp.ocular.main.CodeSwitchLMTrainMain \
-        -lmPath lm/cs_lm.cslmser \
-        -textPaths "spanish->texts/spanish/,latin->texts/latin/,nahuatl->texts/nahuatl/" \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -lmPath lm/trilingual.lmser \
+        -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
         -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
         -insertLongS true
-        
+
+  This program will work with any languages, and any number of languages; simply add an entry for every relevant language.  The set of languages chosen should match the set of languages found in the documents that are to be transcribed.
+
+  More details on the various command-line options can be found below.
+
+
 2. Initialize a font:
 
-        target/start edu.berkeley.cs.nlp.ocular.main.FontInitMain \
-          -lmPath lm/cs_lm.cslmser \
-          -fontPath font/cs_init.fontser
+  Before a font can be trained from texts, a font model consisting of a "guess" for each character must be initialized based on the fonts on your computer.  Use `-fontPath` to specify where the initialized font should be written.  Since different languages use different character sets, a language model must be given in order for the system to know what characters to initialize (`-lmPath`).
+
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -lmPath lm/trilingual.lmser \
+        -fontPath font/trilingual/init.fontser
+
 
 3. Train a font:
 
-  To train using the pages that are in `test_img/multilingual`, run:
+  To train a font, a set of document pages must be given (`-inputPath`), along with the paths to the language model and initial font model.  Use `-outputFontPath` to specify where the trained font model should be written, and `-outputPath` to specify where transcriptions and evaluation metrics should be written.  The path specified by `-inputPath` should point to a pdf or image file or directory or directory hierarchy of such files.  The value given by `-inputPath` will be searched recursively for non-`.txt` files; the transcriptions written to the `-outputPath` will maintain the same directory hierarchy.
 
-        target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
-          -learnFont true \
-          -inputPath sample_images/multilingual \
-          -numDocs 10 \
-          -initFontPath font/cs_init.fontser \
-          -lmPath lm/cs_lm.cslmser \
-          -outputFontPath font/cs_trained.fontser \
-          -outputLmPath lm/cs_trained.cslmser \
-          -outputPath cs_train_output \
-          -lineExtractionOutputPath cs_train_output
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -learnFont true \
+        -initFontPath font/trilingual/init.fontser \
+        -lmPath lm/trilingual.lmser \
+        -inputPath sample_images/advertencias \
+        -numDocs 10 \
+        -outputFontPath font/advertencias/trained.fontser \
+        -outputPath train_output
     
+  If a gold standard transcription is available for a file, it should be written in a `.txt` file in the same directory as the corresponding image, and given the same filename (but with a different extension).  These files will be used to evaluate the accuracy of the transcription (during either training or testing).  For example:
+
+      path/to/some/image_001.jpg      # document image
+      path/to/some/image_001.txt      # corresponding transcription
+
   For extra speed, use `-emissionEngine OPENCL` if you have a Mac with a GPU, or `-emissionEngine CUDA` if you have Cuda installed.
-    
+
+  Many more command-line options can be found below.
+
+
 4. Transcribe some pages:
 
-  To train using the pages that are in `test_img/multilingual`, run:
+  To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-learnFont` unspecified (or set it to `false`).  Additionally, `-initFontPath` should point to the newly-trained font model (instead of the "initial" font model used during font training).
 
-        target/start edu.berkeley.cs.nlp.ocular.main.MultilingualMain \
-          -inputPath sample_images/multilingual \
-          -initFontPath font/cs_trained.fontser \
-          -lmPath lm/cs_trained.cslmser \
-          -outputPath cs_transcribe_output \
-          -lineExtractionOutputPath cs_transcribe_output
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -inputPath sample_images/advertencias \
+        -initFontPath font/advertencias/trained.fontser \
+        -lmPath lm/trilingual.lmser \
+        -outputPath transcribe_output 
 
-    
+
+
+
+
 
 
 ## All Command-Line Options
 
-### LMTrainMain
 
-* `-lmPath`: Output LM file path.
+### TrainLanguageModel
+
+* `-lmPath`: Output Language Model file path. 
 Required.
 
-* `-textPath`: Input corpus path.
+* `-textPath`: Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: `"english->texts/english/,spanish->texts/spanish/,french->texts/french/"`.  If spaces are used, be sure to wrap the whole string with "quotes".).
 Required.
+
+* `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes".  (Only relevant if multiple languages used.) 
+Default: uniform priors
+
+* `-pKeepSameLanguage`: Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (Only relevant if multiple languages used.) 
+Default: 0.999999
+
+* `-alternateSpellingReplacementPaths`: Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: `english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt`. If spaces are used, be sure to wrap the whole string with "quotes". Any languages for which no replacements are needed can be safely ignored. 
+Default: no replacements
 
 * `-insertLongS`: Use separate character type for long s.
 Default: false
 
-* `-removeDiacritics`: Remove diacritics?
+* `-removeDiacritics`: Remove diacritics? 
 Default: false
 
 * `-explicitCharacterSet`: A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters. *Not currently implemented*.
@@ -188,15 +160,18 @@ Default: ...
 * `-maxLines`: Maximum number of lines to use from corpus.
 Default: 1000000
 
-* `-charN`: LM character n-gram length.
+* `-charN`: "LM character n-gram length."
 Default: 6
 
-* `-power`: Exponent on LM scores.
+* `-power`: exponent on LM scores.
 Default: 4.0
 
+* `-lmCharCount`: Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.
+Default: -1
 
 
-### FontInitMain
+
+### InitializeFont
 
 * `-lmPath`: Path to the language model file (so that it knows which characters to create images for).
 Required.
@@ -221,110 +196,9 @@ Default: 0.0
 
 
 
+### TranscribeOrTrainFont
 
-### Main
-
-* `-inputPath`: Path of the directory that contains the input document images.
-Required.
-
-* `-lmPath`: Path to the language model file.
-Required.
-
-* `-initFontPath`: Path of the font initializer file.
-Required.
-
-* `-learnFont`: Whether to learn the font from the input documents and write the font to a file.
-Default: false
-
-* `-outputPath`: Path of the directory that will contain output transcriptions and line extractions.
-Required.
-
-* `-outputFontPath`: Path to write the learned font file to. (Only if learnFont is set to true.)
-Required.
-
-* `-numEMIters`: Number of iterations of EM to use for font learning.
-Default: 4
-
-* `-binarizeThreshold`: Quantile to use for pixel value thresholding. (High values mean more black pixels.)
-Default: 0.12
-
-* `-markovVerticalOffset`: Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
-Default: true
-
-* `-beamSize`: Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
-Default: 10
-
-* `-emissionEngine`: Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
-Default: DEFAULT
-
-* `-cudaDeviceID`: GPU ID when using CUDA emission engine.
-Default: 0
-
-* `-numMstepThreads`: Number of threads to use for LFBGS during m-step.
-Default: 8
-
-* `-numEmissionCacheThreads`: Number of threads to use during emission cache compuation. (Only has affect when emissionEngine is set to DEFAULT.)
-Default: 8
-
-* `-numDecodeThreads`: Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)
-Default: 8
-
-* `-decodeBatchSize`: Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)
-Default: 32
-
-* `-paddingMinWidth`: Min horizontal padding between characters in pixels. (Best left at default value: 1.)
-Default: 1
-
-* `-paddingMaxWidth`: Max horizontal padding between characters in pixels (Best left at default value: 5.)
-Default: 5
-
-
-
-
-### CodeSwitchLMTrainMain
-
-* `-lmPath`: Output Language Model file path. 
-Required.
-
-* `-textPath`: Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: `"english->texts/english/,spanish->texts/spanish/,french->texts/french/"`.  If spaces are used, be sure to wrap the whole string with "quotes".).
-Required.
-
-* `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes".  (Only relevant if multiple languges used.) 
-Default: null  (uniform priors)
-
-* `-pKeepSameLanguage`: Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (Only relevant if multiple languges used.) 
-Default: 0.999999
-
-* `-alternateSpellingReplacementPaths`: Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: `english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt`. If spaces are used, be sure to wrap the whole string with "quotes". Any languages for which no replacements are needed can be safely ignored. 
-Default: null  (no replacements)
-
-* `-insertLongS`: Use separate character type for long s.
-Default: false
-
-* `-removeDiacritics`: Remove diacritics? 
-Default: false.
-
-* `-explicitCharacterSet`: A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters. *Not currently implemented*.
-Default: ...
-
-* `-maxLines`: Maximum number of lines to use from corpus.
-Default: 1000000
-
-* `-charN`: "LM character n-gram length."
-Default: 6
-
-* `-power`: exponent on LM scores.
-Default: 4.0
-
-* `-lmCharCount`: Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.
-Default: -1
-
-
-
-
-### MultilingualMain
-
-* `-inputPath`: Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
+* `-inputPath`: Path of the directory that contains the input document images or pdfs. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
 Required.
 
 * `-numDocs`: Number of documents to use. Ignore or use -1 to use all documents.
@@ -343,7 +217,7 @@ Default: null
 Default: false
 
 * `-numEMIters`: Number of iterations of EM to use for font learning.
-Default: 4
+Default: 3
 
 * `-outputPath`: Path of the directory that will contain output transcriptions and line extractions.
 Required.
@@ -369,7 +243,7 @@ Default: true
 * `-markovVerticalOffset`: Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
 Default: false
 
-* `-beamSize`: Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
+* `-beamSize`: Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
 Default: 10
 
 * `-emissionEngine`: Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
@@ -381,7 +255,7 @@ Default: 0
 * `-numMstepThreads`: Number of threads to use for LFBGS during m-step.
 Default: 8
 
-* `-numEmissionCacheThreads`: Number of threads to use during emission cache compuation. (Only has affect when emissionEngine is set to DEFAULT.)
+* `-numEmissionCacheThreads`: Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.)
 Default: 8
 
 * `-numDecodeThreads`: Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)

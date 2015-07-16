@@ -41,7 +41,7 @@ import fileio.f;
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
-public class CodeSwitchLMTrainMain implements Runnable {
+public class TrainLanguageModel implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")
 	public static String lmPath = null;
@@ -49,10 +49,10 @@ public class CodeSwitchLMTrainMain implements Runnable {
 	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  If spaces are used, be sure to wrap the whole string with \"quotes\".)")
 	public static String textPath = null;
 	
-	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".")
+	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".  Defaults to uniform priors. (Only relevant if multiple languages used.)")
 	public static String languagePriors = null;
 	
-	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (For use with codeSwitch.)")
+	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)")
 	public static double pKeepSameLanguage = 0.999999;
 
 	@Option(gloss = "Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". If spaces are used, be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
@@ -81,7 +81,7 @@ public class CodeSwitchLMTrainMain implements Runnable {
 
 	
 	public static void main(String[] args) {
-		CodeSwitchLMTrainMain main = new CodeSwitchLMTrainMain();
+		TrainLanguageModel main = new TrainLanguageModel();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });
 		if (!parser.doParse(args)) System.exit(1);

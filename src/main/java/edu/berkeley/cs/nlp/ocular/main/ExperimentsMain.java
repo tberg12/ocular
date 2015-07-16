@@ -134,7 +134,7 @@ public class ExperimentsMain implements Runnable {
 			final Indexer<String> charIndexer = lm.getCharacterIndexer();
 			
 			System.out.println("Loading font initializer..");
-			Map<String,CharacterTemplate> font = FontInitMain.readFont(fontPath);
+			Map<String,CharacterTemplate> font = InitializeFont.readFont(fontPath);
 			final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 			for (int c=0; c<templates.length; ++c) {
 				templates[c] = font.get(charIndexer.getObject(c));

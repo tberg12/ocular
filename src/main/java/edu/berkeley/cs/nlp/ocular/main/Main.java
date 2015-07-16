@@ -147,7 +147,7 @@ public class Main implements Runnable {
 		System.out.println("Num characters: " + charIndexer.size());
 
 		System.out.println("Loading font initializer..");
-		Map<String,CharacterTemplate> font = FontInitMain.readFont(initFontPath);
+		Map<String,CharacterTemplate> font = InitializeFont.readFont(initFontPath);
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		for (int c=0; c<templates.length; ++c) {
 			templates[c] = font.get(charIndexer.getObject(c));
@@ -251,7 +251,7 @@ public class Main implements Runnable {
 		}
 		
 		if (learnFont) {
-			FontInitMain.writeFont(font, outputFontPath);
+			InitializeFont.writeFont(font, outputFontPath);
 		}
 
 		if (!allEvals.isEmpty()) {

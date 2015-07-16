@@ -24,7 +24,7 @@ import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
 import fig.OptionsParser;
 
-public class FontInitMain implements Runnable {
+public class InitializeFont implements Runnable {
 
 	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
 	public static String lmPath = null;
@@ -49,7 +49,7 @@ public class FontInitMain implements Runnable {
 	
 	
 	public static void main(String[] args) {
-		FontInitMain main = new FontInitMain();
+		InitializeFont main = new InitializeFont();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] {main});
 		if (!parser.doParse(args)) System.exit(1);
@@ -85,7 +85,7 @@ public class FontInitMain implements Runnable {
 		for (CharacterTemplate template : templates) {
 			font.put(template.getCharacter(), template);
 		}
-		FontInitMain.writeFont(font, fontPath);
+		InitializeFont.writeFont(font, fontPath);
 	}
 	
 	public static LanguageModel readLM(String lmPath) {

@@ -54,12 +54,12 @@ public class FileUtil {
 	
 	public static String extension(String name) {
 		int dotIdx = name.lastIndexOf(".");
-		return dotIdx >= 0 ? name.substring(name.lastIndexOf(".") + 1) : name;
+		return dotIdx >= 0 ? name.substring(dotIdx + 1) : null;
 	}
 
 	public static String withoutExtension(String name) {
 		int dotIdx = name.lastIndexOf(".");
-		return dotIdx >= 0 ? name.substring(0, dotIdx) : null;
+		return dotIdx >= 0 ? name.substring(0, dotIdx) : name;
 	}
 
 

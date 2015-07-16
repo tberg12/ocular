@@ -50,7 +50,7 @@ import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
 
-public class MultilingualMain implements Runnable {
+public class TranscribeOrTrainFont implements Runnable {
 
 	@Option(gloss = "Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
 	public static String inputPath = null; //"test_img";
@@ -97,7 +97,7 @@ public class MultilingualMain implements Runnable {
 	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
 	public static boolean markovVerticalOffset = false;
 
-	@Option(gloss = "Size of beam for viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
+	@Option(gloss = "Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
 	public static int beamSize = 10;
 
 	@Option(gloss = "Engine to use for inner loop of emission cache computation. DEFAULT: Uses Java on CPU, which works on any machine but is the slowest method. OPENCL: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
@@ -109,7 +109,7 @@ public class MultilingualMain implements Runnable {
 	@Option(gloss = "Number of threads to use for LFBGS during m-step.")
 	public static int numMstepThreads = 8;
 
-	@Option(gloss = "Number of threads to use during emission cache compuation. (Only has affect when emissionEngine is set to DEFAULT.)")
+	@Option(gloss = "Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.)")
 	public static int numEmissionCacheThreads = 8;
 
 	@Option(gloss = "Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)")
@@ -129,7 +129,7 @@ public class MultilingualMain implements Runnable {
 
 	
 	public static void main(String[] args) {
-		MultilingualMain main = new MultilingualMain();
+		TranscribeOrTrainFont main = new TranscribeOrTrainFont();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });
 		if (!parser.doParse(args)) System.exit(1);
@@ -166,7 +166,7 @@ public class MultilingualMain implements Runnable {
 		System.out.println("Num characters: " + charIndexer.size());
 
 		System.out.println("Loading font initializer from " + initFontPath);
-		Map<String, CharacterTemplate> font = FontInitMain.readFont(initFontPath);
+		Map<String, CharacterTemplate> font = InitializeFont.readFont(initFontPath);
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
 
 		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
@@ -308,10 +308,10 @@ public class MultilingualMain implements Runnable {
 		}
 
 		if (learnFont) {
-			FontInitMain.writeFont(font, outputFontPath);
+			InitializeFont.writeFont(font, outputFontPath);
 		}
 		if (learnFont && outputLmPath != null) {
-			CodeSwitchLMTrainMain.writeLM(lm, outputLmPath);
+			TrainLanguageModel.writeLM(lm, outputLmPath);
 		}
 
 		if (!allEvals.isEmpty() && new File(inputPath).isDirectory()) {
@@ -323,7 +323,7 @@ public class MultilingualMain implements Runnable {
 	}
 
 	private Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> getForwardTransitionModel(String lmFilePath) {
-		CodeSwitchLanguageModel codeSwitchLM = CodeSwitchLMTrainMain.readLM(lmFilePath);
+		CodeSwitchLanguageModel codeSwitchLM = TrainLanguageModel.readLM(lmFilePath);
 		System.out.println("Loaded CodeSwitchLanguageModel from " + lmFilePath);
 		for (String lang : codeSwitchLM.languages()) {
 			List<String> chars = new ArrayList<String>();
