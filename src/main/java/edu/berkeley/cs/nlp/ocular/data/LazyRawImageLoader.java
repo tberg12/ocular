@@ -29,6 +29,7 @@ public class LazyRawImageLoader implements ImageLoader {
 
 	public static class LazyRawImageDocument implements ImageLoader.Document {
 		private final File file;
+		private final String inputPath;
 		private final int lineHeight;
 		private final double binarizeThreshold;
 		private final boolean crop;
@@ -40,9 +41,9 @@ public class LazyRawImageLoader implements ImageLoader {
 
 		private String lineExtractionImageOutputPath = null;
 
-		public LazyRawImageDocument(File file, int lineHeight, double binarizeThreshold, boolean crop,
-				String lineExtractionImageOutputPath) {
+		public LazyRawImageDocument(File file, String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String lineExtractionImageOutputPath) {
 			this.file = file;
+			this.inputPath = inputPath;
 			this.lineHeight = lineHeight;
 			this.binarizeThreshold = binarizeThreshold;
 			this.crop = crop;
@@ -60,8 +61,7 @@ public class LazyRawImageLoader implements ImageLoader {
 				observations = new PixelType[lines.size()][][];
 				for (int i = 0; i < lines.size(); ++i) {
 					if (lineHeight >= 0) {
-						observations[i] = ImageUtils.getPixelTypes(ImageUtils.resampleImage(ImageUtils.makeImage(lines.get(i)),
-								lineHeight));
+						observations[i] = ImageUtils.getPixelTypes(ImageUtils.resampleImage(ImageUtils.makeImage(lines.get(i)), lineHeight));
 					}
 					else {
 						observations[i] = ImageUtils.getPixelTypes(ImageUtils.makeImage(lines.get(i)));
@@ -69,11 +69,10 @@ public class LazyRawImageLoader implements ImageLoader {
 				}
 
 				if (lineExtractionImageOutputPath != null) {
-					String fileParent = file.getParent();
+					String fileParent = FileUtil.removeCommonPathPrefix(new File(inputPath).getParent(), file.getParent())._2;
 					String preext = FileUtil.withoutExtension(file.getName());
 					String ext = FileUtil.extension(file.getName());
-					String lineExtractionImagePath = lineExtractionImageOutputPath + "/" + fileParent + "/" + preext
-							+ "-line_extract." + ext;
+					String lineExtractionImagePath = lineExtractionImageOutputPath + "/" + fileParent + "/" + preext + "-line_extract." + ext;
 					System.out.println("Writing line-extraction image to: " + lineExtractionImagePath);
 					new File(lineExtractionImagePath).getParentFile().mkdirs();
 					f.writeImage(lineExtractionImagePath, Visualizer.renderLineExtraction(observations));
@@ -121,6 +120,7 @@ public class LazyRawImageLoader implements ImageLoader {
 	public static class LazyRawPdfImageDocument implements ImageLoader.Document {
 		private final File pdfFile;
 		private final int pageNumber; // starts at zero
+		private final String inputPath;
 		private final int lineHeight;
 		private final double binarizeThreshold;
 		private final boolean crop;
@@ -129,10 +129,10 @@ public class LazyRawImageLoader implements ImageLoader {
 
 		private String lineExtractionImageOutputPath = null;
 
-		public LazyRawPdfImageDocument(File pdfFile, int pageNumber, int lineHeight, double binarizeThreshold,
-				boolean crop, String lineExtractionImageOutputPath) {
+		public LazyRawPdfImageDocument(File pdfFile, int pageNumber, String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String lineExtractionImageOutputPath) {
 			this.pdfFile = pdfFile;
 			this.pageNumber = pageNumber;
+			this.inputPath = inputPath;
 			this.lineHeight = lineHeight;
 			this.binarizeThreshold = binarizeThreshold;
 			this.crop = crop;
@@ -150,8 +150,7 @@ public class LazyRawImageLoader implements ImageLoader {
 				observations = new PixelType[lines.size()][][];
 				for (int i = 0; i < lines.size(); ++i) {
 					if (lineHeight >= 0) {
-						observations[i] = ImageUtils.getPixelTypes(ImageUtils.resampleImage(ImageUtils.makeImage(lines.get(i)),
-								lineHeight));
+						observations[i] = ImageUtils.getPixelTypes(ImageUtils.resampleImage(ImageUtils.makeImage(lines.get(i)), lineHeight));
 					}
 					else {
 						observations[i] = ImageUtils.getPixelTypes(ImageUtils.makeImage(lines.get(i)));
@@ -159,11 +158,11 @@ public class LazyRawImageLoader implements ImageLoader {
 				}
 
 				if (lineExtractionImageOutputPath != null) {
-					String fileParent = pdfFile.getParent();
+					String fileParent = FileUtil.removeCommonPathPrefix(new File(inputPath).getParent(), pdfFile.getParent())._2;
 					String preext = new File(baseName()).getName();
 					String ext = "jpg";
-					String lineExtractionImagePath = lineExtractionImageOutputPath + "/" + fileParent + "/" + preext
-							+ "-line_extract." + ext;
+					
+					String lineExtractionImagePath = lineExtractionImageOutputPath + "/" + fileParent + "/" + preext + "-line_extract." + ext;
 					System.out.println("Writing line-extraction image to: " + lineExtractionImagePath);
 					new File(lineExtractionImagePath).getParentFile().mkdirs();
 					f.writeImage(lineExtractionImagePath, Visualizer.renderLineExtraction(observations));
@@ -210,11 +209,11 @@ public class LazyRawImageLoader implements ImageLoader {
 			if (f.getName().endsWith(".pdf")) {
 				int numPages = PdfImageReader.numPagesInPdf(f);
 				for (int pageNumber = 1; pageNumber <= numPages; ++pageNumber) {
-					docs.add(new LazyRawPdfImageDocument(f, pageNumber, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
+					docs.add(new LazyRawPdfImageDocument(f, pageNumber, inputPath, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
 				}
 			}
 			else {
-				docs.add(new LazyRawImageDocument(f, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
+				docs.add(new LazyRawImageDocument(f, inputPath, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
 			}
 		}
 		return docs;

@@ -26,7 +26,7 @@ public class StringHelper {
 	}
 
 	public static String last(String s) {
-		if (s.length() == 0) throw new IllegalArgumentException("cannot get `last` of empty string");
+		if (s.isEmpty()) throw new IllegalArgumentException("cannot get `last` of empty string");
 		return s.substring(s.length() - 1);
 	}
 
@@ -49,7 +49,7 @@ public class StringHelper {
 		StringBuilder sb = new StringBuilder();
 		for (String x : xs)
 			sb.append(x).append(sep);
-		return sb.delete(sb.length() - sepLen, sb.length()).toString();
+		return sb.length() > 0 ? sb.delete(sb.length() - sepLen, sb.length()).toString() : "";
 	}
 
 	public static boolean equals(String a, String b) {

@@ -74,7 +74,7 @@ public class CollectionHelper {
 		if (xs.size() == 0)
 			return Collections.<A> emptyList();
 		else if (xs.size() == 1)
-			return Collections.singletonList(xs.iterator().next());
+			return Collections.<A> singletonList(xs.iterator().next());
 		else {
 			List<A> l = new ArrayList<A>();
 			l.addAll(xs);
@@ -198,6 +198,15 @@ public class CollectionHelper {
 			a[i] = l.get(i);
 		}
 		return a;
+	}
+	
+	public static <A,B> int longestCommonPrefix(List<A> as, List<B> bs) {
+		int longestCommonPrefix = 0;
+		int aLen = as.size();
+		int bLen = bs.size();
+		while (longestCommonPrefix < aLen && longestCommonPrefix < bLen && as.get(longestCommonPrefix).equals(bs.get(longestCommonPrefix))) 
+			++longestCommonPrefix;
+		return longestCommonPrefix;
 	}
 	
 }

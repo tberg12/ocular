@@ -138,6 +138,7 @@ public class MultilingualMain implements Runnable {
 
 	public void run() {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
+		if (!new File(inputPath).exists()) throw new IllegalArgumentException("-inputPath location does not exist");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
@@ -313,8 +314,8 @@ public class MultilingualMain implements Runnable {
 			CodeSwitchLMTrainMain.writeLM(lm, outputLmPath);
 		}
 
-		if (!allEvals.isEmpty()) {
-			printEvaluation(allEvals, outputPath + "/eval.txt");
+		if (!allEvals.isEmpty() && new File(inputPath).isDirectory()) {
+			printEvaluation(allEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
 		}
 
 		System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
@@ -433,7 +434,9 @@ public class MultilingualMain implements Runnable {
 			}
 		}
 
-		String outputFilenameBase = outputPath + "/" + doc.baseName().replaceAll("\\.[^.]*$", "") + (iter <= numEMIters ? "_iter-" + iter : "");
+		String fileParent = FileUtil.removeCommonPathPrefix(new File(inputPath).getParent(), new File(doc.baseName()).getParent())._2;
+		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
+		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (iter <= numEMIters ? "_iter-" + iter : "");
 		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";
 		String goldComparisonOutputFilename = outputFilenameBase + "_vsGold.txt";
 		String htmlOutputFilename = outputFilenameBase + ".html";
@@ -443,6 +446,7 @@ public class MultilingualMain implements Runnable {
 		for (int line = 0; line < decodeStates.length; ++line) {
 			transcriptionOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 		}
+		System.out.println("Writing transcription output to " + transcriptionOutputFilename);
 		System.out.println(transcriptionOutputBuffer.toString());
 		f.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
 
@@ -472,12 +476,14 @@ public class MultilingualMain implements Runnable {
 			}
 			goldComparisonOutputBuffer.append(Evaluator.renderEval(evals));
 
+			System.out.println("Writing gold comparison to " + goldComparisonOutputFilename);
 			System.out.println(goldComparisonOutputBuffer.toString());
 			f.writeString(goldComparisonOutputFilename, goldComparisonOutputBuffer.toString());
 		}
 
 		if (lm.languages().size() > 1) {
 			System.out.println("Multiple languages being used ("+lm.languages().size()+"), so an html file is being generated to show language switching.");
+			System.out.println("Writing html output to " + htmlOutputFilename);
 			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, doc.baseName(), htmlOutputFilename, lm, languageCounts));
 		}
 	}
@@ -597,16 +603,16 @@ public class MultilingualMain implements Runnable {
 		System.out.println("Loading " + numDocsToUse + " documents");
 		for (int docNum = 0; docNum < numDocsToUse; ++docNum) {
 			Document lazyDoc = lazyDocs.get(docNum);
-			String baseName = lazyDoc.baseName();
-			String preext = FileUtil.withoutExtension(baseName);
-			String extension = FileUtil.extension(baseName);
 
-			System.out.println("Loading data for " + inputPath + "/" + baseName);
+			System.out.println("Loading data for " + lazyDoc.baseName());
 			if (existingExtractionsPath == null) {
 				documents.add(lazyDoc);
 			}
 			else if (true) throw new RuntimeException("-existingExtractionsPath option not currently implemented.");
 			else {
+				String baseName = lazyDoc.baseName();
+				String preext = FileUtil.withoutExtension(baseName);
+				String extension = FileUtil.extension(baseName);
 				String existingExtractionsDir = existingExtractionsPath + "/line_extract/" + preext + "/";
 				System.out.println("existingExtractionsDir is [" + existingExtractionsDir + "], which " + (new File(existingExtractionsDir).exists() ? "exists" : "does not exist"));
 				final Pattern pattern = Pattern.compile(preext + "-line_extract-\\d+." + extension);
