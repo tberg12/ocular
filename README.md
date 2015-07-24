@@ -28,7 +28,18 @@ It is described in the following publications:
 
 ## Quick-Start Guide
 
-### Getting set up
+### Obtaining Ocular
+
+The easiest way to get the Ocular software is to download the self-contained jar from http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.2-SNAPSHOT/ocular-0.2-SNAPSHOT-with_dependencies.jar
+
+This jar is executable and can be run like (see detailed instructions below):
+
+    java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
+
+This jar includes all the necessary dependencies, so you should be able to move it to, and run it from, wherever you like.
+
+
+#### Optional: Building Ocular from source code
 
 Clone this repository, and compile the project into a jar:
 
@@ -36,22 +47,18 @@ Clone this repository, and compile the project into a jar:
     cd ocular
     ./compile.sh
 
-  This creates a jar file `ocular-0.2-SNAPSHOT-with_dependencies.jar` that can be run like:
-  
-    java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
+  This creates the jar file `ocular-0.2-SNAPSHOT-with_dependencies.jar`  mentioned above.
 
-  This jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
-
-  Alternatively, if you do not require the source code or sample files, the jar file can just be downloaded from here: [http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.2-SNAPSHOT/ocular-0.2-SNAPSHOT.jar].
-
-#### Other ways of obtaining Ocular
+  Since this jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
 
   The `compile.sh` script also generates an executable script `target/start` that can be run like:
   
     export JAVA_OPTS="-mx7g"     # Increase the available memory
     target/start [MAIN-CLASS] [options...]
 
-  Alternatively, to incorporate Ocular into a larger project, you may use a dependency management system like Maven or SBT with the following information:
+#### Optional: Obtaining Ocular via a dependency management system
+
+  To incorporate Ocular into a larger project, you may use a dependency management system like Maven or SBT with the following information:
 
     * Repository location: `http://www.cs.utexas.edu/~dhg/maven-repository/snapshots`
     * Group ID: `edu.berkeley.cs.nlp`
