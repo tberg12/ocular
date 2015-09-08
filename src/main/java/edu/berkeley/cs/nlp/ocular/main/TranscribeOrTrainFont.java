@@ -608,12 +608,12 @@ public class TranscribeOrTrainFont implements Runnable {
 			if (existingExtractionsPath == null) {
 				documents.add(lazyDoc);
 			}
-			else if (true) throw new RuntimeException("-existingExtractionsPath option not currently implemented.");
 			else {
-				String baseName = lazyDoc.baseName();
+				String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(lazyDoc.baseName()))._2;
+				String baseName = new File(lazyDoc.baseName()).getName();
 				String preext = FileUtil.withoutExtension(baseName);
-				String extension = FileUtil.extension(baseName);
-				String existingExtractionsDir = existingExtractionsPath + "/line_extract/" + preext + "/";
+				String extension = FileUtil.extension(lazyDoc.baseName());
+				String existingExtractionsDir = existingExtractionsPath + "/line_extract/" + fileParent + "/";
 				System.out.println("existingExtractionsDir is [" + existingExtractionsDir + "], which " + (new File(existingExtractionsDir).exists() ? "exists" : "does not exist"));
 				final Pattern pattern = Pattern.compile(preext + "-line_extract-\\d+." + extension);
 				File[] lineImageFiles = new File(existingExtractionsDir).listFiles(new FilenameFilter() {
@@ -621,14 +621,19 @@ public class TranscribeOrTrainFont implements Runnable {
 						return pattern.matcher(name).matches();
 					}
 				});
-				if (lineImageFiles == null) throw new RuntimeException("lineImageFiles is null");
-				if (lineImageFiles.length == 0) throw new RuntimeException("lineImageFiles.length == 0");
-				Arrays.sort(lineImageFiles);
-				String[] lineImagePaths = new String[lineImageFiles.length];
-				for (int i = 0; i < lineImageFiles.length; ++i)
-					lineImagePaths[i] = existingExtractionsDir + lineImageFiles[i].getName();
-				Document doc = new SplitLineImageLoader.SplitLineImageDocument(lineImagePaths, baseName, CharacterTemplate.LINE_HEIGHT);
-				documents.add(doc);
+				System.out.println(Integer.toString(lineImageFiles.length) + " line image files found with pattern " + pattern.toString());
+				if (lineImageFiles.length > 0) {
+					if (lineImageFiles.length == 0) throw new RuntimeException("lineImageFiles.length == 0");
+					Arrays.sort(lineImageFiles);
+					String[] lineImagePaths = new String[lineImageFiles.length];
+					for (int i = 0; i < lineImageFiles.length; ++i)
+						lineImagePaths[i] = existingExtractionsDir + lineImageFiles[i].getName();
+					Document doc = new SplitLineImageLoader.SplitLineImageDocument(lineImagePaths, lazyDoc.baseName(), CharacterTemplate.LINE_HEIGHT);
+					documents.add(doc);
+				}
+				else {
+					documents.add(lazyDoc);
+				}
 			}
 		}
 		return documents;
