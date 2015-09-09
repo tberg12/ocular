@@ -42,15 +42,15 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 	}
 
 	final public PixelType[][][] loadLineImages() {
-	  if (observations == null) { // file has been loaded in this Ocular run
-		    if (preextractedLinesPath == null) {
+	  if (observations == null) { // file has already been loaded in this Ocular run
+		    if (preextractedLinesPath == null) { // no pre-extraction path given
 		    	doLoadObservationsFromFile(); // load data from original file
 		    }
-		    else {
-		      if (extractionFilesPresent()) { // file has been loaded in a previous Ocular run
-		      	doLoadObservationsFromExtractionFiles(); // load data from original file
+		    else { // a pre-extraction path was given
+		      if (extractionFilesPresent()) { // pre-extracted lines exist at the specified location
+		      	doLoadObservationsFromExtractionFiles(); // load data from pre-extracted line files
 		      }
-		      else {
+		      else { // pre-extraction has not been done yet; do it now.
 		      	doLoadObservationsFromFile(); // load data from original file
         		doWriteExtractedLines(); // write extracted lines to files so they don't have to be re-extracted next time
 		      }
