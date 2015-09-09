@@ -6,22 +6,18 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import indexer.Indexer;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import threading.BetterThreader;
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
-import edu.berkeley.cs.nlp.ocular.data.SplitLineImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
@@ -64,9 +60,6 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Path of the font initializer file.")
 	public static String initFontPath = null; //"font/init.fontser";
 
-	@Option(gloss = "If there are existing extractions, where to find them.")
-	public static String existingExtractionsPath = null;
-
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
 	public static boolean learnFont = false;
 
@@ -76,8 +69,8 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 	public static String outputPath = null; //"output_dir";
 
-	@Option(gloss = "Path of the directory where the line-extraction images should be written.  If ignored, no images will be written.")
-	public static String lineExtractionOutputPath = null;
+	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If ignored, document will simply be read from the original document image file, and no line images will be written.")
+	public static String preextractedLinesPath = null;
 	
 	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
 	public static String outputFontPath = null; //"font/trained.fontser";
@@ -421,6 +414,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
 
 		// Get the model output
+		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[numLines];
 		for (int line = 0; line < numLines; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
@@ -454,6 +448,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			// Evaluate against gold-transcribed data (given as "text")
 			StringBuffer goldComparisonOutputBuffer = new StringBuffer();
 			goldComparisonOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
+			@SuppressWarnings("unchecked")
 			List<String>[] goldCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
 				goldCharSequences[line] = new ArrayList<String>();
@@ -537,6 +532,7 @@ public class TranscribeOrTrainFont implements Runnable {
 				langColor.put(language, colors[langColor.size()]);
 			}
 
+			@SuppressWarnings("unchecked")
 			List<String>[] csViterbiChars = new List[decodeStates.length];
 			String prevLanguage = null;
 			for (int line = 0; line < decodeStates.length; ++line) {
@@ -586,7 +582,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	}
 
 	private List<Document> loadDocuments() {
-		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, crop, lineExtractionOutputPath);
+		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, crop, preextractedLinesPath);
 		List<Document> documents = new ArrayList<Document>();
 
 		List<Document> lazyDocs = loader.readDataset();
@@ -600,36 +596,11 @@ public class TranscribeOrTrainFont implements Runnable {
 		});
 		
 		int numDocsToUse = Math.min(lazyDocs.size(), numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
-		System.out.println("Loading " + numDocsToUse + " documents");
+		System.out.println("Using " + numDocsToUse + " documents");
 		for (int docNum = 0; docNum < numDocsToUse; ++docNum) {
 			Document lazyDoc = lazyDocs.get(docNum);
-
-			System.out.println("Loading data for " + lazyDoc.baseName());
-			if (existingExtractionsPath == null) {
-				documents.add(lazyDoc);
-			}
-			else if (true) throw new RuntimeException("-existingExtractionsPath option not currently implemented.");
-			else {
-				String baseName = lazyDoc.baseName();
-				String preext = FileUtil.withoutExtension(baseName);
-				String extension = FileUtil.extension(baseName);
-				String existingExtractionsDir = existingExtractionsPath + "/line_extract/" + preext + "/";
-				System.out.println("existingExtractionsDir is [" + existingExtractionsDir + "], which " + (new File(existingExtractionsDir).exists() ? "exists" : "does not exist"));
-				final Pattern pattern = Pattern.compile(preext + "-line_extract-\\d+." + extension);
-				File[] lineImageFiles = new File(existingExtractionsDir).listFiles(new FilenameFilter() {
-					public boolean accept(File dir, String name) {
-						return pattern.matcher(name).matches();
-					}
-				});
-				if (lineImageFiles == null) throw new RuntimeException("lineImageFiles is null");
-				if (lineImageFiles.length == 0) throw new RuntimeException("lineImageFiles.length == 0");
-				Arrays.sort(lineImageFiles);
-				String[] lineImagePaths = new String[lineImageFiles.length];
-				for (int i = 0; i < lineImageFiles.length; ++i)
-					lineImagePaths[i] = existingExtractionsDir + lineImageFiles[i].getName();
-				Document doc = new SplitLineImageLoader.SplitLineImageDocument(lineImagePaths, baseName, CharacterTemplate.LINE_HEIGHT);
-				documents.add(doc);
-			}
+			System.out.println("  Using " + lazyDoc.baseName());
+			documents.add(lazyDoc);
 		}
 		return documents;
 	}

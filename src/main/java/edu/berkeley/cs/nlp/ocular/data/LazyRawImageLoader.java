@@ -17,15 +17,14 @@ public class LazyRawImageLoader implements ImageLoader {
 	private final double binarizeThreshold;
 	private final boolean crop;
 
-	private String lineExtractionImageOutputPath = null;
+	private String preextractedLinesPath = null;
 
-	public LazyRawImageLoader(String inputPath, int lineHeight, double binarizeThreshold, boolean crop,
-			String lineExtractionImageOutputPath) {
+	public LazyRawImageLoader(String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String preextractedLinesPath) {
 		this.inputPath = inputPath;
 		this.lineHeight = lineHeight;
 		this.binarizeThreshold = binarizeThreshold;
 		this.crop = crop;
-		this.lineExtractionImageOutputPath = lineExtractionImageOutputPath;
+		this.preextractedLinesPath = preextractedLinesPath;
 	}
 
 	public List<Document> readDataset() {
@@ -40,11 +39,11 @@ public class LazyRawImageLoader implements ImageLoader {
 			if (f.getName().endsWith(".pdf")) {
 				int numPages = PdfImageReader.numPagesInPdf(f);
 				for (int pageNumber = 1; pageNumber <= numPages; ++pageNumber) {
-					docs.add(new LazyRawPdfImageDocument(f, pageNumber, inputPath, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
+					docs.add(new LazyRawPdfImageDocument(f, pageNumber, inputPath, lineHeight, binarizeThreshold, crop, preextractedLinesPath));
 				}
 			}
 			else {
-				docs.add(new LazyRawImageDocument(f, inputPath, lineHeight, binarizeThreshold, crop, lineExtractionImageOutputPath));
+				docs.add(new LazyRawSingleImageDocument(f, inputPath, lineHeight, binarizeThreshold, crop, preextractedLinesPath));
 			}
 		}
 		return docs;

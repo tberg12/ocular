@@ -214,9 +214,6 @@ Required.
 * `-initFontPath`: Path of the font initializer file.
 Required.
 
-* `-existingExtractionsPath`: If there are existing extractions, where to find them.  Ignore to perform new extractions.  *Not currently implemented*.
-Default: null
-
 * `-learnFont`: Whether to learn the font from the input documents and write the font to a file.
 Default: false
 
@@ -226,8 +223,8 @@ Default: 3
 * `-outputPath`: Path of the directory that will contain output transcriptions and line extractions.
 Required.
 
-* `-lineExtractionOutputPath`: Path of the directory where the line-extraction images should be written.  If ignored, no images will be written.
-Default: null
+* `-preextractedLinesPath`: Path of the directory where the line-extraction images should be read/written.  If ignored, document will simply be read from the original document image file, and no line images will be written.").  
+Default: null (Don't read or write line image files.)
 
 * `-outputFontPath`: Path to write the learned font file to. (Only if learnFont is set to true.)
 Required if learnFont=true, otherwise ignored.
