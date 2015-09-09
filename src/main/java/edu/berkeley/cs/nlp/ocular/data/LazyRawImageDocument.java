@@ -48,7 +48,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 		    }
 		    else { // a pre-extraction path was given
 		      if (extractionFilesPresent()) { // pre-extracted lines exist at the specified location
-		      	doLoadObservationsFromExtractionFiles(); // load data from pre-extracted line files
+		      	doLoadObservationsFromLineExtractionFiles(); // load data from pre-extracted line files
 		      }
 		      else { // pre-extraction has not been done yet; do it now.
 		      	doLoadObservationsFromFile(); // load data from original file
@@ -72,7 +72,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 		}
 	}
 	
-	private void doLoadObservationsFromExtractionFiles() {
+	private void doLoadObservationsFromLineExtractionFiles() {
 		System.out.println("Loading pre-extracted line images from " + leLineDir());
 		final Pattern pattern = Pattern.compile("line(\\d+)\\." + ext());
 		File[] lineImageFiles = new File(leLineDir()).listFiles(new FilenameFilter() {

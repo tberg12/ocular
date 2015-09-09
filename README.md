@@ -245,7 +245,10 @@ Default: true
 * `-binarizeThreshold`: Quantile to use for pixel value thresholding. (High values mean more black pixels.)
 Default: 0.12
 
-* `-crop`: Crop pages?
+* `-crop`: Crop pages? Useful when the image has a border around the page.
+Default: true
+
+* `-uniformLineHeight`: Scale all lines to have the same height?
 Default: true
 
 * `-markovVerticalOffset`: Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)

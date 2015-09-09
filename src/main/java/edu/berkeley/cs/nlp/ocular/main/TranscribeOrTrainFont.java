@@ -87,6 +87,9 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Crop pages?")
 	public static boolean crop = true;
 
+	@Option(gloss = "Scale all lines to have the same height?")
+	public static boolean uniformLineHeight = true;
+
 	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
 	public static boolean markovVerticalOffset = false;
 
@@ -582,7 +585,8 @@ public class TranscribeOrTrainFont implements Runnable {
 	}
 
 	private List<Document> loadDocuments() {
-		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, crop, preextractedLinesPath);
+		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
+		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, preextractedLinesPath);
 		List<Document> documents = new ArrayList<Document>();
 
 		List<Document> lazyDocs = loader.readDataset();

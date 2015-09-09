@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.preprocessing;
 
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 
 import java.io.File;
@@ -18,7 +19,7 @@ public class LineExtractor {
 		VerticalModel trainedModel = verticalProfile.runEM(5, 100);
 		trainedModel.freezeSizeParams(1);
 		VerticalSegmentation viterbiSegments = verticalProfile.decode(trainedModel);
-//		ImageUtils.display(Visualizer.renderLineExtraction(levels, viterbiSegments));
+		//ImageUtils.display(Visualizer.renderLineExtraction(levels, viterbiSegments));
 		List<Pair<Integer,Integer>> lineBoundaries = viterbiSegments.retrieveLineBoundaries();
 		List<double[][]> result = new ArrayList<double[][]>();
 		for (Pair<Integer,Integer> boundary : lineBoundaries) {
@@ -31,25 +32,34 @@ public class LineExtractor {
 			result.add(line);
 		}
 		System.out.println("Extractor returned " + result.size() + " line images");
+		
 		return result;
 	}
 
 	public static void main(String[] args) {
-		String path = "/Users/tberg/Dropbox/corpora/ocr_data/autocrop_dev/";
-		File dir = new File(path);
-		for (String name : dir.list()) {
-			double[][] levels = ImageUtils.getLevels(f.readImage(path+"/"+name));
+		//String path = "/Users/tberg/Dropbox/corpora/ocr_data/autocrop_dev/";
+		String pathAndName = "/Users/dhg/workspace/ocular/sample_images/advertencias/pl_blac_047_00039-800.jpg";
+		//File dir = new File(path);
+		//for (String name : dir.list()) {
+			//String pathAndName = path+"/"+name;
+			double[][] levels = ImageUtils.getLevels(f.readImage(pathAndName));
 //			ImageUtils.display(ImageUtils.makeImage(levels));
 			double[][] rotLevels = Straightener.straighten(levels);
 //			ImageUtils.display(ImageUtils.makeImage(rotLevels));
 			double[][] cropLevels = Cropper.crop(rotLevels, 0.12);
 			Binarizer.binarizeGlobal(0.12, cropLevels);
 //			ImageUtils.display(ImageUtils.makeImage(cropLevels));
-//			List<double[][]> lines = extractLines(cropLevels);
-//			for (double[][] line : lines) {
+			List<double[][]> lines = extractLines(cropLevels);
+
+			PixelType[][][] observations = new PixelType[lines.size()][][];
+			for (int i = 0; i < lines.size(); ++i) 
+				observations[i] = ImageUtils.getPixelTypes(ImageUtils.makeImage(lines.get(i)));
+			ImageUtils.display(Visualizer.renderLineExtraction(observations));
+			
+			//			for (double[][] line : lines) {
 //				ImageUtils.display(ImageUtils.makeImage(line));
 //			}
-		}
+		//}
 	}
 	
 }

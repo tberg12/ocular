@@ -91,7 +91,7 @@ public class ImageUtils {
 		return image;
 	}
 	
-	public static BufferedImage resampleImage(BufferedImage image , int height) {
+	public static BufferedImage resampleImage(BufferedImage image, int height) {
 		double mult = height / ((double) image.getHeight());
 		Image unbufScaledImage = image.getScaledInstance((int)(mult * image.getWidth()), height, Image.SCALE_DEFAULT);
 		BufferedImage scaledImage = new BufferedImage(unbufScaledImage.getWidth(null), unbufScaledImage.getHeight(null), BufferedImage.TYPE_BYTE_GRAY);
