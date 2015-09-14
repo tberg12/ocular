@@ -81,7 +81,7 @@ Clone this repository, and compile the project into a jar:
         -lmPath lm/english.lmser \
         -textPath texts/pg2600.txt
 
-  For a multilingual (code-switching) model, specify multiple `-textPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows.  For older texts, it might also be useful to specify the optional parameters `-insertLongS true` or `-alternateSpellingReplacementPaths`, as shown here:
+  For a multilingual (code-switching) model, specify multiple `-textPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
@@ -89,7 +89,15 @@ Clone this repository, and compile the project into a jar:
         -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
         -insertLongS true
 
-  This program will work with any languages, and any number of languages; simply add an entry for every relevant language.  The set of languages chosen should match the set of languages found in the documents that are to be transcribed.
+This program will work with any languages, and any number of languages; simply add an entry for every relevant language.  The set of languages chosen should match the set of languages found in the documents that are to be transcribed.
+
+For older texts (either monolingual or multilingual), it might also be useful to specify the optional parameters `alternateSpellingReplacementPaths` or `-insertLongS true`, as shown here:
+
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -lmPath lm/trilingual.lmser \
+        -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
+        -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
+        -insertLongS true
 
   More details on the various command-line options can be found below.
 
