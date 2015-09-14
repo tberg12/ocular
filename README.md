@@ -25,6 +25,9 @@ It is described in the following publications:
 > NAACL 2015
 
 
+Continued development of Ocular is supported in part by a [Digital Humanities Implementation Grant](http://www.neh.gov/divisions/odh/grant-news/announcing-6-digital-humanities-implementation-grants-awards-july-2015) from the [National Endowment for the Humanities](http://www.neh.gov) for the project [Reading the First Books: Multilingual, Early-Modern OCR for Primeros Libros](https://sites.utexas.edu/firstbooks/).
+
+
 
 ## Quick-Start Guide
 
@@ -78,7 +81,7 @@ Clone this repository, and compile the project into a jar:
         -lmPath lm/english.lmser \
         -textPath texts/pg2600.txt
 
-  For a multilingual (code-switching) model, specify multiple `-textPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows.  For older texts, it might also be useful to specify `-alternateSpellingReplacementPaths` or `-insertLongS true`, as shown here:
+  For a multilingual (code-switching) model, specify multiple `-textPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows.  For older texts, it might also be useful to specify the optional parameters `-insertLongS true` or `-alternateSpellingReplacementPaths`, as shown here:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
