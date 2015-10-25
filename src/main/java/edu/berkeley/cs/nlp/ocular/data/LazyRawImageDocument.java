@@ -31,19 +31,19 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 
 	private PixelType[][][] observations = null;
 
-	private String preextractedLinesPath = null;
+	private String extractedLinesPath = null;
 
-	public LazyRawImageDocument(String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String preextractedLinesPath) {
+	public LazyRawImageDocument(String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String extractedLinesPath) {
 		this.inputPath = inputPath;
 		this.lineHeight = lineHeight;
 		this.binarizeThreshold = binarizeThreshold;
 		this.crop = crop;
-		this.preextractedLinesPath = preextractedLinesPath;
+		this.extractedLinesPath = extractedLinesPath;
 	}
 
 	final public PixelType[][][] loadLineImages() {
 	  if (observations == null) { // file has already been loaded in this Ocular run
-		    if (preextractedLinesPath == null) { // no pre-extraction path given
+		    if (extractedLinesPath == null) { // no pre-extraction path given
 		    	doLoadObservationsFromFile(); // load data from original file
 		    }
 		    else { // a pre-extraction path was given
@@ -131,7 +131,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 	private String multilineExtractionImagePath() { return fullLePreExt() + "." + ext(); }
 	private String leLineDir() { return fullLePreExt() + "_" + ext(); }
 	private String fileParent() { return FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), file())._2; }
-	private String fullLePreExt() { return preextractedLinesPath + "/" + fileParent() + "/" + preext() + "-line_extract"; }
+	private String fullLePreExt() { return extractedLinesPath + "/" + fileParent() + "/" + preext() + "-line_extract"; }
 	private String fullLeLinePath(int lineNum) { return String.format(leLineDir() + "/line%02d." + ext(), lineNum); }
 	
 	abstract protected File file();

@@ -13,8 +13,8 @@ public class LazyRawPdfImageDocument extends LazyRawImageDocument {
 	private final File pdfFile;
 	private final int pageNumber; // starts at one!
 
-	public LazyRawPdfImageDocument(File pdfFile, int pageNumber, String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String preextractedLinesPath) {
-		super(inputPath, lineHeight, binarizeThreshold, crop, preextractedLinesPath);
+	public LazyRawPdfImageDocument(File pdfFile, int pageNumber, String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String extractedLinesPath) {
+		super(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
 		this.pdfFile = pdfFile;
 		this.pageNumber = pageNumber;
 	}

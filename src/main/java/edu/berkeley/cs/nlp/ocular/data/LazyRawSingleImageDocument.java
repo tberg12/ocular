@@ -26,8 +26,8 @@ public class LazyRawSingleImageDocument extends LazyRawImageDocument {
 
 	private TextReader textReader = new BasicTextReader();
 
-	public LazyRawSingleImageDocument(File file, String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String preextractedLinesPath) {
-		super(inputPath, lineHeight, binarizeThreshold, crop, preextractedLinesPath);
+	public LazyRawSingleImageDocument(File file, String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String extractedLinesPath) {
+		super(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
 		this.file = file;
 	}
 

@@ -69,8 +69,8 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 	public static String outputPath = null; //"output_dir";
 
-	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If ignored, document will simply be read from the original document image file, and no line images will be written.")
-	public static String preextractedLinesPath = null;
+	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
+	public static String extractedLinesPath = null;
 	
 	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
 	public static String outputFontPath = null; //"font/trained.fontser";
@@ -586,7 +586,7 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	private List<Document> loadDocuments() {
 		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
-		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, preextractedLinesPath);
+		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
 		List<Document> documents = new ArrayList<Document>();
 
 		List<Document> lazyDocs = loader.readDataset();
