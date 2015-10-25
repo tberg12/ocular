@@ -68,7 +68,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 		List<double[][]> lines = LineExtractor.extractLines(cropLevels);
 		observations = new PixelType[lines.size()][][];
 		for (int i = 0; i < lines.size(); ++i) {
-			observations[i] = imageToObservation(ImageUtils.makeImage(lines.get(i)), lineHeight);
+			observations[i] = imageToObservation(ImageUtils.makeImage(lines.get(i)));
 		}
 	}
 	
@@ -91,7 +91,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 			String lineImageFile = fullLeLinePath(i);
 			System.out.println("    Loading pre-extracted line from " + lineImageFile);
 			try {
-				observations[i] = imageToObservation(f.readImage(lineImageFile), i);
+				observations[i] = imageToObservation(f.readImage(lineImageFile));
 			}
 			catch (Exception e) {
 				throw new RuntimeException("Couldn't read line image from: " + lineImageFile, e);
@@ -99,7 +99,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 		}
 	}
 	
-	private PixelType[][] imageToObservation(BufferedImage image, int lineNum) {
+	private PixelType[][] imageToObservation(BufferedImage image) {
 		if (lineHeight >= 0) {
 			return ImageUtils.getPixelTypes(ImageUtils.resampleImage(image, lineHeight));
 		}
