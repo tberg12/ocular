@@ -134,7 +134,7 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	public void run() {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
-		if (!new File(inputPath).exists()) throw new IllegalArgumentException("-inputPath location does not exist");
+		if (!new File(inputPath).exists()) throw new IllegalArgumentException("-inputPath "+inputPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
@@ -143,7 +143,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		long overallNanoTime = System.nanoTime();
 		long overallEmissionCacheNanoTime = 0;
 
-		if (!new File(initFontPath).exists()) throw new RuntimeException("initFontPath " + initFontPath + " does not exist");
+		if (!new File(initFontPath).exists()) throw new RuntimeException("initFontPath " + initFontPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 
 		File outputDir = new File(outputPath);
 		if (!outputDir.exists()) outputDir.mkdirs();

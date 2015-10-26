@@ -182,10 +182,10 @@ Default: ...
 * `-maxLines`: Maximum number of lines to use from corpus.
 Default: 1000000
 
-* `-charN`: "LM character n-gram length."
+* `-charN`: LM character n-gram length.
 Default: 6
 
-* `-power`: exponent on LM scores.
+* `-power`: Exponent on LM scores.
 Default: 4.0
 
 * `-lmCharCount`: Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.
