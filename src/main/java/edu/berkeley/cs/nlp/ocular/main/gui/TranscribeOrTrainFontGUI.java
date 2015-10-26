@@ -325,7 +325,7 @@ public class TranscribeOrTrainFontGUI {
 		panel_inputs.add(input_emissionEngine_opencl);
 		input_emissionEngine.add(input_emissionEngine_opencl);
 		input_emissionEngine_cuda = new JRadioButton();
-		input_emissionEngine_cuda.setToolTipText("CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation. Default: DEFAULT");
+		input_emissionEngine_cuda.setToolTipText("CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.");
 		input_emissionEngine_cuda.setText("CUDA");
 		panel_inputs.add(input_emissionEngine_cuda);
 		input_emissionEngine.add(input_emissionEngine_cuda);
