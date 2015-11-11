@@ -144,7 +144,7 @@ Clone this repository, and compile the project into a jar:
         -lmPath lm/trilingual.lmser \
         -outputPath transcribe_output 
 
-
+  If you'd like to check the accuracy of the trained model, you can supply a gold standard transcription file for each document page, as discussed in the font training section above.
 
 
 
