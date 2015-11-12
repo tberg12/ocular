@@ -170,13 +170,13 @@ public class TranscribeOrTrainFont implements Runnable {
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
 		if (!learnFont) numEMIters = 0;
+		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
 		
 		List<String> languages = makeList(lm.languages());
 		Collections.sort(languages);
 
-		for (int iter = 1; iter <= numEMIters || (iter == 1 && numEMIters == 0); ++iter) {
+		for (int iter = 1; (/* learnFont && */ iter <= numEMIters) || (/* !learnFont && */ iter == 1); ++iter) {
 			if (iter <= numEMIters) System.out.println("Training iteration: " + iter);
-			else if (learnFont) System.out.println("Done with EM ("+numEMIters+" iterations).  Now transcribing the training data...");
 			else System.out.println("Transcribing (learnFont = false).");
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
@@ -189,7 +189,8 @@ public class TranscribeOrTrainFont implements Runnable {
 			for (int c = 0; c < templates.length; ++c)
 				if (templates[c] != null) templates[c].clearCounts();
 
-			for (Document doc : documents) {
+			for (int docNum = 0; docNum < documents.size(); ++docNum) {
+				Document doc = documents.get(docNum);
 				System.out.println("Document: " + doc.baseName());
 
 				final PixelType[][][] pixels = doc.loadLineImages();
@@ -229,7 +230,7 @@ public class TranscribeOrTrainFont implements Runnable {
 					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 					System.out.println("Decode: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 
-					if (iter <= numEMIters) {
+					if (learnFont) {
 						nanoTime = System.nanoTime();
 						BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
 							public void call(Integer line, Object ignore) {
@@ -263,13 +264,13 @@ public class TranscribeOrTrainFont implements Runnable {
 
 			// m-step
 
-			if (iter <= numEMIters) {
+			if (learnFont) {
 				long nanoTime = System.nanoTime();
 				{
 					final int iterFinal = iter;
 					BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
 						public void call(Integer c, Object ignore) {
-							if (templates[c] != null) templates[c].updateParameters(iterFinal, numEMIters);
+							if (templates[c] != null) templates[c].updateParameters(iterFinal);
 						}
 					};
 					BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
@@ -293,7 +294,7 @@ public class TranscribeOrTrainFont implements Runnable {
 					}
 
 					StringBuilder sb = new StringBuilder("Updating language probabilities: ");
-					for(String language: languages)
+					for (String language: languages)
 						sb.append(language).append("->").append(languageCounts.get(language) / languageCountSum).append("  ");
 					System.out.println(sb);
 					
@@ -434,7 +435,7 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
-		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (iter <= numEMIters ? "_iter-" + iter : "");
+		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (learnFont ? "_iter-" + iter : "");
 		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";
 		String goldComparisonOutputFilename = outputFilenameBase + "_vsGold.txt";
 		String htmlOutputFilename = outputFilenameBase + ".html";
@@ -470,7 +471,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			}
 
 			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
-			if (iter > numEMIters) {
+			if (!learnFont) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
 			}
 			goldComparisonOutputBuffer.append(Evaluator.renderEval(evals));

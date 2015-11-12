@@ -193,7 +193,7 @@ public class ExperimentsMain implements Runnable {
 						threader1.run();
 						final int iterFinal = iter;
 						BetterThreader.Function<Integer,Object> func2 = new BetterThreader.Function<Integer,Object>(){public void call(Integer c, Object ignore){
-							if (templates[c] != null) templates[c].updateParameters(iterFinal, numEMIters);
+							if (templates[c] != null) templates[c].updateParameters(iterFinal);
 						}};
 						BetterThreader<Integer,Object> threader2 = new BetterThreader<Integer,Object>(func2, numMstepThreads);
 						for (int c=0; c<templates.length; ++c) threader2.addFunctionArgument(c);
