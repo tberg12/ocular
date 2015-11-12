@@ -1,5 +1,7 @@
 /font/
 /lm/
+/data/
+/extracted_lines/
 /train_output/
 /transcribe_output/
 /cs_train_lineex/

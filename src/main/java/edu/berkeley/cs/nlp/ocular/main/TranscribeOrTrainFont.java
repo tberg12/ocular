@@ -193,6 +193,7 @@ public class TranscribeOrTrainFont implements Runnable {
 				System.out.println("Document: " + doc.baseName());
 
 				final PixelType[][][] pixels = doc.loadLineImages();
+				doc.loadLineText();
 
 				// e-step
 

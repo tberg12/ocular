@@ -85,7 +85,7 @@ public class LanguageTransitionPriorsTests {
 	}
 
 	@Test
-	public void test_makeLanguageTransitionPriors_pKeepSameLanguageZer0() {
+	public void test_makeLanguageTransitionPriors_pKeepSameLanguageZero() {
 		Map<String, Double> languagePriors = makeMap( //
 				makeTuple2("spanish", 0.5), //
 				makeTuple2("latin", 0.3), //

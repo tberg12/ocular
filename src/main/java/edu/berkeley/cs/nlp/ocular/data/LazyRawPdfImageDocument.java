@@ -22,16 +22,12 @@ public class LazyRawPdfImageDocument extends LazyRawImageDocument {
 	protected BufferedImage doLoadBufferedImage() {
 	  System.out.println("Extracting text line images from " + pdfFile + ", page " + pageNumber);
 		return PdfImageReader.readPdfPageAsImage(pdfFile, pageNumber);
-  }
+	}
 	
 	protected File file() { return pdfFile; }
 	protected String preext() { return new File(baseName()).getName(); }
 	protected String ext() { return "png"; }
 	
-	public String[][] loadLineText() {
-		return null;
-	}
-
 	public String baseName() {
 		return FileUtil.withoutExtension(pdfFile.getPath()) + "_pdf_page" + String.format("%05d", pageNumber);
 	}
