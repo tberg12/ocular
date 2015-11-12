@@ -85,9 +85,7 @@ Clone this repository, and compile the project into a jar:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
-        -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
-        -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
-        -insertLongS true
+        -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/"
 
   This program will work with any languages, and any number of languages; simply add an entry for every relevant language.  The set of languages chosen should match the set of languages found in the documents that are to be transcribed.
 
@@ -124,14 +122,21 @@ Clone this repository, and compile the project into a jar:
         -outputFontPath font/advertencias/trained.fontser \
         -outputPath train_output
     
+  For extra speed, use `-emissionEngine OPENCL` if you have a Mac with a GPU, or `-emissionEngine CUDA` if you have Cuda installed.
+
+  Many more command-line options can be found below.
+
+  **Checking accuracy with a gold transcription**
+
   If a gold standard transcription is available for a file, it should be written in a `.txt` file in the same directory as the corresponding image, and given the same filename (but with a different extension).  These files will be used to evaluate the accuracy of the transcription (during either training or testing).  For example:
 
       path/to/some/image_001.jpg      # document image
       path/to/some/image_001.txt      # corresponding transcription
 
-  For extra speed, use `-emissionEngine OPENCL` if you have a Mac with a GPU, or `-emissionEngine CUDA` if you have Cuda installed.
-
-  Many more command-line options can be found below.
+  For pdf files, the transcription filename is based on both the pdf filename and the relevant page number (as a 5-digit number):
+  
+      path/to/some/filename.pdf                 # document image
+      path/to/some/filename_pdf_page00001.txt   # transcription of the document's first page
 
 
 4. Transcribe some pages:
