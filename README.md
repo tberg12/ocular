@@ -63,10 +63,10 @@ Clone this repository, and compile the project into a jar:
 
   To incorporate Ocular into a larger project, you may use a dependency management system like Maven or SBT with the following information:
 
-    * Repository location: `http://www.cs.utexas.edu/~dhg/maven-repository/snapshots`
-    * Group ID: `edu.berkeley.cs.nlp`
-    * Artifact ID: `ocular`
-    * Version: `0.2-SNAPSHOT`
+    * Repository location: http://www.cs.utexas.edu/~dhg/maven-repository/snapshots
+    * Group ID: edu.berkeley.cs.nlp
+    * Artifact ID: ocular
+    * Version: 0.2-SNAPSHOT
     
 
 
@@ -240,8 +240,14 @@ Required.
 * `-learnFont`: Whether to learn the font from the input documents and write the font to a file.
 Default: false
 
-* `-numEMIters`: Number of iterations of EM to use for font learning.
+* `-numEMIters`: Number of iterations of EM to use for font learning. (Only relevant if learnFont is set to true.)
 Default: 3
+
+* `-accumulateBatchesWithinIter`: Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.  (Only relevant if learnFont is set to true.)  Default: true
+	
+* `-updateBatchSize`: Number of documents to process for each parameter update.  (Only relevant if learnFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.
+
+* `-minDocBatchSize`: The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes.  (Only relevant if learnFont is set to true, and updateDocBatchSize is used.)  Default is to always lump remaining documents in with the last complete batch.
 
 * `-outputPath`: Path of the directory that will contain output transcriptions and line extractions.
 Required.
@@ -249,10 +255,10 @@ Required.
 * `-extractedLinesPath`: Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.  
 Default: null (Don't read or write line image files.)
 
-* `-outputFontPath`: Path to write the learned font file to. (Only if learnFont is set to true.)
-Required if learnFont=true, otherwise ignored.
+* `-outputFontPath`: Path to write the learned font file to.
+Required if learnFont is set to true, otherwise ignored.
 
-* `-outputLmPath`: Path to write the learned language model file to. (Only if learnFont is set to true.)
+* `-outputLmPath`: Path to write the learned language model file to. (Only relevant if learnFont is set to true.)
 Default: null  (Don't write out the trained LM.)
 
 * `-allowLanguageSwitchOnPunct`: A language model to be used to assign diacritics to the transcription output.

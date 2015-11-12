@@ -63,8 +63,17 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
 	public static boolean learnFont = false;
 
-	@Option(gloss = "Number of iterations of EM to use for font learning.")
+	@Option(gloss = "Number of iterations of EM to use for font learning.  (Only relevant if learnFont is set to true.)  Default: 3")
 	public static int numEMIters = 3;
+	
+	@Option(gloss = "Number of documents to process for each parameter update.  (Only relevant if learnFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.")
+	public static int updateDocBatchSize = Integer.MAX_VALUE;
+
+	@Option(gloss = "Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.  (Only relevant if learnFont is set to true.)  Default: true")
+	public static boolean accumulateBatchesWithinIter = true;
+	
+	@Option(gloss = "The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  (Only relevant if learnFont is set to true, and updateDocBatchSize is used.)  Default is to always lump remaining documents in with the last complete batch.")
+	public static int minDocBatchSize = Integer.MAX_VALUE;
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 	public static String outputPath = null; //"output_dir";
@@ -72,10 +81,10 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
 	public static String extractedLinesPath = null;
 	
-	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
+	@Option(gloss = "Path to write the learned font file to. (Required if learnFont is set to true, otherwise ignored.)")
 	public static String outputFontPath = null; //"font/trained.fontser";
 	
-	@Option(gloss = "Path to write the learned language model file to. (Only if learnFont is set to true.)")
+	@Option(gloss = "Path to write the learned language model file to. (Only relevant if learnFont is set to true.)")
 	public static String outputLmPath = null; //"lm/cs_trained.lmser";
 	
 	@Option(gloss = "A language model to be used to assign diacritics to the transcription output.")
@@ -149,6 +158,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (!outputDir.exists()) outputDir.mkdirs();
 
 		List<Document> documents = loadDocuments();
+		int numUsableDocs = documents.size();
 
 		System.out.println("Loading initial LM from " + lmPath);
 		Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> lmAndTransModel = getForwardTransitionModel(lmPath);
@@ -176,20 +186,16 @@ public class TranscribeOrTrainFont implements Runnable {
 		Collections.sort(languages);
 
 		for (int iter = 1; (/* learnFont && */ iter <= numEMIters) || (/* !learnFont && */ iter == 1); ++iter) {
-			if (iter <= numEMIters) System.out.println("Training iteration: " + iter);
+			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).");
 			else System.out.println("Transcribing (learnFont = false).");
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 
 			// The number of characters assigned to a particular language (to re-estimate language probabilities).
 			Map<String, Integer> languageCounts = new HashMap<String, Integer>();
-			for (String l : languages)
-				languageCounts.put(l, 1); // add-one smooth
+			clearTemplates(templates, languages, languageCounts);
 
-			for (int c = 0; c < templates.length; ++c)
-				if (templates[c] != null) templates[c].clearCounts();
-
-			for (int docNum = 0; docNum < documents.size(); ++docNum) {
+			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
 				Document doc = documents.get(docNum);
 				System.out.println("Document: " + doc.baseName());
 
@@ -229,24 +235,14 @@ public class TranscribeOrTrainFont implements Runnable {
 					final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
 					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 					System.out.println("Decode: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-
-					if (learnFont) {
-						nanoTime = System.nanoTime();
-						BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
-							public void call(Integer line, Object ignore) {
-								emissionModel.incrementCounts(line, batchDecodeStates[line], batchDecodeWidths[line]);
-							}
-						};
-						BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
-						for (int line = 0; line < emissionModel.numSequences(); ++line)
-							threader.addFunctionArgument(line);
-						threader.run();
-						System.out.println("Increment counts: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-					}
-
+					
 					for (int line = 0; line < emissionModel.numSequences(); ++line) {
 						decodeStates[startLine + line] = batchDecodeStates[line];
 						decodeWidths[startLine + line] = batchDecodeWidths[line];
+					}
+
+					if (learnFont) {
+						incrementCounts(emissionModel, batchDecodeStates, batchDecodeWidths);
 					}
 				}
 
@@ -260,56 +256,32 @@ public class TranscribeOrTrainFont implements Runnable {
 				}
 
 				printTranscription(iter, learnFont, doc, allEvals, decodeCharStates, charIndexer, outputPath, lm, languageCounts);
-			}
-
-			// m-step
-
-			if (learnFont) {
-				long nanoTime = System.nanoTime();
-				{
-					final int iterFinal = iter;
-					BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
-						public void call(Integer c, Object ignore) {
-							if (templates[c] != null) templates[c].updateParameters(iterFinal);
-						}
-					};
-					BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
-					for (int c = 0; c < templates.length; ++c)
-						threader.addFunctionArgument(c);
-					threader.run();
-				}
-				System.out.println("Update parameters: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-
-				//
-				// Hard-EM update on language probabilities
-				//
-				nanoTime = System.nanoTime();
-				{
-					Map<String, Tuple2<SingleLanguageModel, Double>> newSubModelsAndPriors = new HashMap<String, Tuple2<SingleLanguageModel, Double>>();
-					double languageCountSum = 0;
-					for (String language: languages) {
-						double newPrior = languageCounts.get(language).doubleValue();
-						newSubModelsAndPriors.put(language, makeTuple2(lm.get(language), newPrior));
-						languageCountSum += newPrior;
+				
+				// m-step
+				if (learnFont) {
+					int trueMinBatchSize = Math.min(minDocBatchSize, updateDocBatchSize); // min batch size may not exceed standard batch size
+					if (docNum+1 == numUsableDocs) { // last document of the set
+						lm = updateParameters(iter, templates, lm, languages, languageCounts);
+						if (!accumulateBatchesWithinIter) clearTemplates(templates, languages, languageCounts);
 					}
-
-					StringBuilder sb = new StringBuilder("Updating language probabilities: ");
-					for (String language: languages)
-						sb.append(language).append("->").append(languageCounts.get(language) / languageCountSum).append("  ");
-					System.out.println(sb);
-					
-					lm = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getProbKeepSameLanguage(), lm.getMaxOrder());
+					else if (numUsableDocs - (docNum+1) < trueMinBatchSize) { // next batch will be too small, so lump the remaining documents in with this one
+						// no update
+					} 
+					else if ((docNum+1) % updateDocBatchSize == 0) { // batch is complete
+						lm = updateParameters(iter, templates, lm, languages, languageCounts);
+						if (!accumulateBatchesWithinIter) clearTemplates(templates, languages, languageCounts);
+					}
 				}
-				System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 			}
 
 		}
 
 		if (learnFont) {
 			InitializeFont.writeFont(font, outputFontPath);
-		}
-		if (learnFont && outputLmPath != null) {
-			TrainLanguageModel.writeLM(lm, outputLmPath);
+			
+			if (outputLmPath != null) {
+				TrainLanguageModel.writeLM(lm, outputLmPath);
+			}
 		}
 
 		if (!allEvals.isEmpty() && new File(inputPath).isDirectory()) {
@@ -318,6 +290,70 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
 		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime) / 1e9 + "s");
+	}
+
+	private void clearTemplates(final CharacterTemplate[] templates, List<String> languages, Map<String, Integer> languageCounts) {
+		for (int c = 0; c < templates.length; ++c) {
+			if (templates[c] != null) templates[c].clearCounts();
+		}
+		for (String l : languages) languageCounts.put(l, 1); // add-one smooth
+	}
+
+	private void incrementCounts(final EmissionModel emissionModel, final TransitionState[][] batchDecodeStates, final int[][] batchDecodeWidths) {
+		long nanoTime;
+		nanoTime = System.nanoTime();
+		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
+			public void call(Integer line, Object ignore) {
+				emissionModel.incrementCounts(line, batchDecodeStates[line], batchDecodeWidths[line]);
+			}
+		};
+		BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
+		for (int line = 0; line < emissionModel.numSequences(); ++line)
+			threader.addFunctionArgument(line);
+		threader.run();
+		System.out.println("Increment counts: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
+	}
+
+	private CodeSwitchLanguageModel updateParameters(int iter, final CharacterTemplate[] templates, CodeSwitchLanguageModel lm, List<String> languages, Map<String, Integer> languageCounts) {
+		System.out.println();
+		long nanoTime = System.nanoTime();
+		{
+			final int iterFinal = iter;
+			BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
+				public void call(Integer c, Object ignore) {
+					if (templates[c] != null) templates[c].updateParameters(iterFinal);
+				}
+			};
+			BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
+			for (int c = 0; c < templates.length; ++c)
+				threader.addFunctionArgument(c);
+			threader.run();
+		}
+		System.out.println("Update parameters: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
+
+		//
+		// Hard-EM update on language probabilities
+		//
+		nanoTime = System.nanoTime();
+		{
+			Map<String, Tuple2<SingleLanguageModel, Double>> newSubModelsAndPriors = new HashMap<String, Tuple2<SingleLanguageModel, Double>>();
+			double languageCountSum = 0;
+			for (String language: languages) {
+				double newPrior = languageCounts.get(language).doubleValue();
+				newSubModelsAndPriors.put(language, makeTuple2(lm.get(language), newPrior));
+				languageCountSum += newPrior;
+			}
+
+			StringBuilder sb = new StringBuilder("Updating language probabilities: ");
+			for (String language: languages)
+				sb.append(language).append("->").append(languageCounts.get(language) / languageCountSum).append("  ");
+			System.out.println(sb);
+			
+			lm = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getProbKeepSameLanguage(), lm.getMaxOrder());
+		}
+		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
+		System.out.println();
+		return lm;
 	}
 
 	private Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> getForwardTransitionModel(String lmFilePath) {
@@ -435,7 +471,7 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
-		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (learnFont ? "_iter-" + iter : "");
+		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (learnFont && numEMIters > 1 ? "_iter-" + iter : "");
 		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";
 		String goldComparisonOutputFilename = outputFilenameBase + "_vsGold.txt";
 		String htmlOutputFilename = outputFilenameBase + ".html";
