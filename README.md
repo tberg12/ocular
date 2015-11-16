@@ -227,8 +227,11 @@ Default: 0.0
 * `-inputPath`: Path of the directory that contains the input document images or pdfs. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
 Required.
 
-* `-numDocs`: Number of documents to use. Ignore or use -1 to use all documents.
-Default: -1
+* `-numDocs`: Number of documents (pages) to use, counting alphabetically. Ignore or use -1 to use all documents.
+Default: use all documents
+
+* `-numDocsToSkip`: Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks without having to actually create separate directories.
+Default: 0
 
 * `-lmPath`: Path to the language model file.
 Required.

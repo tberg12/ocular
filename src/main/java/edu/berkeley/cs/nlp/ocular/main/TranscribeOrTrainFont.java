@@ -51,8 +51,11 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
 	public static String inputPath = null; //"test_img";
 
-	@Option(gloss = "Number of training documents to use. Ignore or use -1 to use all documents.")
+	@Option(gloss = "Number of documents (pages) to use. Ignore or use -1 to use all documents. Default: use all documents")
 	public static int numDocs = Integer.MAX_VALUE;
+
+	@Option(gloss = "Number of training documents (pages) to skip over.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.  Default: 0")
+	public static int numDocsToSkip = 0;
 
 	@Option(gloss = "Path to the language model file.")
 	public static String lmPath = null; //"lm/cs_lm.lmser";
@@ -148,6 +151,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
+		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
 		
 		long overallNanoTime = System.nanoTime();
 		long overallEmissionCacheNanoTime = 0;
@@ -637,9 +641,14 @@ public class TranscribeOrTrainFont implements Runnable {
 			}
 		});
 		
-		int numDocsToUse = Math.min(lazyDocs.size(), numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
-		System.out.println("Using " + numDocsToUse + " documents");
-		for (int docNum = 0; docNum < numDocsToUse; ++docNum) {
+		int actualNumDocsToSkip = Math.min(lazyDocs.size(), numDocsToSkip);
+		int actualNumDocsToUse = Math.min(lazyDocs.size() - actualNumDocsToSkip, numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
+		System.out.println("Using "+actualNumDocsToUse+" documents (skipping "+actualNumDocsToSkip+")");
+		for (int docNum = 0; docNum < actualNumDocsToSkip; ++docNum) {
+			Document lazyDoc = lazyDocs.get(docNum);
+			System.out.println("  Skipping " + lazyDoc.baseName());
+		}
+		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip+actualNumDocsToUse; ++docNum) {
 			Document lazyDoc = lazyDocs.get(docNum);
 			System.out.println("  Using " + lazyDoc.baseName());
 			documents.add(lazyDoc);
