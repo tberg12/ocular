@@ -122,9 +122,20 @@ Clone this repository, and compile the project into a jar:
         -outputFontPath font/advertencias/trained.fontser \
         -outputPath train_output
     
-  For extra speed, use `-emissionEngine OPENCL` if you have a Mac with a GPU, or `-emissionEngine CUDA` if you have Cuda installed.
+  Many more command-line options, include several that can affect speed and accuracy, can be found below.
 
-  Many more command-line options can be found below.
+
+4. Transcribe some pages:
+
+  To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-learnFont` unspecified (or set it to `false`).  Additionally, `-initFontPath` should point to the newly-trained font model (instead of the "initial" font model used during font training).
+
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -inputPath sample_images/advertencias \
+        -initFontPath font/advertencias/trained.fontser \
+        -lmPath lm/trilingual.lmser \
+        -outputPath transcribe_output 
+
+  Many more command-line options, include several that can affect speed and accuracy, can be found below.
 
   **Checking accuracy with a gold transcription**
 
@@ -139,18 +150,6 @@ Clone this repository, and compile the project into a jar:
       path/to/some/filename_pdf_page00001.txt   # transcription of the document's first page
 
 
-4. Transcribe some pages:
-
-  To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-learnFont` unspecified (or set it to `false`).  Additionally, `-initFontPath` should point to the newly-trained font model (instead of the "initial" font model used during font training).
-
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -inputPath sample_images/advertencias \
-        -initFontPath font/advertencias/trained.fontser \
-        -lmPath lm/trilingual.lmser \
-        -outputPath transcribe_output 
-
-  If you'd like to check the accuracy of the trained model, you can supply a gold standard transcription file for each document page, as discussed in the font training section above.
-
 
 
 
@@ -163,7 +162,7 @@ Clone this repository, and compile the project into a jar:
 * `-lmPath`: Output Language Model file path. 
 Required.
 
-* `-textPath`: Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: `"english->texts/english/,spanish->texts/spanish/,french->texts/french/"`.  If spaces are used, be sure to wrap the whole string with "quotes".).
+* `-textPath`: Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with a dot (`.`).  For a multilingual (code-switching) model, give multiple comma-separated files with language names: `"english->texts/english/,spanish->texts/spanish/,french->texts/french/"`.  If spaces are used, be sure to wrap the whole string with "quotes".).
 Required.
 
 * `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes".  (Only relevant if multiple languages used.) 
