@@ -49,13 +49,13 @@ public class TrainLanguageModel implements Runnable {
 	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  If spaces are used, be sure to wrap the whole string with \"quotes\".)")
 	public static String textPath = null;
 	
-	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".  Defaults to uniform priors. (Only relevant if multiple languages used.)")
+	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".  Defaults to uniform priors. (Only relevant if multiple languages used.)")
 	public static String languagePriors = null;
 	
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)")
 	public static double pKeepSameLanguage = 0.999999;
 
-	@Option(gloss = "Paths to Alternate Spelling Replacement files. Give multiple comma-separated language, path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". If spaces are used, be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
+	@Option(gloss = "Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". If spaces are used, be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
 	public static String alternateSpellingReplacementPaths = null;
 	
 	@Option(gloss = "Use separate character type for long s.")
@@ -146,10 +146,14 @@ public class TrainLanguageModel implements Runnable {
 		
 		Map<String, String> languageAltSpellPathMap = new HashMap<String, String>();
 		if (alternateSpellingReplacementPaths != null) {
-			String asrString = alternateSpellingReplacementPaths;
-			if (!asrString.contains("->")) asrString = "NoLanguageNameGiven->" + asrString; // repair "invalid" input
-			if (asrString != null) {
-				for (String part : asrString.split(",")) {
+			if (!alternateSpellingReplacementPaths.contains("->")) { // only one path, use for all languages
+				String replacementsPath = alternateSpellingReplacementPaths;
+				for (String language : languagePathMap.keySet()) {
+					languageAltSpellPathMap.put(language, replacementsPath);
+				}
+			}
+			else {
+				for (String part : alternateSpellingReplacementPaths.split(",")) {
 					String[] subparts = part.split("->");
 					if (subparts.length != 2) throw new IllegalArgumentException("malformed alternateSpellingReplacementPaths argument: comma-separated part must be of the form \"LANGUAGE->PATH\", was: " + part);
 					String language = subparts[0].trim();
