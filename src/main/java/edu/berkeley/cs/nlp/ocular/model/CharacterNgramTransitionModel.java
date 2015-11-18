@@ -242,7 +242,7 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 		}
 	}
 
-	public Collection<Tuple2<TransitionState,Double>> startStates(int d) {
+	public Collection<Tuple2<TransitionState,Double>> startStates() {
 		List<Tuple2<TransitionState,Double>> result = new ArrayList<Tuple2<TransitionState,Double>>();
 		result.add(makeTuple2((TransitionState) new CharacterNgramTransitionState(new int[0], TransitionStateType.LMRGN), Math.log(LINE_MRGN_PROB)));
 		for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {

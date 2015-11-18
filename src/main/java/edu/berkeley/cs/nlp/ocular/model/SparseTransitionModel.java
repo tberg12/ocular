@@ -15,5 +15,5 @@ public interface SparseTransitionModel {
 		public TransitionStateType getType();
 		public String getLanguage();
 	}
-	public Collection<Tuple2<TransitionState,Double>> startStates(int d);
+	public Collection<Tuple2<TransitionState,Double>> startStates();
 }

@@ -387,7 +387,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 *   
 	 * @param d		unused
 	 */
-	public Collection<Tuple2<TransitionState, Double>> startStates(int d) {
+	public Collection<Tuple2<TransitionState, Double>> startStates() {
 		List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 		/*
 		 * Don't force a language choice.
@@ -447,7 +447,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		while (newContext.length > n - 1)
 			newContext = shortenContextForward(newContext);
 		while (lm != null && !lm.containsContext(newContext)) {
-			if (newContext.length == 0) throw new AssertionError("shrinkContext: newContext length is zero; original context: " + intArrayToList(originalContext) + " (length=" + originalContext.length + ")");
 			newContext = shortenContextForward(newContext);
 		}
 		return newContext;

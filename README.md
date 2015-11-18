@@ -258,13 +258,13 @@ Default: 3
 Required.
 
 * `-extractedLinesPath`: Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.  
-Default: null (Don't read or write line image files.)
+Default: Don't read or write line image files.
 
 * `-outputFontPath`: Path to write the learned font file to.
 Required if learnFont is set to true, otherwise ignored.
 
 * `-outputLmPath`: Path to write the learned language model file to. (Only relevant if learnFont is set to true.)
-Default: null  (Don't write out the trained LM.)
+Default: Don't write out the trained LM.
 
 * `-allowLanguageSwitchOnPunct`: A language model to be used to assign diacritics to the transcription output.
 Default: true

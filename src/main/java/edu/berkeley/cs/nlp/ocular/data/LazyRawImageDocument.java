@@ -136,7 +136,9 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 	}
 	
 	private boolean extractionFilesPresent() {
-		return new File(fullLeLinePath(0)).exists();
+		File f = new File(fullLeLinePath(0));
+		System.out.println("Looking for extractions in ["+f+"]. "+(f.exists() ? "Found" : "Not found")+".");
+		return f.exists();
 	}
 	
 	public String[][] loadLineText() {
@@ -163,7 +165,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 				}
 			}
 			else {
-				System.out.println("No evaluation text found at " + textFile + "  (This isn't necessarily a problem.)");
+				System.out.println("No evaluation text found at " + textFile + "  (This is only a problem if you were trying to provide a gold transcription to check accuracy.)");
 			}
 		}
 		return text;
