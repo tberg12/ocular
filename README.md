@@ -263,7 +263,9 @@ Default: Don't read or write line image files.
 * `-outputFontPath`: Path to write the learned font file to.
 Required if learnFont is set to true, otherwise ignored.
 
-* `-outputLmPath`: Path to write the learned language model file to. (Only relevant if learnFont is set to true.)
+* `-retrainLM`: Should the language model be updated during font training?  Default: false
+
+* `-outputLmPath`: Path to write the retrained language model file to. (Only relevant if retrainLM is set to true.)  
 Default: Don't write out the trained LM.
 
 * `-allowLanguageSwitchOnPunct`: A language model to be used to assign diacritics to the transcription output.
