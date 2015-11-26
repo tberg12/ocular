@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,64 +43,6 @@ public class CollectionHelper {
 			return def;
 	}
 
-	@SafeVarargs
-	public static <A> Set<A> setUnion(Set<A>... sets) {
-		if (sets.length == 0)
-			return Collections.<A> emptySet();
-		else if (sets.length == 1)
-			return sets[0];
-		else {
-			Set<A> set = new HashSet<A>();
-			for (Set<A> xs : sets)
-				set.addAll(xs);
-			return set;
-		}
-	}
-
-	public static <A> Set<A> setDiff(Set<A> a, Set<A> b) {
-		Set<A> set = new HashSet<A>();
-		for (A x : a)
-			if (!b.contains(x)) 
-				set.add(x);
-		return set;
-	}
-
-	public static <A> Set<A> setIntersection(Set<A> a, Set<A> b) {
-		Set<A> set = new HashSet<A>();
-		for (A x : a)
-			if (b.contains(x)) 
-				set.add(x);
-		return set;
-	}
-
-	public static <A> List<A> makeList(Collection<? extends A> xs) {
-		if (xs.size() == 0)
-			return Collections.<A> emptyList();
-		else {
-			List<A> l = new ArrayList<A>();
-			l.addAll(xs);
-			return l;
-		}
-	}
-	
-	@SafeVarargs
-	public static <A> List<A> makeList(A... xs) {
-		if (xs.length == 0)
-			return Collections.<A> emptyList();
-		else {
-			List<A> l = new ArrayList<A>();
-			Collections.addAll(l, xs);
-			return l;
-		}
-	}
-	
-	public static <A> List<A> fillList(int size, A item) {
-		List<A> l = new ArrayList<A>(size);
-		for (int i = 0; i < size; ++i)
-			l.add(item);
-		return l;
-	}
-	
 	public static <A> Set<A> makeSet(Collection<A> xs) {
 		if (xs.size() == 0)
 			return Collections.<A> emptySet();
@@ -125,6 +68,52 @@ public class CollectionHelper {
 		}
 	}
 
+	@SafeVarargs
+	public static <A> Set<A> setUnion(Set<A>... sets) {
+		if (sets.length == 0)
+			return Collections.<A> emptySet();
+		else if (sets.length == 1)
+			return sets[0];
+		else {
+			Set<A> set = new HashSet<A>();
+			for (Set<A> xs : sets)
+				set.addAll(xs);
+			return set;
+		}
+	}
+
+	public static <A> Set<A> setIntersection(Set<A> a, Set<A> b) {
+		Set<A> set = new HashSet<A>();
+		for (A x : a)
+			if (b.contains(x)) 
+				set.add(x);
+		return set;
+	}
+
+	public static <A> Set<A> setDiff(Set<A> a, Set<A> b) {
+		Set<A> set = new HashSet<A>();
+		for (A x : a)
+			if (!b.contains(x)) 
+				set.add(x);
+		return set;
+	}
+
+	public static <A> List<A> makeList(Collection<? extends A> xs) {
+		return new ArrayList<A>(xs);
+	}
+	
+	@SafeVarargs
+	public static <A> List<A> makeList(A... xs) {
+		return Arrays.asList(xs);
+	}
+	
+	public static <A> List<A> fillList(int size, A item) {
+		List<A> l = new ArrayList<A>(size);
+		for (int i = 0; i < size; ++i)
+			l.add(item);
+		return l;
+	}
+	
 	@SafeVarargs
 	public static <A> List<A> listCat(List<A>... lists) {
 		if (lists.length == 0)
