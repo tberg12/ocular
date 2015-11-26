@@ -125,7 +125,7 @@ Clone this repository, and compile the project into a jar:
         -outputFontPath font/advertencias/trained.fontser \
         -outputPath train_output
     
-  Many more command-line options, include several that can affect speed and accuracy, can be found below.
+  Many more command-line options, including several that affect speed and accuracy, can be found below.
 
 
 4. Transcribe some pages:
@@ -138,7 +138,7 @@ Clone this repository, and compile the project into a jar:
         -lmPath lm/trilingual.lmser \
         -outputPath transcribe_output 
 
-  Many more command-line options, include several that can affect speed and accuracy, can be found below.
+  Many more command-line options, including several that affect speed and accuracy, can be found below.
 
   **Checking accuracy with a gold transcription**
 
