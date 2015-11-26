@@ -104,7 +104,7 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	 */
 	public static Map<String, Map<String, Double>> makeLanguageTransitionPriors(Map<String, Double> languagePriors, double pKeepSameLanguage) {
 		if (languagePriors.isEmpty()) throw new IllegalArgumentException("languagePriors may not be empty");
-		if (pKeepSameLanguage < 0.0 || pKeepSameLanguage > 1.0) throw new IllegalArgumentException("pKeepSameLanguage must be between 0 and 1, was " + pKeepSameLanguage);
+		if (pKeepSameLanguage <= 0.0 || pKeepSameLanguage > 1.0) throw new IllegalArgumentException("pKeepSameLanguage must be between 0 and 1, was " + pKeepSameLanguage);
 
 		Set<String> languages = languagePriors.keySet();
 		if (languages.size() > 1) {
