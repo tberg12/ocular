@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
-
 public class ArrayHelperTests {
 
 	@Test

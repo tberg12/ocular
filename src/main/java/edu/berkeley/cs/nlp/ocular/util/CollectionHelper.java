@@ -16,6 +16,7 @@ public class CollectionHelper {
 		return Collections.singletonMap(key, value);
 	}
 
+	@SafeVarargs
 	public static <K, V> Map<K, V> makeMap(Tuple2<K, V>... tuples) {
 		if (tuples.length == 0) {
 			return Collections.<K, V> emptyMap();
@@ -41,6 +42,7 @@ public class CollectionHelper {
 			return def;
 	}
 
+	@SafeVarargs
 	public static <A> Set<A> setUnion(Set<A>... sets) {
 		if (sets.length == 0)
 			return Collections.<A> emptySet();
@@ -80,6 +82,7 @@ public class CollectionHelper {
 		}
 	}
 	
+	@SafeVarargs
 	public static <A> List<A> makeList(A... xs) {
 		if (xs.length == 0)
 			return Collections.<A> emptyList();
@@ -109,6 +112,7 @@ public class CollectionHelper {
 		}
 	}
 	
+	@SafeVarargs
 	public static <A> Set<A> makeSet(A... xs) {
 		if (xs.length == 0)
 			return Collections.<A> emptySet();
@@ -121,6 +125,7 @@ public class CollectionHelper {
 		}
 	}
 
+	@SafeVarargs
 	public static <A> List<A> listCat(List<A>... lists) {
 		if (lists.length == 0)
 			return Collections.<A> emptyList();
