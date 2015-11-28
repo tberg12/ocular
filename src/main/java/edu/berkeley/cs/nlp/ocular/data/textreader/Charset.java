@@ -1,15 +1,19 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.getOrElse;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
+import edu.berkeley.cs.nlp.ocular.util.Tuple3;
+
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -231,14 +235,31 @@ public class Charset {
 	 * (potentially composed or escaped) character.
 	 */
 	public static String escapeChar(String s) {
-		Tuple2<String, Integer> letterAndLength = readCharAt(s, 0);
-		String c = letterAndLength._1;
-		int length = letterAndLength._2;
-		if (s.length() - length != 0) throw new RuntimeException("Could not escape [" + s + "] because it contains more than one character ("+StringHelper.toUnicode(s)+")");
-		return c;
+		Tuple2<List<String>, String> diacriticsAndLetter = escapeCharSeparateDiacritics(s);
+		return StringHelper.join(diacriticsAndLetter._1) + diacriticsAndLetter._2;
 	}
 
 	/**
+	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.textreader.Charset.escapeChar
+	 * 
+	 * @param s	A single character, potentially with diacritics encoded in any 
+	 * form (composed, precomposed, escaped).
+	 * @return	A fully-escaped character, with all diacritics (combining and 
+	 * precomposed) converted to their equivalent escape sequence and placed in
+	 * a list to be returned with the bare letter.
+	 * @throws RuntimeException if the parameter `s` does not represent a single
+	 * (potentially composed or escaped) character.
+	 */
+	public static Tuple2<List<String>,String> escapeCharSeparateDiacritics(String s) {
+		Tuple3<List<String>, String, Integer> letterAndLength = readDiacriticsAndLetterAt(s, 0);
+		int length = letterAndLength._3;
+		if (s.length() != length) throw new RuntimeException("Could not escape ["+s+"] because it contains more than one character ("+StringHelper.toUnicode(s)+")");
+		return makeTuple2(letterAndLength._1, letterAndLength._2);
+	}
+
+	/**
+	 * Read a single character from the line, starting at the given offset.
+	 * 
 	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.textreader.Charset.escapeChar
 	 * 
 	 * @param line	A line of text possibly containing characters with diacritics
@@ -251,41 +272,79 @@ public class Charset {
 	 * escaped character (to use as an offset when scanning through the string).
 	 */
 	public static Tuple2<String, Integer> readCharAt(String line, int offset) {
+		Tuple3<List<String>, String, Integer> result = readDiacriticsAndLetterAt(line, offset);
+		String c = StringHelper.join(result._1) + result._2;
+		int length = result._3;
+		return makeTuple2(c, length);
+	}
+	
+	/**
+	 * Read a single character from the line including a list of all its diacritics, 
+	 * starting at the given offset.
+	 * 
+	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.textreader.Charset.escapeChar
+	 * 
+	 * @param line	A line of text possibly containing characters with diacritics
+	 * composed, precomposed, or escaped.
+	 * @param offset	The offset point in `line` from which to start reading for a 
+	 * character.
+	 * @return	A fully-escaped character, with all diacritics (combining and 
+	 * precomposed) converted to their equivalent escape sequence and put in a list,
+	 * the base letter with all diacritics removed, and the length in the ORIGINAL 
+	 * string of the span used to produce this escaped character (to use as an 
+	 * offset when scanning through the string).
+	 */
+	public static Tuple3<List<String>, String, Integer> readDiacriticsAndLetterAt(String line, int offset) {
 		int lineLen = line.length();
 		if (offset >= lineLen) throw new RuntimeException("offset must be less than the line length");
 		
 		if (lineLen - offset >= 2 && line.substring(offset, offset + 2).equals("\\\\"))
-			return makeTuple2("\\\\", 2); // "\\" is its own character (for "\"), not an escaped diacritic
+			return makeTuple3(new ArrayList<String>(), "\\\\", 2); // "\\" is its own character (for "\"), not an escaped diacritic
 		
-		StringBuilder sb = new StringBuilder();
+		List<String> diacritics = new ArrayList<String>();
 
 		// get any escape prefixes characters
 		int i = offset;
-		while (i < lineLen && line.substring(i, i + 1).equals("\\")) {
+		while (i < lineLen && line.charAt(i) == '\\') {
 			if (i + 1 >= lineLen) throw new RuntimeException("expected more after escape symbol, but found nothing: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 10), i) + "[" + line.substring(i) + "]");
 			String escape = line.substring(i, i + 2);
-			sb.append(escape);
+			diacritics.add(escape);
 			i += 2; // accept the 2-character escape sequence
 		}
 
-		int combiningCharCodeInsertionPoint = i - offset;
+		int combiningCharCodeInsertionPoint = diacritics.size();
 
 		if (i >= lineLen) throw new RuntimeException("expected a letter after escape code, but found nothing: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 50), i) + "[" + line.substring(i) + "]");
 		String letter = line.substring(i, i + 1);
+		if (isCombiningChar(letter)) throw new RuntimeException("expected a letter, but found only a combining character: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 50), i) + "[" + line.substring(i) + "]");
 		i += 1; // accept the letter itself
 
 		// get any combining characters
 		while (i < lineLen) {
 			String next = line.substring(i, i + 1);
 			if (!isCombiningChar(next)) break;
-			sb.insert(combiningCharCodeInsertionPoint, combiningToEscape(next));
+			String escape = combiningToEscape(next);
+			diacritics.add(combiningCharCodeInsertionPoint, escape);
 			i++; // accept the combining character
 		}
 
-		sb.append(getOrElse(Charset.PRECOMPOSED_TO_ESCAPED_MAP, letter, letter)); // turn any precomposed letters into escaped letters
-		return makeTuple2(sb.toString(), i - offset);
+		String deprecomposedChar = Charset.PRECOMPOSED_TO_ESCAPED_MAP.get(letter);
+		if (deprecomposedChar == null) {
+			return makeTuple3(diacritics, letter, i - offset);
+		}
+		else {
+			int dcLen = deprecomposedChar.length();
+			int j = 0;
+			while (j < dcLen && deprecomposedChar.charAt(j) == '\\') {
+				if (j + 1 >= dcLen) throw new RuntimeException("de-precomposed character has no letter after its escape sequence: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 10), i) + "[" + line.substring(i) + "]   ----  ["+deprecomposedChar+"]");
+				String escape = deprecomposedChar.substring(j, j + 2);
+				diacritics.add(escape);
+				j += 2; // accept the 2-character escape sequence
+			}
+			String letterOnly = deprecomposedChar.substring(j, j + 1);
+			return makeTuple3(diacritics, letterOnly, i - offset);
+		}
 	}
-	
 
 	/**
 	 * Convert diacritic escape sequences on a character into unicode precomposed and combining characters
@@ -294,31 +353,30 @@ public class Charset {
 		if (c.length() == 1) return c; // no escapes
 		if (c.equals("\\\\")) return c;
 		
-		String e = escapeChar(c); // use escapes only (and make sure it's a valid character)
-
+		Tuple2<List<String>,String> escapedDiacriticsAndLetter = escapeCharSeparateDiacritics(c); // use escapes only (and make sure it's a valid character)
+		List<String> diacritics = escapedDiacriticsAndLetter._1;
+		String baseLetter = escapedDiacriticsAndLetter._2;
+		
 		StringBuilder b = new StringBuilder();
+		
 		// Attempt to make a precomposed letter, falling back to composed otherwise
-		String last = e.substring(e.length() - 3); // last escape + letter
-		String precomposed = ESCAPED_TO_PRECOMPOSED_MAP.get(last);
-		b.append((precomposed != null ? precomposed : last.substring(2) + escapeToCombining(last.substring(0, 2))));
+		String lastDiacritic = diacritics.get(diacritics.size()-1);
+		String precomposed = ESCAPED_TO_PRECOMPOSED_MAP.get(lastDiacritic + baseLetter); // last escape + letter
+		if (precomposed != null)
+			b.append(precomposed);
+		else 
+			b.append(baseLetter).append(escapeToCombining(lastDiacritic));
 
-		for (int i = e.length() - 5; i >= 0; i -= 2) {
-			String esc = e.substring(i, i + 2);
-			b.append(escapeToCombining(esc));
+		// Handle the rest of the escaped diacritics
+		for (int i = diacritics.size() - 2; i >= 0; i -= 1) {
+			b.append(escapeToCombining(diacritics.get(i)));
 		}
 		
 		return b.toString();
 	}
 
 	public static String removeAnyDiacriticFromChar(String c) {
-		if (c.equals("\\\\")) return c;
-
-		String escaped = escapeChar(c);
-		while (escaped.charAt(0) == '\\') {
-		  escaped = escaped.substring(2);
-		}
-		if (escaped.isEmpty()) throw new RuntimeException("Character contains only escape codes!");
-		return escaped;
+		return escapeCharSeparateDiacritics(c)._2;
 	}
 
 }
