@@ -43,6 +43,7 @@ public class BeamingSemiMarkovDP {
 	private DenseBigramTransitionModel backwardTransitionModel;
 	private EmissionModel emissionModel;
 
+	@SuppressWarnings("unchecked")
 	public BeamingSemiMarkovDP(EmissionModel emissionModel, SparseTransitionModel forwardTransitionModel, DenseBigramTransitionModel backwardTransitionModel) {
 		this.emissionModel = emissionModel;
 		this.forwardTransitionModel = forwardTransitionModel;
@@ -163,7 +164,7 @@ public class BeamingSemiMarkovDP {
 					for (Tuple2<TransitionState,Double> trans : allowedTrans) {
 						TransitionState nextTs = trans._1;
 						double transLogProb = trans._2;
-						int c =nextTs.getCharIndex();
+						int c = nextTs.getCharIndex();
 						for (int w : emissionModel.allowedWidths(c)) {
 							if (t + w < emissionModel.sequenceLength(d)+1) {
 								int nextT = t + w;
