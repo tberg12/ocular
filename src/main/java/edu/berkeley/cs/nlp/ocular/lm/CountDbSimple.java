@@ -2,6 +2,9 @@ package edu.berkeley.cs.nlp.ocular.lm;
 
 import java.util.Arrays;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class CountDbSimple implements CountDb {
   public long[] keys;
   public int[][] countVals;

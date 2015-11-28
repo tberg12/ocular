@@ -46,6 +46,10 @@ import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class TranscribeOrTrainFont implements Runnable {
 
 	@Option(gloss = "Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")

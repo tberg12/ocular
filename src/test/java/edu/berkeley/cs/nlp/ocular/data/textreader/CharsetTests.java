@@ -9,6 +9,9 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class CharsetTests {
 
 	@Test

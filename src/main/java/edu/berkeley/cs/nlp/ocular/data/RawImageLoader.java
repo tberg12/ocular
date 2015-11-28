@@ -15,6 +15,9 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
 import threading.BetterThreader;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class RawImageLoader implements ImageLoader {
 
 	public static class RawImageDocument implements ImageLoader.Document {

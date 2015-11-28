@@ -4,6 +4,9 @@ import java.util.Collection;
 
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public interface SparseTransitionModel {
 	public static interface TransitionState {
 		public int getCharIndex();

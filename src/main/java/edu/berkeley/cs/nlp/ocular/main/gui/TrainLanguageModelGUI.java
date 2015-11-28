@@ -17,6 +17,9 @@ import javax.swing.SwingConstants;
 
 import edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class TrainLanguageModelGUI {
 
 	private int HEIGHT = 400;

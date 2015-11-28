@@ -15,6 +15,9 @@ import java.util.TreeSet;
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class CorpusCounter {
 
   public final CountDbBig[] counts;

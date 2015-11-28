@@ -20,6 +20,10 @@ import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import fig.Option;
 import fig.OptionsParser;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class LMTrainMain implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")

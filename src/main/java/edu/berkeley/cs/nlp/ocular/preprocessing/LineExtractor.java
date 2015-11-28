@@ -4,7 +4,6 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +11,9 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.VerticalProfile.VerticalSegmenta
 import tuple.Pair;
 import fileio.f;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class LineExtractor {
 	
 	public static List<double[][]> extractLines(double[][] levels) {

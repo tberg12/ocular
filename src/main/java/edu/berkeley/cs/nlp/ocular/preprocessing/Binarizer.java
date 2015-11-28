@@ -2,6 +2,9 @@ package edu.berkeley.cs.nlp.ocular.preprocessing;
 
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Binarizer {
 
 	public static boolean isBinary(double[][] levels) {

@@ -9,6 +9,9 @@ import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.preprocessing.VerticalProfile.VerticalSegmentation;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Visualizer {
 
 	public static BufferedImage renderObservationsAndSegmentation(PixelType[][][] observations, List<Integer>[] boundaries) {

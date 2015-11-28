@@ -3,6 +3,9 @@ package edu.berkeley.cs.nlp.ocular.model;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import indexer.Indexer;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public interface EmissionModel {
 
 	public abstract Indexer<String> getCharIndexer();

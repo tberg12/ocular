@@ -39,6 +39,7 @@ import fig.OptionsParser;
 import fileio.f;
 
 /**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
 public class TrainLanguageModel implements Runnable {

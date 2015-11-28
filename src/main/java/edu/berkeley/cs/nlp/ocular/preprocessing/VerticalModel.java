@@ -6,6 +6,9 @@ import java.util.Random;
 import arrays.a;
 import math.m;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class VerticalModel {
 
   public static enum VerticalModelStateType {

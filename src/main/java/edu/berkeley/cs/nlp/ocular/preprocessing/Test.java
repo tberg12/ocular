@@ -7,6 +7,9 @@ import edu.berkeley.cs.nlp.ocular.data.PdfImageReader;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import fileio.f;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Test {
 
 	public static void main(String[] args) {

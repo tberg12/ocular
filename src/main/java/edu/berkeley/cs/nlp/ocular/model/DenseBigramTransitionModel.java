@@ -4,6 +4,9 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import arrays.a;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class DenseBigramTransitionModel {
 	private static double SPC_TO_SPC_SMOOTH = 1e-2;
 	

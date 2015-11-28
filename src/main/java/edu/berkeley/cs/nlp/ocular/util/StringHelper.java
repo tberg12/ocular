@@ -2,6 +2,9 @@ package edu.berkeley.cs.nlp.ocular.util;
 
 import java.util.List;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class StringHelper {
 
 	public static String toUnicode(String s) {

@@ -11,6 +11,9 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class NgramLanguageModel implements SingleLanguageModel {
 	private static final long serialVersionUID = 873286328149782L;
 

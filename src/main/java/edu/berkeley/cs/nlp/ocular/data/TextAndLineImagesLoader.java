@@ -8,6 +8,9 @@ import fileio.f;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class TextAndLineImagesLoader implements ImageLoader {
 	
 	public static class TextAndLineImagesDocument implements ImageLoader.Document {

@@ -2,7 +2,6 @@ package edu.berkeley.cs.nlp.ocular.model;
 
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setDiff;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setIntersection;
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.intArrayToList;
 import indexer.Indexer;
 
 import java.util.ArrayList;
@@ -20,6 +19,7 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 /**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
 public class CodeSwitchTransitionModel implements SparseTransitionModel {

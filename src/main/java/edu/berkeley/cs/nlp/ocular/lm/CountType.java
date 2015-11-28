@@ -1,5 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.lm;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public enum CountType
 {
   TOKEN_INDEX(0),

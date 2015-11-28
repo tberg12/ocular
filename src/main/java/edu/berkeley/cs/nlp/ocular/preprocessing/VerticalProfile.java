@@ -13,6 +13,9 @@ import java.util.Random;
 import math.SloppyMath;
 import tuple.Pair;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class VerticalProfile {
 
 	public static class VerticalSegmentation {

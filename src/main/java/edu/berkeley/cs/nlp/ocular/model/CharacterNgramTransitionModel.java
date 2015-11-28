@@ -12,6 +12,9 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class CharacterNgramTransitionModel implements SparseTransitionModel {
 	
 	public class CharacterNgramTransitionState implements SparseTransitionModel.TransitionState {

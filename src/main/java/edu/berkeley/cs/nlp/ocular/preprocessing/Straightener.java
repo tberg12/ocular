@@ -4,6 +4,9 @@ import java.awt.image.BufferedImage;
 
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Straightener {
 	
 	private static final double MIN_ANGLE_RADIANS = -0.05;

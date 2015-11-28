@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class ArrayHelperTests {
 
 	@Test

@@ -16,6 +16,9 @@ import arrays.a;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class BeamingSemiMarkovDP {
 	
 	private static class BeamState {

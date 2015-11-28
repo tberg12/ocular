@@ -16,7 +16,9 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
 
-
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Evaluator {
 
 	public static class EvalSuffStats {
@@ -195,6 +197,7 @@ public class Evaluator {
 		return str;
 	}
 
+	@SuppressWarnings("unused")
 	private static String convertToOneLineRemoveDashes(List<String>[] chars) {
 		String str = "";
 		for (List<String> line : chars) {
@@ -258,6 +261,7 @@ public class Evaluator {
 
 	private static List<String>[] convertToLines(String rawStr) {
 		String[] lines = rawStr.split("\n");
+		@SuppressWarnings("unchecked")
 		List<String>[] charsPerLine = new List[lines.length];
 		for (int i = 0; i < lines.length; i++) {
 			charsPerLine[i] = Arrays.asList(split(lines[i]));

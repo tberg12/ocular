@@ -10,6 +10,9 @@ import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class FileUtil {
 
 	public static List<File> recursiveFiles(String name) {

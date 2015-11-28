@@ -16,6 +16,9 @@ import jcuda.driver.CUsharedconfig;
 import jcuda.driver.JCudaDriver;
 import gpu.CudaUtil;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class CUDAInnerLoop implements EmissionCacheInnerLoop {
 	
 	public static final int BLOCK_SIZE_X = 16;

@@ -3,6 +3,9 @@ package edu.berkeley.cs.nlp.ocular.lm;
 import java.io.Serializable;
 import java.util.Arrays;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class CountDbBig implements Serializable {
 	private static final long serialVersionUID = 4457857637251200367L;
 	public long[][] keys;

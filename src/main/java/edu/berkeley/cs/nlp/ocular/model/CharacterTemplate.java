@@ -17,6 +17,9 @@ import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class CharacterTemplate implements Serializable {
 	private static final long serialVersionUID = 2L;
 	

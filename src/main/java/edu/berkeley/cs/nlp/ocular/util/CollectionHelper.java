@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class CollectionHelper {
 
 	public static <K, V> Map<K, V> map1(K key, V value) {

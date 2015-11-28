@@ -3,7 +3,9 @@ package edu.berkeley.cs.nlp.ocular.eval;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public enum Operation {
 
   EQUAL, SUBST, INSERT, DELETE;
