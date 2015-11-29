@@ -320,7 +320,7 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 			int c = ts.getCharIndex();
 			int w = endCol - startCol;
 			int tw = w - getPadWidth(d, startCol, ts, w);
-			templates[c].incrementCounts(count, observations[d], startCol, startCol+tw, getExposure(d, startCol, ts, w), getOffset(d, startCol, ts, w));
+			templates[c].incrementCounts(count, observations[d], startCol, tw, getExposure(d, startCol, ts, w), getOffset(d, startCol, ts, w));
 		}
 	}
 	
