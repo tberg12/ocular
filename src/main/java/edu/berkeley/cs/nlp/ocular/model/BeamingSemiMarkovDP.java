@@ -148,14 +148,14 @@ public class BeamingSemiMarkovDP {
 					TransitionState nextTs = startBeamState.transState;
 					double startLogProb = startBeamState.score;
 					if (startLogProb != Double.NEGATIVE_INFINITY) {
-						int c = nextTs.getCharIndex(); 
+						int c = nextTs.getGlyphChar().templateCharIndex; 
 						for (int w : emissionModel.allowedWidths(c)) {
 							if (t + w < emissionModel.sequenceLength(d)+1) {
 								int nextT = t + w;
 								double emissionLogProb = emissionModel.logProb(d, t, nextTs, nextT-t);
 								double score = startLogProb + emissionLogProb;
 								if (score != Double.NEGATIVE_INFINITY) {
-									addToBeam(alphas[d][nextT], nextTs, score, betas[d][nextT][nextTs.getCharIndex()], new Tuple2<Integer,TransitionState>(0, startBeamState.backPointer._2), beamSize);
+									addToBeam(alphas[d][nextT], nextTs, score, betas[d][nextT][nextTs.getGlyphChar().templateCharIndex], new Tuple2<Integer,TransitionState>(0, startBeamState.backPointer._2), beamSize);
 								}
 							}
 						}
@@ -167,14 +167,14 @@ public class BeamingSemiMarkovDP {
 					for (Tuple2<TransitionState,Double> trans : allowedTrans) {
 						TransitionState nextTs = trans._1;
 						double transLogProb = trans._2;
-						int c = nextTs.getCharIndex();
+						int c = nextTs.getGlyphChar().templateCharIndex;
 						for (int w : emissionModel.allowedWidths(c)) {
 							if (t + w < emissionModel.sequenceLength(d)+1) {
 								int nextT = t + w;
 								double emissionLogProb = emissionModel.logProb(d, t, nextTs, nextT-t);
 								double score = beamState.score + transLogProb + emissionLogProb;
 								if (score != Double.NEGATIVE_INFINITY) {
-									addToBeam(alphas[d][nextT], nextTs, score, betas[d][nextT][nextTs.getCharIndex()], makeTuple2(t, beamState.transState), beamSize);
+									addToBeam(alphas[d][nextT], nextTs, score, betas[d][nextT][nextTs.getGlyphChar().templateCharIndex], makeTuple2(t, beamState.transState), beamSize);
 								}
 							}
 						}

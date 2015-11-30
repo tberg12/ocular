@@ -91,11 +91,11 @@ public class CachingEmissionModel implements EmissionModel {
 	}
 	
 	public float logProb(int d, int t, TransitionState ts, int w) {
-		return logProb(d, t, ts.getCharIndex(), w);
+		return logProb(d, t, ts.getGlyphChar().templateCharIndex, w);
 	}
 	
 	public int getExposure(int d, int t, TransitionState ts, int w) {
-		int c = ts.getCharIndex();
+		int c = ts.getGlyphChar().templateCharIndex;
 		double bestScore = Double.NEGATIVE_INFINITY;
 		int bestExposure = -1;
 		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
@@ -116,7 +116,7 @@ public class CachingEmissionModel implements EmissionModel {
 	}
 	
 	public int getOffset(int d, int t, TransitionState ts, int w) {
-		int c = ts.getCharIndex();
+		int c = ts.getGlyphChar().templateCharIndex;
 		double bestScore = Double.NEGATIVE_INFINITY;
 		int bestOffset = Integer.MIN_VALUE;
 		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
@@ -137,7 +137,7 @@ public class CachingEmissionModel implements EmissionModel {
 	}
 	
 	public int getPadWidth(int d, int t, TransitionState ts, int w) {
-		int c = ts.getCharIndex();
+		int c = ts.getGlyphChar().templateCharIndex;
 		double bestScore = Double.NEGATIVE_INFINITY;
 		int bestPadWidth = -1;
 		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
@@ -330,7 +330,7 @@ public class CachingEmissionModel implements EmissionModel {
 
 	public void incrementCount(int d, TransitionState ts, int startCol, int endCol, float count) {
 		if (count > 0.0) {
-			int c = ts.getCharIndex();
+			int c = ts.getGlyphChar().templateCharIndex;
 			int w = endCol - startCol;
 			int tw = w - getPadWidth(d, startCol, ts, w);
 			templates[c].incrementCounts(count, observations[d], startCol, tw, getExposure(d, startCol, ts, w), getOffset(d, startCol, ts, w));

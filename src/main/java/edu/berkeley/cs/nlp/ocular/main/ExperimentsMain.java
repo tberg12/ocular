@@ -261,7 +261,7 @@ public class ExperimentsMain implements Runnable {
 
 				int t = 0;
 				for (int di=0; di<decodeStates[d].length; ++di) {
-					int c = decodeStates[d][di].getCharIndex();
+					int c = decodeStates[d][di].getGlyphChar().templateCharIndex;
 					int w = decodeWidths[d][di];
 					int e = emissionModel.getExposure(d, t, decodeStates[d][di], w);
 					int offset = emissionModel.getOffset(d, t, decodeStates[d][di], w);

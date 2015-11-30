@@ -91,7 +91,7 @@ package edu.berkeley.cs.nlp.ocular.model;
 //
 //		final int maxOrder = 4;
 //
-//		final Indexer<String> charIndexer = new HashMapIndexer<String>();
+//		final Indexer<String> charIndexer = new CharIndexer<String>();
 //		charIndexer.getIndex(" ");
 //		charIndexer.getIndex("a");
 //		charIndexer.getIndex("b");

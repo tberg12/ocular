@@ -1,6 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,9 +14,6 @@ import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
-
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
@@ -22,6 +21,7 @@ public class Charset {
 
 	public static final String SPACE = " ";
 	public static final String HYPHEN = "-";
+	public static final Set<String> LOWERCASE_LATIN_LETTERS = makeSet("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
 	public static final String LONG_S = "\u017F"; // ſ
 	/**
 	 * Punctuation symbols that should be made available for any language, 
@@ -214,7 +214,12 @@ public class Charset {
 		for (Map.Entry<String, String> entry : PRECOMPOSED_TO_ESCAPED_MAP.entrySet())
 			ESCAPED_TO_PRECOMPOSED_MAP.put(entry.getValue(), entry.getKey());
 	}
-
+	
+	public static final Set<String> CHARS_THAT_CAN_BE_REPLACED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	public static final Set<String> VALID_CHAR_SUBSTITUTIONS = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	public static final Set<String> CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	public static final Set<String> CHARS_THAT_CAN_BE_ELIDED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	
 	/**
 	 * Get the character code including any escaped diacritics that precede 
 	 * the letter and any unicode "combining characters" that follow it.

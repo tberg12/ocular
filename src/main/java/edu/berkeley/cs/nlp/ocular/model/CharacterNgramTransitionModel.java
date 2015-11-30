@@ -21,18 +21,18 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 		private final int[] context;
 		private final TransitionStateType type;
 
-		private final int charIndex;
+		private final int lmCharIndex;
 		
 		public CharacterNgramTransitionState(int[] context, TransitionStateType type) {
 			this.context = context;
 			this.type = type;
 			
 			if (context.length == 0 || type == TransitionStateType.LMRGN || type == TransitionStateType.LMRGN_HPHN || type == TransitionStateType.RMRGN || type == TransitionStateType.RMRGN_HPHN) {
-				this.charIndex = spaceCharIndex;
+				this.lmCharIndex = spaceCharIndex;
 			} else if (type == TransitionStateType.RMRGN_HPHN_INIT) {
-				this.charIndex = hyphenCharIndex;
+				this.lmCharIndex = hyphenCharIndex;
 			} else {
-				this.charIndex = context[context.length-1];
+				this.lmCharIndex = context[context.length-1];
 			}
 		}
 		
@@ -198,8 +198,13 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 			return result;
 		}
 		
-		public int getCharIndex() {
-			return charIndex;
+		public int getLmCharIndex() {
+			return lmCharIndex;
+		}
+		
+		public GlyphChar getGlyphChar() {
+			// Always render the character proposed by the language model
+			return new GlyphChar(lmCharIndex, false, false);
 		}
 		
 		public int getOffset() {

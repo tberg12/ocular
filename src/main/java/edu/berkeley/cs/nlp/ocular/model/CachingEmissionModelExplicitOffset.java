@@ -92,13 +92,13 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 	}
 	
 	public float logProb(int d, int t, TransitionState ts, int w) {
-		int c = ts.getCharIndex();
+		int c = ts.getGlyphChar().templateCharIndex;
 		int offset = ts.getOffset();
 		return cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET][w-padAndTemplateMinWidths[c]];
 	}
 	
 	public int getExposure(int d, int t, TransitionState ts, int w) {
-		int c = ts.getCharIndex();
+		int c = ts.getGlyphChar().templateCharIndex;
 		int offset = ts.getOffset();
 		double bestScore = Double.NEGATIVE_INFINITY;
 		int bestExposure = -1;
@@ -122,7 +122,7 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 	}
 	
 	public int getPadWidth(int d, int t, TransitionState ts, int w) {
-		int c = ts.getCharIndex();
+		int c = ts.getGlyphChar().templateCharIndex;
 		int offset = ts.getOffset();
 		double bestScore = Double.NEGATIVE_INFINITY;
 		int bestPadWith = -1;
@@ -317,7 +317,7 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 
 	public void incrementCount(int d, TransitionState ts, int startCol, int endCol, float count) {
 		if (count > 0.0) {
-			int c = ts.getCharIndex();
+			int c = ts.getGlyphChar().templateCharIndex;
 			int w = endCol - startCol;
 			int tw = w - getPadWidth(d, startCol, ts, w);
 			templates[c].incrementCounts(count, observations[d], startCol, tw, getExposure(d, startCol, ts, w), getOffset(d, startCol, ts, w));

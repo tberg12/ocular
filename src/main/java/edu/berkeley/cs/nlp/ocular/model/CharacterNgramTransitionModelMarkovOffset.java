@@ -248,8 +248,12 @@ public class CharacterNgramTransitionModelMarkovOffset implements SparseTransiti
 			return result;
 		}
 		
-		public int getCharIndex() {
+		public int getLmCharIndex() {
 			return charIndex;
+		}
+		
+		public GlyphChar getGlyphChar() {
+			return new GlyphChar(charIndex, false, false);
 		}
 		
 		public int getOffset() {

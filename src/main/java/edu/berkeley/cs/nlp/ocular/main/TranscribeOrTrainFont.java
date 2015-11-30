@@ -3,7 +3,6 @@ package edu.berkeley.cs.nlp.ocular.main;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
-import indexer.Indexer;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import threading.BetterThreader;
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
@@ -37,6 +35,8 @@ import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.EmissionModel;
+import edu.berkeley.cs.nlp.ocular.model.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
@@ -45,6 +45,8 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
+import indexer.Indexer;
+import threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -431,13 +433,17 @@ public class TranscribeOrTrainFont implements Runnable {
 		public double getProbKeepSameLanguage() { return 1.0; }
 		public Double languagePrior(String language) { 
 			return language.equals(this.language) ? 1.0 : 0.0;
-    }
+		}
 		public Double languageTransitionPrior(String fromLanguage, String destinationLanguage) { 
 			return fromLanguage.equals(this.language) && destinationLanguage.equals(this.language) ? 1.0 : 0.0; 
 		}
 		public SingleLanguageModel get(String language) { 
 			if (language.equals(this.language)) return singleLm; 
 			else throw new RuntimeException("No model found for language '"+language+"'.  (Only found '"+this.language+"')"); 
+		}
+
+		public double glyphLogProb(String language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+			throw new RuntimeException("not implemented");
 		}
 	}
 
@@ -480,7 +486,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			viterbiChars[line] = new ArrayList<String>();
 			if (line < decodeStates.length) {
 				for (int i = 0; i < decodeStates[line].length; ++i) {
-					int c = decodeStates[line][i].getCharIndex();
+					int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 						viterbiChars[line].add(charIndexer.getObject(c));
 					}
@@ -599,7 +605,7 @@ public class TranscribeOrTrainFont implements Runnable {
 				csViterbiChars[line] = new ArrayList<String>();
 				if (decodeStates[line] != null) {
 					for (int i = 0; i < decodeStates[line].length; ++i) {
-						int c = decodeStates[line][i].getCharIndex();
+						int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
 						if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 							String s = Charset.unescapeChar(charIndexer.getObject(c));
 							csViterbiChars[line].add(s);

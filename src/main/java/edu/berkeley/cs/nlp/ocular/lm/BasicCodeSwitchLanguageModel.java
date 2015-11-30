@@ -8,6 +8,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import edu.berkeley.cs.nlp.ocular.model.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.model.GlyphProbModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
@@ -16,7 +19,7 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
 public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
-	private static final long serialVersionUID = 498752498346537382L;
+	private static final long serialVersionUID = 765675687L;
 
 	private Set<String> languages;
 
@@ -38,6 +41,7 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	private Indexer<String> charIndexer;
 	private int maxOrder;
 	private double pKeepSameLanguage;
+	private GlyphProbModel glyphProbModel;
 
 	public Set<String> languages() {
 		return languages;
@@ -149,6 +153,10 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 			String language = languages.iterator().next();
 			return map1(language, map1(language, 1.0));
 		}
+	}
+
+	public double glyphLogProb(String language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+		return glyphProbModel.logProb(language, prevGlyphChar, prevLmChar, lmChar, glyphChar);
 	}
 
 	/**

@@ -300,7 +300,7 @@ public class Main implements Runnable {
 			viterbiChars[line] = new ArrayList<String>();
 
 			for (int i=0; i<decodeStates[line].length; ++i) {
-				int c = decodeStates[line][i].getCharIndex();
+				int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
 				if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size()-1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 					viterbiChars[line].add(charIndexer.getObject(c));
 				}
