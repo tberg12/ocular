@@ -19,22 +19,16 @@ import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
-import edu.berkeley.cs.nlp.ocular.model.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel;
-import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModelExplicitOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModelMarkovOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.CodeSwitchTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.EmissionModel;
+import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
@@ -46,7 +40,6 @@ import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
 import indexer.Indexer;
-import threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -163,16 +156,12 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
 		
-		long overallNanoTime = System.nanoTime();
-		long overallEmissionCacheNanoTime = 0;
-
 		if (!new File(initFontPath).exists()) throw new RuntimeException("initFontPath " + initFontPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 
 		File outputDir = new File(outputPath);
 		if (!outputDir.exists()) outputDir.mkdirs();
 
 		List<Document> documents = loadDocuments();
-		int numUsableDocs = documents.size();
 
 		System.out.println("Loading initial LM from " + lmPath);
 		Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> lmAndTransModel = getForwardTransitionModel(lmPath);
@@ -187,111 +176,16 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		System.out.println("Loading font initializer from " + initFontPath);
 		Map<String, CharacterTemplate> font = InitializeFont.readFont(initFontPath);
-		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
 
 		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
-		if (!learnFont) numEMIters = 0;
-		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
+		FontTrainEM fontTrainEM = new FontTrainEM(accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
+		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, allEvals, makeList(lm.languages()));
 		
-		List<String> languages = makeList(lm.languages());
-		Collections.sort(languages);
-		Map<String, Integer> languageCounts = new HashMap<String, Integer>();
-
-		for (int iter = 1; (/* learnFont && */ iter <= numEMIters) || (/* !learnFont && */ iter == 1); ++iter) {
-			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).");
-			else System.out.println("Transcribing (learnFont = false).");
-
-			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
-
-			// The number of characters assigned to a particular language (to re-estimate language probabilities).
-			clearTemplates(templates);
-			clearLmStats(languages, languageCounts);
-
-			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
-				Document doc = documents.get(docNum);
-				if (learnFont) System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName());
-				else System.out.println("Transcribing document: "+docNum+" of "+numUsableDocs+":  "+doc.baseName());
-
-				final PixelType[][][] pixels = doc.loadLineImages();
-				doc.loadLineText();
-
-				// e-step
-
-				TransitionState[][] decodeStates = new TransitionState[pixels.length][0];
-				int[][] decodeWidths = new int[pixels.length][0];
-				int numBatches = (int) Math.ceil(pixels.length / (double) decodeBatchSize);
-
-				for (int b = 0; b < numBatches; ++b) {
-					System.gc();
-					System.gc();
-					System.gc();
-
-					System.out.println("Batch: " + b);
-
-					int startLine = b * decodeBatchSize;
-					int endLine = Math.min((b + 1) * decodeBatchSize, pixels.length);
-					PixelType[][][] batchPixels = new PixelType[endLine - startLine][][];
-					for (int line = startLine; line < endLine; ++line) {
-						batchPixels[line - startLine] = pixels[line];
-					}
-
-					final EmissionModel emissionModel = (markovVerticalOffset ? 
-							new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : 
-							new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
-					long emissionCacheNanoTime = System.nanoTime();
-					emissionModel.rebuildCache();
-					overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
-
-					long nanoTime = System.nanoTime();
-					BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
-					Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
-					final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
-					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
-					System.out.println("Decode: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-					
-					for (int line = 0; line < emissionModel.numSequences(); ++line) {
-						decodeStates[startLine + line] = batchDecodeStates[line];
-						decodeWidths[startLine + line] = batchDecodeWidths[line];
-					}
-
-					if (learnFont) {
-						incrementCounts(emissionModel, batchDecodeStates, batchDecodeWidths);
-					}
-				}
-
-				// evaluate
-
-				TransitionState[][] decodeCharStates = new TransitionState[decodeStates.length][];
-				for (int i = 0; i < decodeStates.length; ++i) {
-					decodeCharStates[i] = new TransitionState[decodeStates[i].length];
-					for (int j = 0; j < decodeStates[i].length; ++j)
-						decodeCharStates[i][j] = (TransitionState) decodeStates[i][j];
-				}
-
-				printTranscription(iter, learnFont, doc, allEvals, decodeCharStates, charIndexer, outputPath, lm, languageCounts);
-				
-				// m-step
-				{
-					int trueMinBatchSize = Math.min(minDocBatchSize, updateDocBatchSize); // min batch size may not exceed standard batch size
-					if (docNum+1 == numUsableDocs) { // last document of the set
-						if (learnFont) updateFontParameters(iter, templates);
-						if (retrainLM) lm = updateLmParameters(lm, languages, languageCounts);
-					}
-					else if (numUsableDocs - (docNum+1) < trueMinBatchSize) { // next batch will be too small, so lump the remaining documents in with this one
-						// no update
-					} 
-					else if ((docNum+1) % updateDocBatchSize == 0) { // batch is complete
-						if (learnFont) updateFontParameters(iter, templates);
-						if (retrainLM) lm = updateLmParameters(lm, languages, languageCounts);
-					}
-				}
-			}
-
-		}
-
+		long overallNanoTime = System.nanoTime();
+		fontTrainEM.run(learnFont, numEMIters, documents, lm, forwardTransitionModel, retrainLM, font, charIndexer, emissionInnerLoop, emIterationEvaluator);
 		if (learnFont) InitializeFont.writeFont(font, outputFontPath);
 		if (retrainLM && outputLmPath != null) TrainLanguageModel.writeLM(lm, outputLmPath);
 
@@ -299,82 +193,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			printEvaluation(allEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
 		}
 
-		System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
 		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime) / 1e9 + "s");
-	}
-
-	private void clearTemplates(final CharacterTemplate[] templates) {
-		for (int c = 0; c < templates.length; ++c) {
-			if (templates[c] != null) templates[c].clearCounts();
-		}
-	}
-
-	private void clearLmStats(List<String> languages, Map<String, Integer> languageCounts) {
-		for (String l : languages) languageCounts.put(l, 1); // add-one smooth
-	}
-
-	private void incrementCounts(final EmissionModel emissionModel, final TransitionState[][] batchDecodeStates, final int[][] batchDecodeWidths) {
-		long nanoTime;
-		nanoTime = System.nanoTime();
-		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
-			public void call(Integer line, Object ignore) {
-				emissionModel.incrementCounts(line, batchDecodeStates[line], batchDecodeWidths[line]);
-			}
-		};
-		BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
-		for (int line = 0; line < emissionModel.numSequences(); ++line)
-			threader.addFunctionArgument(line);
-		threader.run();
-		System.out.println("Increment counts: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-	}
-
-	private void updateFontParameters(int iter, final CharacterTemplate[] templates) {
-		long nanoTime = System.nanoTime();
-		final int iterFinal = iter;
-		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
-			public void call(Integer c, Object ignore) {
-				if (templates[c] != null) templates[c].updateParameters(iterFinal);
-			}
-		};
-		BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
-		for (int c = 0; c < templates.length; ++c)
-			threader.addFunctionArgument(c);
-		threader.run();
-		System.out.println("Update font parameters: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-		
-		if (!accumulateBatchesWithinIter) {
-			System.out.println("Clearing font parameter statistics.");
-			clearTemplates(templates);
-		}
-	}
-
-	/**
-	 * Hard-EM update on language probabilities
-	 */
-	private CodeSwitchLanguageModel updateLmParameters(CodeSwitchLanguageModel lm, List<String> languages, Map<String, Integer> languageCounts) {
-		long nanoTime = System.nanoTime();
-		Map<String, Tuple2<SingleLanguageModel, Double>> newSubModelsAndPriors = new HashMap<String, Tuple2<SingleLanguageModel, Double>>();
-		double languageCountSum = 0;
-		for (String language: languages) {
-			double newPrior = languageCounts.get(language).doubleValue();
-			newSubModelsAndPriors.put(language, makeTuple2(lm.get(language), newPrior));
-			languageCountSum += newPrior;
-		}
-
-		StringBuilder sb = new StringBuilder("Updating language probabilities: ");
-		for (String language: languages)
-			sb.append(language).append("->").append(languageCounts.get(language) / languageCountSum).append("  ");
-		System.out.println(sb);
-		
-		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getProbKeepSameLanguage(), lm.getMaxOrder());
-		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-		
-		if (!accumulateBatchesWithinIter) {
-			System.out.println("Clearing LM parameter statistics.");
-			clearLmStats(languages, languageCounts);
-		}
-		
-		return newLM;
 	}
 
 	private Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> getForwardTransitionModel(String lmFilePath) {
@@ -447,6 +266,67 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 	}
 
+	private EmissionCacheInnerLoop getEmissionInnerLoop() {
+		if (emissionEngine == EmissionCacheInnerLoopType.DEFAULT) return new DefaultInnerLoop(numEmissionCacheThreads);
+		if (emissionEngine == EmissionCacheInnerLoopType.OPENCL) return new OpenCLInnerLoop(numEmissionCacheThreads);
+		if (emissionEngine == EmissionCacheInnerLoopType.CUDA) return new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
+		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
+	}
+
+	private List<Document> loadDocuments() {
+		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
+		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
+		List<Document> documents = new ArrayList<Document>();
+
+		List<Document> lazyDocs = loader.readDataset();
+		Collections.sort(lazyDocs, new Comparator<Document>() {
+			public int compare(Document o1, Document o2) {
+				return o1.baseName().compareTo(o2.baseName());
+			}
+			public boolean equals(Object obj) {
+				return false;
+			}
+		});
+		
+		int actualNumDocsToSkip = Math.min(lazyDocs.size(), numDocsToSkip);
+		int actualNumDocsToUse = Math.min(lazyDocs.size() - actualNumDocsToSkip, numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
+		System.out.println("Using "+actualNumDocsToUse+" documents (skipping "+actualNumDocsToSkip+")");
+		for (int docNum = 0; docNum < actualNumDocsToSkip; ++docNum) {
+			Document lazyDoc = lazyDocs.get(docNum);
+			System.out.println("  Skipping " + lazyDoc.baseName());
+		}
+		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip+actualNumDocsToUse; ++docNum) {
+			Document lazyDoc = lazyDocs.get(docNum);
+			System.out.println("  Using " + lazyDoc.baseName());
+			documents.add(lazyDoc);
+		}
+		return documents;
+	}
+	
+	public static interface EMIterationEvaluator {
+		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates);
+	}
+
+	private class BasicEMIterationEvaluator implements EMIterationEvaluator {
+		Indexer<String> charIndexer;
+		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals;
+		List<String> languages;
+		
+		public BasicEMIterationEvaluator(Indexer<String> charIndexer, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, List<String> languages) {
+			this.charIndexer = charIndexer;
+			this.allEvals = allEvals;
+			this.languages = languages;
+		}
+
+		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates) {
+			printTranscription(iter, learnFont, doc, allEvals, decodeStates, charIndexer, outputPath, languages);
+		}
+	}
+
+	public static class NoOpEMIterationEvaluator implements EMIterationEvaluator {
+		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates) {}
+	}
+
 	public static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
 		Map<String, EvalSuffStats> totalSuffStats = new HashMap<String, EvalSuffStats>();
 		StringBuffer buf = new StringBuffer();
@@ -475,7 +355,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, String outputPath, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
+	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, String outputPath, List<String> languages) {
 		final String[][] text = doc.loadLineText();
 		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
 
@@ -542,150 +422,67 @@ public class TranscribeOrTrainFont implements Runnable {
 			f.writeString(goldComparisonOutputFilename, goldComparisonOutputBuffer.toString());
 		}
 
-		if (lm.languages().size() > 1) {
-			System.out.println("Multiple languages being used ("+lm.languages().size()+"), so an html file is being generated to show language switching.");
+		if (languages.size() > 1) {
+			System.out.println("Multiple languages being used ("+languages.size()+"), so an html file is being generated to show language switching.");
 			System.out.println("Writing html output to " + htmlOutputFilename);
-			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, doc.baseName(), htmlOutputFilename, lm, languageCounts));
+			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, doc.baseName(), htmlOutputFilename, languages));
 		}
 	}
 
-	private static String printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, String imgFilename, String htmlOutputFilename, CodeSwitchLanguageModel lm, Map<String, Integer> languageCounts) {
+	private static String printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, String imgFilename, String htmlOutputFilename, List<String> languages) {
 		StringBuffer outputBuffer = new StringBuffer();
+		outputBuffer.append("<HTML xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n");
+		outputBuffer.append("<HEAD><META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></HEAD>\n");
+		outputBuffer.append("<body>\n");
+		outputBuffer.append("<table><tr><td>\n");
+		outputBuffer.append("<font face=\"courier\"> \n");
+		outputBuffer.append("</br></br></br></br></br>\n");
+		outputBuffer.append("</br></br>\n\n");
 
-		//		{
-		//			List<String>[] csViterbiChars = new List[decodeStates.length];
-		//			String prevLanguage = null;
-		//			for (int line = 0; line < decodeStates.length; ++line) {
-		//				csViterbiChars[line] = new ArrayList<String>();
-		//				if (decodeStates[line] != null) {
-		//					for (int i = 0; i < decodeStates[line].length; ++i) {
-		//						int c = decodeStates[line][i].getCharIndex();
-		//						if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-		//							String s = charIndexer.getObject(c);
-		//							csViterbiChars[line].add(s);
-		//
-		//							String currLanguage = decodeStates[line][i].getLanguage();
-		//							if (!StringHelper.equals(currLanguage, prevLanguage)) {
-		//								if (prevLanguage != null) {
-		//									outputBuffer.append("]");
-		//								}
-		//								outputBuffer.append("[" + currLanguage + " ");
-		//							}
-		//							outputBuffer.append(s);
-		//							prevLanguage = currLanguage;
-		//						}
-		//					}
-		//				}
-		//				outputBuffer.append("\n");
-		//			}
-		//		}
-		//		outputBuffer.append("\n\n\n\n\n");
-		{
-			outputBuffer.append("<HTML xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n");
-			outputBuffer.append("<HEAD><META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></HEAD>\n");
-			outputBuffer.append("<body>\n");
-			outputBuffer.append("<table><tr><td>\n");
-			outputBuffer.append("<font face=\"courier\"> \n");
-			outputBuffer.append("</br></br></br></br></br>\n");
-			outputBuffer.append("</br></br>\n\n");
+		String[] colors = new String[] { "Black", "Red", "Blue", "Olive", "Orange", "Magenta", "Lime", "Cyan", "Purple", "Green", "Brown" };
+		Map<String, String> langColor = new HashMap<String, String>();
+		langColor.put(null, colors[0]);
+		for (String language: languages) {
+			langColor.put(language, colors[langColor.size()]);
+		}
 
-			String[] colors = new String[] { "Black", "Red", "Blue", "Olive", "Orange", "Magenta", "Lime", "Cyan", "Purple", "Green", "Brown" };
-			Map<String, String> langColor = new HashMap<String, String>();
-			langColor.put(null, colors[0]);
-			List<String> allLanguages = makeList(lm.languages());
-			Collections.sort(allLanguages);
-			for (String language: allLanguages) {
-				langColor.put(language, colors[langColor.size()]);
-			}
+		@SuppressWarnings("unchecked")
+		List<String>[] csViterbiChars = new List[decodeStates.length];
+		String prevLanguage = null;
+		for (int line = 0; line < decodeStates.length; ++line) {
+			csViterbiChars[line] = new ArrayList<String>();
+			if (decodeStates[line] != null) {
+				for (int i = 0; i < decodeStates[line].length; ++i) {
+					int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
+					if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
+						String s = Charset.unescapeChar(charIndexer.getObject(c));
+						csViterbiChars[line].add(s);
 
-			@SuppressWarnings("unchecked")
-			List<String>[] csViterbiChars = new List[decodeStates.length];
-			String prevLanguage = null;
-			for (int line = 0; line < decodeStates.length; ++line) {
-				csViterbiChars[line] = new ArrayList<String>();
-				if (decodeStates[line] != null) {
-					for (int i = 0; i < decodeStates[line].length; ++i) {
-						int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
-						if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-							String s = Charset.unescapeChar(charIndexer.getObject(c));
-							csViterbiChars[line].add(s);
-
-							String currLanguage = decodeStates[line][i].getLanguage();
-							if (!StringHelper.equals(currLanguage, prevLanguage)) {
-								if (prevLanguage != null) {
-									outputBuffer.append("</font>");
-								}
-								if (!langColor.containsKey(currLanguage)) langColor.put(currLanguage, colors[langColor.size()]);
-								outputBuffer.append("<font color=\"" + langColor.get(currLanguage) + "\">");
+						String currLanguage = decodeStates[line][i].getLanguage();
+						if (!StringHelper.equals(currLanguage, prevLanguage)) {
+							if (prevLanguage != null) {
+								outputBuffer.append("</font>");
 							}
-							if (currLanguage != null) languageCounts.put(currLanguage, languageCounts.get(currLanguage) + 1);
-							outputBuffer.append(s);
-							prevLanguage = currLanguage;
+							outputBuffer.append("<font color=\"" + langColor.get(currLanguage) + "\">");
 						}
+						outputBuffer.append(s);
+						prevLanguage = currLanguage;
 					}
 				}
-				outputBuffer.append("</br>\n");
 			}
-			outputBuffer.append("</font></font><br/><br/><br/>\n");
-			for (Map.Entry<String, String> c : langColor.entrySet()) {
-				outputBuffer.append("<font color=\"" + c.getValue() + "\">" + c.getKey() + "</font></br>\n");
-			}
-
-			outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\">\n");
-			outputBuffer.append("</td></tr></table>\n");
-			outputBuffer.append("</body></html>\n");
-			outputBuffer.append("\n\n\n");
+			outputBuffer.append("</br>\n");
 		}
+		outputBuffer.append("</font></font><br/><br/><br/>\n");
+		for (Map.Entry<String, String> c : langColor.entrySet()) {
+			outputBuffer.append("<font color=\"" + c.getValue() + "\">" + c.getKey() + "</font></br>\n");
+		}
+
+		outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\">\n");
+		outputBuffer.append("</td></tr></table>\n");
+		outputBuffer.append("</body></html>\n");
+		outputBuffer.append("\n\n\n");
 		outputBuffer.append("\n\n\n\n\n");
 		return outputBuffer.toString();
-	}
-
-	private EmissionCacheInnerLoop getEmissionInnerLoop() {
-		if (emissionEngine == EmissionCacheInnerLoopType.DEFAULT) return new DefaultInnerLoop(numEmissionCacheThreads);
-		if (emissionEngine == EmissionCacheInnerLoopType.OPENCL) return new OpenCLInnerLoop(numEmissionCacheThreads);
-		if (emissionEngine == EmissionCacheInnerLoopType.CUDA) return new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
-		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
-	}
-
-	private List<Document> loadDocuments() {
-		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
-		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
-		List<Document> documents = new ArrayList<Document>();
-
-		List<Document> lazyDocs = loader.readDataset();
-		Collections.sort(lazyDocs, new Comparator<Document>() {
-			public int compare(Document o1, Document o2) {
-				return o1.baseName().compareTo(o2.baseName());
-			}
-			public boolean equals(Object obj) {
-				return false;
-			}
-		});
-		
-		int actualNumDocsToSkip = Math.min(lazyDocs.size(), numDocsToSkip);
-		int actualNumDocsToUse = Math.min(lazyDocs.size() - actualNumDocsToSkip, numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
-		System.out.println("Using "+actualNumDocsToUse+" documents (skipping "+actualNumDocsToSkip+")");
-		for (int docNum = 0; docNum < actualNumDocsToSkip; ++docNum) {
-			Document lazyDoc = lazyDocs.get(docNum);
-			System.out.println("  Skipping " + lazyDoc.baseName());
-		}
-		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip+actualNumDocsToUse; ++docNum) {
-			Document lazyDoc = lazyDocs.get(docNum);
-			System.out.println("  Using " + lazyDoc.baseName());
-			documents.add(lazyDoc);
-		}
-		return documents;
-	}
-
-	private CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
-		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
-		for (int c = 0; c < charIndexer.size(); ++c) {
-			CharacterTemplate template = font.get(charIndexer.getObject(c));
-			if (template == null)
-				throw new RuntimeException("No template found for character '"+charIndexer.getObject(c)+"' ("+StringHelper.toUnicode(charIndexer.getObject(c))+")");
-			templates[c] = template;
-		}
-		return templates;
 	}
 
 }
