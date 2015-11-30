@@ -53,22 +53,22 @@ public class GlyphProbModel implements Serializable {
 
 
 	// P( language )
-	private Map<String, Double> logdistLanguage;
+	private List<Double> logdistLanguage;
 
 	// P( prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)] | language )
-	private Map<String, Map<GlyphType, Double>> logdistGlyphType;
+	private List<Map<GlyphType, Double>> logdistGlyphType;
 
 	// P( prevLmChar | language, prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)] )
-	private Map<String, List<List<Double>>> logdistPrevLmChar;
+	private List<List<List<Double>>> logdistPrevLmChar;
 
 	// P( lmChar | language, prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar )
-	private Map<String, List<List<List<Double>>>> logdistLmChar;
+	private List<List<List<List<Double>>>> logdistLmChar;
 
 	// P( glyph[c1..cN,elisonTilde,elided] | language, prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar, lmChar )
-	private Map<String, List<List<List<Map<GlyphChar, Double>>>>> logdistGlyph;
+	private List<List<List<List<Map<GlyphChar, Double>>>>> logdistGlyph;
 	
 	
-	public double logProb(String language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+	public double logProb(int language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
 		double logpLang = logdistLanguage.get(language);
 		double logpGlyphType = logdistGlyphType.get(language).get(prevGlyphChar);
 		double logpPrevLmChar = logdistPrevLmChar.get(language).get(prevGlyphChar.ordinal()).get(prevLmChar);

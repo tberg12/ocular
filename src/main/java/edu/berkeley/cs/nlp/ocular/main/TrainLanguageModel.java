@@ -36,6 +36,7 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
+import indexer.HashMapIndexer;
 import indexer.Indexer;
 
 /**
@@ -93,30 +94,32 @@ public class TrainLanguageModel implements Runnable {
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
-		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = makePathsReadersAndPriors();
+		Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> langIndexerAndLmData = makePathsReadersAndPriors();
+		Indexer<String> langIndexer = langIndexerAndLmData._1;
+		List<Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = langIndexerAndLmData._2;
 
 		Indexer<String> charIndexer = new CharIndexer();
-		Map<String, Tuple2<SingleLanguageModel, Double>> lmsAndPriors = makeMultipleSubLMs(pathsReadersAndPriors, charIndexer);
+		List<Tuple2<SingleLanguageModel, Double>> lmsAndPriors = makeMultipleSubLMs(pathsReadersAndPriors, charIndexer, langIndexer);
 		charIndexer.lock();
 
 		System.out.println("pKeepSameLanguage = " + pKeepSameLanguage);
 		double priorSum = 0.0;
-		for(String language: lmsAndPriors.keySet())
-			priorSum += lmsAndPriors.get(language)._2;
+		for(Tuple2<SingleLanguageModel,Double> lmAndPrior: lmsAndPriors)
+			priorSum += lmAndPrior._2;
 		StringBuilder priorsSb = new StringBuilder("Language priors: ");
-		for(String language: lmsAndPriors.keySet())
-			priorsSb.append(language).append(" -> ").append(lmsAndPriors.get(language)._2 / priorSum).append(", ");
+		for(int langIndex = 0; langIndex < langIndexer.size(); ++langIndex) {
+			String language = langIndexer.getObject(langIndex);
+			priorsSb.append(language).append(" -> ").append(lmsAndPriors.get(langIndex)._2 / priorSum).append(", ");
+		}
 		System.out.println(priorsSb.substring(0, priorsSb.length() - 2));
 		System.out.println("charN = " + charN);
 
-		CodeSwitchLanguageModel codeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, pKeepSameLanguage, charN);
+		CodeSwitchLanguageModel codeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, langIndexer, pKeepSameLanguage, charN);
 		System.out.println("writing LM to " + lmPath);
 		writeLM(codeSwitchLM, lmPath);
 	}
 
-	public Map<String, Tuple2<Tuple2<String, TextReader>, Double>> makePathsReadersAndPriors() {
-		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = new HashMap<String, Tuple2<Tuple2<String, TextReader>, Double>>();
-
+	public Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> makePathsReadersAndPriors() {
 		String textPathString = textPath;
 		if (!textPath.contains("->")) textPathString = "NoLanguageNameGiven->" + textPath; // repair "invalid" input
 		Map<String, String> languagePathMap = new HashMap<String, String>();
@@ -165,6 +168,8 @@ public class TrainLanguageModel implements Runnable {
 			}
 		}
 		
+		List<Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = new ArrayList<Tuple2<Tuple2<String, TextReader>, Double>>();
+		Indexer<String> langIndexer = new HashMapIndexer<String>();
 		for (String language : languagePathMap.keySet()) {
 			String filepath = languagePathMap.get(language);
 			Double prior = languagePriorMap.get(language);
@@ -177,10 +182,11 @@ public class TrainLanguageModel implements Runnable {
 			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
 			
-			pathsReadersAndPriors.put(language, makeTuple2(makeTuple2(filepath, textReader), prior));
+			langIndexer.getIndex(language);
+			pathsReadersAndPriors.add(makeTuple2(makeTuple2(filepath, textReader), prior));
 		}
 
-		return pathsReadersAndPriors;
+		return makeTuple2(langIndexer, pathsReadersAndPriors);
 	}
 	
 	private TextReader handleReplacementRulesOption(TextReader textReader, String replacementsFilePath) {
@@ -192,12 +198,13 @@ public class TrainLanguageModel implements Runnable {
 		return new ReplaceSomeTextReader(rules, textReader);
 	}
 
-	private Map<String, Tuple2<SingleLanguageModel, Double>> makeMultipleSubLMs(Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors, Indexer<String> charIndexer) {
-		Map<String, Tuple2<SingleLanguageModel, Double>> lmsAndPriors = new HashMap<String, Tuple2<SingleLanguageModel, Double>>();
-		for (Map.Entry<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReaderAndPrior : pathsReadersAndPriors.entrySet()) {
-			String language = pathsReaderAndPrior.getKey();
-			String filepath = pathsReaderAndPrior.getValue()._1._1;
-			TextReader textReader = pathsReaderAndPrior.getValue()._1._2;
+	private List<Tuple2<SingleLanguageModel, Double>> makeMultipleSubLMs(List<Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors, Indexer<String> charIndexer, Indexer<String> langIndexer) {
+		List<Tuple2<SingleLanguageModel, Double>> lmsAndPriors = new ArrayList<Tuple2<SingleLanguageModel, Double>>();
+		for (int langIndex = 0; langIndex < langIndexer.size(); ++langIndex) {
+			Tuple2<Tuple2<String, TextReader>, Double> pathsReaderAndPrior = pathsReadersAndPriors.get(langIndex);
+			String language = langIndexer.getObject(langIndex);
+			String filepath = pathsReaderAndPrior._1._1;
+			TextReader textReader = pathsReaderAndPrior._1._2;
 			System.out.println(language + " text reader: " + textReader);
 
 			CorpusCounter counter = new CorpusCounter(charN);
@@ -205,7 +212,7 @@ public class TrainLanguageModel implements Runnable {
 			System.out.println("  using " + chars.size() + " characters for " + language + " read from " + filepath);
 			counter.countChars(chars, charIndexer, 0);
 
-			Double prior = pathsReaderAndPrior.getValue()._2;
+			Double prior = pathsReaderAndPrior._2;
 
 			List<String> langChars = new ArrayList<String>();
 			for (int i : counter.getActiveCharacters())
@@ -214,7 +221,7 @@ public class TrainLanguageModel implements Runnable {
 			System.out.println(language + ": " + langChars);
 
 			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, power);
-			lmsAndPriors.put(language, makeTuple2(lm, prior));
+			lmsAndPriors.add(makeTuple2(lm, prior));
 		}
 		
 		/*

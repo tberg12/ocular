@@ -1,10 +1,9 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -72,9 +71,6 @@ public class FontTrainEM {
 
 		if (!learnFont) numEMIters = 0;
 		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
-
-		List<String> languages = makeList(lm.languages());
-		Collections.sort(languages);
 
 		long overallEmissionCacheNanoTime = 0;
 		
@@ -146,14 +142,14 @@ public class FontTrainEM {
 					int trueMinBatchSize = Math.min(minDocBatchSize, updateDocBatchSize); // min batch size may not exceed standard batch size
 					if (docNum+1 == numUsableDocs) { // last document of the set
 						if (learnFont) updateFontParameters(iter, templates);
-						if (retrainLM) lm = updateLmParameters(lm, languages, decodeStates);
+						if (retrainLM) lm = updateLmParameters(lm, decodeStates);
 					}
 					else if (numUsableDocs - (docNum+1) < trueMinBatchSize) { // next batch will be too small, so lump the remaining documents in with this one
 						// no update
 					} 
 					else if ((docNum+1) % updateDocBatchSize == 0) { // batch is complete
 						if (learnFont) updateFontParameters(iter, templates);
-						if (retrainLM) lm = updateLmParameters(lm, languages, decodeStates);
+						if (retrainLM) lm = updateLmParameters(lm, decodeStates);
 					}
 				}
 			}
@@ -219,16 +215,16 @@ public class FontTrainEM {
 	/**
 	 * Hard-EM update on language probabilities
 	 */
-	private CodeSwitchLanguageModel updateLmParameters(CodeSwitchLanguageModel lm, List<String> languages, TransitionState[][] decodeStates) {
+	private CodeSwitchLanguageModel updateLmParameters(CodeSwitchLanguageModel lm, TransitionState[][] decodeStates) {
 		long nanoTime = System.nanoTime();
+		Indexer<String> langIndexer = lm.getLanguageIndexer();
 		
 		//
 		// Initialize containers for counts
 		//
-		Map<String, Integer> languageCounts = new HashMap<String, Integer>();
-		for (String language : languages) {
-			languageCounts.put(language, 1); // one-count smooth
-		}
+		int numLanguages = langIndexer.size();
+		int[] languageCounts = new int[numLanguages];
+		Arrays.fill(languageCounts, 1); // one-count smooth
 		
 		//
 		// Pass over the decoded states to accumulate counts
@@ -236,9 +232,9 @@ public class FontTrainEM {
 		for (int line = 0; line < decodeStates.length; ++line) {
 			if (decodeStates[line] != null) {
 				for (int i = 0; i < decodeStates[line].length; ++i) {
-					String currLanguage = decodeStates[line][i].getLanguage();
-					if (currLanguage != null) 
-						languageCounts.put(currLanguage, languageCounts.get(currLanguage) + 1);
+					int currLanguage = decodeStates[line][i].getLanguageIndex();
+					if (currLanguage >= 0) 
+						languageCounts[currLanguage] += 1;
 				}
 			}
 		}
@@ -246,25 +242,25 @@ public class FontTrainEM {
 		//
 		// Update the parameters using counts
 		//
-		Map<String, Tuple2<SingleLanguageModel, Double>> newSubModelsAndPriors = new HashMap<String, Tuple2<SingleLanguageModel, Double>>();
+		List<Tuple2<SingleLanguageModel, Double>> newSubModelsAndPriors = new ArrayList<Tuple2<SingleLanguageModel, Double>>();
 		double languageCountSum = 0;
-		for (String language: languages) {
-			double newPrior = languageCounts.get(language).doubleValue();
-			newSubModelsAndPriors.put(language, makeTuple2(lm.get(language), newPrior));
+		for (int language = 0; language < numLanguages; ++language) {
+			double newPrior = languageCounts[language];
+			newSubModelsAndPriors.add(makeTuple2(lm.get(language), newPrior));
 			languageCountSum += newPrior;
 		}
 
 		//
 		// Construct the new LM
 		//
-		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getProbKeepSameLanguage(), lm.getMaxOrder());
+		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), langIndexer, lm.getProbKeepSameLanguage(), lm.getMaxOrder());
 
 		//
 		// Print out some statistics
 		//
 		StringBuilder sb = new StringBuilder("Updating language probabilities: ");
-		for (String language: languages)
-			sb.append(language).append("->").append(languageCounts.get(language) / languageCountSum).append("  ");
+		for (int language = 0; language < numLanguages; ++language)
+			sb.append(langIndexer.getObject(language)).append("->").append(languageCounts[language] / languageCountSum).append("  ");
 		System.out.println(sb);
 		
 		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");

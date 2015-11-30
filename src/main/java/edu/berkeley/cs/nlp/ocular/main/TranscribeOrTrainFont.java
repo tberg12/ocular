@@ -6,6 +6,7 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -168,6 +169,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		CodeSwitchLanguageModel lm = lmAndTransModel._1;
 		SparseTransitionModel forwardTransitionModel = lmAndTransModel._2;
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		Indexer<String> langIndexer = lm.getLanguageIndexer();
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
 		Collections.sort(allCharacters);
@@ -182,7 +184,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
 		FontTrainEM fontTrainEM = new FontTrainEM(accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
-		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, allEvals, makeList(lm.languages()));
+		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, langIndexer, allEvals);
 		
 		long overallNanoTime = System.nanoTime();
 		fontTrainEM.run(learnFont, numEMIters, documents, lm, forwardTransitionModel, retrainLM, font, charIndexer, emissionInnerLoop, emIterationEvaluator);
@@ -199,17 +201,17 @@ public class TranscribeOrTrainFont implements Runnable {
 	private Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> getForwardTransitionModel(String lmFilePath) {
 		CodeSwitchLanguageModel codeSwitchLM = TrainLanguageModel.readLM(lmFilePath);
 		System.out.println("Loaded CodeSwitchLanguageModel from " + lmFilePath);
-		for (String lang : codeSwitchLM.languages()) {
+		for (int i = 0; i < codeSwitchLM.getLanguageIndexer().size(); ++i) {
 			List<String> chars = new ArrayList<String>();
-			for (int i : codeSwitchLM.get(lang).getActiveCharacters())
-				chars.add(codeSwitchLM.getCharacterIndexer().getObject(i));
+			for (int j : codeSwitchLM.get(i).getActiveCharacters())
+				chars.add(codeSwitchLM.getCharacterIndexer().getObject(j));
 			Collections.sort(chars);
-			System.out.println("    " + lang + ": " + chars);
+			System.out.println("    " + codeSwitchLM.getLanguageIndexer().getObject(i) + ": " + chars);
 		}
 
 		CodeSwitchLanguageModel lm;
 		SparseTransitionModel transitionModel;
-		if (codeSwitchLM.languages().size() > 1) {
+		if (codeSwitchLM.getLanguageIndexer().size() > 1) {
 			lm = codeSwitchLM; 
 			if (markovVerticalOffset)
 				throw new RuntimeException("Markov vertical offset transition model not currently supported for multiple languages.");
@@ -219,8 +221,8 @@ public class TranscribeOrTrainFont implements Runnable {
 			}
 		}
 		else { // only one language, default to original (monolingual) Ocular code because it will be faster.
-			String onlyLanguage = codeSwitchLM.languages().iterator().next();
-			SingleLanguageModel singleLm = codeSwitchLM.get(onlyLanguage);
+			String onlyLanguage = codeSwitchLM.getLanguageIndexer().getObject(0);
+			SingleLanguageModel singleLm = codeSwitchLM.get(0);
 			lm = new OnlyOneLanguageCodeSwitchLM(onlyLanguage, singleLm);
 			if (markovVerticalOffset) {
 				transitionModel = new CharacterNgramTransitionModelMarkovOffset(singleLm, singleLm.getMaxOrder());
@@ -233,14 +235,27 @@ public class TranscribeOrTrainFont implements Runnable {
 		return makeTuple2(lm, transitionModel); 
 	}
 	
-	private class OnlyOneLanguageCodeSwitchLM implements CodeSwitchLanguageModel, SingleLanguageModel {
-		private static final long serialVersionUID = 3287238927893L;
+	private static class OnlyOneLanguageCodeSwitchLM implements CodeSwitchLanguageModel, SingleLanguageModel {
+		private static final long serialVersionUID = 4290853209L;
 		
-		private String language;
 		private SingleLanguageModel singleLm;
+		private Indexer<String> langIndexer;
+		
 		public OnlyOneLanguageCodeSwitchLM(String language, SingleLanguageModel singleLm) {
-			this.language = language;
 			this.singleLm = singleLm;
+			
+			this.langIndexer = new Indexer<String>() {
+				private static final long serialVersionUID = 1L;
+				public boolean locked() { return true; }
+				public void lock() { throw new RuntimeException(); }
+				public int size() { return 1; }
+				public boolean contains(String object) { if (!object.equals(language)) throw new IllegalArgumentException("language="+object); return true; }
+				public int getIndex(String object) { if (!object.equals(language)) throw new IllegalArgumentException("language="+object); return 0; }
+				public String getObject(int index) { if (index != 0) throw new IllegalArgumentException("index="+index); return language; }
+				public void index(String[] vect) { if (vect.length != 1 || !vect[0].equals(language)) throw new IllegalArgumentException();  }
+				public void forgetIndexLookup() { throw new RuntimeException(); }
+				public Collection<String> getObjects() { return Collections.singleton(language); }
+			};
 		}
 
 		public double getCharNgramProb(int[] context, int c) { return singleLm.getCharNgramProb(context, c); }
@@ -248,21 +263,27 @@ public class TranscribeOrTrainFont implements Runnable {
 		public int getMaxOrder() { return singleLm.getMaxOrder(); }
 		public Set<Integer> getActiveCharacters() { return singleLm.getActiveCharacters(); }
 		public boolean containsContext(int[] context) { return singleLm.containsContext(context); }
-		public Set<String> languages() { return Collections.singleton(language); }
 		public double getProbKeepSameLanguage() { return 1.0; }
-		public Double languagePrior(String language) { 
-			return language.equals(this.language) ? 1.0 : 0.0;
+		public double languagePrior(int language) {
+			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; languageIndex "+language+" requested.");
+			return 1.0;
 		}
-		public Double languageTransitionPrior(String fromLanguage, String destinationLanguage) { 
-			return fromLanguage.equals(this.language) && destinationLanguage.equals(this.language) ? 1.0 : 0.0; 
+		public double languageTransitionPrior(int fromLanguage, int destinationLanguage) { 
+			if (fromLanguage != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; fromLanguage index "+fromLanguage+" requested.");
+			if (destinationLanguage != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; destinationLanguage index "+destinationLanguage+" requested.");
+			return 1.0; 
 		}
-		public SingleLanguageModel get(String language) { 
-			if (language.equals(this.language)) return singleLm; 
-			else throw new RuntimeException("No model found for language '"+language+"'.  (Only found '"+this.language+"')"); 
+		public SingleLanguageModel get(int language) {
+			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; languageIndex "+language+" requested.");
+			return singleLm; 
 		}
 
-		public double glyphLogProb(String language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-			throw new RuntimeException("not implemented");
+		public double glyphLogProb(int language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+			throw new RuntimeException("not implemented yet");
+		}
+
+		public Indexer<String> getLanguageIndexer() {
+			return this.langIndexer;
 		}
 	}
 
@@ -309,17 +330,17 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	private class BasicEMIterationEvaluator implements EMIterationEvaluator {
 		Indexer<String> charIndexer;
+		Indexer<String> langIndexer;
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals;
-		List<String> languages;
 		
-		public BasicEMIterationEvaluator(Indexer<String> charIndexer, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, List<String> languages) {
+		public BasicEMIterationEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals) {
 			this.charIndexer = charIndexer;
+			this.langIndexer = langIndexer;
 			this.allEvals = allEvals;
-			this.languages = languages;
 		}
 
 		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates) {
-			printTranscription(iter, learnFont, doc, allEvals, decodeStates, charIndexer, outputPath, languages);
+			printTranscription(iter, learnFont, doc, allEvals, decodeStates, charIndexer, langIndexer, outputPath);
 		}
 	}
 
@@ -355,7 +376,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, String outputPath, List<String> languages) {
+	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, Indexer<String> langIndexer, String outputPath) {
 		final String[][] text = doc.loadLineText();
 		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
 
@@ -422,14 +443,14 @@ public class TranscribeOrTrainFont implements Runnable {
 			f.writeString(goldComparisonOutputFilename, goldComparisonOutputBuffer.toString());
 		}
 
-		if (languages.size() > 1) {
-			System.out.println("Multiple languages being used ("+languages.size()+"), so an html file is being generated to show language switching.");
+		if (langIndexer.size() > 1) {
+			System.out.println("Multiple languages being used ("+langIndexer.size()+"), so an html file is being generated to show language switching.");
 			System.out.println("Writing html output to " + htmlOutputFilename);
-			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, doc.baseName(), htmlOutputFilename, languages));
+			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, langIndexer, doc.baseName(), htmlOutputFilename));
 		}
 	}
 
-	private static String printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, String imgFilename, String htmlOutputFilename, List<String> languages) {
+	private static String printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, Indexer<String> langIndexer, String imgFilename, String htmlOutputFilename) {
 		StringBuffer outputBuffer = new StringBuffer();
 		outputBuffer.append("<HTML xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n");
 		outputBuffer.append("<HEAD><META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></HEAD>\n");
@@ -442,13 +463,13 @@ public class TranscribeOrTrainFont implements Runnable {
 		String[] colors = new String[] { "Black", "Red", "Blue", "Olive", "Orange", "Magenta", "Lime", "Cyan", "Purple", "Green", "Brown" };
 		Map<String, String> langColor = new HashMap<String, String>();
 		langColor.put(null, colors[0]);
-		for (String language: languages) {
-			langColor.put(language, colors[langColor.size()]);
+		for (int i = 0; i < langIndexer.size(); ++i) {
+			langColor.put(langIndexer.getObject(i), colors[i]);
 		}
 
 		@SuppressWarnings("unchecked")
 		List<String>[] csViterbiChars = new List[decodeStates.length];
-		String prevLanguage = null;
+		int prevLanguage = -1;
 		for (int line = 0; line < decodeStates.length; ++line) {
 			csViterbiChars[line] = new ArrayList<String>();
 			if (decodeStates[line] != null) {
@@ -458,9 +479,9 @@ public class TranscribeOrTrainFont implements Runnable {
 						String s = Charset.unescapeChar(charIndexer.getObject(c));
 						csViterbiChars[line].add(s);
 
-						String currLanguage = decodeStates[line][i].getLanguage();
-						if (!StringHelper.equals(currLanguage, prevLanguage)) {
-							if (prevLanguage != null) {
+						int currLanguage = decodeStates[line][i].getLanguageIndex();
+						if (currLanguage != prevLanguage) {
+							if (prevLanguage < 0) {
 								outputBuffer.append("</font>");
 							}
 							outputBuffer.append("<font color=\"" + langColor.get(currLanguage) + "\">");

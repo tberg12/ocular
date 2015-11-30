@@ -272,8 +272,8 @@ public class CharacterNgramTransitionModelMarkovOffset implements SparseTransiti
 			return type;
 		}
 		
-		public String getLanguage() {
-			return null;
+		public int getLanguageIndex() {
+			return -1;
 		}
 	}
 	
