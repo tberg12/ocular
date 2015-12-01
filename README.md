@@ -236,10 +236,10 @@ Default: use all documents
 * `-numDocsToSkip`: Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks without having to actually create separate directories.
 Default: 0
 
-* `-lmPath`: Path to the language model file.
+* `-lmPath`: Path to the input language model file.
 Required.
 
-* `-initFontPath`: Path of the font initializer file.
+* `-initFontPath`: Path of the input font file.
 Required.
 
 * `-learnFont`: Whether to learn the font from the input documents and write the font to a file.
@@ -268,6 +268,21 @@ Required if learnFont is set to true, otherwise ignored.
 * `-outputLmPath`: Path to write the retrained language model file to. (Only relevant if retrainLM is set to true.)  
 Default: Don't write out the trained LM.
 
+* `-allowGlyphSubstitution`: Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions. 
+Default: false
+	
+* `-inputGsmPath`: Path to the input glyph substitution model file.
+(Only relevant if allowGlyphSubstitution is set to true.)
+Default: Don't use a pre-initialized GSM.
+
+* `-retrainGSM`: Should the glyph substitution model be updated during font training?
+(Only relevant if allowGlyphSubstitution is set to true.)
+Default: false
+	
+* `-outputGsmPath`: Path to write the retrained glyph substitution model file to. 
+(Only relevant if allowGlyphSubstitution and retrainGSM are set to true.)
+Default: Don't write out the trained GSM.
+	
 * `-allowLanguageSwitchOnPunct`: A language model to be used to assign diacritics to the transcription output.
 Default: true
 

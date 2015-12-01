@@ -1,11 +1,16 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
@@ -14,8 +19,15 @@ import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont.EMIterationEvaluator;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.sub.BasicCodeSwitchGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.CodeSwitchGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.sub.NoSubCodeSwitchGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.SingleGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
+import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import indexer.Indexer;
 import threading.BetterThreader;
 
@@ -29,6 +41,8 @@ public class FontTrainEM {
 	private int minDocBatchSize;
 	private int updateDocBatchSize;
 	
+	private boolean allowGlyphSubstitution;
+	private boolean allowLanguageSwitchOnPunct;
 	private boolean markovVerticalOffset;
 	
 	private int paddingMinWidth;
@@ -39,12 +53,14 @@ public class FontTrainEM {
 	private int numMstepThreads;
 	private int decodeBatchSize;
 	
-	public FontTrainEM(boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize,
-			boolean markovVerticalOffset, int paddingMinWidth, int paddingMaxWidth, int beamSize, int numDecodeThreads,
-			int numMstepThreads, int decodeBatchSize) {
+	public FontTrainEM(boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize, boolean allowGlyphSubstitution,
+			boolean allowLanguageSwitchOnPunct, boolean markovVerticalOffset, int paddingMinWidth, int paddingMaxWidth, int beamSize, 
+			int numDecodeThreads, int numMstepThreads, int decodeBatchSize) {
 		this.accumulateBatchesWithinIter = accumulateBatchesWithinIter;
 		this.minDocBatchSize = minDocBatchSize;
 		this.updateDocBatchSize = updateDocBatchSize;
+		this.allowGlyphSubstitution = allowGlyphSubstitution;
+		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
 		this.markovVerticalOffset = markovVerticalOffset;
 		this.paddingMinWidth = paddingMinWidth;
 		this.paddingMaxWidth = paddingMaxWidth;
@@ -54,18 +70,25 @@ public class FontTrainEM {
 		this.decodeBatchSize = decodeBatchSize;
 	}
 
-	public void run(boolean learnFont,
-					int numEMIters,
-					List<Document> documents,
-					CodeSwitchLanguageModel lm,
-					SparseTransitionModel forwardTransitionModel,
-					boolean retrainLM,
-					Map<String, CharacterTemplate> font,
-					Indexer<String> charIndexer,
-					EmissionCacheInnerLoop emissionInnerLoop,
-					EMIterationEvaluator emIterationEvaluator
-					) {
+	public Tuple3<CodeSwitchLanguageModel, CodeSwitchGlyphSubstitutionModel, Map<String, CharacterTemplate>> run(
+				boolean learnFont,
+				int numEMIters,
+				List<Document> documents,
+				CodeSwitchLanguageModel codeSwitchLM,
+				CodeSwitchGlyphSubstitutionModel codeSwitchGSM,
+				boolean retrainLM,
+				boolean retrainGSM,
+				Map<String, CharacterTemplate> font,
+				Indexer<String> charIndexer,
+				EmissionCacheInnerLoop emissionInnerLoop,
+				EMIterationEvaluator emIterationEvaluator
+				) {
 			
+		Tuple3<CodeSwitchLanguageModel, CodeSwitchGlyphSubstitutionModel, SparseTransitionModel> transitionModelEtc = constructTransitionModel(codeSwitchLM, codeSwitchGSM);
+		CodeSwitchLanguageModel lm = transitionModelEtc._1;
+		CodeSwitchGlyphSubstitutionModel gsm = transitionModelEtc._2;
+		SparseTransitionModel forwardTransitionModel = transitionModelEtc._3;
+		
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
 		int numUsableDocs = documents.size();
 
@@ -139,26 +162,161 @@ public class FontTrainEM {
 
 				// m-step
 				{
+					boolean batchComplete = false;
 					int trueMinBatchSize = Math.min(minDocBatchSize, updateDocBatchSize); // min batch size may not exceed standard batch size
 					if (docNum+1 == numUsableDocs) { // last document of the set
-						if (learnFont) updateFontParameters(iter, templates);
-						if (retrainLM) lm = updateLmParameters(lm, decodeStates);
+						batchComplete = true;
 					}
 					else if (numUsableDocs - (docNum+1) < trueMinBatchSize) { // next batch will be too small, so lump the remaining documents in with this one
 						// no update
 					} 
 					else if ((docNum+1) % updateDocBatchSize == 0) { // batch is complete
-						if (learnFont) updateFontParameters(iter, templates);
-						if (retrainLM) lm = updateLmParameters(lm, decodeStates);
+						batchComplete = true;
 					}
+					
+					if (batchComplete) {
+						if (learnFont) 
+							updateFontParameters(iter, templates);
+						if (retrainLM) 
+							lm = updateLmParameters(lm, decodeStates);
+						if (!allowGlyphSubstitution)
+							gsm = new NoSubCodeSwitchGlyphSubstitutionModel(lm);
+						else if (retrainGSM)
+							gsm = updateGsmParameters(gsm, decodeStates);
+					}
+
+					Tuple3<CodeSwitchLanguageModel, CodeSwitchGlyphSubstitutionModel, SparseTransitionModel> transitionModelEtc2 = constructTransitionModel(lm, gsm);
+					lm = transitionModelEtc2._1;
+					gsm = transitionModelEtc2._2;
+					forwardTransitionModel = transitionModelEtc2._3;
 				}
 			}
 
 		}
 		
 		System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
+		return makeTuple3(lm, gsm, font);
 	}
 	
+	private Tuple3<CodeSwitchLanguageModel, CodeSwitchGlyphSubstitutionModel, SparseTransitionModel> constructTransitionModel(CodeSwitchLanguageModel codeSwitchLM, CodeSwitchGlyphSubstitutionModel codeSwitchGSM) {
+		CodeSwitchLanguageModel lm;
+		CodeSwitchGlyphSubstitutionModel gsm;
+		SparseTransitionModel transitionModel;
+		
+		boolean multilingual = codeSwitchLM.getLanguageIndexer().size() > 1;
+		if (multilingual || allowGlyphSubstitution) {
+			lm = codeSwitchLM;
+			gsm = codeSwitchGSM;
+			if (markovVerticalOffset) {
+				if (allowGlyphSubstitution)
+					throw new RuntimeException("Markov vertical offset transition model not currently supported with glyph substitution.");
+				else
+					throw new RuntimeException("Markov vertical offset transition model not currently supported for multiple languages.");
+			}
+			else { 
+				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct, codeSwitchGSM, allowGlyphSubstitution);
+				System.out.println("Using CodeSwitchLanguageModel, CodeSwitchGlyphSubstitutionModel, and CodeSwitchTransitionModel");
+			}
+		}
+		else { // only one language, default to original (monolingual) Ocular code because it will be faster.
+			String onlyLanguage = codeSwitchLM.getLanguageIndexer().getObject(0);
+			SingleLanguageModel singleLm = codeSwitchLM.get(0);
+			SingleGlyphSubstitutionModel singleGsm = codeSwitchGSM.get(0);
+			lm = new OnlyOneLanguageCodeSwitchLM(onlyLanguage, singleLm);
+			gsm = new OnlyOneLanguageCodeSwitchGSM(onlyLanguage, singleGsm);
+			if (markovVerticalOffset) {
+				transitionModel = new CharacterNgramTransitionModelMarkovOffset(singleLm, singleLm.getMaxOrder());
+				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModelMarkovOffset");
+			} else {
+				transitionModel = new CharacterNgramTransitionModel(singleLm, singleLm.getMaxOrder());
+				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModel");
+			}
+		}
+		
+		return makeTuple3(lm, gsm, transitionModel);
+	}
+	
+	private static class OnlyOneLanguageCodeSwitchLM implements CodeSwitchLanguageModel, SingleLanguageModel {
+		private static final long serialVersionUID = 4290853209L;
+		
+		private SingleLanguageModel singleLm;
+		private Indexer<String> langIndexer;
+		
+		public OnlyOneLanguageCodeSwitchLM(String language, SingleLanguageModel singleLm) {
+			this.singleLm = singleLm;
+			this.langIndexer = new SingleLanguageIndexer(language);
+		}
+
+		public double getCharNgramProb(int[] context, int c) { return singleLm.getCharNgramProb(context, c); }
+		public Indexer<String> getCharacterIndexer() { return singleLm.getCharacterIndexer(); }
+		public int getMaxOrder() { return singleLm.getMaxOrder(); }
+		public Set<Integer> getActiveCharacters() { return singleLm.getActiveCharacters(); }
+		public boolean containsContext(int[] context) { return singleLm.containsContext(context); }
+		public double getProbKeepSameLanguage() { return 1.0; }
+		public double languagePrior(int language) {
+			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; languageIndex "+language+" requested.");
+			return 1.0;
+		}
+		public double languageTransitionProb(int fromLanguage, int destinationLanguage) { 
+			if (fromLanguage != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; fromLanguage index "+fromLanguage+" requested.");
+			if (destinationLanguage != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; destinationLanguage index "+destinationLanguage+" requested.");
+			return 1.0; 
+		}
+		public SingleLanguageModel get(int language) {
+			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; languageIndex "+language+" requested.");
+			return singleLm; 
+		}
+
+		public Indexer<String> getLanguageIndexer() {
+			return this.langIndexer;
+		}
+	}
+
+	private static class OnlyOneLanguageCodeSwitchGSM implements CodeSwitchGlyphSubstitutionModel, SingleGlyphSubstitutionModel, Serializable {
+		private static final long serialVersionUID = 4290853209L;
+		
+		private SingleGlyphSubstitutionModel singleGsm;
+		private Indexer<String> langIndexer;
+		
+		public OnlyOneLanguageCodeSwitchGSM(String language, SingleGlyphSubstitutionModel singleGsm) {
+			this.singleGsm = singleGsm;
+			this.langIndexer = new SingleLanguageIndexer(language);
+		}
+
+		public double logGlyphProb(GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+			return singleGsm.logGlyphProb(prevGlyphChar, prevLmChar, lmChar, glyphChar);
+		}
+		
+		public double logLanguagePrior(int language) {
+			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchGSM has only one language; languageIndex "+language+" requested.");
+			return 0.0; // log(1.0)
+		}
+		
+		public SingleGlyphSubstitutionModel get(int language) {
+			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchGSM has only one language; languageIndex "+language+" requested.");
+			return singleGsm; 
+		}
+		
+		public Indexer<String> getLanguageIndexer() {
+			return this.langIndexer;
+		}
+	}
+	
+	private static class SingleLanguageIndexer implements Indexer<String> {
+		private static final long serialVersionUID = 1L;
+		private String language;
+		public SingleLanguageIndexer(String language) { this.language = language; }
+		public boolean locked() { return true; }
+		public void lock() { throw new RuntimeException(); }
+		public int size() { return 1; }
+		public boolean contains(String object) { if (!object.equals(language)) throw new IllegalArgumentException("language="+object); return true; }
+		public int getIndex(String object) { if (!object.equals(language)) throw new IllegalArgumentException("language="+object); return 0; }
+		public String getObject(int index) { if (index != 0) throw new IllegalArgumentException("index="+index); return language; }
+		public void index(String[] vect) { if (vect.length != 1 || !vect[0].equals(language)) throw new IllegalArgumentException();  }
+		public void forgetIndexLookup() { throw new RuntimeException(); }
+		public Collection<String> getObjects() { return Collections.singleton(language); }
+	}
+
 	private CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		for (int c = 0; c < charIndexer.size(); ++c) {
@@ -213,7 +371,7 @@ public class FontTrainEM {
 	}
 
 	/**
-	 * Hard-EM update on language probabilities
+	 * Hard-EM update on language model probabilities
 	 */
 	private CodeSwitchLanguageModel updateLmParameters(CodeSwitchLanguageModel lm, TransitionState[][] decodeStates) {
 		long nanoTime = System.nanoTime();
@@ -265,6 +423,56 @@ public class FontTrainEM {
 		
 		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 		return newLM;
+	}
+
+	/**
+	 * Hard-EM update on glyph substitution probabilities
+	 */
+	private CodeSwitchGlyphSubstitutionModel updateGsmParameters(CodeSwitchGlyphSubstitutionModel gsm, TransitionState[][] decodeStates) {
+		long nanoTime = System.nanoTime();
+		Indexer<String> langIndexer = gsm.getLanguageIndexer();
+		
+		//
+		// Initialize containers for counts
+		//
+		int numLanguages = langIndexer.size();
+		int[] languageCounts = new int[numLanguages];
+		Arrays.fill(languageCounts, 1); // one-count smooth
+		
+		//
+		// Pass over the decoded states to accumulate counts
+		//
+		for (int line = 0; line < decodeStates.length; ++line) {
+			if (decodeStates[line] != null) {
+				for (int i = 0; i < decodeStates[line].length; ++i) {
+					int currLanguage = decodeStates[line][i].getLanguageIndex();
+					if (currLanguage >= 0) 
+						languageCounts[currLanguage] += 1;
+				}
+			}
+		}
+		
+		//
+		// Update the parameters using counts
+		//
+		List<Tuple2<SingleGlyphSubstitutionModel, Double>> newSubModelsAndPriors = new ArrayList<Tuple2<SingleGlyphSubstitutionModel, Double>>();
+		double languageCountSum = 0;
+		for (int language = 0; language < numLanguages; ++language) {
+			double newPrior = languageCounts[language];
+			newSubModelsAndPriors.add(makeTuple2(gsm.get(language), newPrior));
+			languageCountSum += newPrior;
+		}
+
+		//
+		// Construct the new GSM
+		//
+		CodeSwitchGlyphSubstitutionModel newGSM = new BasicCodeSwitchGlyphSubstitutionModel();
+
+		//
+		// Print out some statistics
+		//
+		System.out.println("New GSM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
+		return newGSM;
 	}
 
 }

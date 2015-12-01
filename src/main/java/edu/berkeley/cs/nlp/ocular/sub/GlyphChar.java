@@ -1,4 +1,4 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.sub;
 
 import java.io.Serializable;
 import java.util.List;
@@ -7,6 +7,9 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class GlyphChar implements Serializable {
 	private static final long serialVersionUID = 1L;
 

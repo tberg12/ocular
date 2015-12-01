@@ -2,8 +2,6 @@ package edu.berkeley.cs.nlp.ocular.lm;
 
 import java.io.Serializable;
 
-import edu.berkeley.cs.nlp.ocular.model.GlyphChar;
-import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
 import indexer.Indexer;
 
 /**
@@ -15,8 +13,7 @@ public interface CodeSwitchLanguageModel extends LanguageModel, Serializable {
 	
 	public SingleLanguageModel get(int language);
 	public double languagePrior(int language);
-	public double languageTransitionPrior(int fromLanguage, int destinationLanguage);
+	public double languageTransitionProb(int fromLanguage, int destinationLanguage);
 	public double getProbKeepSameLanguage();
 
-	public double glyphLogProb(int language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar);
 }

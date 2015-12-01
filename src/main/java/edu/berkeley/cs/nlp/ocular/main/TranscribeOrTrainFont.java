@@ -6,13 +6,11 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
@@ -21,22 +19,18 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
-import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel;
-import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModelMarkovOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
-import edu.berkeley.cs.nlp.ocular.model.CodeSwitchTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
-import edu.berkeley.cs.nlp.ocular.model.GlyphChar;
-import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.sub.CodeSwitchGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.NoSubCodeSwitchGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
+import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
@@ -57,10 +51,10 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Number of training documents (pages) to skip over.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.  Default: 0")
 	public static int numDocsToSkip = 0;
 
-	@Option(gloss = "Path to the language model file.")
+	@Option(gloss = "Path to the input language model file.")
 	public static String lmPath = null; //"lm/cs_lm.lmser";
 
-	@Option(gloss = "Path of the font initializer file.")
+	@Option(gloss = "Path of the input font file.")
 	public static String initFontPath = null; //"font/init.fontser";
 
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
@@ -92,6 +86,18 @@ public class TranscribeOrTrainFont implements Runnable {
 	
 	@Option(gloss = "Path to write the retrained language model file to. (Only relevant if retrainLM is set to true.)  Default: Don't write out the trained LM.")
 	public static String outputLmPath = null; //"lm/cs_trained.lmser";
+
+	@Option(gloss = "Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions. Default: false")
+	public static boolean allowGlyphSubstitution = false;
+	
+	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.) Default: false")
+	public static boolean retrainGSM = false;
+	
+	@Option(gloss = "Path to the input glyph substitution model file. (Only relevant if allowGlyphSubstitution is set to true.) Default: Don't use a pre-initialized GSM.")
+	public static String inputGsmPath = null;
+
+	@Option(gloss = "Path to write the retrained glyph substitution model file to. (Only relevant if allowGlyphSubstitution and retrainGSM are set to true.)  Default: Don't write out the trained GSM.")
+	public static String outputGsmPath = null;
 	
 	@Option(gloss = "A language model to be used to assign diacritics to the transcription output.")
 	public static boolean allowLanguageSwitchOnPunct = true;
@@ -154,6 +160,9 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (outputLmPath != null && !retrainLM) throw new IllegalArgumentException("-outputLmPath not permitted if -retrainLM is false.");
+		if (retrainGSM && !allowGlyphSubstitution) throw new IllegalArgumentException("-retrainGSM not permitted if -allowGlyphSubstitution is false.");
+		if (inputGsmPath != null && !allowGlyphSubstitution) throw new IllegalArgumentException("-inputGsmPath not permitted if -allowGlyphSubstitution is false.");
+		if (outputGsmPath != null && !retrainGSM) throw new IllegalArgumentException("-outputGsmPath not permitted if -retrainGsM is false.");
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
 		
@@ -164,12 +173,39 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		List<Document> documents = loadDocuments();
 
+		/*
+		 * Load LM (and print some info about it)
+		 */
 		System.out.println("Loading initial LM from " + lmPath);
-		Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> lmAndTransModel = getForwardTransitionModel(lmPath);
-		CodeSwitchLanguageModel lm = lmAndTransModel._1;
-		SparseTransitionModel forwardTransitionModel = lmAndTransModel._2;
-		Indexer<String> charIndexer = lm.getCharacterIndexer();
-		Indexer<String> langIndexer = lm.getLanguageIndexer();
+		CodeSwitchLanguageModel codeSwitchLM = TrainLanguageModel.readLM(lmPath);
+		System.out.println("Loaded CodeSwitchLanguageModel from " + lmPath);
+		for (int i = 0; i < codeSwitchLM.getLanguageIndexer().size(); ++i) {
+			List<String> chars = new ArrayList<String>();
+			for (int j : codeSwitchLM.get(i).getActiveCharacters())
+				chars.add(codeSwitchLM.getCharacterIndexer().getObject(j));
+			Collections.sort(chars);
+			System.out.println("    " + codeSwitchLM.getLanguageIndexer().getObject(i) + ": " + chars);
+		}
+
+		/*
+		 * Load GSM (and print some info about it)
+		 */
+		CodeSwitchGlyphSubstitutionModel codeSwitchGSM;
+		if (!allowGlyphSubstitution) {
+			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
+			codeSwitchGSM = new NoSubCodeSwitchGlyphSubstitutionModel(codeSwitchLM);
+		}
+		else if (inputGsmPath != null) { // file path given
+			System.out.println("Loading initial GSM from " + inputGsmPath);
+			codeSwitchGSM = CodeSwitchGlyphSubstitutionModel.readGSM(inputGsmPath);
+		}
+		else {
+			System.out.println("No initial GSM provided; initializing to uniform model.");
+			codeSwitchGSM = CodeSwitchGlyphSubstitutionModel.initializeNewGSM();
+		}
+
+		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
+		Indexer<String> langIndexer = codeSwitchLM.getLanguageIndexer();
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
 		Collections.sort(allCharacters);
@@ -183,108 +219,24 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
-		FontTrainEM fontTrainEM = new FontTrainEM(accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
+		FontTrainEM fontTrainEM = new FontTrainEM(accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, allowGlyphSubstitution, allowLanguageSwitchOnPunct, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
 		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, langIndexer, allEvals);
 		
 		long overallNanoTime = System.nanoTime();
-		fontTrainEM.run(learnFont, numEMIters, documents, lm, forwardTransitionModel, retrainLM, font, charIndexer, emissionInnerLoop, emIterationEvaluator);
-		if (learnFont) InitializeFont.writeFont(font, outputFontPath);
-		if (retrainLM && outputLmPath != null) TrainLanguageModel.writeLM(lm, outputLmPath);
+		Tuple3<CodeSwitchLanguageModel, CodeSwitchGlyphSubstitutionModel, Map<String, CharacterTemplate>> trainedModels = 
+				fontTrainEM.run(learnFont, numEMIters, documents, codeSwitchLM, codeSwitchGSM, retrainLM, retrainGSM, font, charIndexer, emissionInnerLoop, emIterationEvaluator);
+		CodeSwitchLanguageModel newLm = trainedModels._1;
+		CodeSwitchGlyphSubstitutionModel newGsm = trainedModels._2;
+		Map<String, CharacterTemplate> newFont = trainedModels._3;
+		if (learnFont) InitializeFont.writeFont(newFont, outputFontPath);
+		if (outputLmPath != null) TrainLanguageModel.writeLM(newLm, outputLmPath);
+		if (outputGsmPath != null) CodeSwitchGlyphSubstitutionModel.writeGSM(newGsm, outputGsmPath);
 
 		if (!allEvals.isEmpty() && new File(inputPath).isDirectory()) {
 			printEvaluation(allEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
 		}
 
 		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime) / 1e9 + "s");
-	}
-
-	private Tuple2<CodeSwitchLanguageModel, SparseTransitionModel> getForwardTransitionModel(String lmFilePath) {
-		CodeSwitchLanguageModel codeSwitchLM = TrainLanguageModel.readLM(lmFilePath);
-		System.out.println("Loaded CodeSwitchLanguageModel from " + lmFilePath);
-		for (int i = 0; i < codeSwitchLM.getLanguageIndexer().size(); ++i) {
-			List<String> chars = new ArrayList<String>();
-			for (int j : codeSwitchLM.get(i).getActiveCharacters())
-				chars.add(codeSwitchLM.getCharacterIndexer().getObject(j));
-			Collections.sort(chars);
-			System.out.println("    " + codeSwitchLM.getLanguageIndexer().getObject(i) + ": " + chars);
-		}
-
-		CodeSwitchLanguageModel lm;
-		SparseTransitionModel transitionModel;
-		if (codeSwitchLM.getLanguageIndexer().size() > 1) {
-			lm = codeSwitchLM; 
-			if (markovVerticalOffset)
-				throw new RuntimeException("Markov vertical offset transition model not currently supported for multiple languages.");
-			else { 
-				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct);
-				System.out.println("Using CodeSwitchLanguageModel and CodeSwitchTransitionModel");
-			}
-		}
-		else { // only one language, default to original (monolingual) Ocular code because it will be faster.
-			String onlyLanguage = codeSwitchLM.getLanguageIndexer().getObject(0);
-			SingleLanguageModel singleLm = codeSwitchLM.get(0);
-			lm = new OnlyOneLanguageCodeSwitchLM(onlyLanguage, singleLm);
-			if (markovVerticalOffset) {
-				transitionModel = new CharacterNgramTransitionModelMarkovOffset(singleLm, singleLm.getMaxOrder());
-				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModelMarkovOffset");
-			} else {
-				transitionModel = new CharacterNgramTransitionModel(singleLm, singleLm.getMaxOrder());
-				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModel");
-			}
-		}
-		return makeTuple2(lm, transitionModel); 
-	}
-	
-	private static class OnlyOneLanguageCodeSwitchLM implements CodeSwitchLanguageModel, SingleLanguageModel {
-		private static final long serialVersionUID = 4290853209L;
-		
-		private SingleLanguageModel singleLm;
-		private Indexer<String> langIndexer;
-		
-		public OnlyOneLanguageCodeSwitchLM(String language, SingleLanguageModel singleLm) {
-			this.singleLm = singleLm;
-			
-			this.langIndexer = new Indexer<String>() {
-				private static final long serialVersionUID = 1L;
-				public boolean locked() { return true; }
-				public void lock() { throw new RuntimeException(); }
-				public int size() { return 1; }
-				public boolean contains(String object) { if (!object.equals(language)) throw new IllegalArgumentException("language="+object); return true; }
-				public int getIndex(String object) { if (!object.equals(language)) throw new IllegalArgumentException("language="+object); return 0; }
-				public String getObject(int index) { if (index != 0) throw new IllegalArgumentException("index="+index); return language; }
-				public void index(String[] vect) { if (vect.length != 1 || !vect[0].equals(language)) throw new IllegalArgumentException();  }
-				public void forgetIndexLookup() { throw new RuntimeException(); }
-				public Collection<String> getObjects() { return Collections.singleton(language); }
-			};
-		}
-
-		public double getCharNgramProb(int[] context, int c) { return singleLm.getCharNgramProb(context, c); }
-		public Indexer<String> getCharacterIndexer() { return singleLm.getCharacterIndexer(); }
-		public int getMaxOrder() { return singleLm.getMaxOrder(); }
-		public Set<Integer> getActiveCharacters() { return singleLm.getActiveCharacters(); }
-		public boolean containsContext(int[] context) { return singleLm.containsContext(context); }
-		public double getProbKeepSameLanguage() { return 1.0; }
-		public double languagePrior(int language) {
-			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; languageIndex "+language+" requested.");
-			return 1.0;
-		}
-		public double languageTransitionPrior(int fromLanguage, int destinationLanguage) { 
-			if (fromLanguage != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; fromLanguage index "+fromLanguage+" requested.");
-			if (destinationLanguage != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; destinationLanguage index "+destinationLanguage+" requested.");
-			return 1.0; 
-		}
-		public SingleLanguageModel get(int language) {
-			if (language != 0) throw new RuntimeException("OnlyOneLanguageCodeSwitchLM has only one language; languageIndex "+language+" requested.");
-			return singleLm; 
-		}
-
-		public double glyphLogProb(int language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-			throw new RuntimeException("not implemented yet");
-		}
-
-		public Indexer<String> getLanguageIndexer() {
-			return this.langIndexer;
-		}
 	}
 
 	private EmissionCacheInnerLoop getEmissionInnerLoop() {

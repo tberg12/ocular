@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import edu.berkeley.cs.nlp.ocular.model.GlyphChar;
-import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
-import edu.berkeley.cs.nlp.ocular.model.GlyphProbModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
 
@@ -33,27 +30,29 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	/**
 	 * Map[destinationLanguage -> Map[fromLanguage, "prior prob of switching from "from" to "destination"]]
 	 */
-	private List<List<Double>> languageTransitionPriors;
+	private List<List<Double>> languageTransitionProbs;
 
 	private Indexer<String> charIndexer;
 	private int maxOrder;
 	private double pKeepSameLanguage;
-	private GlyphProbModel glyphProbModel;
 
 	public Indexer<String> getLanguageIndexer() {
 		return langIndexer;
 	}
 
 	public SingleLanguageModel get(int language) {
-		return subModels.get(language);
+		if (language == -1)
+			return null;
+		else
+			return subModels.get(language);
 	}
 
 	public double languagePrior(int language) {
 		return languagePriors.get(language);
 	}
 
-	public double languageTransitionPrior(int fromLanguage, int destinationLanguage) {
-		return languageTransitionPriors.get(destinationLanguage).get(fromLanguage);
+	public double languageTransitionProb(int fromLanguage, int destinationLanguage) {
+		return languageTransitionProbs.get(destinationLanguage).get(fromLanguage);
 	}
 
 	public Indexer<String> getCharacterIndexer() {
@@ -88,7 +87,7 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 			this.languagePriors.add(lmAndPrior._2 / languagePriorSum);
 		}
 
-		this.languageTransitionPriors = makeLanguageTransitionPriors(this.languagePriors, pKeepSameLanguage, langIndexer);
+		this.languageTransitionProbs = makeLanguageTransitionProbs(this.languagePriors, pKeepSameLanguage, langIndexer);
 
 		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
@@ -101,7 +100,7 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	 * @param pKeepSameLanguage	The prior probability of deterministically keeping the same language on a word boundary.
 	 * @return Map[destinationLanguage -> Map[fromLanguage, "prob of switching from "from" to "to"]]
 	 */
-	public static List<List<Double>> makeLanguageTransitionPriors(List<Double> languagePriors, double pKeepSameLanguage, Indexer<String> langIndexer) {
+	public static List<List<Double>> makeLanguageTransitionProbs(List<Double> languagePriors, double pKeepSameLanguage, Indexer<String> langIndexer) {
 		if (languagePriors.isEmpty()) throw new IllegalArgumentException("languagePriors may not be empty");
 		if (pKeepSameLanguage <= 0.0 || pKeepSameLanguage > 1.0) throw new IllegalArgumentException("pKeepSameLanguage must be between 0 and 1, was " + pKeepSameLanguage);
 
@@ -149,17 +148,13 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 		}
 	}
 
-	public double glyphLogProb(int language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-		return glyphProbModel.logProb(language, prevGlyphChar, prevLmChar, lmChar, glyphChar);
-	}
-
 	/**
 	 * TODO: This is really just here for DenseBigramTransitionModel to use.
 	 *       I have *NO IDEA* whether it matters that this doesn't consider: 
 	 *         a) the role of spaces in determining language switches (it 
 	 *            kind of assumes that every character can be a different 
 	 *            language)
-	 *         b) languageTransitionPriors (since we can't track the language
+	 *         b) languageTransitionProb (since we can't track the language
 	 *            of the context)
 	 */
 	public double getCharNgramProb(int[] context, int c) {

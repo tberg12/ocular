@@ -1,10 +1,10 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.sub;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 
 /**
  * Probability of the model choosing to generate the `glyphCharToRender` 
@@ -48,32 +48,28 @@ import edu.berkeley.cs.nlp.ocular.model.GlyphChar.GlyphType;
  * 
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
-public class GlyphProbModel implements Serializable {
+public class BasicGlyphSubstitutionModel implements SingleGlyphSubstitutionModel, Serializable {
 	private static final long serialVersionUID = -8473038413268727114L;
 
 
-	// P( language )
-	private List<Double> logdistLanguage;
+	// P( prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)] | )
+	private Map<GlyphType, Double> logdistGlyphType;
 
-	// P( prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)] | language )
-	private List<Map<GlyphType, Double>> logdistGlyphType;
+	// P( prevLmChar | prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)] )
+	private List<List<Double>> logdistPrevLmChar;
 
-	// P( prevLmChar | language, prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)] )
-	private List<List<List<Double>>> logdistPrevLmChar;
+	// P( lmChar | prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar )
+	private List<List<List<Double>>> logdistLmChar;
 
-	// P( lmChar | language, prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar )
-	private List<List<List<List<Double>>>> logdistLmChar;
-
-	// P( glyph[c1..cN,elisonTilde,elided] | language, prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar, lmChar )
-	private List<List<List<List<Map<GlyphChar, Double>>>>> logdistGlyph;
+	// P( glyph[c1..cN,elisonTilde,elided] | prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar, lmChar )
+	private List<List<List<Map<GlyphChar, Double>>>> logdistGlyph;
 	
 	
-	public double logProb(int language, GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-		double logpLang = logdistLanguage.get(language);
-		double logpGlyphType = logdistGlyphType.get(language).get(prevGlyphChar);
-		double logpPrevLmChar = logdistPrevLmChar.get(language).get(prevGlyphChar.ordinal()).get(prevLmChar);
-		double logpLmChar = logdistLmChar.get(language).get(prevGlyphChar.ordinal()).get(prevLmChar).get(lmChar);
-		double logpGlyph = logdistGlyph.get(language).get(prevGlyphChar.ordinal()).get(prevLmChar).get(lmChar).get(glyphChar);
+	public double logGlyphProb(GlyphType prevGlyphChar, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+		double logpGlyphType = logdistGlyphType.get(prevGlyphChar);
+		double logpPrevLmChar = logdistPrevLmChar.get(prevGlyphChar.ordinal()).get(prevLmChar);
+		double logpLmChar = logdistLmChar.get(prevGlyphChar.ordinal()).get(prevLmChar).get(lmChar);
+		double logpGlyph = logdistGlyph.get(prevGlyphChar.ordinal()).get(prevLmChar).get(lmChar).get(glyphChar);
 		
 
 		
@@ -97,7 +93,7 @@ public class GlyphProbModel implements Serializable {
 //					
 //					
 //					
-//					glyphLogProbs.get(language).get(lmChar).get(prevGlyphChar).get(glyphChar);
+//					glyphLogProbs.get(lmChar).get(prevGlyphChar).get(glyphChar);
 //				}		
 		
 		
@@ -105,7 +101,7 @@ public class GlyphProbModel implements Serializable {
 		
 		
 		
-		return logpLang + logpGlyphType + logpPrevLmChar + logpLmChar + logpGlyph;
+		return logpGlyphType + logpPrevLmChar + logpLmChar + logpGlyph;
 	}
 
 }

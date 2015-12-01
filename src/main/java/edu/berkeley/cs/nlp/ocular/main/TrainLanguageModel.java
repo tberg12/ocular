@@ -279,7 +279,7 @@ public class TrainLanguageModel implements Runnable {
 
 	public static void writeLM(CodeSwitchLanguageModel lm, String lmPath) {
 		try {
-      new File(lmPath).getParentFile().mkdirs();
+			new File(lmPath).getParentFile().mkdirs();
 			FileOutputStream fileOut = new FileOutputStream(lmPath);
 			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(fileOut));
 			out.writeObject(lm);

@@ -2,6 +2,7 @@ package edu.berkeley.cs.nlp.ocular.model;
 
 import java.util.Collection;
 
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
