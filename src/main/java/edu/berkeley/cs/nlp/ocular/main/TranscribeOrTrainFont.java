@@ -26,8 +26,9 @@ import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
-import edu.berkeley.cs.nlp.ocular.sub.CodeSwitchGlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.sub.NoSubCodeSwitchGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
@@ -187,25 +188,26 @@ public class TranscribeOrTrainFont implements Runnable {
 			System.out.println("    " + codeSwitchLM.getLanguageIndexer().getObject(i) + ": " + chars);
 		}
 
+		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
+		Indexer<String> langIndexer = codeSwitchLM.getLanguageIndexer();
+
 		/*
 		 * Load GSM (and print some info about it)
 		 */
-		CodeSwitchGlyphSubstitutionModel codeSwitchGSM;
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(langIndexer, charIndexer);
+		GlyphSubstitutionModel codeSwitchGSM;
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
-			codeSwitchGSM = new NoSubCodeSwitchGlyphSubstitutionModel(codeSwitchLM);
+			codeSwitchGSM = new NoSubGlyphSubstitutionModel(langIndexer, charIndexer);
 		}
 		else if (inputGsmPath != null) { // file path given
 			System.out.println("Loading initial GSM from " + inputGsmPath);
-			codeSwitchGSM = CodeSwitchGlyphSubstitutionModel.readGSM(inputGsmPath);
+			codeSwitchGSM = GlyphSubstitutionModel.readGSM(inputGsmPath);
 		}
 		else {
 			System.out.println("No initial GSM provided; initializing to uniform model.");
-			codeSwitchGSM = CodeSwitchGlyphSubstitutionModel.initializeNewGSM();
+			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), codeSwitchLM);
 		}
-
-		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
-		Indexer<String> langIndexer = codeSwitchLM.getLanguageIndexer();
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
 		Collections.sort(allCharacters);
@@ -219,18 +221,20 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
-		FontTrainEM fontTrainEM = new FontTrainEM(accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, allowGlyphSubstitution, allowLanguageSwitchOnPunct, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
 		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, langIndexer, allEvals);
+		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, retrainLM, retrainGSM, gsmFactory, emissionInnerLoop, emIterationEvaluator, 
+				accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, allowGlyphSubstitution, allowLanguageSwitchOnPunct, markovVerticalOffset, 
+				paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
 		
 		long overallNanoTime = System.nanoTime();
-		Tuple3<CodeSwitchLanguageModel, CodeSwitchGlyphSubstitutionModel, Map<String, CharacterTemplate>> trainedModels = 
-				fontTrainEM.run(learnFont, numEMIters, documents, codeSwitchLM, codeSwitchGSM, retrainLM, retrainGSM, font, charIndexer, emissionInnerLoop, emIterationEvaluator);
+		Tuple3<CodeSwitchLanguageModel, GlyphSubstitutionModel, Map<String, CharacterTemplate>> trainedModels = 
+				fontTrainEM.run(learnFont, numEMIters, documents, codeSwitchLM, codeSwitchGSM, font);
 		CodeSwitchLanguageModel newLm = trainedModels._1;
-		CodeSwitchGlyphSubstitutionModel newGsm = trainedModels._2;
+		GlyphSubstitutionModel newGsm = trainedModels._2;
 		Map<String, CharacterTemplate> newFont = trainedModels._3;
 		if (learnFont) InitializeFont.writeFont(newFont, outputFontPath);
 		if (outputLmPath != null) TrainLanguageModel.writeLM(newLm, outputLmPath);
-		if (outputGsmPath != null) CodeSwitchGlyphSubstitutionModel.writeGSM(newGsm, outputGsmPath);
+		if (outputGsmPath != null) GlyphSubstitutionModel.writeGSM(newGsm, outputGsmPath);
 
 		if (!allEvals.isEmpty() && new File(inputPath).isDirectory()) {
 			printEvaluation(allEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");

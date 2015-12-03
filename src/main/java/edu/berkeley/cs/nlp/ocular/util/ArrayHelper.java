@@ -7,6 +7,28 @@ import java.util.Arrays;
  */
 public class ArrayHelper {
 
+	public static int sum(int[] xs) {
+		int result = 0;
+		for (double x : xs) result += x;
+		return result;
+	}
+
+	public static double sum(double[] xs) {
+		double result = 0.0;
+		for (double x : xs) result += x;
+		return result;
+	}
+
+	public static double avg(int[] xs) {
+		if (xs.length == 0) return 0.0;
+		else return ((double)sum(xs)) / xs.length;
+	}
+
+	public static double avg(double[] xs) {
+		if (xs.length == 0) return 0.0;
+		else return sum(xs) / xs.length;
+	}
+
 	public static int[] prepend(int c, int[] vec1) {
 		int[] result = new int[vec1.length + 1];
 		if (vec1.length > 0) System.arraycopy(vec1, 0, result, 1, vec1.length);

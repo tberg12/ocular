@@ -1,15 +1,15 @@
 package edu.berkeley.cs.nlp.ocular.lm;
 
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeMap;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
-import java.util.Map;
+import java.util.List;
 
 import org.junit.Test;
 
-import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
+import indexer.HashMapIndexer;
+import indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -17,49 +17,54 @@ import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 public class LanguageTransitionPriorsTests {
 
 	@Test
-	public void test_makeLanguageTransitionPriors_multipleLanguages() {
+	public void test_makeLanguageTransitionProbs_multipleLanguages() {
 
-		Map<String, Double> languagePriors = makeMap( //
-				makeTuple2("spanish", 0.5), //
-				makeTuple2("latin", 0.3), //
-				makeTuple2("nahautl", 0.1));
+		List<Double> languagePriors = makeList( //
+				0.5, // makeTuple2("spanish", 0.5), //
+				0.3, // makeTuple2("latin", 0.3), //
+				0.1); //makeTuple2("nahautl", 0.1));
 		double pKeepSameLanguage = 0.8;
+		Indexer<String> langIndexer = new HashMapIndexer<String>();
+		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );
 
 		// Map[destinationLanguage -> (destinationLM, Map[fromLanguage, "prob of switching from "from" to "to"])]
-		Map<String, Map<String, Double>> languageTransitionPriors = BasicCodeSwitchLanguageModel.makeLanguageTransitionPriors(languagePriors, pKeepSameLanguage);
+		List<List<Double>> languageTransitionPriors = BasicCodeSwitchLanguageModel.makeLanguageTransitionProbs(languagePriors, pKeepSameLanguage, langIndexer);
 
-		assertEquals((0.1 * 0.5) / 0.16, languageTransitionPriors.get("spanish").get("nahautl"), 1e-9);
-		assertEquals((0.1 * 0.3) / 0.16, languageTransitionPriors.get("latin").get("nahautl"), 1e-9);
-		assertEquals((0.8 * 0.1) / 0.16, languageTransitionPriors.get("nahautl").get("nahautl"), 1e-9);
+		assertEquals((0.1 * 0.5) / 0.16, languageTransitionPriors.get(langIndexer.getIndex("spanish")).get(langIndexer.getIndex("nahuatl")), 1e-9);
+		assertEquals((0.1 * 0.3) / 0.16, languageTransitionPriors.get(langIndexer.getIndex("latin")).get(langIndexer.getIndex("nahuatl")), 1e-9);
+		assertEquals((0.8 * 0.1) / 0.16, languageTransitionPriors.get(langIndexer.getIndex("nahuatl")).get(langIndexer.getIndex("nahuatl")), 1e-9);
 
-		assertEquals((0.1 * 0.5) / 0.30, languageTransitionPriors.get("spanish").get("latin"), 1e-9);
-		assertEquals((0.8 * 0.3) / 0.30, languageTransitionPriors.get("latin").get("latin"), 1e-9);
-		assertEquals((0.1 * 0.1) / 0.30, languageTransitionPriors.get("nahautl").get("latin"), 1e-9);
+		assertEquals((0.1 * 0.5) / 0.30, languageTransitionPriors.get(langIndexer.getIndex("spanish")).get(langIndexer.getIndex("latin")), 1e-9);
+		assertEquals((0.8 * 0.3) / 0.30, languageTransitionPriors.get(langIndexer.getIndex("latin")).get(langIndexer.getIndex("latin")), 1e-9);
+		assertEquals((0.1 * 0.1) / 0.30, languageTransitionPriors.get(langIndexer.getIndex("nahuatl")).get(langIndexer.getIndex("latin")), 1e-9);
 
-		assertEquals((0.8 * 0.5) / 0.44, languageTransitionPriors.get("spanish").get("spanish"), 1e-9);
-		assertEquals((0.1 * 0.3) / 0.44, languageTransitionPriors.get("latin").get("spanish"), 1e-9);
-		assertEquals((0.1 * 0.1) / 0.44, languageTransitionPriors.get("nahautl").get("spanish"), 1e-9);
+		assertEquals((0.8 * 0.5) / 0.44, languageTransitionPriors.get(langIndexer.getIndex("spanish")).get(langIndexer.getIndex("spanish")), 1e-9);
+		assertEquals((0.1 * 0.3) / 0.44, languageTransitionPriors.get(langIndexer.getIndex("latin")).get(langIndexer.getIndex("spanish")), 1e-9);
+		assertEquals((0.1 * 0.1) / 0.44, languageTransitionPriors.get(langIndexer.getIndex("nahuatl")).get(langIndexer.getIndex("spanish")), 1e-9);
 	}
 
 	@Test
-	public void test_makeLanguageTransitionPriors_oneLanguage() {
-		Map<String, Double> languagePriors = makeMap( //
-		makeTuple2("spanish", 0.5));
+	public void test_makeLanguageTransitionProbs_oneLanguage() {
+		List<Double> languagePriors = makeList( //
+				0.5); //makeTuple2("spanish", 0.5));
 		double pKeepSameLanguage = 0.8;
+		Indexer<String> langIndexer = new HashMapIndexer<String>();
+		langIndexer.index(new String[] { "spanish" } );
 
 		// Map[destinationLanguage -> (destinationLM, Map[fromLanguage, "prob of switching from "from" to "to"])]
-		Map<String, Map<String, Double>> languageTransitionPriors = BasicCodeSwitchLanguageModel.makeLanguageTransitionPriors(languagePriors, pKeepSameLanguage);
+		List<List<Double>> languageTransitionPriors = BasicCodeSwitchLanguageModel.makeLanguageTransitionProbs(languagePriors, pKeepSameLanguage, langIndexer);
 
-		assertEquals(1.0, languageTransitionPriors.get("spanish").get("spanish"), 1e-9);
+		assertEquals(1.0, languageTransitionPriors.get(langIndexer.getIndex("spanish")).get(langIndexer.getIndex("spanish")), 1e-9);
 	}
 
 	@Test
-	public void test_makeLanguageTransitionPriors_noLanguages() {
-		Map<String, Double> languagePriors = makeMap();
+	public void test_makeLanguageTransitionProbs_noLanguages() {
+		List<Double> languagePriors = makeList();
 		double pKeepSameLanguage = 0.8;
+		Indexer<String> langIndexer = new HashMapIndexer<String>();
 
 		try {
-			BasicCodeSwitchLanguageModel.makeLanguageTransitionPriors(languagePriors, pKeepSameLanguage);
+			BasicCodeSwitchLanguageModel.makeLanguageTransitionProbs(languagePriors, pKeepSameLanguage, langIndexer);
 			fail("exception expected");
 		}
 		catch (RuntimeException e) {
@@ -68,15 +73,17 @@ public class LanguageTransitionPriorsTests {
 	}
 
 	@Test
-	public void test_makeLanguageTransitionPriors_pKeepSameLanguageGreaterThan1() {
-		Map<String, Double> languagePriors = makeMap( //
-				makeTuple2("spanish", 0.5), //
-				makeTuple2("latin", 0.3), //
-				makeTuple2("nahautl", 0.1));
+	public void test_makeLanguageTransitionProbs_pKeepSameLanguageGreaterThan1() {
+		List<Double> languagePriors = makeList( //
+				0.5, // makeTuple2("spanish", 0.5), //
+				0.3, // makeTuple2("latin", 0.3), //
+				0.1); //makeTuple2("nahautl", 0.1));
 		double pKeepSameLanguage = 1.1;
+		Indexer<String> langIndexer = new HashMapIndexer<String>();
+		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );
 
 		try {
-			BasicCodeSwitchLanguageModel.makeLanguageTransitionPriors(languagePriors, pKeepSameLanguage);
+			BasicCodeSwitchLanguageModel.makeLanguageTransitionProbs(languagePriors, pKeepSameLanguage, langIndexer);
 			fail("exception expected");
 		}
 		catch (RuntimeException e) {
@@ -85,15 +92,17 @@ public class LanguageTransitionPriorsTests {
 	}
 
 	@Test
-	public void test_makeLanguageTransitionPriors_pKeepSameLanguageZero() {
-		Map<String, Double> languagePriors = makeMap( //
-				makeTuple2("spanish", 0.5), //
-				makeTuple2("latin", 0.3), //
-				makeTuple2("nahautl", 0.1));
+	public void test_makeLanguageTransitionProbs_pKeepSameLanguageZero() {
+		List<Double> languagePriors = makeList( //
+				0.5, // makeTuple2("spanish", 0.5), //
+				0.3, // makeTuple2("latin", 0.3), //
+				0.1); //makeTuple2("nahautl", 0.1));
 		double pKeepSameLanguage = 0.0;
+		Indexer<String> langIndexer = new HashMapIndexer<String>();
+		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );
 
 		try {
-			BasicCodeSwitchLanguageModel.makeLanguageTransitionPriors(languagePriors, pKeepSameLanguage);
+			BasicCodeSwitchLanguageModel.makeLanguageTransitionProbs(languagePriors, pKeepSameLanguage, langIndexer);
 			fail("exception expected");
 		}
 		catch (RuntimeException e) {
@@ -102,15 +111,17 @@ public class LanguageTransitionPriorsTests {
 	}
 
 	@Test
-	public void test_makeLanguageTransitionPriors_languagePriorZero() {
-		Map<String, Double> languagePriors = makeMap( //
-				makeTuple2("spanish", 0.5), //
-				makeTuple2("latin", 0.0), //
-				makeTuple2("nahautl", 0.2));
+	public void test_makeLanguageTransitionProbs_languagePriorZero() {
+		List<Double> languagePriors = makeList( //
+				0.5, // makeTuple2("spanish", 0.5), //
+				0.0, // makeTuple2("latin", 0.0), //
+				0.2); //makeTuple2("nahautl", 0.2));
 		double pKeepSameLanguage = 0.8;
+		Indexer<String> langIndexer = new HashMapIndexer<String>();
+		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );
 
 		try {
-			BasicCodeSwitchLanguageModel.makeLanguageTransitionPriors(languagePriors, pKeepSameLanguage);
+			BasicCodeSwitchLanguageModel.makeLanguageTransitionProbs(languagePriors, pKeepSameLanguage, langIndexer);
 			fail("exception expected");
 		}
 		catch (RuntimeException e) {

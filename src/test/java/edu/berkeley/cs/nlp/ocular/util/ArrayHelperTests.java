@@ -10,6 +10,46 @@ import org.junit.Test;
 public class ArrayHelperTests {
 
 	@Test
+	public void test_sum_int() {
+		assertEquals(225, ArrayHelper.sum(new int[] { 50, 0, 150, 25 }));
+		assertEquals(25, ArrayHelper.sum(new int[] { 25 }));
+		assertEquals(0, ArrayHelper.sum(new int[] { 0 }));
+		assertEquals(0, ArrayHelper.sum(new int[] { 0, 0 }));
+		assertEquals(0, ArrayHelper.sum(new int[0]));
+	}
+
+	@Test
+	public void test_avg_int() {
+		assertEquals(54.8, ArrayHelper.avg(new int[] { 50, 0, 150, 74, 0 }), 1e-9);
+		assertEquals(67.5, ArrayHelper.avg(new int[] { 50, 150, 70, 0 }), 1e-9);
+		assertEquals(90, ArrayHelper.avg(new int[] { 50, 150, 70 }), 1e-9);
+		assertEquals(25.0, ArrayHelper.avg(new int[] { 25 }), 1e-9);
+		assertEquals(0, ArrayHelper.avg(new int[] { 0 }), 1e-9);
+		assertEquals(0, ArrayHelper.avg(new int[] { 0, 0 }), 1e-9);
+		assertEquals(0, ArrayHelper.avg(new int[0]), 1e-9);
+	}
+
+	@Test
+	public void test_sum_double() {
+		assertEquals(2.25, ArrayHelper.sum(new double[] { 0.5, 0.0, 1.5, 0.25 }), 1e-9);
+		assertEquals(0.25, ArrayHelper.sum(new double[] { 0.25 }), 1e-9);
+		assertEquals(0.0, ArrayHelper.sum(new double[] { 0.0 }), 1e-9);
+		assertEquals(0.0, ArrayHelper.sum(new double[] { 0.0, 0.0 }), 1e-9);
+		assertEquals(0.0, ArrayHelper.sum(new double[0]), 1e-9);
+	}
+
+	@Test
+	public void test_avg_double() {
+		assertEquals(0.54, ArrayHelper.avg(new double[] { 0.5, 0.0, 1.5, 0.7, 0.0 }), 1e-9);
+		assertEquals(0.675, ArrayHelper.avg(new double[] { 0.5, 1.5, 0.7, 0.0 }), 1e-9);
+		assertEquals(0.9, ArrayHelper.avg(new double[] { 0.5, 1.5, 0.7 }), 1e-9);
+		assertEquals(0.25, ArrayHelper.avg(new double[] { 0.25 }), 1e-9);
+		assertEquals(0.0, ArrayHelper.avg(new double[] { 0.0 }), 1e-9);
+		assertEquals(0.0, ArrayHelper.avg(new double[] { 0.0, 0.0 }), 1e-9);
+		assertEquals(0.0, ArrayHelper.avg(new double[0]), 1e-9);
+	}
+
+	@Test
 	public void test_prepend() {
 		{
 			int[] b = ArrayHelper.prepend(0, new int[] { 1, 2, 3 });

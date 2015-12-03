@@ -1,13 +1,16 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeAddTildeMap;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElidedSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeReplacedSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makePunctSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubstitutionCharsSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setIntersection;
-import indexer.Indexer;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,11 +19,11 @@ import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
-import edu.berkeley.cs.nlp.ocular.sub.CodeSwitchGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -155,7 +158,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					
 					// 2. Next state's glyph is a substitution of the LM character
 					if (canBeReplaced.contains(nextLmChar)) {
-						for (int nextGlyphCharIndex : setIntersection(codeSwitchLM.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
+						for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
 							potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, false, false));
 						}
 					}
@@ -189,10 +192,10 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		private void addTransitionsToTmpl(List<Tuple2<TransitionState, Double>> result, int[] context, double prevScore, boolean clearContext) {
 			if (this.langIndex < 0) { // there is no current language
 				for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) { // no current language, can switch to any language
-					SingleLanguageModel destLM = codeSwitchLM.get(destLanguage);
+					SingleLanguageModel destLM = lm.get(destLanguage);
 					for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we have no current language
 						if (c != spaceCharIndex) {
-							double pDestLang = codeSwitchLM.languagePrior(destLanguage); // no language to transition from
+							double pDestLang = lm.languagePrior(destLanguage); // no language to transition from
 							int[] shrunkenContext = shrinkContext(context, destLM);
 							double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
 							int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
@@ -205,11 +208,11 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				boolean switchAllowed = lmCharIndex == spaceCharIndex; // can switch if its (a non-space character) after a space
 				if (switchAllowed) { // switch permitted
 					for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) {
-						SingleLanguageModel destLM = codeSwitchLM.get(destLanguage);
+						SingleLanguageModel destLM = lm.get(destLanguage);
 						for (int c : destLM.getActiveCharacters()) {
 							if (punctSet.contains(c)) {
 								if (allowLanguageSwitchOnPunct) {
-									double pDestLang = codeSwitchLM.languageTransitionProb(this.langIndex, destLanguage);
+									double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
 									int[] shrunkenContext = shrinkContext(context, destLM);
 									double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
 									int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
@@ -224,7 +227,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 								}
 							}
 							else if (c != spaceCharIndex) {
-								double pDestLang = codeSwitchLM.languageTransitionProb(this.langIndex, destLanguage);
+								double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
 								int[] shrunkenContext = shrinkContext(context, destLM);
 								double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
 								int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
@@ -235,7 +238,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				}
 				else { // no switching allowed
 					int destLanguage = this.langIndex; // there will always be a current language here
-					SingleLanguageModel destLM = codeSwitchLM.get(destLanguage);
+					SingleLanguageModel destLM = lm.get(destLanguage);
 					for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we're definitely not switching anyway
 						if (c != spaceCharIndex) {
 							double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
@@ -249,7 +252,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			}
 
 			{ // space character: switching is never allowed
-				SingleLanguageModel thisLM = codeSwitchLM.get(this.langIndex);
+				SingleLanguageModel thisLM = lm.get(this.langIndex);
 				// TODO: If current lmCharIndex==spaceCharIndex, sum over all languages?
 				double pTransition = 0.0;
 				//				if (lmCharIndex == spaceCharIndex) {
@@ -260,8 +263,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				//				else {
 				//					// total probability of transitioning to a space, regardless of language
 				//					for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) {
-				//						SingleLanguageModel destLM = codeSwitchLM.get(destLanguage);
-				//						double pDestLang = codeSwitchLM.languageTransitionPrior(this.langIndex, destLanguage);
+				//						SingleLanguageModel destLM = lm.get(destLanguage);
+				//						double pDestLang = lm.languageTransitionPrior(this.langIndex, destLanguage);
 				//						int[] shrunkenContext = shrinkContext(context, thisLM);
 				//						pTransition += getNgramProb(thisLM, shrunkenContext, spaceCharIndex) * pDestLang;
 				//					}
@@ -275,7 +278,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		public Collection<Tuple2<TransitionState, Double>> nextLineStartStates() {
 			TransitionStateType type = getType();
 			int[] context = getContext();
-			SingleLanguageModel thisLM = codeSwitchLM.get(this.langIndex);
+			SingleLanguageModel thisLM = lm.get(this.langIndex);
 			List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 
 			if (type == TransitionStateType.TMPL) {
@@ -339,7 +342,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		public Collection<Tuple2<TransitionState, Double>> forwardTransitions() {
 			TransitionStateType type = getType();
 			int[] context = getContext();
-			SingleLanguageModel thisLM = codeSwitchLM.get(this.langIndex);
+			SingleLanguageModel thisLM = lm.get(this.langIndex);
 			List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 
 			if (type == TransitionStateType.LMRGN) {
@@ -447,8 +450,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private Map<Integer, Integer> addTilde;
 
 	private int numLanguages;
-	private CodeSwitchLanguageModel codeSwitchLM;
-	private CodeSwitchGlyphSubstitutionModel codeSwitchGSM;
+	private CodeSwitchLanguageModel lm;
+	private GlyphSubstitutionModel gsm;
 	private boolean allowLanguageSwitchOnPunct;
 	private boolean allowGlyphSubstitution;
 
@@ -475,45 +478,24 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	/**
 	 * @param languageModelsAndPriors 	<Language, <LM, PriorOfLanguage>>
 	 */
-	public CodeSwitchTransitionModel(CodeSwitchLanguageModel codeSwitchLM, boolean allowLanguageSwitchOnPunct, CodeSwitchGlyphSubstitutionModel codeSwitchGSM, boolean allowGlyphSubstitution) {
-		this.codeSwitchLM = codeSwitchLM;
-		this.codeSwitchGSM = codeSwitchGSM;
+	public CodeSwitchTransitionModel(CodeSwitchLanguageModel lm, boolean allowLanguageSwitchOnPunct, GlyphSubstitutionModel gsm, boolean allowGlyphSubstitution) {
+		this.lm = lm;
+		this.gsm = gsm;
 		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 
-		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
-		this.punctSet = new HashSet<Integer>();
-		for (String c : charIndexer.getObjects()) {
-			if (Charset.isPunctuationChar(c))
-				this.punctSet.add(charIndexer.getIndex(c));
-		}
-		this.canBeReplaced = new HashSet<Integer>();
-		for (String c : charIndexer.getObjects()) {
-			if (Charset.CHARS_THAT_CAN_BE_REPLACED.contains(c))
-				this.canBeReplaced.add(charIndexer.getIndex(c));
-		}
-		this.validSubstitutionChars = new HashSet<Integer>();
-		for (String c : charIndexer.getObjects()) {
-			if (Charset.VALID_CHAR_SUBSTITUTIONS.contains(c))
-				this.validSubstitutionChars.add(charIndexer.getIndex(c));
-		}
-		this.canBeElided = new HashSet<Integer>();
-		for (String c : charIndexer.getObjects()) {
-			if (Charset.CHARS_THAT_CAN_BE_ELIDED.contains(c))
-				this.canBeElided.add(charIndexer.getIndex(c));
-		}
-		this.addTilde = new HashMap<Integer, Integer>();
-		for (String c : charIndexer.getObjects()) {
-			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c)) {
-				this.addTilde.put(charIndexer.getIndex(c), charIndexer.getIndex(Charset.TILDE_ESCAPE + c));
-			}
-		}
+		this.punctSet = makePunctSet(charIndexer);
+		this.canBeReplaced = makeCanBeReplacedSet(charIndexer);
+		this.validSubstitutionChars = makeValidSubstitutionCharsSet(charIndexer);
+		this.canBeElided = makeCanBeElidedSet(charIndexer);
+		this.addTilde = makeAddTildeMap(charIndexer);
 
-		this.n = codeSwitchLM.getMaxOrder();
+		this.n = lm.getMaxOrder();
 
-		this.numLanguages = codeSwitchLM.getLanguageIndexer().size();
+		this.numLanguages = lm.getLanguageIndexer().size();
 	}
 
 	private void addNoSubGlyphStartState(List<Tuple2<TransitionState, Double>> result, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
@@ -547,7 +529,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			
 			// 2. Next state's glyph is a substitution of the LM character
 			if (canBeReplaced.contains(nextLmChar)) {
-				for (int nextGlyphCharIndex : setIntersection(codeSwitchLM.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
+				for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
 					potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, false, false));
 				}
 			}
@@ -572,8 +554,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 * First possibility: L-Margin, with no context. Has probability LINE_MRGN_PROB * prior prob of the language. (1 of this) 
 	 * Other possibilities: TMPL, with any individual single character c as context (~75 of these) 
 	 *   - probability is: 1-LINE_MRGN_PROB * probability of c with no context * prior prob of the language.
-	 *   
-	 * @param d		unused
 	 */
 	public Collection<Tuple2<TransitionState, Double>> startStates() {
 		List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
@@ -588,8 +568,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		 * Choose among all the languages when there's an actual word (not a space).
 		 */
 		for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) {
-			SingleLanguageModel destLM = codeSwitchLM.get(destLanguage);
-			double destLanguagePrior = codeSwitchLM.languagePrior(destLanguage);
+			SingleLanguageModel destLM = lm.get(destLanguage);
+			double destLanguagePrior = lm.languagePrior(destLanguage);
 			for (int c : destLM.getActiveCharacters()) {
 				if (c != spaceCharIndex) {
 					double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(destLM, new int[0], c)) + Math.log(destLanguagePrior);
@@ -606,39 +586,39 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		{
 			double totalSpaceProb = 0.0;
 			for (int language = 0; language < numLanguages; ++language)
-				totalSpaceProb += getNgramProb(codeSwitchLM.get(language), new int[0], spaceCharIndex) * codeSwitchLM.languagePrior(language);
+				totalSpaceProb += getNgramProb(lm.get(language), new int[0], spaceCharIndex) * lm.languagePrior(language);
 			double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(totalSpaceProb) /*+ Math.log(1.0)*/;
 			addNoSubGlyphStartState(result, new int[] { spaceCharIndex }, TransitionStateType.TMPL, -1, score);
 		}
 		return result;
 	}
 
-	private double getNgramProb(SingleLanguageModel lm, int[] context, int c) {
-		if (lm != null) {
-			return lm.getCharNgramProb(context, c);
+	private double getNgramProb(SingleLanguageModel slm, int[] context, int c) {
+		if (slm != null) {
+			return slm.getCharNgramProb(context, c);
 		}
 		else {
 			// No current language, so sum transition to `c` across all languages
 			double totalSpaceProb = 0.0;
 			for (int language = 0; language < numLanguages; ++language)
-				totalSpaceProb += codeSwitchLM.get(language).getCharNgramProb(context, c) * codeSwitchLM.languagePrior(language);
+				totalSpaceProb += this.lm.get(language).getCharNgramProb(context, c) * this.lm.languagePrior(language);
 			return totalSpaceProb;
 		}
 	}
 
-	//	private int[] appendToContext(int[] originalContext, int c, SingleLanguageModel lm) {
-	//		return shrinkContext(a.append(originalContext, c), lm);
+	//	private int[] appendToContext(int[] originalContext, int c, SingleLanguageModels lm) {
+	//		return shrinkContext(a.append(originalContext, c), slm);
 	//	}
 
 	private double calculateGlyphLogProb(int nextLanguage, GlyphType glyphType, int lmCharIndex, int nextLmChar, GlyphChar nextGlyphChar) {
-		return codeSwitchGSM.logLanguagePrior(nextLanguage) + codeSwitchGSM.get(nextLanguage).logGlyphProb(glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+		return gsm.logGlyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
 	}
 
-	private int[] shrinkContext(int[] originalContext, SingleLanguageModel lm) {
+	private int[] shrinkContext(int[] originalContext, SingleLanguageModel slm) {
 		int[] newContext = originalContext;
 		while (newContext.length > n - 1)
 			newContext = shortenContextForward(newContext);
-		while (lm != null && !lm.containsContext(newContext)) {
+		while (slm != null && !slm.containsContext(newContext)) {
 			newContext = shortenContextForward(newContext);
 		}
 		return newContext;

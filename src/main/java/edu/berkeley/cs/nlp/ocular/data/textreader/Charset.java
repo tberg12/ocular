@@ -6,6 +6,7 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,6 +14,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
+import indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
@@ -219,6 +221,49 @@ public class Charset {
 	public static final Set<String> VALID_CHAR_SUBSTITUTIONS = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_ELIDED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	
+	public static Set<Integer> makePunctSet(Indexer<String> charIndexer) {
+		Set<Integer> punctSet = new HashSet<Integer>();
+		for (String c : charIndexer.getObjects()) {
+			if (Charset.isPunctuationChar(c))
+				punctSet.add(charIndexer.getIndex(c));
+		}
+		return punctSet;
+	}
+	public static Set<Integer> makeCanBeReplacedSet(Indexer<String> charIndexer) {
+		Set<Integer> canBeReplaced = new HashSet<Integer>();
+		for (String c : charIndexer.getObjects()) {
+			if (Charset.CHARS_THAT_CAN_BE_REPLACED.contains(c))
+				canBeReplaced.add(charIndexer.getIndex(c));
+		}
+		return canBeReplaced;
+	}
+	public static Set<Integer> makeValidSubstitutionCharsSet(Indexer<String> charIndexer) {
+		Set<Integer> validSubstitutionChars = new HashSet<Integer>();
+		for (String c : charIndexer.getObjects()) {
+			if (Charset.VALID_CHAR_SUBSTITUTIONS.contains(c))
+				validSubstitutionChars.add(charIndexer.getIndex(c));
+		}
+		return validSubstitutionChars;
+	}
+	public static Set<Integer> makeCanBeElidedSet(Indexer<String> charIndexer) {
+		Set<Integer> canBeElided = new HashSet<Integer>();
+		for (String c : charIndexer.getObjects()) {
+			if (Charset.CHARS_THAT_CAN_BE_ELIDED.contains(c))
+				canBeElided.add(charIndexer.getIndex(c));
+		}
+		return canBeElided;
+	}
+	public static Map<Integer,Integer> makeAddTildeMap(Indexer<String> charIndexer) {
+		Map<Integer,Integer> addTilde = new HashMap<Integer, Integer>();
+		for (String c : charIndexer.getObjects()) {
+			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c)) {
+				addTilde.put(charIndexer.getIndex(c), charIndexer.getIndex(Charset.TILDE_ESCAPE + c));
+			}
+		}
+		return addTilde;
+	}
+	
 	
 	/**
 	 * Get the character code including any escaped diacritics that precede 
