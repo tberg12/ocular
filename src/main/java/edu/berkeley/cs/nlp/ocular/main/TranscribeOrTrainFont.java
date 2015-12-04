@@ -391,7 +391,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			for (int line = 0; line < numLines; ++line) {
 				goldComparisonOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 				goldComparisonOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
-				goldComparisonOutputBuffer.append("\n\n");
+				goldComparisonOutputBuffer.append("\n");
 			}
 
 			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
@@ -446,7 +446,7 @@ public class TranscribeOrTrainFont implements Runnable {
 							outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 						}
 						if (lmChar != glyphChar) {
-							outputBuffer.append("[" + (ts.getGlyphChar().isElided ? "" : Charset.unescapeChar(charIndexer.getObject(lmChar))) + "/" + sglyphChar + "]");
+							outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (ts.getGlyphChar().isElided ? "" : sglyphChar) + "]");
 						}
 						else {
 							outputBuffer.append(sglyphChar);

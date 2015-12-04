@@ -35,7 +35,7 @@ public class ExplicitCharacterSetTextReader implements TextReader {
   		 * necessary to remove diacritics, the use RemoveDiacriticsTextReader
   		 * as well.
   		 */
-			if (allValidCharacters.contains(c) || Charset.SPACE.equals(c) || Charset.UNIV_PUNC.contains(c)) {
+			if (allValidCharacters.contains(c)) {
 				chars.add(c);
 			}
 			else {
@@ -49,7 +49,7 @@ public class ExplicitCharacterSetTextReader implements TextReader {
 	}
 
 	public String toString() {
-		return "RemoveDiacriticsTextReader(" + delegate + ")";
+		return "ExplicitCharacterSetTextReader(" + delegate + ")";
 	}
 
 }

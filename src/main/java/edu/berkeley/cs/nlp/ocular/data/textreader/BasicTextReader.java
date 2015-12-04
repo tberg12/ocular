@@ -32,7 +32,9 @@ public class BasicTextReader implements TextReader {
 			Tuple2<String, Integer> escapedCharAndLength = Charset.readCharAt(line, i);
 			String c = escapedCharAndLength._1;
 			int length = escapedCharAndLength._2;
-			escapedChars.add(c);
+			if (!Charset.BANNED_CHARS.contains(c)) {
+				escapedChars.add(c);
+			}
 			i += length; // advance to the next character
 		}
 		return escapedChars;
