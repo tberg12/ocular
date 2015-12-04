@@ -26,10 +26,9 @@ import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
@@ -282,7 +281,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	}
 	
 	public static interface EMIterationEvaluator {
-		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates);
+		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates, int[][] decodeWidths);
 	}
 
 	private class BasicEMIterationEvaluator implements EMIterationEvaluator {
@@ -296,13 +295,13 @@ public class TranscribeOrTrainFont implements Runnable {
 			this.allEvals = allEvals;
 		}
 
-		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates) {
-			printTranscription(iter, learnFont, doc, allEvals, decodeStates, charIndexer, langIndexer, outputPath);
+		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates, int[][] decodeWidths) {
+			printTranscription(iter, learnFont, doc, allEvals, decodeStates, decodeWidths, charIndexer, langIndexer, outputPath);
 		}
 	}
 
 	public static class NoOpEMIterationEvaluator implements EMIterationEvaluator {
-		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates) {}
+		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates, int[][] decodeWidths) {}
 	}
 
 	public static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
@@ -333,23 +332,31 @@ public class TranscribeOrTrainFont implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, Indexer<String> charIndexer, Indexer<String> langIndexer, String outputPath) {
+	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, Indexer<String> langIndexer, String outputPath) {
 		final String[][] text = doc.loadLineText();
 		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
 
 		// Get the model output
 		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[numLines];
+		@SuppressWarnings("unchecked")
+		List<TransitionState>[] viterbiTransStates = new List[numLines];
+		@SuppressWarnings("unchecked")
+		List<Integer>[] viterbiWidths = new List[numLines];
 		for (int line = 0; line < numLines; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
+			viterbiTransStates[line] = new ArrayList<TransitionState>();
+			viterbiWidths[line] = new ArrayList<Integer>();
 			if (line < decodeStates.length) {
 				for (int i = 0; i < decodeStates[line].length; ++i) {
-					GlyphChar glyphChar = decodeStates[line][i].getGlyphChar();
-					int c = glyphChar.templateCharIndex;
+					TransitionState ts = decodeStates[line][i];
+					int c = ts.getGlyphChar().templateCharIndex;
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-						if (!glyphChar.isElided) {
+						if (!ts.getGlyphChar().isElided) {
 							if (!(i == 0 && c == charIndexer.getIndex(Charset.SPACE))) {
 								viterbiChars[line].add(charIndexer.getObject(c));
+								viterbiTransStates[line].add(ts);
+								viterbiWidths[line].add(decodeWidths[line][i]);
 							}
 						}
 					}
@@ -365,13 +372,44 @@ public class TranscribeOrTrainFont implements Runnable {
 		String htmlOutputFilename = outputFilenameBase + ".html";
 		new File(transcriptionOutputFilename).getParentFile().mkdirs();
 		
+		System.out.println("Writing transcription output to " + transcriptionOutputFilename);
 		StringBuffer transcriptionOutputBuffer = new StringBuffer();
 		for (int line = 0; line < decodeStates.length; ++line) {
 			transcriptionOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 		}
-		System.out.println("Writing transcription output to " + transcriptionOutputFilename);
-		System.out.println(transcriptionOutputBuffer.toString());
+		System.out.println(transcriptionOutputBuffer.toString() + "\n\n");
 		f.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+
+		System.out.println("Transcription with substitutions");
+		StringBuffer transcriptionWithSubsOutputBuffer = new StringBuffer();
+		for (int line = 0; line < decodeStates.length; ++line) {
+			for (TransitionState ts : viterbiTransStates[line]) {
+				int lmChar = ts.getLmCharIndex();
+				int glyphChar = ts.getGlyphChar().templateCharIndex;
+				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
+				if (lmChar != glyphChar) {
+					transcriptionWithSubsOutputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (ts.getGlyphChar().isElided ? "" : sglyphChar) + "]");
+				}
+				else {
+					transcriptionWithSubsOutputBuffer.append(sglyphChar);
+				}
+			}
+			transcriptionWithSubsOutputBuffer.append("\n");
+		}
+		System.out.println(transcriptionWithSubsOutputBuffer.toString() + "\n\n");
+
+		System.out.println("Transcription with widths");
+		StringBuffer transcriptionWithWidthsOutputBuffer = new StringBuffer();
+		for (int line = 0; line < decodeStates.length; ++line) {
+			for (int i = 0; i < viterbiTransStates[line].size(); ++i) {
+				TransitionState ts = viterbiTransStates[line].get(i);
+				int w = viterbiWidths[line].get(i);
+				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(ts.getGlyphChar().templateCharIndex));
+				transcriptionWithWidthsOutputBuffer.append(sglyphChar + "[" + w + "]");
+			}
+			transcriptionWithWidthsOutputBuffer.append("\n");
+		}
+		System.out.println(transcriptionWithWidthsOutputBuffer.toString());
 
 		if (text != null) {
 			// Evaluate against gold-transcribed data (given as "text")

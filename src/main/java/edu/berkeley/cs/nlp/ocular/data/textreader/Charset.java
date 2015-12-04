@@ -25,7 +25,7 @@ public class Charset {
 	public static final String HYPHEN = "-";
 	public static final Set<String> LOWERCASE_LATIN_LETTERS = makeSet("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
 	public static final String LONG_S = "\u017F"; // ſ
-	public static final Set<String> BANNED_CHARS = makeSet("@", "$");
+	public static final Set<String> BANNED_CHARS = makeSet("@", "$", "%");
 	/**
 	 * Punctuation symbols that should be made available for any language, 
 	 * regardless of whether they are seen in the language model training 

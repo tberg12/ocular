@@ -169,7 +169,7 @@ public class FontTrainEM {
 				}
 
 				// evaluate
-				emIterationEvaluator.evaluate(iter, doc, decodeStates);
+				emIterationEvaluator.evaluate(iter, doc, decodeStates, decodeWidths);
 
 				// m-step
 				{
@@ -380,7 +380,7 @@ public class FontTrainEM {
 				}
 				
 				// Handle all the states
-				boolean contentFound = false;
+//				boolean contentFound = false;
 				for (int i = 0; i < lineLength; ++i) {
 					TransitionState ts = decodeStates[line][i];
 					int c = ts.getGlyphChar().templateCharIndex;
