@@ -186,7 +186,7 @@ public class FontTrainEM {
 					}
 					
 					if (batchComplete) {
-						List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates);
+						List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 						if (learnFont) updateFontParameters(iter, templates);
 						if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
 						if (retrainGSM) gsm = updateGsmParameters(gsmFactory, lm, fullViterbiStateSeq);
@@ -343,7 +343,7 @@ public class FontTrainEM {
 		//
 		// Construct the new GSM
 		//
-		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, newLM);
+		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, 0.999999, newLM);
 
 		//
 		// Print out some statistics
@@ -355,7 +355,7 @@ public class FontTrainEM {
 	/**
 	 * Make a single sequence of states
 	 */
-	private List<TransitionState> makeFullViterbiStateSeq(TransitionState[][] decodeStates) {
+	public static List<TransitionState> makeFullViterbiStateSeq(TransitionState[][] decodeStates, Indexer<String> charIndexer) {
 		int spaceIndex = charIndexer.getIndex(Charset.SPACE);
 		int hyphenIndex = charIndexer.getIndex(Charset.HYPHEN);
 		int numLines = decodeStates.length;
@@ -366,6 +366,8 @@ public class FontTrainEM {
 			viterbiChars[line] = new ArrayList<String>();
 			if (line < decodeStates.length) {
 				int lineLength = decodeStates[line].length;
+				
+				// Figure out stuff about the end of the line hyphen whatever
 				int lastCharOfLine = -1;
 				boolean endsInRightHyphen = false;
 				for (int i = 0; i < lineLength; ++i) {
@@ -376,9 +378,19 @@ public class FontTrainEM {
 					}
 					endsInRightHyphen = (tsType == TransitionStateType.RMRGN_HPHN_INIT || tsType == TransitionStateType.RMRGN_HPHN);
 				}
+				
+				// Handle all the states
+				boolean contentFound = false;
 				for (int i = 0; i < lineLength; ++i) {
 					TransitionState ts = decodeStates[line][i];
 					int c = ts.getGlyphChar().templateCharIndex;
+//					if (!contentFound) { // ignore spaces at the front
+//						if (ts.getLanguageIndex() >= 0) throw new RuntimeException("");
+//						if (c != spaceIndex) throw new RuntimeException("");
+//						//if (ts.getLanguageIndex() >= 0) throw new RuntimeException("");
+//						//if (ts.getLanguageIndex() >= 0) throw new RuntimeException("");
+//					}
+//					else 
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 						viterbiChars[line].add(charIndexer.getObject(c));
 						if (ts.getType() == TransitionStateType.TMPL) {

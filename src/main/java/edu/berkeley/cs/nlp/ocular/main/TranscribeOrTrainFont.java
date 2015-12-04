@@ -29,6 +29,7 @@ import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
@@ -206,7 +207,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 		else {
 			System.out.println("No initial GSM provided; initializing to uniform model.");
-			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), codeSwitchLM);
+			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), 0.999999, codeSwitchLM, 0);
 		}
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
@@ -343,9 +344,14 @@ public class TranscribeOrTrainFont implements Runnable {
 			viterbiChars[line] = new ArrayList<String>();
 			if (line < decodeStates.length) {
 				for (int i = 0; i < decodeStates[line].length; ++i) {
-					int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
+					GlyphChar glyphChar = decodeStates[line][i].getGlyphChar();
+					int c = glyphChar.templateCharIndex;
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-						viterbiChars[line].add(charIndexer.getObject(c));
+						if (!glyphChar.isElided) {
+							if (!(i == 0 && c == charIndexer.getIndex(Charset.SPACE))) {
+								viterbiChars[line].add(charIndexer.getObject(c));
+							}
+						}
 					}
 				}
 			}
@@ -417,11 +423,6 @@ public class TranscribeOrTrainFont implements Runnable {
 		outputBuffer.append("</br></br>\n\n");
 
 		String[] colors = new String[] { "Black", "Red", "Blue", "Olive", "Orange", "Magenta", "Lime", "Cyan", "Purple", "Green", "Brown" };
-		Map<String, String> langColor = new HashMap<String, String>();
-		langColor.put(null, colors[0]);
-		for (int i = 0; i < langIndexer.size(); ++i) {
-			langColor.put(langIndexer.getObject(i), colors[i]);
-		}
 
 		@SuppressWarnings("unchecked")
 		List<String>[] csViterbiChars = new List[decodeStates.length];
@@ -430,19 +431,26 @@ public class TranscribeOrTrainFont implements Runnable {
 			csViterbiChars[line] = new ArrayList<String>();
 			if (decodeStates[line] != null) {
 				for (int i = 0; i < decodeStates[line].length; ++i) {
-					int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
-					if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-						String s = Charset.unescapeChar(charIndexer.getObject(c));
-						csViterbiChars[line].add(s);
+					TransitionState ts = decodeStates[line][i];
+					int lmChar = ts.getLmCharIndex();
+					int glyphChar = ts.getGlyphChar().templateCharIndex;
+					if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(glyphChar)))) {
+						String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
+						csViterbiChars[line].add(sglyphChar);
 
-						int currLanguage = decodeStates[line][i].getLanguageIndex();
+						int currLanguage = ts.getLanguageIndex();
 						if (currLanguage != prevLanguage) {
 							if (prevLanguage < 0) {
 								outputBuffer.append("</font>");
 							}
-							outputBuffer.append("<font color=\"" + langColor.get(currLanguage) + "\">");
+							outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 						}
-						outputBuffer.append(s);
+						if (lmChar != glyphChar) {
+							outputBuffer.append("[" + (ts.getGlyphChar().isElided ? "" : Charset.unescapeChar(charIndexer.getObject(lmChar))) + "/" + sglyphChar + "]");
+						}
+						else {
+							outputBuffer.append(sglyphChar);
+						}
 						prevLanguage = currLanguage;
 					}
 				}
@@ -450,8 +458,8 @@ public class TranscribeOrTrainFont implements Runnable {
 			outputBuffer.append("</br>\n");
 		}
 		outputBuffer.append("</font></font><br/><br/><br/>\n");
-		for (Map.Entry<String, String> c : langColor.entrySet()) {
-			outputBuffer.append("<font color=\"" + c.getValue() + "\">" + c.getKey() + "</font></br>\n");
+		for (int i = -1; i < langIndexer.size(); ++i) {
+			outputBuffer.append("<font color=\"" + colors[i+1] + "\">" + (i < 0 ? "none" : langIndexer.getObject(i)) + "</font></br>\n");
 		}
 
 		outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\">\n");

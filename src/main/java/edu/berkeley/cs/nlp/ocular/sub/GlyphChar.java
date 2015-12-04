@@ -59,4 +59,12 @@ public class GlyphChar implements Serializable {
 	public int hashCode() {
 		return 29 * templateCharIndex + 7 * (hasElisionTilde ? 1 : 0) + (isElided ? 1 : 0); 
 	}
+	
+	public String toString() {
+		return "GlyphChar(templateCharIndex="+templateCharIndex+", hasElisionTilde="+hasElisionTilde+", isElided="+isElided+")";
+	}
+	
+	public String toString(Indexer<String> charIndexer) {
+		return "GlyphChar(tmplChar="+charIndexer.getObject(templateCharIndex)+"("+templateCharIndex+"), hasElisionTilde="+hasElisionTilde+", isElided="+isElided+")";
+	}
 }

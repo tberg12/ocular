@@ -5,7 +5,7 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElided
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeReplacedSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makePunctSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubstitutionCharsSet;
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setIntersection;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.*;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.util.ArrayList;
@@ -109,7 +109,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					 * and can't follow tilde-elision states.
 					 */
 					GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, glyphChar.hasElisionTilde, glyphChar.isElided);
-					double glyphLogProb = calculateGlyphLogProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
 					addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 				}
 				else {
@@ -124,7 +124,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					if (glyphType != GlyphType.ELISION_TILDE) {
 						// 1. Next state's glyph is just the rendering of the LM character
 						GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, false, false);
-						double glyphLogProb = calculateGlyphLogProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
 						addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 					}
 				}
@@ -179,7 +179,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					
 				// Create states for all the potential next glyphs
 				for (GlyphChar nextGlyphChar : potentialNextGlyphChars) {
-					double glyphLogProb = calculateGlyphLogProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
 					addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 				}
 			}
@@ -455,6 +455,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private boolean allowLanguageSwitchOnPunct;
 	private boolean allowGlyphSubstitution;
 
+	private Set<TransitionStateType> alwaysSpaceTransitionTypes;
+	private Set<TransitionStateType> alwaysHyphenTransitionTypes;
+	
 	/**
 	 * character index is the last letter of the context.
 	 * 
@@ -463,11 +466,11 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 * then last letter is a hyphen; if there is a context then you
 	 * know, context.
 	 */
-	public int makeLmCharIndex(int[] context, TransitionStateType type) {
-		if (context.length == 0 || type == TransitionStateType.LMRGN || type == TransitionStateType.LMRGN_HPHN || type == TransitionStateType.RMRGN || type == TransitionStateType.RMRGN_HPHN) {
+	private int makeLmCharIndex(int[] context, TransitionStateType type) {
+		if (context.length == 0 || this.alwaysSpaceTransitionTypes.contains(type)) {
 			return spaceCharIndex;
 		}
-		else if (type == TransitionStateType.RMRGN_HPHN_INIT) {
+		else if (this.alwaysHyphenTransitionTypes.contains(type)) {
 			return hyphenCharIndex;
 		}
 		else {
@@ -496,6 +499,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.n = lm.getMaxOrder();
 
 		this.numLanguages = lm.getLanguageIndexer().size();
+		this.alwaysSpaceTransitionTypes = makeSet(TransitionStateType.LMRGN, TransitionStateType.LMRGN_HPHN, TransitionStateType.RMRGN, TransitionStateType.RMRGN_HPHN);
+		this.alwaysHyphenTransitionTypes = makeSet(TransitionStateType.RMRGN_HPHN_INIT);
 	}
 
 	private void addNoSubGlyphStartState(List<Tuple2<TransitionState, Double>> result, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
@@ -504,7 +509,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		else {
 			// 1. Next state's glyph is just the rendering of the LM character
 			GlyphChar nextGlyphChar = new GlyphChar(spaceCharIndex, false, false);
-			double glyphLogProb = calculateGlyphLogProb(nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, spaceCharIndex, nextGlyphChar);
+			double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, spaceCharIndex, nextGlyphChar);
 			addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 		}
 	}
@@ -542,7 +547,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	
 			// Create states for all the potential next glyphs
 			for (GlyphChar nextGlyphChar : potentialNextGlyphChars) {
-				double glyphLogProb = calculateGlyphLogProb(nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, nextLmChar, nextGlyphChar);
+				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, nextLmChar, nextGlyphChar);
 				addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 			}
 		}
@@ -610,8 +615,16 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	//		return shrinkContext(a.append(originalContext, c), slm);
 	//	}
 
-	private double calculateGlyphLogProb(int nextLanguage, GlyphType glyphType, int lmCharIndex, int nextLmChar, GlyphChar nextGlyphChar) {
-		return gsm.logGlyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+	private double calculateGlyphLogProb(TransitionStateType nextType, int nextLanguage, GlyphType glyphType, int lmCharIndex, int nextLmChar, GlyphChar nextGlyphChar) {
+		if (nextLanguage == -1) {
+			if (this.alwaysSpaceTransitionTypes.contains(nextType) && nextGlyphChar.templateCharIndex == spaceCharIndex)
+				return 0.0; // log(1)
+			else
+				return Double.NEGATIVE_INFINITY; // log(0)
+		}
+		else {
+			return gsm.logGlyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+		}
 	}
 
 	private int[] shrinkContext(int[] originalContext, SingleLanguageModel slm) {
