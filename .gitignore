@@ -1,9 +1,9 @@
-/font/
-/lm/
-/data/
-/extracted_lines/
-/train_output/
-/transcribe_output/
+/font
+/lm
+/data
+/extracted_lines
+/train_output
+/transcribe_output
 /cs_train_lineex/
 /cs_train_output/
 /cs_train_output.txt
@@ -11,8 +11,8 @@
 /cs_transcribe_output/
 /cs_transcribe_output.txt
 /sample_images/
-/texts/
-/replace/
+/texts
+/replace
 
 *.class
 *.log
