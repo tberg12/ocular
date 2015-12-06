@@ -454,6 +454,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private GlyphSubstitutionModel gsm;
 	private boolean allowLanguageSwitchOnPunct;
 	private boolean allowGlyphSubstitution;
+	private double noCharSubPrior;
 
 	private Set<TransitionStateType> alwaysSpaceTransitionTypes;
 	private Set<TransitionStateType> alwaysHyphenTransitionTypes;
@@ -481,11 +482,12 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	/**
 	 * @param languageModelsAndPriors 	<Language, <LM, PriorOfLanguage>>
 	 */
-	public CodeSwitchTransitionModel(CodeSwitchLanguageModel lm, boolean allowLanguageSwitchOnPunct, GlyphSubstitutionModel gsm, boolean allowGlyphSubstitution) {
+	public CodeSwitchTransitionModel(CodeSwitchLanguageModel lm, boolean allowLanguageSwitchOnPunct, GlyphSubstitutionModel gsm, boolean allowGlyphSubstitution, double noCharSubPrior) {
 		this.lm = lm;
 		this.gsm = gsm;
 		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
+		this.noCharSubPrior = noCharSubPrior;
 
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
@@ -623,7 +625,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				return Double.NEGATIVE_INFINITY; // log(0)
 		}
 		else {
-			return gsm.logGlyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+			double p = (1.0 - noCharSubPrior) * gsm.glyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+			double pWithBias = (nextGlyphChar.templateCharIndex == lmCharIndex ? noCharSubPrior + p : p);
+			return Math.log(pWithBias);
 		}
 	}
 

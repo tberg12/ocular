@@ -25,8 +25,8 @@ public class NoSubGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		return charIndexer;
 	}
 	
-	public double logGlyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-		return ((!glyphChar.hasElisionTilde && !glyphChar.isElided && lmChar == glyphChar.templateCharIndex) ? 0.0 : Double.NEGATIVE_INFINITY);
+	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+		return ((!glyphChar.hasElisionTilde && !glyphChar.isElided && lmChar == glyphChar.templateCharIndex) ? 1.0 : 0.0);
 	}
 	
 }

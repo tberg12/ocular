@@ -45,6 +45,8 @@ public class FontTrainEM {
 	private int updateDocBatchSize;
 	
 	private boolean allowGlyphSubstitution;
+	private double gsmSmoothingCount;
+	private double noCharSubPrior;
 	private boolean allowLanguageSwitchOnPunct;
 	private boolean markovVerticalOffset;
 	
@@ -64,7 +66,7 @@ public class FontTrainEM {
 			BasicGlyphSubstitutionModelFactory gsmFactory,
 			EmissionCacheInnerLoop emissionInnerLoop,
 			EMIterationEvaluator emIterationEvaluator,
-			boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize, boolean allowGlyphSubstitution,
+			boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize, boolean allowGlyphSubstitution, double gsmSmoothingCount, double noCharSubPrior,
 			boolean allowLanguageSwitchOnPunct, boolean markovVerticalOffset, int paddingMinWidth, int paddingMaxWidth, int beamSize, 
 			int numDecodeThreads, int numMstepThreads, int decodeBatchSize) {
 		
@@ -81,6 +83,8 @@ public class FontTrainEM {
 		this.minDocBatchSize = minDocBatchSize;
 		this.updateDocBatchSize = updateDocBatchSize;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
+		this.gsmSmoothingCount = gsmSmoothingCount;
+		this.noCharSubPrior = noCharSubPrior;
 		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
 		this.markovVerticalOffset = markovVerticalOffset;
 		this.paddingMinWidth = paddingMinWidth;
@@ -189,7 +193,7 @@ public class FontTrainEM {
 						List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 						if (learnFont) updateFontParameters(iter, templates);
 						if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
-						if (retrainGSM) gsm = updateGsmParameters(gsmFactory, lm, fullViterbiStateSeq);
+						if (retrainGSM) gsm = updateGsmParameters(gsmFactory, lm, fullViterbiStateSeq, iter);
 					}
 				}
 			}
@@ -212,7 +216,7 @@ public class FontTrainEM {
 					throw new RuntimeException("Markov vertical offset transition model not currently supported for multiple languages.");
 			}
 			else { 
-				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct, codeSwitchGSM, allowGlyphSubstitution);
+				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct, codeSwitchGSM, allowGlyphSubstitution, noCharSubPrior);
 				System.out.println("Using CodeSwitchLanguageModel, GlyphSubstitutionModel, and CodeSwitchTransitionModel");
 			}
 		}
@@ -337,13 +341,13 @@ public class FontTrainEM {
 	/**
 	 * Hard-EM update on glyph substitution probabilities
 	 */
-	private GlyphSubstitutionModel updateGsmParameters(BasicGlyphSubstitutionModelFactory gsmFactory, CodeSwitchLanguageModel newLM, List<TransitionState> fullViterbiStateSeq) {
+	private GlyphSubstitutionModel updateGsmParameters(BasicGlyphSubstitutionModelFactory gsmFactory, CodeSwitchLanguageModel newLM, List<TransitionState> fullViterbiStateSeq, int iter) {
 		long nanoTime = System.nanoTime();
 
 		//
 		// Construct the new GSM
 		//
-		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, 0.999999, newLM);
+		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, gsmSmoothingCount, newLM, iter);
 
 		//
 		// Print out some statistics
@@ -380,17 +384,9 @@ public class FontTrainEM {
 				}
 				
 				// Handle all the states
-//				boolean contentFound = false;
 				for (int i = 0; i < lineLength; ++i) {
 					TransitionState ts = decodeStates[line][i];
 					int c = ts.getGlyphChar().templateCharIndex;
-//					if (!contentFound) { // ignore spaces at the front
-//						if (ts.getLanguageIndex() >= 0) throw new RuntimeException("");
-//						if (c != spaceIndex) throw new RuntimeException("");
-//						//if (ts.getLanguageIndex() >= 0) throw new RuntimeException("");
-//						//if (ts.getLanguageIndex() >= 0) throw new RuntimeException("");
-//					}
-//					else 
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 						viterbiChars[line].add(charIndexer.getObject(c));
 						if (ts.getType() == TransitionStateType.TMPL) {

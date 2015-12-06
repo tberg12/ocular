@@ -20,7 +20,7 @@ public interface GlyphSubstitutionModel extends Serializable {
 
 	public Indexer<String> getLanguageIndexer();
 	public Indexer<String> getCharacterIndexer();
-	public double logGlyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar);
+	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar);
 
 	public static GlyphSubstitutionModel readGSM(String gsmPath) {
 		GlyphSubstitutionModel gsm = null;

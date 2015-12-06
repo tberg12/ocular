@@ -27,6 +27,7 @@ import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
@@ -90,6 +91,12 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	@Option(gloss = "Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions. Default: false")
 	public static boolean allowGlyphSubstitution = false;
+	
+	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation. Default: 1.0")
+	public static double gsmSmoothingCount = 1.0;
+	
+	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions. Default: 0.999999")
+	public static double noCharSubPrior = 0.999999;
 	
 	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.) Default: false")
 	public static boolean retrainGSM = false;
@@ -206,7 +213,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 		else {
 			System.out.println("No initial GSM provided; initializing to uniform model.");
-			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), 0.999999, codeSwitchLM, 0);
+			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), gsmSmoothingCount, codeSwitchLM, 0);
 		}
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
@@ -223,8 +230,8 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, langIndexer, allEvals);
 		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, retrainLM, retrainGSM, gsmFactory, emissionInnerLoop, emIterationEvaluator, 
-				accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, allowGlyphSubstitution, allowLanguageSwitchOnPunct, markovVerticalOffset, 
-				paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
+				accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, allowGlyphSubstitution, gsmSmoothingCount, noCharSubPrior, allowLanguageSwitchOnPunct, 
+				markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
 		
 		long overallNanoTime = System.nanoTime();
 		Tuple3<CodeSwitchLanguageModel, GlyphSubstitutionModel, Map<String, CharacterTemplate>> trainedModels = 
@@ -353,12 +360,10 @@ public class TranscribeOrTrainFont implements Runnable {
 					int c = ts.getGlyphChar().templateCharIndex;
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 						if (!ts.getGlyphChar().isElided) {
-							if (!(i == 0 && c == charIndexer.getIndex(Charset.SPACE))) {
-								viterbiChars[line].add(charIndexer.getObject(c));
-								viterbiTransStates[line].add(ts);
-								viterbiWidths[line].add(decodeWidths[line][i]);
-							}
+							viterbiChars[line].add(charIndexer.getObject(c));
 						}
+						viterbiTransStates[line].add(ts);
+						viterbiWidths[line].add(decodeWidths[line][i]);
 					}
 				}
 			}
@@ -385,10 +390,11 @@ public class TranscribeOrTrainFont implements Runnable {
 		for (int line = 0; line < decodeStates.length; ++line) {
 			for (TransitionState ts : viterbiTransStates[line]) {
 				int lmChar = ts.getLmCharIndex();
-				int glyphChar = ts.getGlyphChar().templateCharIndex;
+				GlyphChar glyph = ts.getGlyphChar();
+				int glyphChar = glyph.templateCharIndex;
 				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
-				if (lmChar != glyphChar) {
-					transcriptionWithSubsOutputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (ts.getGlyphChar().isElided ? "" : sglyphChar) + "]");
+				if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
+					transcriptionWithSubsOutputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
 				}
 				else {
 					transcriptionWithSubsOutputBuffer.append(sglyphChar);
@@ -471,7 +477,8 @@ public class TranscribeOrTrainFont implements Runnable {
 				for (int i = 0; i < decodeStates[line].length; ++i) {
 					TransitionState ts = decodeStates[line][i];
 					int lmChar = ts.getLmCharIndex();
-					int glyphChar = ts.getGlyphChar().templateCharIndex;
+					GlyphChar glyph = ts.getGlyphChar();
+					int glyphChar = glyph.templateCharIndex;
 					if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(glyphChar)))) {
 						String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
 						csViterbiChars[line].add(sglyphChar);
@@ -483,8 +490,8 @@ public class TranscribeOrTrainFont implements Runnable {
 							}
 							outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 						}
-						if (lmChar != glyphChar) {
-							outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (ts.getGlyphChar().isElided ? "" : sglyphChar) + "]");
+						if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
+							outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
 						}
 						else {
 							outputBuffer.append(sglyphChar);

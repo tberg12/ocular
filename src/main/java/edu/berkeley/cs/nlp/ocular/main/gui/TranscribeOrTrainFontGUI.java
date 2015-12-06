@@ -363,6 +363,7 @@ public class TranscribeOrTrainFontGUI {
 		input_go = new JButton();
 		input_go.setMaximumSize(new Dimension(20, 100));
 		input_go.addActionListener(new ActionListener() {
+			@SuppressWarnings("static-access")
 			public void actionPerformed(ActionEvent e) {
 				TranscribeOrTrainFont exec = new TranscribeOrTrainFont();
 				// names.foreach(n =>
