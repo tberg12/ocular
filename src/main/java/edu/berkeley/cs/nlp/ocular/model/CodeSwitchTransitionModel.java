@@ -440,6 +440,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	public static final double LINE_END_HYPHEN_PROB = 1e-8;
 
 	private int n;
+	private Indexer<String> charIndexer;
+	private int GLYPH_ELISION_TILDE;
+	private int GLYPH_ELIDED;
 	private int spaceCharIndex;
 	private int hyphenCharIndex;
 	private Set<Integer> punctSet;
@@ -489,7 +492,10 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.noCharSubPrior = noCharSubPrior;
 
-		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		this.charIndexer = lm.getCharacterIndexer();
+		int numChars = charIndexer.size();
+		this.GLYPH_ELISION_TILDE = numChars;
+		this.GLYPH_ELIDED = numChars + 1;
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 		this.punctSet = makePunctSet(charIndexer);
@@ -625,8 +631,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				return Double.NEGATIVE_INFINITY; // log(0)
 		}
 		else {
+			int glyph = (glyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (glyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : nextGlyphChar.templateCharIndex);
 			double p = (1.0 - noCharSubPrior) * gsm.glyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
-			double pWithBias = (nextGlyphChar.templateCharIndex == lmCharIndex ? noCharSubPrior + p : p);
+			double pWithBias = (glyph == nextLmChar ? noCharSubPrior + p : p);
 			return Math.log(pWithBias);
 		}
 	}
@@ -635,9 +642,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		int[] newContext = originalContext;
 		while (newContext.length > n - 1)
 			newContext = shortenContextForward(newContext);
-		while (slm != null && !slm.containsContext(newContext)) {
+		while (slm != null && !slm.containsContext(newContext))
 			newContext = shortenContextForward(newContext);
-		}
 		return newContext;
 	}
 

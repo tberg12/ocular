@@ -266,11 +266,9 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 							double sum = ArrayHelper.sum(counts[language][prevGlyph.ordinal()][prevLmChar][lmChar]);
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
 								double c = counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];
-//								double p = (1.0 - selfEmissionBias) * ((double)c) / sum;
-//								double pWithBias = (glyph == lmChar ? selfEmissionBias + p : p);
-								double p = c / sum;
+								double p = (c / sum);
 								probs[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = p;
-								
+
 								if (c > 1) {
 									//System.out.println("c="+c+", lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+charIndexer.getObject(glyph)+"("+glyph+")");
 									toPrintLanguage.add(language);
