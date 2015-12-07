@@ -284,6 +284,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			System.out.println("  Using " + lazyDoc.baseName());
 			documents.add(lazyDoc);
 		}
+		if (actualNumDocsToUse < 1) throw new RuntimeException("No documents given!");
 		return documents;
 	}
 	
@@ -373,7 +374,10 @@ public class TranscribeOrTrainFont implements Runnable {
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
 		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (learnFont && numEMIters > 1 ? "_iter-" + iter : "");
 		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";
+		String transcriptionWithSubsOutputFilename = outputFilenameBase + "_transcription_withSubs.txt";
+		String transcriptionWithWidthsOutputFilename = outputFilenameBase + "_transcription_withWidths.txt";
 		String goldComparisonOutputFilename = outputFilenameBase + "_vsGold.txt";
+		String goldComparisonWithSubsOutputFilename = outputFilenameBase + "_vsGold_withSubs.txt";
 		String htmlOutputFilename = outputFilenameBase + ".html";
 		new File(transcriptionOutputFilename).getParentFile().mkdirs();
 		
@@ -403,6 +407,7 @@ public class TranscribeOrTrainFont implements Runnable {
 			transcriptionWithSubsOutputBuffer.append("\n");
 		}
 		System.out.println(transcriptionWithSubsOutputBuffer.toString() + "\n\n");
+		f.writeString(transcriptionWithSubsOutputFilename, transcriptionWithSubsOutputBuffer.toString());
 
 		System.out.println("Transcription with widths");
 		StringBuffer transcriptionWithWidthsOutputBuffer = new StringBuffer();
@@ -416,11 +421,12 @@ public class TranscribeOrTrainFont implements Runnable {
 			transcriptionWithWidthsOutputBuffer.append("\n");
 		}
 		System.out.println(transcriptionWithWidthsOutputBuffer.toString());
+		f.writeString(transcriptionWithWidthsOutputFilename, transcriptionWithWidthsOutputBuffer.toString());
 
 		if (text != null) {
+			//
 			// Evaluate against gold-transcribed data (given as "text")
-			StringBuffer goldComparisonOutputBuffer = new StringBuffer();
-			goldComparisonOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
+			//
 			@SuppressWarnings("unchecked")
 			List<String>[] goldCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
@@ -432,21 +438,59 @@ public class TranscribeOrTrainFont implements Runnable {
 				}
 			}
 
+			//
+			// Evaluate the comparison
+			//
+			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
+			if (!learnFont) {
+				allEvals.add(makeTuple2(doc.baseName(), evals));
+			}
+			
+			//
+			// Make comparison file
+			//
+			{
+			StringBuffer goldComparisonOutputBuffer = new StringBuffer();
+			goldComparisonOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
 			for (int line = 0; line < numLines; ++line) {
 				goldComparisonOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 				goldComparisonOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
 				goldComparisonOutputBuffer.append("\n");
 			}
-
-			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
-			if (!learnFont) {
-				allEvals.add(makeTuple2(doc.baseName(), evals));
-			}
 			goldComparisonOutputBuffer.append(Evaluator.renderEval(evals));
-
 			System.out.println("Writing gold comparison to " + goldComparisonOutputFilename);
 			System.out.println(goldComparisonOutputBuffer.toString());
 			f.writeString(goldComparisonOutputFilename, goldComparisonOutputBuffer.toString());
+			}
+			
+			//
+			// Make comparison file with substitutions
+			//
+			{
+			System.out.println("Transcription with substitutions");
+			StringBuffer goldComparisonWithSubsOutputBuffer = new StringBuffer();
+			for (int line = 0; line < decodeStates.length; ++line) {
+				for (TransitionState ts : viterbiTransStates[line]) {
+					int lmChar = ts.getLmCharIndex();
+					GlyphChar glyph = ts.getGlyphChar();
+					int glyphChar = glyph.templateCharIndex;
+					String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
+					if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
+						goldComparisonWithSubsOutputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
+					}
+					else {
+						goldComparisonWithSubsOutputBuffer.append(sglyphChar);
+					}
+				}
+				goldComparisonWithSubsOutputBuffer.append("\n");
+				
+				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
+				goldComparisonWithSubsOutputBuffer.append("\n");
+			}
+			goldComparisonWithSubsOutputBuffer.append(Evaluator.renderEval(evals));
+			System.out.println(goldComparisonWithSubsOutputBuffer.toString() + "\n\n");
+			f.writeString(goldComparisonWithSubsOutputFilename, goldComparisonWithSubsOutputBuffer.toString());
+			}
 		}
 
 		if (langIndexer.size() > 1) {

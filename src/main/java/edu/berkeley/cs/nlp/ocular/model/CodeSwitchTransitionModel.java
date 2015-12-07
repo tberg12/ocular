@@ -187,7 +187,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						}
 					}
 				}
-					
+				
 				// Create states for all the potential next glyphs
 				for (GlyphChar nextGlyphChar : potentialNextGlyphChars) {
 					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
