@@ -1,8 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,10 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.eval.BasicEMIterationEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.EMIterationEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
@@ -25,12 +23,9 @@ import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
@@ -228,7 +223,7 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
-		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, langIndexer, allEvals);
+		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, langIndexer, allEvals, learnFont, inputPath, outputPath, numEMIters);
 		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, retrainLM, retrainGSM, gsmFactory, emissionInnerLoop, emIterationEvaluator, 
 				accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, allowGlyphSubstitution, gsmSmoothingCount, noCharSubPrior, allowLanguageSwitchOnPunct, 
 				markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
@@ -288,31 +283,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		return documents;
 	}
 	
-	public static interface EMIterationEvaluator {
-		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates, int[][] decodeWidths);
-	}
-
-	private class BasicEMIterationEvaluator implements EMIterationEvaluator {
-		Indexer<String> charIndexer;
-		Indexer<String> langIndexer;
-		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals;
-		
-		public BasicEMIterationEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals) {
-			this.charIndexer = charIndexer;
-			this.langIndexer = langIndexer;
-			this.allEvals = allEvals;
-		}
-
-		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates, int[][] decodeWidths) {
-			printTranscription(iter, learnFont, doc, allEvals, decodeStates, decodeWidths, charIndexer, langIndexer, outputPath);
-		}
-	}
-
-	public static class NoOpEMIterationEvaluator implements EMIterationEvaluator {
-		public void evaluate(int iter, Document doc, TransitionState[][] decodeStates, int[][] decodeWidths) {}
-	}
-
-	public static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
+	private static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
 		Map<String, EvalSuffStats> totalSuffStats = new HashMap<String, EvalSuffStats>();
 		StringBuffer buf = new StringBuffer();
 		buf.append("All evals:\n");
@@ -338,225 +309,6 @@ public class TranscribeOrTrainFont implements Runnable {
 		f.writeString(outputPath, buf.toString());
 		System.out.println("\n" + outputPath);
 		System.out.println(buf.toString());
-	}
-
-	private static void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, Indexer<String> langIndexer, String outputPath) {
-		final String[][] text = doc.loadLineText();
-		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
-
-		// Get the model output
-		@SuppressWarnings("unchecked")
-		List<String>[] viterbiChars = new List[numLines];
-		@SuppressWarnings("unchecked")
-		List<TransitionState>[] viterbiTransStates = new List[numLines];
-		@SuppressWarnings("unchecked")
-		List<Integer>[] viterbiWidths = new List[numLines];
-		for (int line = 0; line < numLines; ++line) {
-			viterbiChars[line] = new ArrayList<String>();
-			viterbiTransStates[line] = new ArrayList<TransitionState>();
-			viterbiWidths[line] = new ArrayList<Integer>();
-			if (line < decodeStates.length) {
-				for (int i = 0; i < decodeStates[line].length; ++i) {
-					TransitionState ts = decodeStates[line][i];
-					int c = ts.getGlyphChar().templateCharIndex;
-					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-						if (!ts.getGlyphChar().isElided) {
-							viterbiChars[line].add(charIndexer.getObject(c));
-						}
-						viterbiTransStates[line].add(ts);
-						viterbiWidths[line].add(decodeWidths[line][i]);
-					}
-				}
-			}
-		}
-
-		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
-		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
-		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext + (learnFont && numEMIters > 1 ? "_iter-" + iter : "");
-		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";
-		String transcriptionWithSubsOutputFilename = outputFilenameBase + "_transcription_withSubs.txt";
-		String transcriptionWithWidthsOutputFilename = outputFilenameBase + "_transcription_withWidths.txt";
-		String goldComparisonOutputFilename = outputFilenameBase + "_vsGold.txt";
-		String goldComparisonWithSubsOutputFilename = outputFilenameBase + "_vsGold_withSubs.txt";
-		String htmlOutputFilename = outputFilenameBase + ".html";
-		new File(transcriptionOutputFilename).getParentFile().mkdirs();
-		
-		System.out.println("Writing transcription output to " + transcriptionOutputFilename);
-		StringBuffer transcriptionOutputBuffer = new StringBuffer();
-		for (int line = 0; line < decodeStates.length; ++line) {
-			transcriptionOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
-		}
-		System.out.println(transcriptionOutputBuffer.toString() + "\n\n");
-		f.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
-
-		System.out.println("Transcription with substitutions");
-		StringBuffer transcriptionWithSubsOutputBuffer = new StringBuffer();
-		for (int line = 0; line < decodeStates.length; ++line) {
-			for (TransitionState ts : viterbiTransStates[line]) {
-				int lmChar = ts.getLmCharIndex();
-				GlyphChar glyph = ts.getGlyphChar();
-				int glyphChar = glyph.templateCharIndex;
-				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
-				if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
-					transcriptionWithSubsOutputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
-				}
-				else {
-					transcriptionWithSubsOutputBuffer.append(sglyphChar);
-				}
-			}
-			transcriptionWithSubsOutputBuffer.append("\n");
-		}
-		System.out.println(transcriptionWithSubsOutputBuffer.toString() + "\n\n");
-		f.writeString(transcriptionWithSubsOutputFilename, transcriptionWithSubsOutputBuffer.toString());
-
-		System.out.println("Transcription with widths");
-		StringBuffer transcriptionWithWidthsOutputBuffer = new StringBuffer();
-		for (int line = 0; line < decodeStates.length; ++line) {
-			for (int i = 0; i < viterbiTransStates[line].size(); ++i) {
-				TransitionState ts = viterbiTransStates[line].get(i);
-				int w = viterbiWidths[line].get(i);
-				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(ts.getGlyphChar().templateCharIndex));
-				transcriptionWithWidthsOutputBuffer.append(sglyphChar + "[" + w + "]");
-			}
-			transcriptionWithWidthsOutputBuffer.append("\n");
-		}
-		System.out.println(transcriptionWithWidthsOutputBuffer.toString());
-		f.writeString(transcriptionWithWidthsOutputFilename, transcriptionWithWidthsOutputBuffer.toString());
-
-		if (text != null) {
-			//
-			// Evaluate against gold-transcribed data (given as "text")
-			//
-			@SuppressWarnings("unchecked")
-			List<String>[] goldCharSequences = new List[numLines];
-			for (int line = 0; line < numLines; ++line) {
-				goldCharSequences[line] = new ArrayList<String>();
-				if (line < text.length) {
-					for (int i = 0; i < text[line].length; ++i) {
-						goldCharSequences[line].add(text[line][i]);
-					}
-				}
-			}
-
-			//
-			// Evaluate the comparison
-			//
-			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
-			if (!learnFont) {
-				allEvals.add(makeTuple2(doc.baseName(), evals));
-			}
-			
-			//
-			// Make comparison file
-			//
-			{
-			StringBuffer goldComparisonOutputBuffer = new StringBuffer();
-			goldComparisonOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
-			for (int line = 0; line < numLines; ++line) {
-				goldComparisonOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
-				goldComparisonOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
-				goldComparisonOutputBuffer.append("\n");
-			}
-			goldComparisonOutputBuffer.append(Evaluator.renderEval(evals));
-			System.out.println("Writing gold comparison to " + goldComparisonOutputFilename);
-			System.out.println(goldComparisonOutputBuffer.toString());
-			f.writeString(goldComparisonOutputFilename, goldComparisonOutputBuffer.toString());
-			}
-			
-			//
-			// Make comparison file with substitutions
-			//
-			{
-			System.out.println("Transcription with substitutions");
-			StringBuffer goldComparisonWithSubsOutputBuffer = new StringBuffer();
-			for (int line = 0; line < decodeStates.length; ++line) {
-				for (TransitionState ts : viterbiTransStates[line]) {
-					int lmChar = ts.getLmCharIndex();
-					GlyphChar glyph = ts.getGlyphChar();
-					int glyphChar = glyph.templateCharIndex;
-					String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
-					if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
-						goldComparisonWithSubsOutputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
-					}
-					else {
-						goldComparisonWithSubsOutputBuffer.append(sglyphChar);
-					}
-				}
-				goldComparisonWithSubsOutputBuffer.append("\n");
-				
-				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
-				goldComparisonWithSubsOutputBuffer.append("\n");
-			}
-			goldComparisonWithSubsOutputBuffer.append(Evaluator.renderEval(evals));
-			System.out.println(goldComparisonWithSubsOutputBuffer.toString() + "\n\n");
-			f.writeString(goldComparisonWithSubsOutputFilename, goldComparisonWithSubsOutputBuffer.toString());
-			}
-		}
-
-		if (langIndexer.size() > 1) {
-			System.out.println("Multiple languages being used ("+langIndexer.size()+"), so an html file is being generated to show language switching.");
-			System.out.println("Writing html output to " + htmlOutputFilename);
-			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, langIndexer, doc.baseName(), htmlOutputFilename));
-		}
-	}
-
-	private static String printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, Indexer<String> langIndexer, String imgFilename, String htmlOutputFilename) {
-		StringBuffer outputBuffer = new StringBuffer();
-		outputBuffer.append("<HTML xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n");
-		outputBuffer.append("<HEAD><META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></HEAD>\n");
-		outputBuffer.append("<body>\n");
-		outputBuffer.append("<table><tr><td>\n");
-		outputBuffer.append("<font face=\"courier\"> \n");
-		outputBuffer.append("</br></br></br></br></br>\n");
-		outputBuffer.append("</br></br>\n\n");
-
-		String[] colors = new String[] { "Black", "Red", "Blue", "Olive", "Orange", "Magenta", "Lime", "Cyan", "Purple", "Green", "Brown" };
-
-		@SuppressWarnings("unchecked")
-		List<String>[] csViterbiChars = new List[decodeStates.length];
-		int prevLanguage = -1;
-		for (int line = 0; line < decodeStates.length; ++line) {
-			csViterbiChars[line] = new ArrayList<String>();
-			if (decodeStates[line] != null) {
-				for (int i = 0; i < decodeStates[line].length; ++i) {
-					TransitionState ts = decodeStates[line][i];
-					int lmChar = ts.getLmCharIndex();
-					GlyphChar glyph = ts.getGlyphChar();
-					int glyphChar = glyph.templateCharIndex;
-					if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(glyphChar)))) {
-						String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
-						csViterbiChars[line].add(sglyphChar);
-
-						int currLanguage = ts.getLanguageIndex();
-						if (currLanguage != prevLanguage) {
-							if (prevLanguage < 0) {
-								outputBuffer.append("</font>");
-							}
-							outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
-						}
-						if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
-							outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
-						}
-						else {
-							outputBuffer.append(sglyphChar);
-						}
-						prevLanguage = currLanguage;
-					}
-				}
-			}
-			outputBuffer.append("</br>\n");
-		}
-		outputBuffer.append("</font></font><br/><br/><br/>\n");
-		for (int i = -1; i < langIndexer.size(); ++i) {
-			outputBuffer.append("<font color=\"" + colors[i+1] + "\">" + (i < 0 ? "none" : langIndexer.getObject(i)) + "</font></br>\n");
-		}
-
-		outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\">\n");
-		outputBuffer.append("</td></tr></table>\n");
-		outputBuffer.append("</body></html>\n");
-		outputBuffer.append("\n\n\n");
-		outputBuffer.append("\n\n\n\n\n");
-		return outputBuffer.toString();
 	}
 
 }
