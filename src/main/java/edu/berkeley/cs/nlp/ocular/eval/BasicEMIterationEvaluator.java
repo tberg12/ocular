@@ -45,10 +45,10 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 	}
 
 	public void evaluate(int iter, Document doc, TransitionState[][] decodeStates, int[][] decodeWidths) {
-		printTranscription(iter, learnFont, doc, allEvals, decodeStates, decodeWidths, charIndexer, langIndexer, outputPath);
+		printTranscription(iter, doc, allEvals, decodeStates, decodeWidths);
 	}
 
-	private void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, Indexer<String> langIndexer, String outputPath) {
+	private void printTranscription(int iter, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, int[][] decodeWidths) {
 		String[][] text = doc.loadLineText();
 		
 		//
@@ -257,12 +257,12 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 				if (currLanguage != prevLanguage) {
 					outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 				}
-				if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
+				
+				if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided)
 					outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
-				}
-				else {
+				else
 					outputBuffer.append(sglyphChar);
-				}
+				
 				prevLanguage = currLanguage;
 			}
 			outputBuffer.append("</br>\n");
