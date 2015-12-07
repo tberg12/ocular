@@ -49,8 +49,32 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 	}
 
 	private void printTranscription(int iter, boolean learnFont, Document doc, List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, Indexer<String> langIndexer, String outputPath) {
-		final String[][] text = doc.loadLineText();
+		String[][] text = doc.loadLineText();
+		
+		//
+		// Make sure the decoded states and the text have the same number of lines (numLines)
+		//
 		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
+		if (text != null && text.length < numLines) {
+			String[][] newText = new String[numLines][];
+			for (int line = 0; line < numLines; ++line) {
+				if (line < text.length)
+					newText[line] = text[line];
+				else
+					newText[line] = new String[0];
+			}
+			text = newText;
+		}
+		if (decodeStates.length < numLines) {
+			TransitionState[][] newDecodeStates = new TransitionState[numLines][];
+			for (int line = 0; line < numLines; ++line) {
+				if (line < decodeStates.length)
+					newDecodeStates[line] = decodeStates[line];
+				else
+					newDecodeStates[line] = new TransitionState[0];
+			}
+			decodeStates = newDecodeStates;
+		}
 
 		//
 		// Get the model output
@@ -65,17 +89,15 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 			viterbiChars[line] = new ArrayList<String>();
 			viterbiTransStates[line] = new ArrayList<TransitionState>();
 			viterbiWidths[line] = new ArrayList<Integer>();
-			if (line < decodeStates.length) {
-				for (int i = 0; i < decodeStates[line].length; ++i) {
-					TransitionState ts = decodeStates[line][i];
-					int c = ts.getGlyphChar().templateCharIndex;
-					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-						if (!ts.getGlyphChar().isElided) {
-							viterbiChars[line].add(charIndexer.getObject(c));
-						}
-						viterbiTransStates[line].add(ts);
-						viterbiWidths[line].add(decodeWidths[line][i]);
+			for (int i = 0; i < decodeStates[line].length; ++i) {
+				TransitionState ts = decodeStates[line][i];
+				int c = ts.getGlyphChar().templateCharIndex;
+				if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
+					if (!ts.getGlyphChar().isElided) {
+						viterbiChars[line].add(charIndexer.getObject(c));
 					}
+					viterbiTransStates[line].add(ts);
+					viterbiWidths[line].add(decodeWidths[line][i]);
 				}
 			}
 		}
@@ -97,7 +119,7 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 		{
 		System.out.println("Writing transcription output to " + transcriptionOutputFilename);
 		StringBuffer transcriptionOutputBuffer = new StringBuffer();
-		for (int line = 0; line < decodeStates.length; ++line) {
+		for (int line = 0; line < numLines; ++line) {
 			transcriptionOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 		}
 		System.out.println(transcriptionOutputBuffer.toString() + "\n\n");
@@ -110,7 +132,7 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 		List<String> transcriptionWithSubsOutputLines = new ArrayList<String>();
 		{
 		System.out.println("Transcription with substitutions");
-		for (int line = 0; line < decodeStates.length; ++line) {
+		for (int line = 0; line < numLines; ++line) {
 			StringBuilder lineBuffer = new StringBuilder();
 			for (TransitionState ts : viterbiTransStates[line]) {
 				int lmChar = ts.getLmCharIndex();
@@ -137,7 +159,7 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 		{
 		System.out.println("Transcription with widths");
 		StringBuffer transcriptionWithWidthsOutputBuffer = new StringBuffer();
-		for (int line = 0; line < decodeStates.length; ++line) {
+		for (int line = 0; line < numLines; ++line) {
 			for (int i = 0; i < viterbiTransStates[line].size(); ++i) {
 				TransitionState ts = viterbiTransStates[line].get(i);
 				int w = viterbiWidths[line].get(i);
@@ -158,10 +180,8 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 			List<String>[] goldCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
 				goldCharSequences[line] = new ArrayList<String>();
-				if (line < text.length) {
-					for (int i = 0; i < text[line].length; ++i) {
-						goldCharSequences[line].add(text[line][i]);
-					}
+				for (int i = 0; i < text[line].length; ++i) {
+					goldCharSequences[line].add(text[line][i]);
 				}
 			}
 
@@ -197,7 +217,7 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 			System.out.println("Transcription with substitutions");
 			StringBuffer goldComparisonWithSubsOutputBuffer = new StringBuffer();
 			goldComparisonWithSubsOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
-			for (int line = 0; line < decodeStates.length; ++line) {
+			for (int line = 0; line < numLines; ++line) {
 				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(transcriptionWithSubsOutputLines.get(line), "") + "\n");
 				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
 				goldComparisonWithSubsOutputBuffer.append("\n");
@@ -212,53 +232,38 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 		if (langIndexer.size() > 1) {
 			System.out.println("Multiple languages being used ("+langIndexer.size()+"), so an html file is being generated to show language switching.");
 			System.out.println("Writing html output to " + htmlOutputFilename);
-			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, decodeStates, charIndexer, langIndexer, doc.baseName(), htmlOutputFilename));
+			f.writeString(htmlOutputFilename, printLanguageAnnotatedTranscription(text, numLines, viterbiTransStates, charIndexer, langIndexer, doc.baseName(), htmlOutputFilename));
 		}
 	}
 
-	private String printLanguageAnnotatedTranscription(String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer, Indexer<String> langIndexer, String imgFilename, String htmlOutputFilename) {
+	private String printLanguageAnnotatedTranscription(String[][] text, int numLines, List<TransitionState>[] viterbiTransStates, Indexer<String> charIndexer, Indexer<String> langIndexer, String imgFilename, String htmlOutputFilename) {
 		StringBuffer outputBuffer = new StringBuffer();
 		outputBuffer.append("<HTML xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n");
 		outputBuffer.append("<HEAD><META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></HEAD>\n");
 		outputBuffer.append("<body>\n");
 		outputBuffer.append("<table><tr><td>\n");
-		outputBuffer.append("<font face=\"courier\"> \n");
-		outputBuffer.append("</br></br></br></br></br>\n");
-		outputBuffer.append("</br></br>\n\n");
 
 		String[] colors = new String[] { "Black", "Red", "Blue", "Olive", "Orange", "Magenta", "Lime", "Cyan", "Purple", "Green", "Brown" };
 
-		@SuppressWarnings("unchecked")
-		List<String>[] csViterbiChars = new List[decodeStates.length];
 		int prevLanguage = -1;
-		for (int line = 0; line < decodeStates.length; ++line) {
-			csViterbiChars[line] = new ArrayList<String>();
-			if (decodeStates[line] != null) {
-				for (int i = 0; i < decodeStates[line].length; ++i) {
-					TransitionState ts = decodeStates[line][i];
-					int lmChar = ts.getLmCharIndex();
-					GlyphChar glyph = ts.getGlyphChar();
-					int glyphChar = glyph.templateCharIndex;
-					if (csViterbiChars[line].isEmpty() || !(HYPHEN.equals(csViterbiChars[line].get(csViterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(glyphChar)))) {
-						String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
-						csViterbiChars[line].add(sglyphChar);
+		for (int line = 0; line < numLines; ++line) {
+			for (TransitionState ts : viterbiTransStates[line]) {
+				int lmChar = ts.getLmCharIndex();
+				GlyphChar glyph = ts.getGlyphChar();
+				int glyphChar = glyph.templateCharIndex;
+				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
 
-						int currLanguage = ts.getLanguageIndex();
-						if (currLanguage != prevLanguage) {
-							if (prevLanguage < 0) {
-								outputBuffer.append("</font>");
-							}
-							outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
-						}
-						if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
-							outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
-						}
-						else {
-							outputBuffer.append(sglyphChar);
-						}
-						prevLanguage = currLanguage;
-					}
+				int currLanguage = ts.getLanguageIndex();
+				if (currLanguage != prevLanguage) {
+					outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 				}
+				if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
+					outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
+				}
+				else {
+					outputBuffer.append(sglyphChar);
+				}
+				prevLanguage = currLanguage;
 			}
 			outputBuffer.append("</br>\n");
 		}
