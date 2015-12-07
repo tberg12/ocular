@@ -225,13 +225,23 @@ public class TrainLanguageModel implements Runnable {
 		}
 		
 		/*
-		 *  Add elision-tilde decorated versions of the characters, but don't 
-		 *  necessary associate them with any particular languages since they
-		 *  are not truly characters in that language.
+		 *  Add alternate versions of the characters, but don't necessary 
+		 *  associate them with any particular languages since they are not 
+		 *  truly characters in that language.
 		 */
 		for (String c : charIndexer.getObjects()) {
-			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c)) {
+			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c))
 				charIndexer.getIndex(Charset.TILDE_ESCAPE + c);
+			
+			Tuple2<List<String>,String> originalEscapedDiacriticsAndLetter = Charset.escapeCharSeparateDiacritics(c);
+			String baseLetter = originalEscapedDiacriticsAndLetter._2;
+			if (Charset.LETTERS_WITH_DISREGARDEDABLE_DIACRITICS.contains(baseLetter)) {
+				for (String diacritic : originalEscapedDiacriticsAndLetter._1) {
+					if (Charset.ESCAPE_DIACRITICS_THAT_CAN_BE_DISREGARDED.contains(diacritic)) {
+						charIndexer.getIndex(baseLetter);
+						break;
+					}
+				}
 			}
 		}
 		

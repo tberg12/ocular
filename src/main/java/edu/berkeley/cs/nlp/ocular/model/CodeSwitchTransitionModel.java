@@ -3,9 +3,11 @@ package edu.berkeley.cs.nlp.ocular.model;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeAddTildeMap;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElidedSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeReplacedSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeDiacriticDisregardMap;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makePunctSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubstitutionCharsSet;
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.*;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setIntersection;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.util.ArrayList;
@@ -138,6 +140,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		 *   2. Next state's glyph is a substitution of the LM character
 		 *   3. Next state's glyph is an elision-decorated version of the LM character
 		 *   4. Next state's glyph is elided
+		 *   5. Next state's glyph is the LM char, stripped of its accents
 		 * 
 		 */
 		private void addGlyphStates(List<Tuple2<TransitionState, Double>> result, int nextLmChar, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
@@ -173,6 +176,14 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					if (glyphType == GlyphType.ELIDED) {
 						if (canBeElided.contains(nextLmChar)) {
 							potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, false, true)); // TODO: commenting this out will ensure that only single-char elisions will be allowed
+						}
+					}
+					
+					// 5. Next state's glyph is the LM char, stripped of its accents
+					Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(nextLmChar);
+					if (diacriticDisregardSet != null) {
+						for (Integer replacementChar : diacriticDisregardSet) {
+							potentialNextGlyphChars.add(new GlyphChar(replacementChar, false, false));
 						}
 					}
 				}
@@ -451,6 +462,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private Set<Integer> validSubstitutionChars;
 	private Set<Integer> canBeElided;
 	private Map<Integer, Integer> addTilde;
+	private Map<Integer,Set<Integer>> diacriticDisregardMap;
 
 	private int numLanguages;
 	private CodeSwitchLanguageModel lm;
@@ -503,6 +515,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.validSubstitutionChars = makeValidSubstitutionCharsSet(charIndexer);
 		this.canBeElided = makeCanBeElidedSet(charIndexer);
 		this.addTilde = makeAddTildeMap(charIndexer);
+		this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
 
 		this.n = lm.getMaxOrder();
 
@@ -529,6 +542,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 *   2. Next state's glyph is a substitution of the LM character
 	 *   3. Next state's glyph is an elision-decorated version of the LM character
 	 * X 4. Next state's glyph is elided
+	 *   5. Next state's glyph is the LM char, stripped of its accents
 	 * 
 	 */
 	private void addGlyphStartStates(List<Tuple2<TransitionState, Double>> result, int nextLmChar, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
@@ -551,6 +565,14 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			Integer tildeLmCharIndex = addTilde.get(nextLmChar);
 			if (tildeLmCharIndex != null) {
 				potentialNextGlyphChars.add(new GlyphChar(tildeLmCharIndex, true, false));
+			}
+			
+			// 5. Next state's glyph is the LM char, stripped of its accents
+			Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(nextLmChar);
+			if (diacriticDisregardSet != null) {
+				for (Integer replacementChar : diacriticDisregardSet) {
+					potentialNextGlyphChars.add(new GlyphChar(replacementChar, false, false));
+				}
 			}
 	
 			// Create states for all the potential next glyphs

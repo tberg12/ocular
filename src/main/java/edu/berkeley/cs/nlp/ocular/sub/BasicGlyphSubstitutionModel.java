@@ -3,8 +3,10 @@ package edu.berkeley.cs.nlp.ocular.sub;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeAddTildeMap;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElidedSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeReplacedSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeDiacriticDisregardMap;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubstitutionCharsSet;
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.*;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setUnion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,13 +59,8 @@ import indexer.Indexer;
 public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	private static final long serialVersionUID = -8473038413268727114L;
 
-	private CodeSwitchLanguageModel newLM;
 	private Indexer<String> langIndexer;
 	private Indexer<String> charIndexer;
-	private Set<Integer> canBeReplaced;
-	private Set<Integer> validSubstitutionChars;
-	private Set<Integer> canBeElided;
-	private Map<Integer,Integer> addTilde;
 
 	//private int numGlyphs;
 	private int GLYPH_ELISION_TILDE;
@@ -75,14 +72,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			CodeSwitchLanguageModel newLM,
 			Indexer<String> langIndexer, Indexer<String> charIndexer, 
 			Set<Integer> canBeReplaced, Set<Integer> validSubstitutionChars, Set<Integer> canBeElided, Map<Integer, Integer> addTilde) {
-		this.newLM = newLM;
 		this.langIndexer = langIndexer;
 		this.charIndexer = charIndexer;
-		
-		this.canBeReplaced = canBeReplaced;
-		this.validSubstitutionChars = validSubstitutionChars;
-		this.canBeElided = canBeElided;
-		this.addTilde = addTilde;
 		
 		int numChars = charIndexer.size();
 		//this.numGlyphs = numChars + 2;
@@ -95,45 +86,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
 		GlyphType currGlyphType = glyphChar.toGlyphType();
 		int glyph = (currGlyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (currGlyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : glyphChar.templateCharIndex);
-		
-		double p = probs[language][prevGlyphType.ordinal()][prevLmChar][lmChar][glyph];
-		
-//		boolean invalid = true;
-//		Set<Integer> langActiveChars = newLM.get(language).getActiveCharacters();
-//		if (langActiveChars.contains(lmChar)) {
-//			if (glyph == GLYPH_ELISION_TILDE) {
-//				if (prevGlyphType != GlyphType.ELISION_TILDE) {
-//					if (addTilde.get(lmChar) != null) {
-//						invalid = false;
-//					}
-//				}
-//			}
-//			else if (glyph == GLYPH_ELIDED) {
-//				if (prevGlyphType != GlyphType.NORMAL_CHAR) {
-//					if (canBeElided.contains(lmChar)) {
-//						invalid = false;
-//					}
-//				}
-//			}
-//			else { // glyph is a normal character
-//				if (langActiveChars.contains(glyph)) {
-//					if (prevGlyphType != GlyphType.ELISION_TILDE) {
-//						if (lmChar == glyph) {
-//							invalid = false;
-//						}
-//						else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph)) {
-//							invalid = false;
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//		if (invalid != (lp == Double.NEGATIVE_INFINITY)) {
-//			throw new RuntimeException("invalid="+invalid+", lp="+lp+"\n  lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyphType + ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+glyphChar.toString(charIndexer));
-//		}
-		
-		return p;
+		return probs[language][prevGlyphType.ordinal()][prevLmChar][lmChar][glyph];
 	}
 
 	public Indexer<String> getLanguageIndexer() {
@@ -153,6 +106,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private Set<Integer> validSubstitutionChars;
 		private Set<Integer> canBeElided;
 		private Map<Integer,Integer> addTilde;
+		private Map<Integer,Set<Integer>> diacriticDisregardMap;
 
 		public BasicGlyphSubstitutionModelFactory(
 				Indexer<String> langIndexer,
@@ -164,6 +118,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.validSubstitutionChars = makeValidSubstitutionCharsSet(charIndexer);
 			this.canBeElided = makeCanBeElidedSet(charIndexer);
 			this.addTilde = makeAddTildeMap(charIndexer);
+			this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
 		}
 		
 		public BasicGlyphSubstitutionModel make(List<TransitionState> fullViterbiStateSeq, double gsmSmoothingCount, CodeSwitchLanguageModel newLM) {
@@ -210,11 +165,11 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 									else { // glyph is a normal character
 										if (langActiveChars.contains(glyph)) {
 											if (prevGlyph != GlyphType.ELISION_TILDE) {
-												if (lmChar == glyph) {
-													counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = gsmSmoothingCount;
-												}
-												else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph)) {
-													counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = gsmSmoothingCount;
+												Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(lmChar);
+												if (lmChar == glyph ||
+													(canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph)) ||
+													(diacriticDisregardSet != null && diacriticDisregardSet.contains(glyph))) {
+														counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = gsmSmoothingCount;
 												}
 											}
 										}

@@ -24,6 +24,7 @@ public class Charset {
 	public static final String SPACE = " ";
 	public static final String HYPHEN = "-";
 	public static final Set<String> LOWERCASE_LATIN_LETTERS = makeSet("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
+	public static final Set<String> LOWERCASE_VOWELS = makeSet("a", "e", "i", "o", "u");
 	public static final String LONG_S = "\u017F"; // ſ
 	public static final Set<String> BANNED_CHARS = makeSet("@", "$", "%");
 	/**
@@ -222,6 +223,8 @@ public class Charset {
 	public static final Set<String> VALID_CHAR_SUBSTITUTIONS = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_ELIDED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	public static final Set<String> ESCAPE_DIACRITICS_THAT_CAN_BE_DISREGARDED = makeSet(GRAVE_ESCAPE, ACUTE_ESCAPE);
+	public static final Set<String> LETTERS_WITH_DISREGARDEDABLE_DIACRITICS = LOWERCASE_VOWELS;
 	
 	public static Set<Integer> makePunctSet(Indexer<String> charIndexer) {
 		Set<Integer> punctSet = new HashSet<Integer>();
@@ -256,13 +259,31 @@ public class Charset {
 		return canBeElided;
 	}
 	public static Map<Integer,Integer> makeAddTildeMap(Indexer<String> charIndexer) {
-		Map<Integer,Integer> addTilde = new HashMap<Integer, Integer>();
+		Map<Integer,Integer> m = new HashMap<Integer, Integer>();
 		for (String c : charIndexer.getObjects()) {
 			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c)) {
-				addTilde.put(charIndexer.getIndex(c), charIndexer.getIndex(Charset.TILDE_ESCAPE + c));
+				m.put(charIndexer.getIndex(c), charIndexer.getIndex(Charset.TILDE_ESCAPE + c));
 			}
 		}
-		return addTilde;
+		return m;
+	}
+	public static Map<Integer,Set<Integer>> makeDiacriticDisregardMap(Indexer<String> charIndexer) {
+		Map<Integer,Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+		for (String original : charIndexer.getObjects()) { // find accented letters
+			Tuple2<List<String>,String> originalEscapedDiacriticsAndLetter = escapeCharSeparateDiacritics(original);
+			String baseLetter = originalEscapedDiacriticsAndLetter._2;
+			if (charIndexer.getObjects().contains(baseLetter) && LETTERS_WITH_DISREGARDEDABLE_DIACRITICS.contains(baseLetter)) {
+				for (String diacritic : originalEscapedDiacriticsAndLetter._1) {
+					if (ESCAPE_DIACRITICS_THAT_CAN_BE_DISREGARDED.contains(diacritic)) {
+						Set<Integer> replacementSet = m.get(original);
+						if (replacementSet == null) replacementSet = new HashSet<Integer>();
+						replacementSet.add(charIndexer.getIndex(baseLetter));
+						break;
+					}
+				}
+			}
+		}
+		return m;
 	}
 	
 	
