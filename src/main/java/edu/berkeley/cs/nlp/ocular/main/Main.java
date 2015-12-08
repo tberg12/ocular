@@ -37,6 +37,9 @@ import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Main implements Runnable {
 
 	@Option(gloss = "Path of the directory that contains the input document images.")
@@ -291,6 +294,7 @@ public class Main implements Runnable {
 	}
 
 	private static void printTranscription(int iter, int numIters, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer) {
+		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[decodeStates.length];
 		for (int line=0; line<decodeStates.length; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
@@ -303,6 +307,7 @@ public class Main implements Runnable {
 			}
 		}
 		if (text != null) {
+			@SuppressWarnings("unchecked")
 			List<String>[] goldCharSequences = new List[text.length];
 			for (int line=0; line<decodeStates.length; ++line) {
 				goldCharSequences[line] = new ArrayList<String>();

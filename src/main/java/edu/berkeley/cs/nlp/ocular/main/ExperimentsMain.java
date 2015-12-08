@@ -40,6 +40,9 @@ import fig.Execution;
 import fig.Option;
 import fileio.f;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class ExperimentsMain implements Runnable {
 	
 	@Option(gloss = "")
@@ -245,8 +248,11 @@ public class ExperimentsMain implements Runnable {
 	
 	private static void printTranscription(int iter, int numIters, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, PixelType[][][] pixels, String[][] text, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, CharacterTemplate[] templates, EmissionModel emissionModel) {
 		if (evaluate || writeVisuals || popupVisuals) {
+			@SuppressWarnings("unchecked")
 			List<Integer>[] segmentBoundaries = new List[pixels.length];
+			@SuppressWarnings("unchecked")
 			List<String>[] viterbiChars = new List[pixels.length];
+			@SuppressWarnings("unchecked")
 			List<double[]>[] pixelsBlackProbsLists = new List[pixels.length];
 			for (int d=0; d<decodeStates.length; ++d) {
 				segmentBoundaries[d] = new ArrayList<Integer>();
@@ -315,6 +321,7 @@ public class ExperimentsMain implements Runnable {
 			for (int i=0; i<alphabetBlackProbsList.size(); ++i) alphabetBlackProbs[0][i] = alphabetBlackProbsList.get(i);
 
 			if (text != null && evaluate) {
+				@SuppressWarnings("unchecked")
 				List<String>[] goldCharSequences = new List[text.length];
 				for (int d=0; d<text.length; ++d) {
 					goldCharSequences[d] = new ArrayList<String>();

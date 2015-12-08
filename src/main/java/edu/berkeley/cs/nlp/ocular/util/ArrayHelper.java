@@ -2,6 +2,9 @@ package edu.berkeley.cs.nlp.ocular.util;
 
 import java.util.Arrays;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class ArrayHelper {
 
 	public static int[] prepend(int c, int[] vec1) {

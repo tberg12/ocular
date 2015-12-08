@@ -1,6 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.lm;
 
-
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public interface CountDb {
   
   public long getNumTokens();

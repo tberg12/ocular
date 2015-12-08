@@ -1,16 +1,18 @@
 package edu.berkeley.cs.nlp.ocular.lm;
 
-import indexer.HashMapIndexer;
-import indexer.Indexer;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import indexer.Indexer;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class NgramLanguageModel implements SingleLanguageModel {
 	private static final long serialVersionUID = 873286328149782L;
 
@@ -52,7 +54,7 @@ public class NgramLanguageModel implements SingleLanguageModel {
 	public static NgramLanguageModel buildFromText(String fileName, int maxNumLines, int maxOrder, LMType type, double lmPower, TextReader textReader) {
 		CorpusCounter counter = new CorpusCounter(maxOrder);
 		Set<Integer> activeCharacters = counter.getActiveCharacters();
-		Indexer<String> charIndexer = new HashMapIndexer<String>();
+		Indexer<String> charIndexer = new CharIndexer();
 		for (String c : Charset.UNIV_PUNC) activeCharacters.add(charIndexer.getIndex(c));
 		counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
 		charIndexer.lock();

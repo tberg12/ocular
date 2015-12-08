@@ -21,6 +21,9 @@ import javax.swing.SwingConstants;
 import edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont;
 import edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont.EmissionCacheInnerLoopType;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class TranscribeOrTrainFontGUI {
 
 	public static Color GRAY = new Color(238, 238, 238);

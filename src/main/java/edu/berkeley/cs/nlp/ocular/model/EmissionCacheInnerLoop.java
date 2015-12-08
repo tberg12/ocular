@@ -1,5 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public interface EmissionCacheInnerLoop {
 	public void startup(float[][] whiteTemplates, float[][] blackTemplates, int[] templateNumIndices, int[] templateIndicesOffsets, int minTemplateWidth, int maxTemplateWidth, int maxSequenceLength, int totalTemplateNumIndices);
 	public void shutdown();

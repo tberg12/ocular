@@ -1,8 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
-import indexer.HashMapIndexer;
-import indexer.Indexer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,6 +19,7 @@ import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ExplicitCharacterSetTextReader;
@@ -37,8 +36,10 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
+import indexer.Indexer;
 
 /**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
 public class TrainLanguageModel implements Runnable {
@@ -94,7 +95,7 @@ public class TrainLanguageModel implements Runnable {
 		
 		Map<String, Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = makePathsReadersAndPriors();
 
-		Indexer<String> charIndexer = new HashMapIndexer<String>();
+		Indexer<String> charIndexer = new CharIndexer();
 		Map<String, Tuple2<SingleLanguageModel, Double>> lmsAndPriors = makeMultipleSubLMs(pathsReadersAndPriors, charIndexer);
 		charIndexer.lock();
 
@@ -228,6 +229,7 @@ public class TrainLanguageModel implements Runnable {
 					List<String> chars = textReader.readCharacters(line + " ");
 					
 					for (String c: chars) {
+						// validate the character...
 						Charset.escapeChar(c);
 						Charset.unescapeChar(c);
 					}

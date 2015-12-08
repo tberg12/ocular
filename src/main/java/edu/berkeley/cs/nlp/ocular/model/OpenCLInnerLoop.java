@@ -19,6 +19,9 @@ import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 
 import gpu.CudaUtil;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class OpenCLInnerLoop implements EmissionCacheInnerLoop {
 
 	public static final int NVIDIA_GPU_BLOCK_SIZE_X = 1;
@@ -129,6 +132,7 @@ public class OpenCLInnerLoop implements EmissionCacheInnerLoop {
 		this.numThreads = numThreads;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void startup(float[][] whiteTemplates, float[][] blackTemplates, int[] templateNumIndices, int[] templateIndicesOffsets, int minTemplateWidth, int maxTemplateWidth, int maxSequenceLength, int totalTemplateNumIndices) {
 		this.templateNumIndices = templateNumIndices;
 		this.templateIndicesOffsets = templateIndicesOffsets;

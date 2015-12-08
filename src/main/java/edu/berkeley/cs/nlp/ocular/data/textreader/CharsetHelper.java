@@ -5,6 +5,9 @@ import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class CharsetHelper {
 
 	public static List<String> splitToEncodedWords(List<String> chars) {

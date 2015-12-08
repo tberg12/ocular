@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,12 +11,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class CollectionHelper {
 
 	public static <K, V> Map<K, V> map1(K key, V value) {
 		return Collections.singletonMap(key, value);
 	}
 
+	@SafeVarargs
 	public static <K, V> Map<K, V> makeMap(Tuple2<K, V>... tuples) {
 		if (tuples.length == 0) {
 			return Collections.<K, V> emptyMap();
@@ -41,6 +46,32 @@ public class CollectionHelper {
 			return def;
 	}
 
+	public static <A> Set<A> makeSet(Collection<A> xs) {
+		if (xs.size() == 0)
+			return Collections.<A> emptySet();
+		else if (xs.size() == 1)
+			return Collections.singleton(xs.iterator().next());
+		else {
+			Set<A> set = new HashSet<A>(xs.size());
+			set.addAll(xs);
+			return set;
+		}
+	}
+	
+	@SafeVarargs
+	public static <A> Set<A> makeSet(A... xs) {
+		if (xs.length == 0)
+			return Collections.<A> emptySet();
+		else if (xs.length == 1)
+			return Collections.singleton(xs[0]);
+		else {
+			Set<A> set = new HashSet<A>(xs.length);
+			Collections.addAll(set, xs);
+			return set;
+		}
+	}
+
+	@SafeVarargs
 	public static <A> Set<A> setUnion(Set<A>... sets) {
 		if (sets.length == 0)
 			return Collections.<A> emptySet();
@@ -54,14 +85,6 @@ public class CollectionHelper {
 		}
 	}
 
-	public static <A> Set<A> setDiff(Set<A> a, Set<A> b) {
-		Set<A> set = new HashSet<A>();
-		for (A x : a)
-			if (!b.contains(x)) 
-				set.add(x);
-		return set;
-	}
-
 	public static <A> Set<A> setIntersection(Set<A> a, Set<A> b) {
 		Set<A> set = new HashSet<A>();
 		for (A x : a)
@@ -70,24 +93,21 @@ public class CollectionHelper {
 		return set;
 	}
 
+	public static <A> Set<A> setDiff(Set<A> a, Set<A> b) {
+		Set<A> set = new HashSet<A>();
+		for (A x : a)
+			if (!b.contains(x)) 
+				set.add(x);
+		return set;
+	}
+
 	public static <A> List<A> makeList(Collection<? extends A> xs) {
-		if (xs.size() == 0)
-			return Collections.<A> emptyList();
-		else {
-			List<A> l = new ArrayList<A>();
-			l.addAll(xs);
-			return l;
-		}
+		return new ArrayList<A>(xs);
 	}
 	
+	@SafeVarargs
 	public static <A> List<A> makeList(A... xs) {
-		if (xs.length == 0)
-			return Collections.<A> emptyList();
-		else {
-			List<A> l = new ArrayList<A>();
-			Collections.addAll(l, xs);
-			return l;
-		}
+		return Arrays.asList(xs);
 	}
 	
 	public static <A> List<A> fillList(int size, A item) {
@@ -97,30 +117,7 @@ public class CollectionHelper {
 		return l;
 	}
 	
-	public static <A> Set<A> makeSet(Collection<A> xs) {
-		if (xs.size() == 0)
-			return Collections.<A> emptySet();
-		else if (xs.size() == 1)
-			return Collections.singleton(xs.iterator().next());
-		else {
-			Set<A> set = new HashSet<A>(xs.size());
-			set.addAll(xs);
-			return set;
-		}
-	}
-	
-	public static <A> Set<A> makeSet(A... xs) {
-		if (xs.length == 0)
-			return Collections.<A> emptySet();
-		else if (xs.length == 1)
-			return Collections.singleton(xs[0]);
-		else {
-			Set<A> set = new HashSet<A>(xs.length);
-			Collections.addAll(set, xs);
-			return set;
-		}
-	}
-
+	@SafeVarargs
 	public static <A> List<A> listCat(List<A>... lists) {
 		if (lists.length == 0)
 			return Collections.<A> emptyList();

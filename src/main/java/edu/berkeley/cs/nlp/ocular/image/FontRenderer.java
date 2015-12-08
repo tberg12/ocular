@@ -20,6 +20,9 @@ import java.util.Set;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.unescapeChar;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class FontRenderer {
 	
 	private static Set<String> OUTLAWED_FONTS;

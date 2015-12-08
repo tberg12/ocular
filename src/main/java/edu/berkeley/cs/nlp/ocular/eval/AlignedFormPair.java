@@ -2,7 +2,9 @@ package edu.berkeley.cs.nlp.ocular.eval;
 
 import java.util.List;
 
-
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class AlignedFormPair {
   
   public final Form src;

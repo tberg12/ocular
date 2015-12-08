@@ -16,6 +16,9 @@ import javax.swing.SwingConstants;
 
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
 
+/**
+ * @author Dan Garrette (dhg@cs.utexas.edu)
+ */
 public class InitializeFontGUI {
 
 	private int HEIGHT = 250;

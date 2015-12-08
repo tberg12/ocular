@@ -2,6 +2,9 @@ package edu.berkeley.cs.nlp.ocular.model;
 
 import gpu.CudaUtil;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class DefaultInnerLoop implements EmissionCacheInnerLoop {
 	
 	int numThreads;

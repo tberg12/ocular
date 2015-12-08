@@ -1,5 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Glyph implements Comparable<Glyph> {
   
   public final String glyph;

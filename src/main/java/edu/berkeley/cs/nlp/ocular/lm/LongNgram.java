@@ -13,8 +13,7 @@ import indexer.Indexer;
  * n-grams (with 0s) can be differentiated from n-grams with the first character in the indexer
  * in them.
  * 
- * @author Greg
- *
+ * @author Greg Durrett (gdurrett@cs.berkeley.edu)
  */
 public class LongNgram {
 

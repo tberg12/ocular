@@ -16,8 +16,7 @@ import java.util.List;
  * than it needs to be because it's object-heavy, but this isn't the bottleneck of our
  * algorithm and this generality allows possible other extensions to edit distance.
  * 
- * @author gdurrett
- * 
+ * @author Greg Durrett (gdurrett@cs.berkeley.edu)
  */
 public class MarkovEditDistanceComputer {
 
@@ -25,9 +24,6 @@ public class MarkovEditDistanceComputer {
    * Stores parameters for the edit distance operation.
    * Also stores the things being aligned because some parameters are anchored
    * to these, such as the fancy equality and substitute costs.
-   * 
-   * @author gdurrett
-   *
    */
   public static class EditDistanceParams {
 
@@ -64,9 +60,6 @@ public class MarkovEditDistanceComputer {
 
   /**
    * State for the Viterbi forward pass through the edit distance lattice to compute backward costs.
-   * 
-   * @author gdurrett
-   *
    */
   public static class ForwardSearchState {
 

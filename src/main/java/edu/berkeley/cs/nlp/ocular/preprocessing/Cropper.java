@@ -7,6 +7,9 @@ import java.util.Arrays;
 import arrays.a;
 import tuple.Pair;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class Cropper {
 	
 	public static final int NUM_CROP_POINTS = 200;

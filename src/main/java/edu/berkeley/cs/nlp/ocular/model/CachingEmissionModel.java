@@ -12,6 +12,9 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class CachingEmissionModel implements EmissionModel {
 	
 	private EmissionCacheInnerLoop innerLoop;
@@ -229,7 +232,9 @@ public class CachingEmissionModel implements EmissionModel {
 		final int minTemplateWidth = minTemplateWidthTmp;
 		final int numTemplateWidths = (maxTemplateWidth-minTemplateWidth)+1;
 		final int[][][][] templateIndices = new int[numTemplateWidths][charIndexer.size()][CharacterTemplate.EXP_GAINS.length][2*CharacterTemplate.MAX_OFFSET+1]; 
+		@SuppressWarnings("unchecked")
 		final List<float[]>[] whiteTemplatesList = new List[numTemplateWidths];
+		@SuppressWarnings("unchecked")
 		final List<float[]>[] blackTemplatesList = new List[numTemplateWidths];
 		for (int tw=minTemplateWidth; tw<=maxTemplateWidth; ++tw) {
 			whiteTemplatesList[tw-minTemplateWidth] = new ArrayList<float[]>();

@@ -24,6 +24,9 @@ import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
 import fig.OptionsParser;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class InitializeFont implements Runnable {
 
 	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
@@ -124,6 +127,7 @@ public class InitializeFont implements Runnable {
 		return fAndBarFontPixelData.toArray(new PixelType[0][][]);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static Map<String,CharacterTemplate> readFont(String fontPath) {
 		Map<String,CharacterTemplate> font = null;
 		try {

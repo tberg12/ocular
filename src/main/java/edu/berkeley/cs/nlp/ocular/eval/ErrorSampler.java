@@ -10,7 +10,9 @@ import tuple.Pair;
 import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
 import fig.IOUtils;
 
-
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class ErrorSampler {
   
   public static class Error implements Comparable<Error> {
