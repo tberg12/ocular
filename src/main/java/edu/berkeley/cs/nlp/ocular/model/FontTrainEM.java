@@ -4,15 +4,19 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.eval.EMDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.EMIterationEvaluator;
-import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
+import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
@@ -22,6 +26,7 @@ import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
+import fileio.f;
 import indexer.Indexer;
 import threading.BetterThreader;
 
@@ -31,11 +36,9 @@ import threading.BetterThreader;
  */
 public class FontTrainEM {
 	
-	private boolean retrainLM;
-	private boolean retrainGSM;
 	private BasicGlyphSubstitutionModelFactory gsmFactory;
-	private EmissionCacheInnerLoop emissionInnerLoop;
-	private EMIterationEvaluator emIterationEvaluator;
+	private DecoderEM decoderEM;
+	private EMDocumentEvaluator emDocumentEvaluator;
 
 	private Indexer<String> langIndexer;
 	private Indexer<String> charIndexer;
@@ -44,82 +47,70 @@ public class FontTrainEM {
 	private int minDocBatchSize;
 	private int updateDocBatchSize;
 	
-	private boolean allowGlyphSubstitution;
-	private double gsmSmoothingCount;
-	private double noCharSubPrior;
-	private boolean allowLanguageSwitchOnPunct;
-	private boolean markovVerticalOffset;
-	
-	private int paddingMinWidth;
-	private int paddingMaxWidth;
-	
-	private int beamSize;
-	private int numDecodeThreads;
 	private int numMstepThreads;
-	private int decodeBatchSize;
+	
+	private EMIterationEvaluator emEvalSetIterationEvaluator;
+	private int evalFreq;
+	private boolean evalBatches;
 
 	public FontTrainEM(
 			Indexer<String> langIndexer,
 			Indexer<String> charIndexer,
-			boolean retrainLM,
-			boolean retrainGSM,
+			DecoderEM decoderEM,
 			BasicGlyphSubstitutionModelFactory gsmFactory,
-			EmissionCacheInnerLoop emissionInnerLoop,
-			EMIterationEvaluator emIterationEvaluator,
-			boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize, boolean allowGlyphSubstitution, double gsmSmoothingCount, double noCharSubPrior,
-			boolean allowLanguageSwitchOnPunct, boolean markovVerticalOffset, int paddingMinWidth, int paddingMaxWidth, int beamSize, 
-			int numDecodeThreads, int numMstepThreads, int decodeBatchSize) {
+			EMDocumentEvaluator emDocumentEvaluator,
+			boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize,
+			int numMstepThreads,
+			EMIterationEvaluator emEvalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
 		
 		this.langIndexer = langIndexer;
 		this.charIndexer = charIndexer;
 
-		this.retrainLM = retrainLM;
-		this.retrainGSM = retrainGSM;
 		this.gsmFactory = gsmFactory;
-		this.emissionInnerLoop = emissionInnerLoop;
-		this.emIterationEvaluator = emIterationEvaluator;
+		this.decoderEM = decoderEM;
+		this.emDocumentEvaluator = emDocumentEvaluator;
 
 		this.accumulateBatchesWithinIter = accumulateBatchesWithinIter;
 		this.minDocBatchSize = minDocBatchSize;
 		this.updateDocBatchSize = updateDocBatchSize;
-		this.allowGlyphSubstitution = allowGlyphSubstitution;
-		this.gsmSmoothingCount = gsmSmoothingCount;
-		this.noCharSubPrior = noCharSubPrior;
-		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
-		this.markovVerticalOffset = markovVerticalOffset;
-		this.paddingMinWidth = paddingMinWidth;
-		this.paddingMaxWidth = paddingMaxWidth;
-		this.beamSize = beamSize;
-		this.numDecodeThreads = numDecodeThreads;
 		this.numMstepThreads = numMstepThreads;
-		this.decodeBatchSize = decodeBatchSize;
+		
+		this.emEvalSetIterationEvaluator = emEvalSetIterationEvaluator;
+		this.evalFreq = evalFreq;
+		this.evalBatches = evalBatches;
 	}
 
 	public Tuple3<CodeSwitchLanguageModel, GlyphSubstitutionModel, Map<String, CharacterTemplate>> run(
+				List<Document> documents, String inputPath, String outputPath,
 				boolean learnFont,
+				boolean retrainLM,
+				boolean retrainGSM,
 				int numEMIters,
-				List<Document> documents,
-				CodeSwitchLanguageModel lm,
-				GlyphSubstitutionModel gsm,
-				Map<String, CharacterTemplate> font) {
+				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font) {
+		int numUsableDocs = documents.size();
 		
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
-		int numUsableDocs = documents.size();
 
 		if (!learnFont) numEMIters = 0;
 		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
 
-		long overallEmissionCacheNanoTime = 0;
+		//long overallEmissionCacheNanoTime = 0;
 		
+		List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 		for (int iter = 1; (/* learnFont && */ iter <= numEMIters) || (/* !learnFont && */ iter == 1); ++iter) {
 			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).");
 			else System.out.println("Transcribing (learnFont = false).");
+			boolean isLastIteration = (iter == numEMIters);
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 
 			// The number of characters assigned to a particular language (to re-estimate language probabilities).
 			clearTemplates(templates);
 
+			double totalIterationJointLogProb = 0.0;
+			double totalBatchJointLogProb = 0.0;
+			int completedBatchesInIteration = 0;
+			int batchDocsCounter = 0;
 			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
 				Document doc = documents.get(docNum);
 				if (learnFont) System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName());
@@ -127,53 +118,14 @@ public class FontTrainEM {
 				doc.loadLineText();
 
 				// e-step
-
-				final PixelType[][][] pixels = doc.loadLineImages();
-				TransitionState[][] decodeStates = new TransitionState[pixels.length][0];
-				int[][] decodeWidths = new int[pixels.length][0];
-				int numBatches = (int) Math.ceil(pixels.length / (double) decodeBatchSize);
-
-				for (int b = 0; b < numBatches; ++b) {
-					System.gc();
-					System.gc();
-					System.gc();
-
-					System.out.println("Batch: " + b);
-
-					int startLine = b * decodeBatchSize;
-					int endLine = Math.min((b + 1) * decodeBatchSize, pixels.length);
-					PixelType[][][] batchPixels = new PixelType[endLine - startLine][][];
-					for (int line = startLine; line < endLine; ++line) {
-						batchPixels[line - startLine] = pixels[line];
-					}
-
-					final EmissionModel emissionModel = (markovVerticalOffset ? 
-							new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : 
-							new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
-					long emissionCacheNanoTime = System.nanoTime();
-					emissionModel.rebuildCache();
-					overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
-
-					long nanoTime = System.nanoTime();
-					SparseTransitionModel forwardTransitionModel = constructTransitionModel(lm, gsm);
-					BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
-					Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
-					final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
-					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
-					System.out.println("Decode: " + ((System.nanoTime() - nanoTime) / 1000000) + "ms");
-					
-					for (int line = 0; line < emissionModel.numSequences(); ++line) {
-						decodeStates[startLine + line] = batchDecodeStates[line];
-						decodeWidths[startLine + line] = batchDecodeWidths[line];
-					}
-
-					if (learnFont) {
-						incrementCounts(emissionModel, batchDecodeStates, batchDecodeWidths);
-					}
-				}
+				Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, learnFont, lm, gsm, templates, backwardTransitionModel);
+				final TransitionState[][] decodeStates = decodeResults._1._1;
+				final int[][] decodeWidths = decodeResults._1._2;
+				totalIterationJointLogProb += decodeResults._2;
+				totalBatchJointLogProb += decodeResults._2;
 
 				// evaluate
-				emIterationEvaluator.evaluate(iter, doc, decodeStates, decodeWidths);
+				emDocumentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, ((!learnFont || isLastIteration) ? allTrainEvals : null));
 
 				// m-step
 				{
@@ -193,48 +145,37 @@ public class FontTrainEM {
 						List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 						if (learnFont) updateFontParameters(iter, templates);
 						if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
-						if (retrainGSM) gsm = updateGsmParameters(gsmFactory, lm, fullViterbiStateSeq, iter);
+						if (retrainGSM) gsm = updateGsmParameters(lm, fullViterbiStateSeq, iter);
+
+						++completedBatchesInIteration;
+						++batchDocsCounter;
+						double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
+						System.out.println("Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb);
+						if (evalBatches) {
+							if (iter % evalFreq == 0 || iter == numEMIters) // evaluate after evalFreq iterations, and at the very end
+								if (iter != numEMIters || docNum+1 != numUsableDocs) // don't evaluate the last batch of the training because it will be done below
+									emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, gsm, font);
+						}
+						totalBatchJointLogProb = 0;
+						batchDocsCounter = 0;
 					}
 				}
 			}
-
+			double avgLogProb = ((double)totalIterationJointLogProb) / numUsableDocs;
+			System.out.println("Iteration "+iter+" avg joint log prob: " + avgLogProb);
+			if (iter % evalFreq == 0 || iter == numEMIters) // evaluate after evalFreq iterations, and at the very end
+				emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, gsm, font);
 		}
 		
-		System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
+		if (!allTrainEvals.isEmpty() && new File(inputPath).isDirectory()) {
+			printEvaluation(allTrainEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
+		}
+
+		//System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
 		return makeTuple3(lm, gsm, font);
 	}
-	
-	private SparseTransitionModel constructTransitionModel(CodeSwitchLanguageModel codeSwitchLM, GlyphSubstitutionModel codeSwitchGSM) {
-		SparseTransitionModel transitionModel;
-		
-		boolean multilingual = codeSwitchLM.getLanguageIndexer().size() > 1;
-		if (multilingual || allowGlyphSubstitution) {
-			if (markovVerticalOffset) {
-				if (allowGlyphSubstitution)
-					throw new RuntimeException("Markov vertical offset transition model not currently supported with glyph substitution.");
-				else
-					throw new RuntimeException("Markov vertical offset transition model not currently supported for multiple languages.");
-			}
-			else { 
-				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct, codeSwitchGSM, allowGlyphSubstitution, noCharSubPrior);
-				System.out.println("Using CodeSwitchLanguageModel, GlyphSubstitutionModel, and CodeSwitchTransitionModel");
-			}
-		}
-		else { // only one language, default to original (monolingual) Ocular code because it will be faster.
-			SingleLanguageModel singleLm = codeSwitchLM.get(0);
-			if (markovVerticalOffset) {
-				transitionModel = new CharacterNgramTransitionModelMarkovOffset(singleLm, singleLm.getMaxOrder());
-				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModelMarkovOffset");
-			} else {
-				transitionModel = new CharacterNgramTransitionModel(singleLm, singleLm.getMaxOrder());
-				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModel");
-			}
-		}
-		
-		return transitionModel;
-	}
-	
-	private CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
+
+	public static CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		for (int c = 0; c < charIndexer.size(); ++c) {
 			CharacterTemplate template = font.get(charIndexer.getObject(c));
@@ -245,26 +186,12 @@ public class FontTrainEM {
 		return templates;
 	}
 
+
 	private void clearTemplates(final CharacterTemplate[] templates) {
 		for (int c = 0; c < templates.length; ++c) {
 			if (templates[c] != null) 
 				templates[c].clearCounts();
 		}
-	}
-
-	private void incrementCounts(final EmissionModel emissionModel, final TransitionState[][] batchDecodeStates, final int[][] batchDecodeWidths) {
-		long nanoTime;
-		nanoTime = System.nanoTime();
-		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
-			public void call(Integer line, Object ignore) {
-				emissionModel.incrementCounts(line, batchDecodeStates[line], batchDecodeWidths[line]);
-			}
-		};
-		BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);
-		for (int line = 0; line < emissionModel.numSequences(); ++line)
-			threader.addFunctionArgument(line);
-		threader.run();
-		System.out.println("Increment counts: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 	}
 
 	private void updateFontParameters(int iter, final CharacterTemplate[] templates) {
@@ -341,13 +268,13 @@ public class FontTrainEM {
 	/**
 	 * Hard-EM update on glyph substitution probabilities
 	 */
-	private GlyphSubstitutionModel updateGsmParameters(BasicGlyphSubstitutionModelFactory gsmFactory, CodeSwitchLanguageModel newLM, List<TransitionState> fullViterbiStateSeq, int iter) {
+	private GlyphSubstitutionModel updateGsmParameters(CodeSwitchLanguageModel newLM, List<TransitionState> fullViterbiStateSeq, int iter) {
 		long nanoTime = System.nanoTime();
 
 		//
 		// Construct the new GSM
 		//
-		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, gsmSmoothingCount, newLM, iter);
+		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, newLM, iter);
 
 		//
 		// Print out some statistics
@@ -400,4 +327,33 @@ public class FontTrainEM {
 		}
 		return fullViterbiStateSeq;
 	}
+
+	public static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
+		Map<String, EvalSuffStats> totalSuffStats = new HashMap<String, EvalSuffStats>();
+		StringBuffer buf = new StringBuffer();
+		buf.append("All evals:\n");
+		for (Tuple2<String, Map<String, EvalSuffStats>> docNameAndEvals : allEvals) {
+			String docName = docNameAndEvals._1;
+			Map<String, EvalSuffStats> evals = docNameAndEvals._2;
+			buf.append("Document: " + docName + "\n");
+			buf.append(Evaluator.renderEval(evals) + "\n");
+			for (String evalType : evals.keySet()) {
+				EvalSuffStats eval = evals.get(evalType);
+				EvalSuffStats totalEval = totalSuffStats.get(evalType);
+				if (totalEval == null) {
+					totalEval = new EvalSuffStats();
+					totalSuffStats.put(evalType, totalEval);
+				}
+				totalEval.increment(eval);
+			}
+		}
+
+		buf.append("\nMarco-avg total eval:\n");
+		buf.append(Evaluator.renderEval(totalSuffStats) + "\n");
+
+		f.writeString(outputPath, buf.toString());
+		System.out.println("\n" + outputPath);
+		System.out.println(buf.toString());
+	}
+
 }

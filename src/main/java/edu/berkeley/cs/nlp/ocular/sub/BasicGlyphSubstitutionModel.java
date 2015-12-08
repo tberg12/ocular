@@ -99,6 +99,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 	
 	public static class BasicGlyphSubstitutionModelFactory {
+		private double gsmSmoothingCount;
 		private Indexer<String> langIndexer;
 		private Indexer<String> charIndexer;
 		private int spaceCharIndex;
@@ -109,8 +110,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private Map<Integer,Set<Integer>> diacriticDisregardMap;
 
 		public BasicGlyphSubstitutionModelFactory(
+				double gsmSmoothingCount,
 				Indexer<String> langIndexer,
 				Indexer<String> charIndexer) {
+			this.gsmSmoothingCount = gsmSmoothingCount;
 			this.langIndexer = langIndexer;
 			this.charIndexer = charIndexer;
 			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
@@ -121,11 +124,11 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
 		}
 		
-		public BasicGlyphSubstitutionModel make(List<TransitionState> fullViterbiStateSeq, double gsmSmoothingCount, CodeSwitchLanguageModel newLM) {
-			return make(fullViterbiStateSeq, gsmSmoothingCount, newLM, null);
+		public BasicGlyphSubstitutionModel make(List<TransitionState> fullViterbiStateSeq, CodeSwitchLanguageModel newLM) {
+			return make(fullViterbiStateSeq, newLM, null);
 		}
 		
-		public BasicGlyphSubstitutionModel make(List<TransitionState> fullViterbiStateSeq, double gsmSmoothingCount, CodeSwitchLanguageModel newLM, Integer iter) {
+		public BasicGlyphSubstitutionModel make(List<TransitionState> fullViterbiStateSeq, CodeSwitchLanguageModel newLM, Integer iter) {
 			System.out.println("Estimating parameters of a new Glyph Substitution Model.  " + (iter != null ? "Iter: "+iter : ""));
 
 			int numLanguages = langIndexer.size();

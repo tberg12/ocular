@@ -72,18 +72,18 @@ public class BeamingSemiMarkovDP {
 	}
 
 	private Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decodeSingleThread(int beamSize) {
-		TransitionState[][] decodeStates = new TransitionState[emissionModel.numSequences()][];
-		int[][] decodeWidths = new int[emissionModel.numSequences()][];
-		
 		Collection<BeamState> startStates = null;
 		double logJointProb = Double.NEGATIVE_INFINITY;
-		for (int d=0; d<emissionModel.numSequences(); ++d) {
+		for (int d = 0; d < emissionModel.numSequences(); ++d) {
 			Tuple2<Double,Collection<BeamState>> logJointProbAndNextStartStates = doForwardPassLogSpace(d, beamSize, startStates);
 			logJointProb = logJointProbAndNextStartStates._1;
 			startStates = logJointProbAndNextStartStates._2;
 		}
+		
+		TransitionState[][] decodeStates = new TransitionState[emissionModel.numSequences()][];
+		int[][] decodeWidths = new int[emissionModel.numSequences()][];
 		TransitionState finalState = null;
-		for (int d=emissionModel.numSequences()-1; d>=0; --d) {
+		for (int d = emissionModel.numSequences()-1; d >= 0; --d) {
 			Tuple2<Tuple2<TransitionState[],int[]>,TransitionState> statesAndWidthsAndNextFinalState = followBackpointers(d, finalState);
 			decodeStates[d] = statesAndWidthsAndNextFinalState._1._1;
 			decodeWidths[d] = statesAndWidthsAndNextFinalState._1._2;

@@ -209,7 +209,7 @@ Required.
 Required.
 
 * `-numFontInitThreads`: Number of threads to use.
-Deafult: 8
+Default: 8
 
 * `-templateMaxWidthFraction`: Max template width as fraction of text line height.
 Default: 1.0
@@ -271,14 +271,20 @@ Default: Don't write out the trained LM.
 * `-allowGlyphSubstitution`: Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions. 
 Default: false
 	
-* `-inputGsmPath`: Path to the input glyph substitution model file.
-(Only relevant if allowGlyphSubstitution is set to true.)
-Default: Don't use a pre-initialized GSM.
-
+* `-gsmSmoothingCount`: The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation. 
+Default: 1.0
+	
+* `-noCharSubPrior`: The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions. 
+Default: 0.9999999
+	
 * `-retrainGSM`: Should the glyph substitution model be updated during font training?
 (Only relevant if allowGlyphSubstitution is set to true.)
 Default: false
 	
+* `-inputGsmPath`: Path to the input glyph substitution model file.
+(Only relevant if allowGlyphSubstitution is set to true.)
+Default: Don't use a pre-initialized GSM.
+
 * `-outputGsmPath`: Path to write the retrained glyph substitution model file to. 
 (Only relevant if allowGlyphSubstitution and retrainGSM are set to true.)
 Default: Don't write out the trained GSM.
@@ -310,7 +316,7 @@ Default: 0
 * `-numMstepThreads`: Number of threads to use for LFBGS during m-step.
 Default: 8
 
-* `-numEmissionCacheThreads`: Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.)
+* `-numEmissionCacheThreads`: Number of threads to use during emission cache computation. (Only has effect when emissionEngine is set to DEFAULT.)
 Default: 8
 
 * `-numDecodeThreads`: Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)
@@ -325,5 +331,13 @@ Default: 1
 * `-paddingMaxWidth`: Max horizontal padding between characters in pixels (Best left at default value: 5.)
 Default: 5
 
+* `-evalInputPath`: When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
 
+* `-evalExtractedLinesPath`: When using -evalInputPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
+
+* `-evalFreq`: When using -evalInputPath, the font trainer will perform an evaluation every `evalFreq` iterations. 
+Default: Evaluate only after all iterations have completed.
+
+* `-evalBatches`: When using -evalInputPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?. 
+Default: false
 

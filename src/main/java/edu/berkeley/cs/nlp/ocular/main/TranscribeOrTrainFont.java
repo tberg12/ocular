@@ -6,19 +6,19 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
+import edu.berkeley.cs.nlp.ocular.eval.BasicEMDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.BasicEMIterationEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.EMDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.EMIterationEvaluator;
-import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
-import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
@@ -26,11 +26,9 @@ import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
 import fig.OptionsParser;
-import fileio.f;
 import indexer.Indexer;
 
 /**
@@ -91,7 +89,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	public static double gsmSmoothingCount = 1.0;
 	
 	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions. Default: 0.999999")
-	public static double noCharSubPrior = 0.999999;
+	public static double noCharSubPrior = 0.9999999;
 	
 	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.) Default: false")
 	public static boolean retrainGSM = false;
@@ -145,6 +143,19 @@ public class TranscribeOrTrainFont implements Runnable {
 	public static int paddingMaxWidth = 5;
 
 	
+	@Option(gloss = "When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
+	public static String evalInputPath = null;
+
+	@Option(gloss = "When using -evalInputPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
+	public static String evalExtractedLinesPath = null;
+
+	@Option(gloss = "When using -evalInputPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
+	public static int evalFreq = Integer.MAX_VALUE;
+	
+	@Option(gloss = "When using -evalInputPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?. Default: false")
+	public static boolean evalBatches = false;
+	
+	
 	public static enum EmissionCacheInnerLoopType { DEFAULT, OPENCL, CUDA };
 
 	
@@ -168,13 +179,14 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (outputGsmPath != null && !retrainGSM) throw new IllegalArgumentException("-outputGsmPath not permitted if -retrainGsM is false.");
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
+		if (evalExtractedLinesPath != null && evalInputPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputPath.");
 		
 		if (!new File(initFontPath).exists()) throw new RuntimeException("initFontPath " + initFontPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 
 		File outputDir = new File(outputPath);
 		if (!outputDir.exists()) outputDir.mkdirs();
 
-		List<Document> documents = loadDocuments();
+		List<Document> trainDocuments = loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip);
 
 		/*
 		 * Load LM (and print some info about it)
@@ -196,7 +208,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		/*
 		 * Load GSM (and print some info about it)
 		 */
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(langIndexer, charIndexer);
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer);
 		GlyphSubstitutionModel codeSwitchGSM;
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
@@ -208,7 +220,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 		else {
 			System.out.println("No initial GSM provided; initializing to uniform model.");
-			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), gsmSmoothingCount, codeSwitchLM, 0);
+			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), codeSwitchLM, 0);
 		}
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
@@ -221,26 +233,29 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
 
-		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
-
-		EMIterationEvaluator emIterationEvaluator = new BasicEMIterationEvaluator(charIndexer, langIndexer, allEvals, learnFont, inputPath, outputPath, numEMIters);
-		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, retrainLM, retrainGSM, gsmFactory, emissionInnerLoop, emIterationEvaluator, 
-				accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, allowGlyphSubstitution, gsmSmoothingCount, noCharSubPrior, allowLanguageSwitchOnPunct, 
-				markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
+		DecoderEM decoderEM = new DecoderEM(emissionInnerLoop, allowGlyphSubstitution, noCharSubPrior, allowLanguageSwitchOnPunct, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize, charIndexer);
+		EMDocumentEvaluator emDocumentEvaluator = new BasicEMDocumentEvaluator(charIndexer, langIndexer);
+		
+		EMIterationEvaluator emEvalSetIterationEvaluator;
+		if (evalInputPath != null) {
+			List<Document> evalDocuments = loadDocuments(evalInputPath, evalExtractedLinesPath, numDocs, numDocsToSkip);
+			emEvalSetIterationEvaluator = new BasicEMIterationEvaluator(evalDocuments, evalInputPath, outputPath, decoderEM, emDocumentEvaluator, charIndexer);
+		}
+		else {
+			emEvalSetIterationEvaluator = new EMIterationEvaluator.NoOpEMIterationEvaluator();
+		}
+			
+		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, decoderEM, gsmFactory, emDocumentEvaluator, accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, numMstepThreads, emEvalSetIterationEvaluator, evalFreq, evalBatches);
 		
 		long overallNanoTime = System.nanoTime();
 		Tuple3<CodeSwitchLanguageModel, GlyphSubstitutionModel, Map<String, CharacterTemplate>> trainedModels = 
-				fontTrainEM.run(learnFont, numEMIters, documents, codeSwitchLM, codeSwitchGSM, font);
+				fontTrainEM.run(trainDocuments, inputPath, outputPath, learnFont, retrainLM, retrainGSM, numEMIters, codeSwitchLM, codeSwitchGSM, font);
 		CodeSwitchLanguageModel newLm = trainedModels._1;
 		GlyphSubstitutionModel newGsm = trainedModels._2;
 		Map<String, CharacterTemplate> newFont = trainedModels._3;
 		if (learnFont) InitializeFont.writeFont(newFont, outputFontPath);
 		if (outputLmPath != null) TrainLanguageModel.writeLM(newLm, outputLmPath);
 		if (outputGsmPath != null) GlyphSubstitutionModel.writeGSM(newGsm, outputGsmPath);
-
-		if (!allEvals.isEmpty() && new File(inputPath).isDirectory()) {
-			printEvaluation(allEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
-		}
 
 		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime) / 1e9 + "s");
 	}
@@ -252,7 +267,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
 	}
 
-	private List<Document> loadDocuments() {
+	private List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip) {
 		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
 		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
 		List<Document> documents = new ArrayList<Document>();
@@ -283,32 +298,4 @@ public class TranscribeOrTrainFont implements Runnable {
 		return documents;
 	}
 	
-	private static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
-		Map<String, EvalSuffStats> totalSuffStats = new HashMap<String, EvalSuffStats>();
-		StringBuffer buf = new StringBuffer();
-		buf.append("All evals:\n");
-		for (Tuple2<String, Map<String, EvalSuffStats>> docNameAndEvals : allEvals) {
-			String docName = docNameAndEvals._1;
-			Map<String, EvalSuffStats> evals = docNameAndEvals._2;
-			buf.append("Document: " + docName + "\n");
-			buf.append(Evaluator.renderEval(evals) + "\n");
-			for (String evalType : evals.keySet()) {
-				EvalSuffStats eval = evals.get(evalType);
-				EvalSuffStats totalEval = totalSuffStats.get(evalType);
-				if (totalEval == null) {
-					totalEval = new EvalSuffStats();
-					totalSuffStats.put(evalType, totalEval);
-				}
-				totalEval.increment(eval);
-			}
-		}
-
-		buf.append("\nMarco-avg total eval:\n");
-		buf.append(Evaluator.renderEval(totalSuffStats) + "\n");
-
-		f.writeString(outputPath, buf.toString());
-		System.out.println("\n" + outputPath);
-		System.out.println(buf.toString());
-	}
-
 }
