@@ -23,10 +23,10 @@ import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
-import fileio.f;
 import indexer.Indexer;
 import threading.BetterThreader;
 
@@ -96,11 +96,10 @@ public class FontTrainEM {
 
 		//long overallEmissionCacheNanoTime = 0;
 		
-		List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 		for (int iter = 1; (/* learnFont && */ iter <= numEMIters) || (/* !learnFont && */ iter == 1); ++iter) {
 			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).");
 			else System.out.println("Transcribing (learnFont = false).");
-			boolean isLastIteration = (iter == numEMIters);
+			List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 
@@ -125,7 +124,7 @@ public class FontTrainEM {
 				totalBatchJointLogProb += decodeResults._2;
 
 				// evaluate
-				emDocumentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, ((!learnFont || isLastIteration) ? allTrainEvals : null));
+				emDocumentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allTrainEvals);
 
 				// m-step
 				{
@@ -152,24 +151,29 @@ public class FontTrainEM {
 						double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
 						System.out.println("Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb);
 						if (evalBatches) {
-							if (iter % evalFreq == 0 || iter == numEMIters) // evaluate after evalFreq iterations, and at the very end
-								if (iter != numEMIters || docNum+1 != numUsableDocs) // don't evaluate the last batch of the training because it will be done below
+							if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
+								if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
 									emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, gsm, font);
+								}
+							}
 						}
 						totalBatchJointLogProb = 0;
 						batchDocsCounter = 0;
 					}
-				}
-			}
+				} // end: m-step
+			} // end: for (doc in usableDocs)
 			double avgLogProb = ((double)totalIterationJointLogProb) / numUsableDocs;
 			System.out.println("Iteration "+iter+" avg joint log prob: " + avgLogProb);
-			if (iter % evalFreq == 0 || iter == numEMIters) // evaluate after evalFreq iterations, and at the very end
+			if (new File(inputPath).isDirectory()) {
+				printEvaluation(allTrainEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+".txt");
+			}
+			
+			if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
+				System.out.println("Evaluating dev data at the end of iteration "+iter);
 				emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, gsm, font);
-		}
+			}
+		} // end: for iteration
 		
-		if (new File(inputPath).isDirectory()) {
-			printEvaluation(allTrainEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
-		}
 
 		//System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
 		return makeTuple3(lm, gsm, font);
@@ -351,7 +355,7 @@ public class FontTrainEM {
 		buf.append("\nMarco-avg total eval:\n");
 		buf.append(Evaluator.renderEval(totalSuffStats) + "\n");
 
-		f.writeString(outputPath, buf.toString());
+		FileHelper.writeString(outputPath, buf.toString());
 		System.out.println("\n" + outputPath);
 		System.out.println(buf.toString());
 	}

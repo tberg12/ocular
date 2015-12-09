@@ -14,6 +14,7 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fileio.f;
@@ -115,7 +116,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			transcriptionOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 		}
 		System.out.println(transcriptionOutputBuffer.toString() + "\n\n");
-		f.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+		FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
 		}
 
 		//
@@ -138,11 +139,11 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 					lineBuffer.append(sglyphChar);
 				}
 			}
-			transcriptionWithSubsOutputLines.add(lineBuffer.toString());
+			transcriptionWithSubsOutputLines.add(lineBuffer.toString() + "\n");
 		}
 		String transcriptionWithSubsOutputBuffer = StringHelper.join(transcriptionWithSubsOutputLines, "");
-		System.out.println(transcriptionWithSubsOutputBuffer.toString() + "\n\n");
-		f.writeString(transcriptionWithSubsOutputFilename, transcriptionWithSubsOutputBuffer.toString());
+		//System.out.println(transcriptionWithSubsOutputBuffer.toString() + "\n\n");
+		FileHelper.writeString(transcriptionWithSubsOutputFilename, transcriptionWithSubsOutputBuffer.toString());
 		}
 
 		//
@@ -152,6 +153,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		System.out.println("Transcription with widths");
 		StringBuffer transcriptionWithWidthsOutputBuffer = new StringBuffer();
 		for (int line = 0; line < numLines; ++line) {
+			transcriptionWithWidthsOutputBuffer.append(transcriptionWithSubsOutputLines.get(line) + "\n");
 			for (int i = 0; i < viterbiTransStates[line].size(); ++i) {
 				TransitionState ts = viterbiTransStates[line].get(i);
 				int w = viterbiWidths[line].get(i);
@@ -160,8 +162,8 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			}
 			transcriptionWithWidthsOutputBuffer.append("\n");
 		}
-		System.out.println(transcriptionWithWidthsOutputBuffer.toString());
-		f.writeString(transcriptionWithWidthsOutputFilename, transcriptionWithWidthsOutputBuffer.toString());
+		//System.out.println(transcriptionWithWidthsOutputBuffer.toString());
+		FileHelper.writeString(transcriptionWithWidthsOutputFilename, transcriptionWithWidthsOutputBuffer.toString());
 		}
 
 		if (text != null) {
@@ -198,7 +200,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			}
 			goldComparisonOutputBuffer.append(Evaluator.renderEval(evals));
 			System.out.println("Writing gold comparison to " + goldComparisonOutputFilename);
-			System.out.println(goldComparisonOutputBuffer.toString());
+			//System.out.println(goldComparisonOutputBuffer.toString());
 			f.writeString(goldComparisonOutputFilename, goldComparisonOutputBuffer.toString());
 			}
 			

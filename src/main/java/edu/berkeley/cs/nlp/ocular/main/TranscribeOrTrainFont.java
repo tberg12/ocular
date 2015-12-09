@@ -208,7 +208,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		/*
 		 * Load GSM (and print some info about it)
 		 */
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, intputPath, outputPath, documents);
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, inputPath, outputPath, trainDocuments);
 		GlyphSubstitutionModel codeSwitchGSM;
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
@@ -239,7 +239,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		EMIterationEvaluator emEvalSetIterationEvaluator;
 		if (evalInputPath != null) {
 			List<Document> evalDocuments = loadDocuments(evalInputPath, evalExtractedLinesPath, numDocs, numDocsToSkip);
-			emEvalSetIterationEvaluator = new BasicEMIterationEvaluator(evalDocuments, evalInputPath, outputPath, decoderEM, emDocumentEvaluator, charIndexer);
+			emEvalSetIterationEvaluator = new BasicEMIterationEvaluator(evalDocuments, evalInputPath, outputPath, learnFont, numEMIters, decoderEM, emDocumentEvaluator, charIndexer);
 		}
 		else {
 			emEvalSetIterationEvaluator = new EMIterationEvaluator.NoOpEMIterationEvaluator();

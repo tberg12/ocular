@@ -25,18 +25,23 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 	private List<Document> documents;
 	private String inputPath; 
 	private String outputPath;
+	private boolean learnFont;
+	private int numEMIters;
 	private DecoderEM decoderEM;
 	private EMDocumentEvaluator docEvaluator;
 	private Indexer<String> charIndexer;
 	
 	public BasicEMIterationEvaluator(
 			List<Document> documents, String inputPath, String outputPath,
+			boolean learnFont, int numEMIters,
 			DecoderEM decoderEM,
 			EMDocumentEvaluator docEvaluator,
 			Indexer<String> charIndexer) {
 		this.documents = documents;
 		this.inputPath = inputPath;
 		this.outputPath = outputPath;
+		this.learnFont = learnFont;
+		this.numEMIters = numEMIters;
 		this.decoderEM = decoderEM;
 		this.docEvaluator = docEvaluator;
 		this.charIndexer = charIndexer;
@@ -61,18 +66,18 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, false, inputPath, 0, outputPath, allEvals);
+			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allEvals);
 		}
 		double avgLogProb = ((double)totalJointLogProb) / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);
 		if (new File(inputPath).isDirectory()) {
 			Document doc = documents.get(0);
 			String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
-			String preext = "evaldata";
+			String preext = "eval";
 			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
 			if (iter > 0) outputFilenameBase += "_iter-" + iter;
 			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
-			String outputFilename = outputFilenameBase + "_eval.txt";
+			String outputFilename = outputFilenameBase + ".txt";
 			FontTrainEM.printEvaluation(allEvals, outputFilename);
 		}
 	}

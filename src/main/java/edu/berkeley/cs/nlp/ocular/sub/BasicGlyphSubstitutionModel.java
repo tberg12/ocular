@@ -21,7 +21,7 @@ import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
-import fileio.f;
+import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import indexer.Indexer;
 
 /**
@@ -119,7 +119,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				double gsmSmoothingCount,
 				Indexer<String> langIndexer,
 				Indexer<String> charIndexer,
-				String inputPath, String outputPath) {
+				String inputPath, String outputPath, List<Document> documents) {
 			this.gsmSmoothingCount = gsmSmoothingCount;
 			this.langIndexer = langIndexer;
 			this.charIndexer = charIndexer;
@@ -130,12 +130,13 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.addTilde = makeAddTildeMap(charIndexer);
 			this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
 			
+			this.documents = documents;
 			this.inputPath = inputPath;
 			this.outputPath = outputPath;
 		}
 		
 		public BasicGlyphSubstitutionModel make(List<TransitionState> fullViterbiStateSeq, CodeSwitchLanguageModel newLM, int iter, int batchId) {
-			System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+" batch: "+batchId);
+			System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+batchId);
 
 			int numLanguages = langIndexer.size();
 			int numChars = charIndexer.size();
@@ -255,7 +256,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			return new BasicGlyphSubstitutionModel(probs, langIndexer, charIndexer);
 		}
 
-		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, Integer iter, Integer batchId) {
+		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId) {
 			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" "), Charset.LOWERCASE_LATIN_LETTERS);
 			for (String c : Charset.LOWERCASE_VOWELS) {
 				CHARS_TO_PRINT.add(Charset.ACUTE_ESCAPE + c);
@@ -320,8 +321,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
 			String outputFilename = outputFilenameBase + ".tsv";
 
-			System.out.println("Write GSM info out to ["+outputFilename+"]");
-			f.writeString(outputFilename, sb.toString());
+			System.out.println("Writing info about newly-trained GSM on iteration "+iter+", batch "+batchId+" out to ["+outputFilename+"]");
+			FileHelper.writeString(outputFilename, sb.toString());
 		}
 
 		private void printGsmProbs2(int numLanguages, int numChars, int numGlyphs, double[][][][][] probs) {
@@ -412,7 +413,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			
 			String fn = "";//outputPath "/u/dhg/temp/retrained-gsm-stats-iter-"+iter+".tsv";
 			System.out.println("Write GSM info out to ["+fn+"]");
-			f.writeString(fn, sb.toString());
+			FileHelper.writeString(fn, sb.toString());
 		}
 	}
 	
