@@ -9,7 +9,7 @@ public class ArrayHelper {
 
 	public static int sum(int[] xs) {
 		int result = 0;
-		for (double x : xs) result += x;
+		for (int x : xs) result += x;
 		return result;
 	}
 
@@ -27,6 +27,22 @@ public class ArrayHelper {
 	public static double avg(double[] xs) {
 		if (xs.length == 0) return 0.0;
 		else return sum(xs) / xs.length;
+	}
+
+	public static int min(int[] xs) {
+		if (xs.length == 0) throw new RuntimeException("ArrayHelper.min cannot be used on an empty array.");
+		int v = Integer.MAX_VALUE;
+		for (int x : xs)
+			if (x < v) v = x;
+		return v;
+	}
+
+	public static double min(double[] xs) {
+		if (xs.length == 0) throw new RuntimeException("ArrayHelper.min cannot be used on an empty array.");
+		double v = Double.MAX_VALUE;
+		for (double x : xs)
+			if (x < v) v = x;
+		return v;
 	}
 
 	public static int[] prepend(int c, int[] vec1) {

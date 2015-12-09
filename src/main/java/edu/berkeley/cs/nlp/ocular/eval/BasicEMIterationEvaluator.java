@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
@@ -65,7 +66,14 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 		double avgLogProb = ((double)totalJointLogProb) / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);
 		if (new File(inputPath).isDirectory()) {
-			FontTrainEM.printEvaluation(allEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
+			Document doc = documents.get(0);
+			String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
+			String preext = "evaldata";
+			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
+			if (iter > 0) outputFilenameBase += "_iter-" + iter;
+			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
+			String outputFilename = outputFilenameBase + "_eval.txt";
+			FontTrainEM.printEvaluation(allEvals, outputFilename);
 		}
 	}
 

@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -47,6 +47,21 @@ public class ArrayHelperTests {
 		assertEquals(0.0, ArrayHelper.avg(new double[] { 0.0 }), 1e-9);
 		assertEquals(0.0, ArrayHelper.avg(new double[] { 0.0, 0.0 }), 1e-9);
 		assertEquals(0.0, ArrayHelper.avg(new double[0]), 1e-9);
+	}
+
+	@Test
+	public void test_min_int() {
+		assertEquals(10, ArrayHelper.min(new int[] { 50, 10, 25, 150, 10, 25 }));
+		assertEquals(25, ArrayHelper.min(new int[] { 25 }));
+		assertEquals(20, ArrayHelper.min(new int[] { 20 }));
+		assertEquals(20, ArrayHelper.min(new int[] { 20, 20 }));
+		try {
+			ArrayHelper.min(new int[0]);
+			fail("exception expected");
+		}
+		catch(RuntimeException e) {
+			// good
+		}
 	}
 
 	@Test

@@ -145,7 +145,7 @@ public class FontTrainEM {
 						List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 						if (learnFont) updateFontParameters(iter, templates);
 						if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
-						if (retrainGSM) gsm = updateGsmParameters(lm, fullViterbiStateSeq, iter);
+						if (retrainGSM) gsm = updateGsmParameters(lm, fullViterbiStateSeq, iter, completedBatchesInIteration);
 
 						++completedBatchesInIteration;
 						++batchDocsCounter;
@@ -167,7 +167,7 @@ public class FontTrainEM {
 				emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, gsm, font);
 		}
 		
-		if (!allTrainEvals.isEmpty() && new File(inputPath).isDirectory()) {
+		if (new File(inputPath).isDirectory()) {
 			printEvaluation(allTrainEvals, outputPath + "/" + new File(inputPath).getName() + "/eval.txt");
 		}
 
@@ -268,13 +268,13 @@ public class FontTrainEM {
 	/**
 	 * Hard-EM update on glyph substitution probabilities
 	 */
-	private GlyphSubstitutionModel updateGsmParameters(CodeSwitchLanguageModel newLM, List<TransitionState> fullViterbiStateSeq, int iter) {
+	private GlyphSubstitutionModel updateGsmParameters(CodeSwitchLanguageModel newLM, List<TransitionState> fullViterbiStateSeq, int iter, int batchId) {
 		long nanoTime = System.nanoTime();
 
 		//
 		// Construct the new GSM
 		//
-		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, newLM, iter);
+		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, newLM, iter, batchId);
 
 		//
 		// Print out some statistics

@@ -78,8 +78,8 @@ public class TrainLanguageModel implements Runnable {
 	@Option(gloss = "Exponent on LM scores.")
 	public static double power = 4.0;
 	
-	@Option(gloss = "Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.")
-	public static long lmCharCount = -1;
+	@Option(gloss = "Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.")
+	public static long lmCharCount = 0;
 
 	
 	public static void main(String[] args) {
@@ -132,7 +132,7 @@ public class TrainLanguageModel implements Runnable {
 		}
 
 		Map<String, Double> languagePriorMap = new HashMap<String, Double>();
-		if (languagePriors != null) {
+		if (languagePriors != null && !languagePriors.isEmpty()) {
 			for (String part : languagePriors.split(",")) {
 				String[] subparts = part.split("->");
 				if (subparts.length != 2) throw new IllegalArgumentException("malformed languagePriors argument: comma-separated part must be of the form \"LANGUAGE->PRIOR\", was: " + part);
@@ -149,7 +149,7 @@ public class TrainLanguageModel implements Runnable {
 		}
 		
 		Map<String, String> languageAltSpellPathMap = new HashMap<String, String>();
-		if (alternateSpellingReplacementPaths != null) {
+		if (alternateSpellingReplacementPaths != null && !alternateSpellingReplacementPaths.isEmpty()) {
 			if (!alternateSpellingReplacementPaths.contains("->")) { // only one path, use for all languages
 				String replacementsPath = alternateSpellingReplacementPaths;
 				for (String language : languagePathMap.keySet()) {
@@ -177,7 +177,7 @@ public class TrainLanguageModel implements Runnable {
 					+ (languageAltSpellPathMap.keySet().contains(language) ? ", alternate spelling replacement rules in " + languageAltSpellPathMap.get(language) : ""));
 			
 			TextReader textReader = new BasicTextReader();
-			if (explicitCharacterSet != null) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
+			if (explicitCharacterSet != null && !explicitCharacterSet.isEmpty()) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
 			if (removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));

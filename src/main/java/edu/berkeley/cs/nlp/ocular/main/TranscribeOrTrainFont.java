@@ -208,7 +208,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		/*
 		 * Load GSM (and print some info about it)
 		 */
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer);
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, intputPath, outputPath, documents);
 		GlyphSubstitutionModel codeSwitchGSM;
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
@@ -220,7 +220,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 		else {
 			System.out.println("No initial GSM provided; initializing to uniform model.");
-			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), codeSwitchLM, 0);
+			codeSwitchGSM = gsmFactory.make(Collections.emptyList(), codeSwitchLM, 0, 0);
 		}
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
