@@ -194,8 +194,8 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			StringBuffer goldComparisonOutputBuffer = new StringBuffer();
 			goldComparisonOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
 			for (int line = 0; line < numLines; ++line) {
-				goldComparisonOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
-				goldComparisonOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
+				goldComparisonOutputBuffer.append(StringHelper.join(viterbiChars[line], "").trim() + "\n");
+				goldComparisonOutputBuffer.append(StringHelper.join(goldCharSequences[line], "").trim() + "\n");
 				goldComparisonOutputBuffer.append("\n");
 			}
 			goldComparisonOutputBuffer.append(Evaluator.renderEval(evals));
@@ -212,8 +212,8 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			StringBuffer goldComparisonWithSubsOutputBuffer = new StringBuffer();
 			goldComparisonWithSubsOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
 			for (int line = 0; line < numLines; ++line) {
-				goldComparisonWithSubsOutputBuffer.append(transcriptionWithSubsOutputLines.get(line));
-				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
+				goldComparisonWithSubsOutputBuffer.append(transcriptionWithSubsOutputLines.get(line).trim() + "\n");
+				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(goldCharSequences[line], "").trim() + "\n");
 				goldComparisonWithSubsOutputBuffer.append("\n");
 			}
 			goldComparisonWithSubsOutputBuffer.append(Evaluator.renderEval(evals));
