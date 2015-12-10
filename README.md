@@ -40,7 +40,7 @@ The easiest way to get the Ocular software is to download the self-contained jar
 
 Once you have this jar, you will be able to run Ocular according to the instructions below in the Using Ocular section.
 
-The jar is executable, so when you use go to use Ocular, you will run it following this this template (where [MAIN-CLASS] will specify which program to run, as detailed in the Using Ocular section below):
+The jar is executable, so when you use go to use Ocular, you will run it following this template (where [MAIN-CLASS] will specify which program to run, as detailed in the Using Ocular section below):
 
     java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
 
