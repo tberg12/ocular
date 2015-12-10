@@ -128,37 +128,37 @@ public class FontTrainEM {
 
 				// m-step
 				{
-					boolean batchComplete = false;
-					int trueMinBatchSize = Math.min(minDocBatchSize, updateDocBatchSize); // min batch size may not exceed standard batch size
-					if (docNum+1 == numUsableDocs) { // last document of the set
-						batchComplete = true;
-					}
-					else if (numUsableDocs - (docNum+1) < trueMinBatchSize) { // next batch will be too small, so lump the remaining documents in with this one
-						// no update
-					} 
-					else if ((docNum+1) % updateDocBatchSize == 0) { // batch is complete
-						batchComplete = true;
-					}
-					
-					if (batchComplete) {
-						List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
-						if (learnFont) updateFontParameters(iter, templates);
-						if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
-						if (retrainGSM) gsm = updateGsmParameters(lm, fullViterbiStateSeq, iter, completedBatchesInIteration);
+				boolean batchComplete = false;
+				int trueMinBatchSize = Math.min(minDocBatchSize, updateDocBatchSize); // min batch size may not exceed standard batch size
+				if (docNum+1 == numUsableDocs) { // last document of the set
+					batchComplete = true;
+				}
+				else if (numUsableDocs - (docNum+1) < trueMinBatchSize) { // next batch will be too small, so lump the remaining documents in with this one
+					// no update
+				} 
+				else if ((docNum+1) % updateDocBatchSize == 0) { // batch is complete
+					batchComplete = true;
+				}
+				
+				if (batchComplete) {
+					List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
+					if (learnFont) updateFontParameters(iter, templates);
+					if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
+					if (retrainGSM) gsm = updateGsmParameters(lm, fullViterbiStateSeq, iter, completedBatchesInIteration);
 
-						++completedBatchesInIteration;
-						++batchDocsCounter;
-						double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
-						System.out.println("Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb);
-						if (evalBatches) {
-							if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
-								if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
-									emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, gsm, font);
-								}
+					++completedBatchesInIteration;
+					++batchDocsCounter;
+					double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
+					System.out.println("Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb);
+					if (evalBatches) {
+						if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
+							if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
+								emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, gsm, font);
 							}
 						}
-						totalBatchJointLogProb = 0;
-						batchDocsCounter = 0;
+					}
+					totalBatchJointLogProb = 0;
+					batchDocsCounter = 0;
 					}
 				} // end: m-step
 			} // end: for (doc in usableDocs)

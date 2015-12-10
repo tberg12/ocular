@@ -153,7 +153,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		System.out.println("Transcription with widths");
 		StringBuffer transcriptionWithWidthsOutputBuffer = new StringBuffer();
 		for (int line = 0; line < numLines; ++line) {
-			transcriptionWithWidthsOutputBuffer.append(transcriptionWithSubsOutputLines.get(line) + "\n");
+			transcriptionWithWidthsOutputBuffer.append(transcriptionWithSubsOutputLines.get(line));
 			for (int i = 0; i < viterbiTransStates[line].size(); ++i) {
 				TransitionState ts = viterbiTransStates[line].get(i);
 				int w = viterbiWidths[line].get(i);
@@ -212,7 +212,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			StringBuffer goldComparisonWithSubsOutputBuffer = new StringBuffer();
 			goldComparisonWithSubsOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");
 			for (int line = 0; line < numLines; ++line) {
-				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(transcriptionWithSubsOutputLines.get(line), "") + "\n");
+				goldComparisonWithSubsOutputBuffer.append(transcriptionWithSubsOutputLines.get(line));
 				goldComparisonWithSubsOutputBuffer.append(StringHelper.join(goldCharSequences[line], "") + "\n");
 				goldComparisonWithSubsOutputBuffer.append("\n");
 			}
