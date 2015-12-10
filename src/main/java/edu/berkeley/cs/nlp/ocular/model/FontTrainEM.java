@@ -5,8 +5,10 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +99,7 @@ public class FontTrainEM {
 		//long overallEmissionCacheNanoTime = 0;
 		
 		for (int iter = 1; (/* learnFont && */ iter <= numEMIters) || (/* !learnFont && */ iter == 1); ++iter) {
-			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).");
+			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).   " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			else System.out.println("Transcribing (learnFont = false).");
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
@@ -112,7 +114,7 @@ public class FontTrainEM {
 			int batchDocsCounter = 0;
 			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
 				Document doc = documents.get(docNum);
-				if (learnFont) System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName());
+				if (learnFont) System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 				else System.out.println("Transcribing document: "+docNum+" of "+numUsableDocs+":  "+doc.baseName());
 				doc.loadLineText();
 
@@ -149,7 +151,7 @@ public class FontTrainEM {
 					++completedBatchesInIteration;
 					++batchDocsCounter;
 					double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
-					System.out.println("Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb);
+					System.out.println("Completed Batch: Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 					if (evalBatches) {
 						if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 							if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
@@ -169,7 +171,7 @@ public class FontTrainEM {
 			}
 			
 			if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
-				System.out.println("Evaluating dev data at the end of iteration "+iter);
+				System.out.println("Evaluating dev data at the end of iteration "+iter+"    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 				emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, gsm, font);
 			}
 		} // end: for iteration
