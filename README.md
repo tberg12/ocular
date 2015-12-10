@@ -38,7 +38,9 @@ Continued development of Ocular is supported in part by a [Digital Humanities Im
 
 The easiest way to get the Ocular software is to download the self-contained jar from http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.2-SNAPSHOT/ocular-0.2-SNAPSHOT-with_dependencies.jar
 
-This jar is executable and can be run like (see detailed instructions below):
+Once you have this jar, you will be able to run Ocular according to the instructions below in the Using Ocular section.
+
+The jar is executable, so when you use go to use Ocular, you will run it following this this template (where [MAIN-CLASS] will specify which program to run, as detailed in the Using Ocular section below):
 
     java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
 
@@ -51,13 +53,15 @@ Clone this repository, and compile the project into a jar:
 
     git clone https://github.com/tberg12/ocular.git
     cd ocular
-    ./compile.sh
+    ./make_jar.sh
 
-  This creates the jar file `ocular-0.2-SNAPSHOT-with_dependencies.jar`  mentioned above.
+This creates precisely the same `ocular-0.2-SNAPSHOT-with_dependencies.jar` jar file discussed above.  Thus, this is sufficient to be able to run Ocular, as stated above, using the detailed instructions in the Using Ocular section below.
 
-  Since this jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
+Also like above, since this jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
 
-  The `compile.sh` script also generates an executable script `target/start` that can be run like:
+**Compiling to an executable script instead of jar**
+
+Alternatively, if you do not wish to create the entire jar, you can run `make_run_script.sh`, which compiles the code and generates an executable script `target/start`.  This script can be used directly, in lieu of the jar file.  Thus to run Ocular, it is sufficient to run the `make_run_script.sh` script and then use the following template instead of the template given above:
   
     export JAVA_OPTS="-mx7g"     # Increase the available memory
     target/start [MAIN-CLASS] [options...]
@@ -251,7 +255,7 @@ Default: 3
 * `-updateBatchSize`: Number of documents to process for each parameter update.  (Only relevant if learnFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.
 
 * `-accumulateBatchesWithinIter`: Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.  (Only relevant if learnFont is set to true and updateDocBatchSize is used.)  Default: true
-	
+  
 * `-minDocBatchSize`: The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes.  (Only relevant if learnFont is set to true and updateDocBatchSize is used.)  Default is to always lump remaining documents in with the last complete batch.
 
 * `-outputPath`: Path of the directory that will contain output transcriptions and line extractions.
