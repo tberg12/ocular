@@ -2,6 +2,9 @@ package edu.berkeley.cs.nlp.ocular.model;
 
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
@@ -77,17 +80,23 @@ public class DecoderEM {
 				batchPixels[line - startLine] = pixels[line];
 			}
 
+			System.out.println("Initializing EmissionModel    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			final EmissionModel emissionModel = (markovVerticalOffset ? 
 					new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : 
 					new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+			System.out.println("Rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//long emissionCacheNanoTime = System.nanoTime();
 			emissionModel.rebuildCache();
+                        System.out.println("Done rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 
 			long nanoTime = System.nanoTime();
+			System.out.println("Constructing forwardTransitionModel");
 			SparseTransitionModel forwardTransitionModel = constructTransitionModel(lm, gsm);
 			BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
+			System.out.println("Ready to run decoder");
 			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
+                        System.out.println("Done running decoder");
 			totalNanoTime += (System.nanoTime() - nanoTime);
 			final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
 			final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
@@ -98,6 +107,7 @@ public class DecoderEM {
 			}
 
 			if (learnFont) {
+				System.out.println("Ready to run increment counts");
 				incrementCounts(emissionModel, batchDecodeStates, batchDecodeWidths);
 			}
 			
