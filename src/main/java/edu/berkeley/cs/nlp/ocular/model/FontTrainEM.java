@@ -107,6 +107,8 @@ public class FontTrainEM {
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
 		int[] languageCounts = new int[numLanguages]; // The number of characters assigned to a particular language (to re-estimate language probabilities).
 		double[][][][][] gsmCounts;
+		
+		GlyphSubstitutionModel evalGsm = gsmFactory.makeForEval(gsmFactory.initializeNewCountsMatrix());
 
 		if (!learnFont) numEMIters = 0;
 		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
@@ -169,7 +171,12 @@ public class FontTrainEM {
 					String outputFilePrefix = "retrained_iter-"+iter+"_batch-"+completedBatchesInIteration+""; 
 					if (learnFont) updateFontParameters(templates, font, outputPath, outputFilePrefix);
 					if (retrainLM) lm = reestimateLM(languageCounts, lm, outputPath, outputFilePrefix);
-					if (retrainGSM) gsm = reestimateGSM(gsmCounts, iter, completedBatchesInIteration, outputPath, outputFilePrefix);
+					if (retrainGSM) {
+						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
+						evalGsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
+						if (writeTrainedGsm) GlyphSubstitutionModel.writeGSM(evalGsm, outputPath + "/gsm/" + outputFilePrefix + ".gsmser");
+					}
+
 
 					if (!accumulateBatchesWithinIter) {
 						// Clear counts at the end of a batch, if necessary
@@ -184,7 +191,7 @@ public class FontTrainEM {
 					if (evalBatches) {
 						if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 							if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
-								emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, gsm, font);
+								emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, evalGsm, font);
 							}
 						}
 					}
@@ -201,7 +208,7 @@ public class FontTrainEM {
 			
 			if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 				System.out.println("Evaluating dev data at the end of iteration "+iter+"    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-				emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, gsm, font);
+				emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, evalGsm, font);
 			}
 		} // end: for iteration
 		
@@ -284,17 +291,6 @@ public class FontTrainEM {
 		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 		if (writeTrainedLm) TrainLanguageModel.writeLM(newLM, outputPath + "/lm/" + outputFilePrefix + ".lmser");
 		return newLM;
-	}
-
-	/**
-	 * Hard-EM update on glyph substitution probabilities
-	 */
-	private GlyphSubstitutionModel reestimateGSM(double[][][][][] gsmCounts, int iter, int batchId, String outputPath, String outputFilePrefix) {
-		long nanoTime = System.nanoTime();
-		GlyphSubstitutionModel newGSM = gsmFactory.make(gsmCounts, iter, batchId);
-		System.out.println("New GSM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-		if (writeTrainedGsm) GlyphSubstitutionModel.writeGSM(newGSM, outputPath + "/gsm/" + outputFilePrefix + ".gsmser");
-		return newGSM;
 	}
 
 	/**
