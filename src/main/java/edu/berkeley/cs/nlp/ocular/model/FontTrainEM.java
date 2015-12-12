@@ -144,7 +144,7 @@ public class FontTrainEM {
 				
 				if (batchComplete) {
 					List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
-					if (learnFont) updateFontParameters(iter, templates);
+					if (learnFont) updateFontParameters(templates);
 					if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
 					if (retrainGSM) gsm = updateGsmParameters(lm, fullViterbiStateSeq, iter, completedBatchesInIteration);
 
@@ -200,12 +200,11 @@ public class FontTrainEM {
 		}
 	}
 
-	private void updateFontParameters(int iter, final CharacterTemplate[] templates) {
+	private void updateFontParameters(final CharacterTemplate[] templates) {
 		long nanoTime = System.nanoTime();
-		final int iterFinal = iter;
 		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
 			public void call(Integer c, Object ignore) {
-				if (templates[c] != null) templates[c].updateParameters(iterFinal);
+				if (templates[c] != null) templates[c].updateParameters();
 			}
 		};
 		BetterThreader<Integer, Object> threader = new BetterThreader<Integer, Object>(func, numMstepThreads);

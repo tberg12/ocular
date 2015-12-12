@@ -274,7 +274,7 @@ public class CharacterTemplate implements Serializable {
 		incrementWidthCounts(width, count);
 	}
 	
-	public void updateParameters(int iter) {
+	public void updateParameters() {
 		updateWidthParameters(LEARN_WIDTH_MIN_VAR, LEARN_WIDTH_STD_THRESH);
 		updateEmissionParameters(MSTEP_LBFGS_TOL, MSTEP_LBFGS_ITERS);
 	}

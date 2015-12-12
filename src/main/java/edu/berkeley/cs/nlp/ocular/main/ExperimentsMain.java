@@ -194,9 +194,8 @@ public class ExperimentsMain implements Runnable {
 						BetterThreader<Integer,Object> threader1 = new BetterThreader<Integer,Object>(func1, numMstepThreads);
 						for (int line=0; line<emissionModel.numSequences(); ++line) threader1.addFunctionArgument(line);
 						threader1.run();
-						final int iterFinal = iter;
 						BetterThreader.Function<Integer,Object> func2 = new BetterThreader.Function<Integer,Object>(){public void call(Integer c, Object ignore){
-							if (templates[c] != null) templates[c].updateParameters(iterFinal);
+							if (templates[c] != null) templates[c].updateParameters();
 						}};
 						BetterThreader<Integer,Object> threader2 = new BetterThreader<Integer,Object>(func2, numMstepThreads);
 						for (int c=0; c<templates.length; ++c) threader2.addFunctionArgument(c);

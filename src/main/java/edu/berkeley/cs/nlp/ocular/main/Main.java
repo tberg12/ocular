@@ -240,9 +240,8 @@ public class Main implements Runnable {
 			if (iter <= numEMIters) {
 				long nanoTime = System.nanoTime();
 				{
-					final int iterFinal = iter;
 					BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer c, Object ignore){
-						if (templates[c] != null) templates[c].updateParameters(iterFinal);
+						if (templates[c] != null) templates[c].updateParameters();
 					}};
 					BetterThreader<Integer,Object> threader = new BetterThreader<Integer,Object>(func, numMstepThreads);
 					for (int c=0; c<templates.length; ++c) threader.addFunctionArgument(c);
