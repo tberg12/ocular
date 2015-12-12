@@ -68,8 +68,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	private int GLYPH_ELIDED;
 	
 	private double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs;
+	private boolean collapsePrevLmChar;
 
 	public BasicGlyphSubstitutionModel(double[][][][][] probs,
+			boolean collapsePrevLmChar,
 			Indexer<String> langIndexer, Indexer<String> charIndexer) {
 		this.langIndexer = langIndexer;
 		this.charIndexer = charIndexer;
@@ -78,14 +80,16 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		//this.numGlyphs = numChars + 2;
 		this.GLYPH_ELISION_TILDE = numChars;
 		this.GLYPH_ELIDED = numChars + 1;
+
 		this.probs = probs;
+		this.collapsePrevLmChar = collapsePrevLmChar;
 	}
 
 	// P( glyph[c1..cN,elisonTilde,elided] | prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar, lmChar )
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
 		GlyphType currGlyphType = glyphChar.toGlyphType();
 		int glyph = (currGlyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (currGlyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : glyphChar.templateCharIndex);
-		return probs[language][prevGlyphType.ordinal()][prevLmChar][lmChar][glyph];
+		return probs[language][prevGlyphType.ordinal()][(collapsePrevLmChar ? 0 : prevLmChar)][lmChar][glyph];
 	}
 
 	public Indexer<String> getLanguageIndexer() {
@@ -165,7 +169,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		 * Initialize the counts matrix. Add smoothing counts (and no counts for invalid options).
 		 */
 		public double[][][][][] initializeNewCountsMatrix() {
-			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
+			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts = new double[numLanguages][numGlyphTypes][(collapsePrevLmChar ? 1 : numChars)][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
 				Set<Integer> langActiveChars = activeCharacterSets[language];
 				for (GlyphType prevGlyph : GlyphType.values()) {
@@ -241,10 +245,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			//
 			// Normalize counts to get probabilities
 			//
-			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
+			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numGlyphTypes][(collapsePrevLmChar ? 1 : numChars)][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
 				for (GlyphType prevGlyph : GlyphType.values()) {
-					for (int prevLmChar = 0; prevLmChar < numChars; ++prevLmChar) {
+					for (int prevLmChar = 0; prevLmChar < (collapsePrevLmChar ? 1 : numChars); ++prevLmChar) {
 						for (int lmChar = 0; lmChar < numChars; ++lmChar) {
 							double sum = ArrayHelper.sum(counts[language][prevGlyph.ordinal()][prevLmChar][lmChar]);
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
@@ -260,19 +264,19 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			System.out.println("Writing out GSM information.");
 			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId); }
 			
-			return new BasicGlyphSubstitutionModel(probs, langIndexer, charIndexer);
+			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, langIndexer, charIndexer);
 		}
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts) {
-			double[][][][][] evalCounts = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
+			double[][][][][] evalCounts = new double[numLanguages][numGlyphTypes][(collapsePrevLmChar ? 1 : numChars)][numChars][numGlyphs];
 			
 			//
 			// Normalize counts to get probabilities
 			//
-			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
+			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numGlyphTypes][(collapsePrevLmChar ? 1 : numChars)][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
 				for (GlyphType prevGlyph : GlyphType.values()) {
-					for (int prevLmChar = 0; prevLmChar < numChars; ++prevLmChar) {
+					for (int prevLmChar = 0; prevLmChar < (collapsePrevLmChar ? 1 : numChars); ++prevLmChar) {
 						for (int lmChar = 0; lmChar < numChars; ++lmChar) {
 							
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
@@ -295,7 +299,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				}
 			}
 			
-			return new BasicGlyphSubstitutionModel(probs, langIndexer, charIndexer);
+			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, langIndexer, charIndexer);
 		}
 
 		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId) {
