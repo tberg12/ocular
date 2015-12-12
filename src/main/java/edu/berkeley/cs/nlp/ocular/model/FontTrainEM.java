@@ -22,6 +22,8 @@ import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
+import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
+import edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
@@ -54,6 +56,10 @@ public class FontTrainEM {
 	private EMIterationEvaluator emEvalSetIterationEvaluator;
 	private int evalFreq;
 	private boolean evalBatches;
+	
+	private boolean writeTrainedFont;
+	private boolean writeTrainedLm;
+	private boolean writeTrainedGsm;
 
 	public FontTrainEM(
 			Indexer<String> langIndexer,
@@ -63,7 +69,8 @@ public class FontTrainEM {
 			EMDocumentEvaluator emDocumentEvaluator,
 			boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize,
 			int numMstepThreads,
-			EMIterationEvaluator emEvalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
+			EMIterationEvaluator emEvalSetIterationEvaluator, int evalFreq, boolean evalBatches,
+			boolean writeTrainedFont, boolean writeTrainedLm, boolean writeTrainedGsm) {
 		
 		this.langIndexer = langIndexer;
 		this.charIndexer = charIndexer;
@@ -80,9 +87,13 @@ public class FontTrainEM {
 		this.emEvalSetIterationEvaluator = emEvalSetIterationEvaluator;
 		this.evalFreq = evalFreq;
 		this.evalBatches = evalBatches;
+		
+		this.writeTrainedFont = writeTrainedFont;
+		this.writeTrainedLm = writeTrainedLm;
+		this.writeTrainedGsm = writeTrainedGsm;
 	}
 
-	public Tuple3<CodeSwitchLanguageModel, GlyphSubstitutionModel, Map<String, CharacterTemplate>> run(
+	public Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> run(
 				List<Document> documents, String inputPath, String outputPath,
 				boolean learnFont,
 				boolean retrainLM,
@@ -90,8 +101,12 @@ public class FontTrainEM {
 				int numEMIters,
 				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font) {
 		int numUsableDocs = documents.size();
+		int numLanguages = langIndexer.size();
 		
+		// Containers for counts that will be accumulated
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
+		int[] languageCounts = new int[numLanguages]; // The number of characters assigned to a particular language (to re-estimate language probabilities).
+		double[][][][][] gsmCounts;
 
 		if (!learnFont) numEMIters = 0;
 		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
@@ -105,8 +120,10 @@ public class FontTrainEM {
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 
-			// The number of characters assigned to a particular language (to re-estimate language probabilities).
+			// Clear counts at the start of the iteration
 			clearTemplates(templates);
+			Arrays.fill(languageCounts, 1); // one-count smooth
+			gsmCounts = gsmFactory.initializeNewCountsMatrix();
 
 			double totalIterationJointLogProb = 0.0;
 			double totalBatchJointLogProb = 0.0;
@@ -124,7 +141,10 @@ public class FontTrainEM {
 				final int[][] decodeWidths = decodeResults._1._2;
 				totalIterationJointLogProb += decodeResults._2;
 				totalBatchJointLogProb += decodeResults._2;
-
+				List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
+				incrementLmCounts(languageCounts, fullViterbiStateSeq);
+				gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
+				
 				// evaluate
 				emDocumentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allTrainEvals);
 
@@ -143,13 +163,22 @@ public class FontTrainEM {
 				}
 				
 				if (batchComplete) {
-					List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
-					if (learnFont) updateFontParameters(templates);
-					if (retrainLM) lm = updateLmParameters(lm, fullViterbiStateSeq);
-					if (retrainGSM) gsm = updateGsmParameters(lm, fullViterbiStateSeq, iter, completedBatchesInIteration);
-
 					++completedBatchesInIteration;
 					++batchDocsCounter;
+					
+					String outputFilePrefix = "retrained_iter-"+iter+"_batch-"+completedBatchesInIteration+""; 
+					if (learnFont) updateFontParameters(templates, font, outputPath, outputFilePrefix);
+					if (retrainLM) lm = reestimateLM(languageCounts, lm, outputPath, outputFilePrefix);
+					if (retrainGSM) gsm = reestimateGSM(gsmCounts, iter, completedBatchesInIteration, outputPath, outputFilePrefix);
+
+					if (!accumulateBatchesWithinIter) {
+						// Clear counts at the end of a batch, if necessary
+						System.out.println("Clearing font parameter statistics.");
+						clearTemplates(templates);
+						Arrays.fill(languageCounts, 1); // one-count smooth
+						gsmCounts = gsmFactory.initializeNewCountsMatrix();
+					}
+					
 					double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
 					System.out.println("Completed Batch: Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 					if (evalBatches) {
@@ -178,7 +207,7 @@ public class FontTrainEM {
 		
 
 		//System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
-		return makeTuple3(lm, gsm, font);
+		return makeTuple3(font, lm, gsm);
 	}
 
 	public static CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
@@ -200,7 +229,7 @@ public class FontTrainEM {
 		}
 	}
 
-	private void updateFontParameters(final CharacterTemplate[] templates) {
+	private void updateFontParameters(final CharacterTemplate[] templates, Map<String, CharacterTemplate> font, String outputPath, String outputFilePrefix) {
 		long nanoTime = System.nanoTime();
 		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
 			public void call(Integer c, Object ignore) {
@@ -213,78 +242,58 @@ public class FontTrainEM {
 		threader.run();
 		System.out.println("Update font parameters: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
 		
-		if (!accumulateBatchesWithinIter) {
-			System.out.println("Clearing font parameter statistics.");
-			clearTemplates(templates);
-		}
+		if (writeTrainedFont) InitializeFont.writeFont(font, outputPath + "/font/" + outputFilePrefix + ".fontser");
 	}
 
 	/**
-	 * Hard-EM update on language model probabilities
+	 * Pass over the decoded states to accumulate counts
 	 */
-	private CodeSwitchLanguageModel updateLmParameters(CodeSwitchLanguageModel lm, List<TransitionState> fullViterbiStateSeq) {
-		long nanoTime = System.nanoTime();
-		
-		//
-		// Initialize containers for counts
-		//
-		int numLanguages = langIndexer.size();
-		int[] languageCounts = new int[numLanguages];
-		Arrays.fill(languageCounts, 1); // one-count smooth
-		
-		//
-		// Pass over the decoded states to accumulate counts
-		//
+	private void incrementLmCounts(int[] languageCounts, List<TransitionState> fullViterbiStateSeq) {
 		for (TransitionState ts : fullViterbiStateSeq) {
 			int currLanguage = ts.getLanguageIndex();
 			if (currLanguage >= 0) { 
 				languageCounts[currLanguage] += 1;
 			}
 		}
+	}
+	
+	/**
+	 * Hard-EM update on language model probabilities
+	 */
+	private CodeSwitchLanguageModel reestimateLM(int[] languageCounts, CodeSwitchLanguageModel lm, String outputPath, String outputFilePrefix) {
+		long nanoTime = System.nanoTime();
 		
-		//
 		// Update the parameters using counts
-		//
 		List<Tuple2<SingleLanguageModel, Double>> newSubModelsAndPriors = new ArrayList<Tuple2<SingleLanguageModel, Double>>();
 		double languageCountSum = 0;
-		for (int language = 0; language < numLanguages; ++language) {
+		for (int language = 0; language < languageCounts.length; ++language) {
 			double newPrior = languageCounts[language];
 			newSubModelsAndPriors.add(makeTuple2(lm.get(language), newPrior));
 			languageCountSum += newPrior;
 		}
 
-		//
 		// Construct the new LM
-		//
 		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), langIndexer, lm.getProbKeepSameLanguage(), lm.getMaxOrder());
 
-		//
 		// Print out some statistics
-		//
 		StringBuilder sb = new StringBuilder("Updating language probabilities: ");
-		for (int language = 0; language < numLanguages; ++language)
+		for (int language = 0; language < languageCounts.length; ++language)
 			sb.append(langIndexer.getObject(language)).append("->").append(languageCounts[language] / languageCountSum).append("  ");
 		System.out.println(sb);
 		
 		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
+		if (writeTrainedLm) TrainLanguageModel.writeLM(newLM, outputPath + "/lm/" + outputFilePrefix + ".lmser");
 		return newLM;
 	}
 
 	/**
 	 * Hard-EM update on glyph substitution probabilities
 	 */
-	private GlyphSubstitutionModel updateGsmParameters(CodeSwitchLanguageModel newLM, List<TransitionState> fullViterbiStateSeq, int iter, int batchId) {
+	private GlyphSubstitutionModel reestimateGSM(double[][][][][] gsmCounts, int iter, int batchId, String outputPath, String outputFilePrefix) {
 		long nanoTime = System.nanoTime();
-
-		//
-		// Construct the new GSM
-		//
-		GlyphSubstitutionModel newGSM = gsmFactory.make(fullViterbiStateSeq, newLM, iter, batchId);
-
-		//
-		// Print out some statistics
-		//
+		GlyphSubstitutionModel newGSM = gsmFactory.make(gsmCounts, iter, batchId);
 		System.out.println("New GSM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
+		if (writeTrainedGsm) GlyphSubstitutionModel.writeGSM(newGSM, outputPath + "/gsm/" + outputFilePrefix + ".gsmser");
 		return newGSM;
 	}
 

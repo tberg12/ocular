@@ -149,7 +149,7 @@ public class InitializeFont implements Runnable {
 
 	public static void writeFont(Map<String,CharacterTemplate> font, String fontPath) {
 		try {
-		  new File(fontPath).getParentFile().mkdirs();
+			new File(fontPath).getParentFile().mkdirs();
 			FileOutputStream fileOut = new FileOutputStream(fontPath);
 			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(fileOut));
 			out.writeObject(font);

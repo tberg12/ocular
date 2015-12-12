@@ -16,7 +16,6 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
@@ -102,6 +101,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private double gsmSmoothingCount;
 		private Indexer<String> langIndexer;
 		private Indexer<String> charIndexer;
+		private Set<Integer>[] activeCharacterSets;
 		private int spaceCharIndex;
 		private Set<Integer> canBeReplaced;
 		private Set<Integer> validSubstitutionChars;
@@ -109,19 +109,28 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private Map<Integer,Integer> addTilde;
 		private Map<Integer,Set<Integer>> diacriticDisregardMap;
 		
+		private int numLanguages;
+		private int numChars;
+		private int numGlyphTypes;
+		private int numGlyphs;
+		private int GLYPH_ELISION_TILDE;
+		private int GLYPH_ELIDED;
+		
 		// stuff for printing out model info
 		private List<Document> documents;
 		private String inputPath;
 		private String outputPath;
-
+		
 		public BasicGlyphSubstitutionModelFactory(
 				double gsmSmoothingCount,
 				Indexer<String> langIndexer,
 				Indexer<String> charIndexer,
+				Set<Integer>[] activeCharacterSets,
 				String inputPath, String outputPath, List<Document> documents) {
 			this.gsmSmoothingCount = gsmSmoothingCount;
 			this.langIndexer = langIndexer;
 			this.charIndexer = charIndexer;
+			this.activeCharacterSets = activeCharacterSets;
 			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 			this.canBeReplaced = makeCanBeReplacedSet(charIndexer);
 			this.validSubstitutionChars = makeValidSubstitutionCharsSet(charIndexer);
@@ -129,27 +138,29 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.addTilde = makeAddTildeMap(charIndexer);
 			this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
 			
+			this.numLanguages = langIndexer.size();
+			this.numChars = charIndexer.size();
+			this.numGlyphTypes = GlyphType.values().length;
+			this.numGlyphs = numChars + 2;
+			this.GLYPH_ELISION_TILDE = numChars;
+			this.GLYPH_ELIDED = numChars + 1;
+			
 			this.documents = documents;
 			this.inputPath = inputPath;
 			this.outputPath = outputPath;
 		}
 		
-		public BasicGlyphSubstitutionModel make(List<TransitionState> fullViterbiStateSeq, CodeSwitchLanguageModel newLM, int iter, int batchId) {
-			System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+batchId);
-
-			int numLanguages = langIndexer.size();
-			int numChars = charIndexer.size();
-			int numGlyphTypes = GlyphType.values().length;
-			int numGlyphs = numChars + 2;
-			int GLYPH_ELISION_TILDE = numChars;
-			int GLYPH_ELIDED = numChars + 1;
-	
-			//
-			// Initialize the counts matrix. Add smoothing counts (and no counts for invalid options).
-			//
+		public BasicGlyphSubstitutionModel uniform() {
+			return make(initializeNewCountsMatrix(), 0, 0);
+		}
+		
+		/**
+		 * Initialize the counts matrix. Add smoothing counts (and no counts for invalid options).
+		 */
+		public double[][][][][] initializeNewCountsMatrix() {
 			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
-				Set<Integer> langActiveChars = newLM.get(language).getActiveCharacters();
+				Set<Integer> langActiveChars = activeCharacterSets[language];
 				for (GlyphType prevGlyph : GlyphType.values()) {
 					for (int prevLmChar = 0; prevLmChar < numChars; ++prevLmChar) {
 						for (int lmChar = 0; lmChar < numChars; ++lmChar) {
@@ -190,10 +201,13 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					}
 				}
 			}
-			
-			//
-			// Traverse the sequence of viterbi states, adding counts
-			//
+			return counts;
+		}
+		
+		/**
+		 * Traverse the sequence of viterbi states, adding counts
+		 */
+		public void incrementCounts(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts, List<TransitionState> fullViterbiStateSeq) {
 			for (int i = 0; i < fullViterbiStateSeq.size(); ++i) {
 				TransitionState prevTs = ((i > 0) ? fullViterbiStateSeq.get(i-1) : null);
 				TransitionState currTs = fullViterbiStateSeq.get(i);
@@ -213,7 +227,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					//System.out.println("lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+charIndexer.getObject(glyph)+"("+glyph+")");
 				}
 			}
-			
+		}
+
+		public BasicGlyphSubstitutionModel make(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
+			System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+batchId);
 			//
 			// Normalize counts to get probabilities
 			//
