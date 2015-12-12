@@ -222,7 +222,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					GlyphType currGlyphType = currGlyphChar.toGlyphType();
 					int glyph = (currGlyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (currGlyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : currGlyphChar.templateCharIndex);
 					
-					if (counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] < 1) throw new RuntimeException("Illegal state found in viterbi decoding result:  language="+language + ", prevGlyph="+prevGlyph + ", prevLmChar="+prevLmChar + ", lmChar="+lmChar + ", glyph="+glyph);
+					if (counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] < gsmSmoothingCount-1e-9) throw new RuntimeException("Illegal state found in viterbi decoding result:  language="+language + ", prevGlyph="+prevGlyph + ", prevLmChar="+prevLmChar + ", lmChar="+lmChar + ", glyph="+glyph);
 					counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] += 1;
 					//System.out.println("lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+charIndexer.getObject(glyph)+"("+glyph+")");
 				}
@@ -250,14 +250,14 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 								double p = (c / sum);
 								probs[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = p;
 
-								if (c > gsmSmoothingCount) {
+//								if (c > gsmSmoothingCount) {
 //									System.out.println("c="+c+", lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+charIndexer.getObject(glyph)+"("+glyph+"), p="+p+", logp="+Math.log(p));
 //									toPrintLanguage.add(language);
 //									toPrintPrevGlyph.add(prevGlyph.ordinal());
 //									toPrintPrevLmChar.add(prevLmChar);
 //									toPrintLmChar.add(lmChar);
 //									toPrintGlyph.add(glyph);
-								}
+//								}
 							}
 						}
 					}
