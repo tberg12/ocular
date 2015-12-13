@@ -135,7 +135,7 @@ public class FontTrainEM {
 			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
 				Document doc = documents.get(docNum);
 				if (learnFont) System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-				else System.out.println("Transcribing document: "+docNum+" of "+numUsableDocs+":  "+doc.baseName());
+				else System.out.println("Transcribing document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName());
 				doc.loadLineText();
 
 				// e-step
