@@ -216,10 +216,6 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
 		Indexer<String> langIndexer = codeSwitchLM.getLanguageIndexer();
-		int numLanguages = langIndexer.size();
-		@SuppressWarnings("unchecked")
-		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
-		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = codeSwitchLM.get(l).getActiveCharacters();
 
 		List<String> allCharacters = makeList(charIndexer.getObjects());
 		Collections.sort(allCharacters);
@@ -247,20 +243,12 @@ public class TranscribeOrTrainFont implements Runnable {
 		/*
 		 * Load GSM (and print some info about it)
 		 */
+		int numLanguages = langIndexer.size();
+		@SuppressWarnings("unchecked")
+		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
+		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = codeSwitchLM.get(l).getActiveCharacters();
 		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, activeCharacterSets, collapsePrevLmChar, gsmPower, minCountsForEvalGsm, inputPath, outputPath, trainDocuments, evalDocuments);
-		GlyphSubstitutionModel codeSwitchGSM;
-		if (!allowGlyphSubstitution) {
-			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
-			codeSwitchGSM = new NoSubGlyphSubstitutionModel(langIndexer, charIndexer);
-		}
-		else if (inputGsmPath != null) { // file path given
-			System.out.println("Loading initial GSM from " + inputGsmPath);
-			codeSwitchGSM = GlyphSubstitutionModel.readGSM(inputGsmPath);
-		}
-		else {
-			System.out.println("No initial GSM provided; initializing to uniform model.");
-			codeSwitchGSM = gsmFactory.uniform();
-		}
+		GlyphSubstitutionModel codeSwitchGSM = getGlyphSubstituionModel(gsmFactory, langIndexer, charIndexer);
 
 		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, decoderEM, gsmFactory, emDocumentEvaluator, accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, numMstepThreads, emEvalSetIterationEvaluator, evalFreq, evalBatches, outputFontPath != null, outputLmPath != null, outputGsmPath != null);
 		
@@ -284,6 +272,21 @@ public class TranscribeOrTrainFont implements Runnable {
 		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
 	}
 
+	private GlyphSubstitutionModel getGlyphSubstituionModel(BasicGlyphSubstitutionModelFactory gsmFactory, Indexer<String> langIndexer, Indexer<String> charIndexer) {
+		if (!allowGlyphSubstitution) {
+			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
+			return new NoSubGlyphSubstitutionModel(langIndexer, charIndexer);
+		}
+		else if (inputGsmPath != null) { // file path given
+			System.out.println("Loading initial GSM from " + inputGsmPath);
+			return GlyphSubstitutionModel.readGSM(inputGsmPath);
+		}
+		else {
+			System.out.println("No initial GSM provided; initializing to uniform model.");
+			return gsmFactory.uniform();
+		}
+	}
+	
 	private List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip) {
 		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
 		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
@@ -293,9 +296,6 @@ public class TranscribeOrTrainFont implements Runnable {
 		Collections.sort(lazyDocs, new Comparator<Document>() {
 			public int compare(Document o1, Document o2) {
 				return o1.baseName().compareTo(o2.baseName());
-			}
-			public boolean equals(Object obj) {
-				return false;
 			}
 		});
 		
