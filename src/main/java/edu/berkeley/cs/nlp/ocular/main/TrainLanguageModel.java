@@ -213,13 +213,24 @@ public class TrainLanguageModel implements Runnable {
 			counter.countChars(chars, charIndexer, 0);
 
 			Double prior = pathsReaderAndPrior._2;
+			Set<Integer> activeChars = counter.getActiveCharacters();
 
+			List<Tuple2<Integer,Integer>> reverseUnigramCounts = new ArrayList<Tuple2<Integer,Integer>>();
+			for (Map.Entry<Integer,Integer> entry : counter.getUnigramCounts().entrySet())
+				reverseUnigramCounts.add(makeTuple2(entry.getValue(),entry.getKey()));
+			reverseUnigramCounts.sort(new Tuple2.DefaultLexicographicTuple2Comparator<>());
+			Collections.reverse(reverseUnigramCounts);
+			for (Tuple2<Integer,Integer> entry : reverseUnigramCounts) {
+				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2));
+				if (entry._1 < 10) activeChars.remove(entry._2); // remove low-count characters
+			}
+			
 			List<String> langChars = new ArrayList<String>();
-			for (int i : counter.getActiveCharacters())
+			for (int i : activeChars)
 				langChars.add(charIndexer.getObject(i));
 			Collections.sort(langChars);
 			System.out.println(language + ": " + langChars);
-
+			
 			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, power);
 			lmsAndPriors.add(makeTuple2(lm, prior));
 		}

@@ -8,7 +8,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -34,6 +36,7 @@ public class CorpusCounter {
                                                40 * MILLION, 60 * MILLION, 80 * MILLION };
 
   private final Set<Integer> activeCharacters;
+  private final Map<Integer,Integer> unigramCounts;
   
 	public CorpusCounter(int maxNgramOrder) {
     this.counts = new CountDbBig[maxNgramOrder];
@@ -54,6 +57,7 @@ public class CorpusCounter {
     this.tokenCount = 0;
     
     this.activeCharacters = new TreeSet<Integer>();
+    this.unigramCounts = new HashMap<Integer,Integer>();
   }
 
   public CountDbBig[] getCounts() {
@@ -140,6 +144,7 @@ public class CorpusCounter {
         incrementCounts(ngramArr, maxNgramOrder - (firstMinusOneLookingBack(ngramArr) + 1));
         
         this.activeCharacters.add(line[charIdx]);
+        this.unigramCounts.put(line[charIdx], this.unigramCounts.getOrDefault(line[charIdx], 0) + 1);
       }
       tokenCount++;
       for (int i = 0; i < counts.length; i++) {
@@ -202,6 +207,10 @@ public class CorpusCounter {
   
   public Set<Integer> getActiveCharacters() {
 		return activeCharacters;
-	}
+  }
+  
+  public Map<Integer,Integer> getUnigramCounts() {
+		return unigramCounts;
+  }
 
 }
