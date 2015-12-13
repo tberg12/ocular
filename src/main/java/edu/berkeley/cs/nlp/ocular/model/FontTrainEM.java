@@ -108,7 +108,7 @@ public class FontTrainEM {
 		int[] languageCounts = new int[numLanguages]; // The number of characters assigned to a particular language (to re-estimate language probabilities).
 		double[][][][][] gsmCounts;
 		
-		GlyphSubstitutionModel evalGsm = gsmFactory.makeForEval(gsmFactory.initializeNewCountsMatrix());
+		GlyphSubstitutionModel evalGsm = gsmFactory.makeForEval(gsmFactory.initializeNewCountsMatrix(), 0, 0);
 
 		if (!learnFont) numEMIters = 0;
 		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
@@ -173,7 +173,7 @@ public class FontTrainEM {
 					if (retrainLM) lm = reestimateLM(languageCounts, lm, outputPath, outputFilePrefix);
 					if (retrainGSM) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
-						evalGsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
+						evalGsm = gsmFactory.makeForEval(gsmCounts, iter, completedBatchesInIteration);
 						if (writeTrainedGsm) GlyphSubstitutionModel.writeGSM(evalGsm, outputPath + "/gsm/" + outputFilePrefix + ".gsmser");
 					}
 

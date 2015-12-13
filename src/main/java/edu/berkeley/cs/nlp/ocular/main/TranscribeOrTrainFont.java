@@ -218,10 +218,33 @@ public class TranscribeOrTrainFont implements Runnable {
 		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
 		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = codeSwitchLM.get(l).getActiveCharacters();
 
+		List<String> allCharacters = makeList(charIndexer.getObjects());
+		Collections.sort(allCharacters);
+		System.out.println("Characters: " + allCharacters);
+		System.out.println("Num characters: " + charIndexer.size());
+
+		System.out.println("Loading font initializer from " + initFontPath);
+		Map<String, CharacterTemplate> font = InitializeFont.readFont(initFontPath);
+
+		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
+
+		DecoderEM decoderEM = new DecoderEM(emissionInnerLoop, allowGlyphSubstitution, noCharSubPrior, allowLanguageSwitchOnPunct, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize, charIndexer);
+		EMDocumentEvaluator emDocumentEvaluator = new BasicEMDocumentEvaluator(charIndexer, langIndexer);
+		
+		List<Document> evalDocuments = null;
+		EMIterationEvaluator emEvalSetIterationEvaluator;
+		if (evalInputPath != null) {
+			evalDocuments = loadDocuments(evalInputPath, evalExtractedLinesPath, numDocs, numDocsToSkip);
+			emEvalSetIterationEvaluator = new BasicEMIterationEvaluator(evalDocuments, evalInputPath, outputPath, learnFont, numEMIters, decoderEM, emDocumentEvaluator, charIndexer);
+		}
+		else {
+			emEvalSetIterationEvaluator = new EMIterationEvaluator.NoOpEMIterationEvaluator();
+		}
+			
 		/*
 		 * Load GSM (and print some info about it)
 		 */
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, activeCharacterSets, collapsePrevLmChar, minCountsForEvalGsm, inputPath, outputPath, trainDocuments);
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, activeCharacterSets, collapsePrevLmChar, minCountsForEvalGsm, inputPath, outputPath, trainDocuments, evalDocuments);
 		GlyphSubstitutionModel codeSwitchGSM;
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
@@ -236,28 +259,6 @@ public class TranscribeOrTrainFont implements Runnable {
 			codeSwitchGSM = gsmFactory.uniform();
 		}
 
-		List<String> allCharacters = makeList(charIndexer.getObjects());
-		Collections.sort(allCharacters);
-		System.out.println("Characters: " + allCharacters);
-		System.out.println("Num characters: " + charIndexer.size());
-
-		System.out.println("Loading font initializer from " + initFontPath);
-		Map<String, CharacterTemplate> font = InitializeFont.readFont(initFontPath);
-
-		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
-
-		DecoderEM decoderEM = new DecoderEM(emissionInnerLoop, allowGlyphSubstitution, noCharSubPrior, allowLanguageSwitchOnPunct, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize, charIndexer);
-		EMDocumentEvaluator emDocumentEvaluator = new BasicEMDocumentEvaluator(charIndexer, langIndexer);
-		
-		EMIterationEvaluator emEvalSetIterationEvaluator;
-		if (evalInputPath != null) {
-			List<Document> evalDocuments = loadDocuments(evalInputPath, evalExtractedLinesPath, numDocs, numDocsToSkip);
-			emEvalSetIterationEvaluator = new BasicEMIterationEvaluator(evalDocuments, evalInputPath, outputPath, learnFont, numEMIters, decoderEM, emDocumentEvaluator, charIndexer);
-		}
-		else {
-			emEvalSetIterationEvaluator = new EMIterationEvaluator.NoOpEMIterationEvaluator();
-		}
-			
 		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, decoderEM, gsmFactory, emDocumentEvaluator, accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, numMstepThreads, emEvalSetIterationEvaluator, evalFreq, evalBatches, outputFontPath != null, outputLmPath != null, outputGsmPath != null);
 		
 		long overallNanoTime = System.nanoTime();

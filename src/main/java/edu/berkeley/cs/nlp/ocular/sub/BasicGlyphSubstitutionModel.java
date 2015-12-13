@@ -125,6 +125,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		
 		// stuff for printing out model info
 		private List<Document> documents;
+		private List<Document> evalDocuments;
 		private String inputPath;
 		private String outputPath;
 		
@@ -134,7 +135,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				Indexer<String> charIndexer,
 				Set<Integer>[] activeCharacterSets,
 				boolean collapsePrevLmChar, int minCountsForEvalGsm,
-				String inputPath, String outputPath, List<Document> documents) {
+				String inputPath, String outputPath, List<Document> documents, List<Document> evalDocuments) {
 			this.gsmSmoothingCount = gsmSmoothingCount;
 			this.langIndexer = langIndexer;
 			this.charIndexer = charIndexer;
@@ -157,6 +158,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.GLYPH_ELIDED = numChars + 1;
 			
 			this.documents = documents;
+			this.evalDocuments = evalDocuments;
 			this.inputPath = inputPath;
 			this.outputPath = outputPath;
 		}
@@ -262,12 +264,12 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			}
 			
 			System.out.println("Writing out GSM information.");
-			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId); }
+			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, documents.get(0)); }
 			
 			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, langIndexer, charIndexer);
 		}
 
-		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts) {
+		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
 			double[][][][][] evalCounts = new double[numLanguages][numGlyphTypes][(collapsePrevLmChar ? 1 : numChars)][numChars][numGlyphs];
 			
 			//
@@ -280,12 +282,13 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 						for (int lmChar = 0; lmChar < numChars; ++lmChar) {
 							
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
-								if (counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] - gsmSmoothingCount < 1e-9)
+								double trueCount = counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] - gsmSmoothingCount;
+								if (trueCount < 1e-9)
 									evalCounts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = 0;
-								else if (counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] - gsmSmoothingCount < minCountsForEvalGsm-1e-9)
+								else if (trueCount < minCountsForEvalGsm-1e-9)
 									evalCounts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = 0;
-								else 
-									evalCounts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];
+								else
+									evalCounts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = trueCount;
 							}
 							
 							double sum = ArrayHelper.sum(evalCounts[language][prevGlyph.ordinal()][prevLmChar][lmChar]);
@@ -299,18 +302,21 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				}
 			}
 			
+			System.out.println("Writing out GSM information.");
+			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, evalDocuments.get(0)); }
+
 			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, langIndexer, charIndexer);
 		}
 
-		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId) {
+		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId, Document doc) {
 			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" "), Charset.LOWERCASE_LATIN_LETTERS);
-			for (String c : Charset.LOWERCASE_VOWELS) {
-				CHARS_TO_PRINT.add(Charset.ACUTE_ESCAPE + c);
-				CHARS_TO_PRINT.add(Charset.GRAVE_ESCAPE + c);
-			}
+//			for (String c : Charset.LOWERCASE_VOWELS) {
+//				CHARS_TO_PRINT.add(Charset.ACUTE_ESCAPE + c);
+//				CHARS_TO_PRINT.add(Charset.GRAVE_ESCAPE + c);
+//			}
 			
 			StringBuffer sb = new StringBuffer();
-			sb.append("language\tprevGlyph\tprevLmChar\tlmChar\tglyph\tmincount\tcount\tminProb\tprob\n"); 
+			sb.append("language\tprevGlyph\tprevLmChar\tlmChar\tglyph\tcount\tminProb\tprob\n"); 
 			for (int language = 0; language < numLanguages; ++language) {
 				String slanguage = langIndexer.getObject(language);
 				for (GlyphType prevGlyph : GlyphType.values()) {
@@ -321,19 +327,19 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 							String slmChar = charIndexer.getObject(lmChar);
 							
 							// figure out what the lowest count is, and then exclude things with that count
-							double lowCount = ArrayHelper.min(counts[language][prevGlyph.ordinal()][prevLmChar][lmChar]);
 							double lowProb = ArrayHelper.min(probs[language][prevGlyph.ordinal()][prevLmChar][lmChar]);
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
+								String sglyph = glyph < numChars ? charIndexer.getObject(glyph) : (glyph == numGlyphs ? "EpsilonTilde": "Elided");
+								
 								double p = probs[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];
-								double c =  counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];
-								if (c > gsmSmoothingCount) {
+								double c = counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];
+								if (c > gsmSmoothingCount || (CHARS_TO_PRINT.contains(slmChar) && (CHARS_TO_PRINT.contains(sglyph) || glyph >= numChars))) {
 									//System.out.println("c="+c+", lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+(glyph < numChars ? charIndexer.getObject(glyph) : (glyph == numGlyphs ? "EpsilonTilde": "Elided"))+"("+glyph+"), p="+p+", logp="+Math.log(p));
 									sb.append(slanguage).append("\t");
 									sb.append(sprevGlyph).append("\t");
 									sb.append(sprevLmChar).append("\t");
 									sb.append(slmChar).append("\t");
-									sb.append(glyph < numChars ? charIndexer.getObject(glyph) : (glyph == numGlyphs ? "EpsilonTilde": "Elided")).append("\t");
-									sb.append(lowCount).append("\t");
+									sb.append(sglyph).append("\t");
 									sb.append(c).append("\t");
 									sb.append(lowProb).append("\t");
 									sb.append(p).append("\t");
@@ -345,7 +351,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				}
 			}
 		
-			Document doc = documents.get(0);
 			String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
 			String preext = "newGSM";
 			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
