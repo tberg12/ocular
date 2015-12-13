@@ -69,9 +69,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	
 	private double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs;
 	private boolean collapsePrevLmChar;
+	private double gsmPower;
 
 	public BasicGlyphSubstitutionModel(double[][][][][] probs,
-			boolean collapsePrevLmChar,
+			boolean collapsePrevLmChar, double gsmPower,
 			Indexer<String> langIndexer, Indexer<String> charIndexer) {
 		this.langIndexer = langIndexer;
 		this.charIndexer = charIndexer;
@@ -83,13 +84,15 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 		this.probs = probs;
 		this.collapsePrevLmChar = collapsePrevLmChar;
+		this.gsmPower = gsmPower;
 	}
 
 	// P( glyph[c1..cN,elisonTilde,elided] | prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar, lmChar )
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
 		GlyphType currGlyphType = glyphChar.toGlyphType();
 		int glyph = (currGlyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (currGlyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : glyphChar.templateCharIndex);
-		return probs[language][prevGlyphType.ordinal()][(collapsePrevLmChar ? 0 : prevLmChar)][lmChar][glyph];
+		double p = probs[language][prevGlyphType.ordinal()][(collapsePrevLmChar ? 0 : prevLmChar)][lmChar][glyph];
+		return Math.pow(p, gsmPower);
 	}
 
 	public Indexer<String> getLanguageIndexer() {
@@ -121,6 +124,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private int GLYPH_ELIDED;
 		
 		private boolean collapsePrevLmChar;
+		private double gsmPower;
 		private int minCountsForEvalGsm;
 		
 		// stuff for printing out model info
@@ -134,13 +138,14 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				Indexer<String> langIndexer,
 				Indexer<String> charIndexer,
 				Set<Integer>[] activeCharacterSets,
-				boolean collapsePrevLmChar, int minCountsForEvalGsm,
+				boolean collapsePrevLmChar, double gsmPower, int minCountsForEvalGsm,
 				String inputPath, String outputPath, List<Document> documents, List<Document> evalDocuments) {
 			this.gsmSmoothingCount = gsmSmoothingCount;
 			this.langIndexer = langIndexer;
 			this.charIndexer = charIndexer;
 			this.activeCharacterSets = activeCharacterSets;
 			this.collapsePrevLmChar = collapsePrevLmChar;
+			this.gsmPower = gsmPower;
 			this.minCountsForEvalGsm = minCountsForEvalGsm;
 			
 			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
@@ -266,7 +271,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			System.out.println("Writing out GSM information.");
 			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, documents.get(0)); }
 			
-			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, langIndexer, charIndexer);
+			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, gsmPower, langIndexer, charIndexer);
 		}
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
@@ -305,7 +310,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			System.out.println("Writing out GSM information.");
 			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, evalDocuments.get(0)); }
 
-			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, langIndexer, charIndexer);
+			return new BasicGlyphSubstitutionModel(probs, collapsePrevLmChar, gsmPower, langIndexer, charIndexer);
 		}
 
 		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId, Document doc) {

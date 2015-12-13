@@ -163,6 +163,9 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "minCountsForEvalGsm. Default: 2")
 	public static int minCountsForEvalGsm = 2;
 	
+	@Option(gloss = "gsmPower. Default: ")
+	public static double gsmPower = 4.0;
+	
 	
 	public static enum EmissionCacheInnerLoopType { DEFAULT, OPENCL, CUDA };
 
@@ -244,7 +247,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		/*
 		 * Load GSM (and print some info about it)
 		 */
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, activeCharacterSets, collapsePrevLmChar, minCountsForEvalGsm, inputPath, outputPath, trainDocuments, evalDocuments);
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, activeCharacterSets, collapsePrevLmChar, gsmPower, minCountsForEvalGsm, inputPath, outputPath, trainDocuments, evalDocuments);
 		GlyphSubstitutionModel codeSwitchGSM;
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
