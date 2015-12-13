@@ -56,6 +56,7 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 		
 		double totalJointLogProb = 0.0;
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
+		List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 		for (int docNum = 0; docNum < numDocs; ++docNum) {
 			Document doc = documents.get(docNum);
 			System.out.println("Transcribing eval document: "+docNum+" of "+numDocs+":  "+doc.baseName());
@@ -66,7 +67,7 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allEvals);
+			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allEvals, allLmEvals);
 		}
 		double avgLogProb = ((double)totalJointLogProb) / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);
@@ -77,8 +78,8 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
 			if (iter > 0) outputFilenameBase += "_iter-" + iter;
 			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
-			String outputFilename = outputFilenameBase + ".txt";
-			FontTrainEM.printEvaluation(allEvals, outputFilename);
+			FontTrainEM.printEvaluation(allEvals, outputFilenameBase + ".txt");
+			FontTrainEM.printEvaluation(allLmEvals, outputFilenameBase + "_lmeval.txt");
 		}
 	}
 

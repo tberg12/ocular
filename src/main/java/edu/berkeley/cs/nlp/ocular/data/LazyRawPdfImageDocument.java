@@ -20,7 +20,7 @@ public class LazyRawPdfImageDocument extends LazyRawImageDocument {
 	}
 
 	protected BufferedImage doLoadBufferedImage() {
-	  System.out.println("Extracting text line images from " + pdfFile + ", page " + pageNumber);
+		System.out.println("Extracting text line images from " + pdfFile + ", page " + pageNumber);
 		return PdfImageReader.readPdfPageAsImage(pdfFile, pageNumber);
 	}
 	

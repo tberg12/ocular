@@ -119,6 +119,7 @@ public class FontTrainEM {
 			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).   " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			else System.out.println("Transcribing (learnFont = false).");
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
+			List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainLmEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 
@@ -148,7 +149,7 @@ public class FontTrainEM {
 				gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 				
 				// evaluate
-				emDocumentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allTrainEvals);
+				emDocumentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allTrainEvals, allTrainLmEvals);
 
 				// m-step
 				{
@@ -204,6 +205,7 @@ public class FontTrainEM {
 			System.out.println("Iteration "+iter+" avg joint log prob: " + avgLogProb);
 			if (new File(inputPath).isDirectory()) {
 				printEvaluation(allTrainEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+".txt");
+				printEvaluation(allTrainLmEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+"_lmeval.txt");
 			}
 			
 			if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end

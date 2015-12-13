@@ -171,6 +171,36 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 		return text;
 	}
 
+	public String[][] loadLmLineText() {
+		if (text == null) {
+			File textFile = new File(baseName().replaceAll("\\.[^.]*$", "") + "_lm.txt");
+			if (textFile.exists()) {
+				System.out.println("Evaluation text found at " + textFile);
+				List<List<String>> textList = new ArrayList<List<String>>();
+				try {
+					BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
+					while (in.ready()) {
+						textList.add(textReader.readCharacters(in.readLine()));
+					}
+					in.close();
+				}
+				catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+
+				text = new String[textList.size()][];
+				for (int i = 0; i < text.length; ++i) {
+					List<String> line = textList.get(i);
+					text[i] = line.toArray(new String[line.size()]);
+				}
+			}
+			else {
+				System.out.println("No LM evaluation text found at " + textFile + "  (This is only a problem if you were trying to provide a gold transcription to check accuracy.)");
+			}
+		}
+		return text;
+	}
+
 	private String multilineExtractionImagePath() { return fullLePreExt() + "." + ext(); }
 	private String leLineDir() { return fullLePreExt() + "_" + ext(); }
 	private String fileParent() { return FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), file())._2; }

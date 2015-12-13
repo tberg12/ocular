@@ -38,13 +38,18 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			TransitionState[][] decodeStates, int[][] decodeWidths,
 			boolean learnFont, String inputPath, int numEMIters,
 			String outputPath,
-			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals) {
+			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
+			List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals) {
 		String[][] text = doc.loadLineText();
+		String[][] lmText = doc.loadLmLineText();
 		
 		//
 		// Make sure the decoded states and the text have the same number of lines (numLines)
 		//
-		int numLines = (text != null ? Math.max(text.length, decodeStates.length) : decodeStates.length); // in case gold and viterbi have different line counts
+		int numLines = decodeStates.length;
+		if (text != null && text.length > numLines) numLines = text.length; // in case gold and viterbi have different line counts
+		if (lmText != null && lmText.length > numLines) numLines = lmText.length; // in case gold and viterbi have different line counts
+		
 		if (text != null && text.length < numLines) {
 			String[][] newText = new String[numLines][];
 			for (int line = 0; line < numLines; ++line) {
@@ -54,6 +59,16 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 					newText[line] = new String[0];
 			}
 			text = newText;
+		}
+		if (lmText != null && lmText.length < numLines) {
+			String[][] newLmText = new String[numLines][];
+			for (int line = 0; line < numLines; ++line) {
+				if (line < lmText.length)
+					newLmText[line] = lmText[line];
+				else
+					newLmText[line] = new String[0];
+			}
+			lmText = newLmText;
 		}
 		if (decodeStates.length < numLines) {
 			TransitionState[][] newDecodeStates = new TransitionState[numLines][];
@@ -72,11 +87,14 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[numLines];
 		@SuppressWarnings("unchecked")
+		List<String>[] viterbiLmChars = new List[numLines];
+		@SuppressWarnings("unchecked")
 		List<TransitionState>[] viterbiTransStates = new List[numLines];
 		@SuppressWarnings("unchecked")
 		List<Integer>[] viterbiWidths = new List[numLines];
 		for (int line = 0; line < numLines; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
+			viterbiLmChars[line] = new ArrayList<String>();
 			viterbiTransStates[line] = new ArrayList<TransitionState>();
 			viterbiWidths[line] = new ArrayList<Integer>();
 			for (int i = 0; i < decodeStates[line].length; ++i) {
@@ -86,6 +104,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 					if (!ts.getGlyphChar().isElided) {
 						viterbiChars[line].add(charIndexer.getObject(c));
 					}
+					viterbiLmChars[line].add(charIndexer.getObject(ts.getLmCharIndex()));
 					viterbiTransStates[line].add(ts);
 					viterbiWidths[line].add(decodeWidths[line][i]);
 				}
@@ -172,10 +191,14 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			//
 			@SuppressWarnings("unchecked")
 			List<String>[] goldCharSequences = new List[numLines];
+			@SuppressWarnings("unchecked")
+			List<String>[] goldLmCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
 				goldCharSequences[line] = new ArrayList<String>();
+				goldLmCharSequences[line] = new ArrayList<String>();
 				for (int i = 0; i < text[line].length; ++i) {
 					goldCharSequences[line].add(text[line][i]);
+					goldLmCharSequences[line].add(lmText[line][i]);
 				}
 			}
 
@@ -185,6 +208,10 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
 			if (allEvals != null) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
+			}
+			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(viterbiLmChars, goldLmCharSequences);
+			if (allLmEvals != null) {
+				allLmEvals.add(makeTuple2(doc.baseName(), lmEvals));
 			}
 			
 			//

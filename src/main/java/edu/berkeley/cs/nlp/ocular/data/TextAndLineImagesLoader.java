@@ -52,6 +52,10 @@ public class TextAndLineImagesLoader implements ImageLoader {
 			return text;
 		}
 		
+		public String[][] loadLmLineText() {
+			return null;
+		}
+		
 		public String baseName() {
 			String[] split = imgPathPrefix.split("/");
 			String baseNamePlusHyphen = split[split.length-1];

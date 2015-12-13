@@ -13,6 +13,7 @@ public interface ImageLoader {
 		public String baseName();
 		public PixelType[][][] loadLineImages();
 		public String[][] loadLineText();
+		public String[][] loadLmLineText();
 	}
 
 	public List<Document> readDataset();

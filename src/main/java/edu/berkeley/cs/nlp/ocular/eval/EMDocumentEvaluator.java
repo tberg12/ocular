@@ -18,7 +18,8 @@ public interface EMDocumentEvaluator {
 			TransitionState[][] decodeStates, int[][] decodeWidths,
 			boolean learnFont, String inputPath, int numEMIters,
 			String outputPath,
-			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals);
+			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
+			List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals);
 
 	/**
 	 * No-op version of an evaluator 
@@ -29,6 +30,7 @@ public interface EMDocumentEvaluator {
 				TransitionState[][] decodeStates, int[][] decodeWidths,
 				boolean learnFont, String inputPath, int numEMIters,
 				String outputPath,
-				List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals) {}
+				List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
+				List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals) {}
 	}
 }
