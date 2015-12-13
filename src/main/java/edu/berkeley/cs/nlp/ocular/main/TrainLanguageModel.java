@@ -77,8 +77,8 @@ public class TrainLanguageModel implements Runnable {
 	@Option(gloss = "Exponent on LM scores.")
 	public static double power = 4.0;
 	
-	@Option(gloss = "Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.")
-	public static long lmCharCount = -1;
+	@Option(gloss = "Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.")
+	public static long lmCharCount = 0;
 
 	
 	public static void main(String[] args) {

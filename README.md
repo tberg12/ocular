@@ -169,16 +169,16 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 * `-lmPath`: Output Language Model file path. 
 Required.
 
-* `-textPath`: Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with a dot (`.`).  For a multilingual (code-switching) model, give multiple comma-separated files with language names: `"english->texts/english/,spanish->texts/spanish/,french->texts/french/"`.  If spaces are used, be sure to wrap the whole string with "quotes".).
+* `-textPath`: Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with a dot (`.`).  For a multilingual (code-switching) model, give multiple comma-separated files with language names: `"english->texts/english/,spanish->texts/spanish/,french->texts/french/"`.  Be sure to wrap the whole string with "quotes" if multiple languages are used.
 Required.
 
-* `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: `english->0.7,spanish->0.2,french->0.1`. If spaces are used, be sure to wrap the whole string with "quotes".  (Only relevant if multiple languages used.) 
+* `-languagePriors`: Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: `"english->0.7,spanish->0.2,french->0.1"`. Be sure to wrap the whole string with "quotes" if multiple languages are used.  (Only relevant if multiple languages used.) 
 Default: uniform priors
 
 * `-pKeepSameLanguage`: Prior probability of sticking with the same language when moving between words in a code-switch model transition model.  (Only relevant if multiple languages used.) 
 Default: 0.999999
 
-* `-alternateSpellingReplacementPaths`: Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: `english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt`. If spaces are used, be sure to wrap the whole string with "quotes". Any languages for which no replacements are needed can be safely ignored. 
+* `-alternateSpellingReplacementPaths`: Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: `"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt"`. Be sure to wrap the whole string with "quotes" if multiple languages are used. Any languages for which no replacements are needed can be safely ignored. 
 Default: no replacements
 
 * `-insertLongS`: Use separate character type for long s.
@@ -199,8 +199,8 @@ Default: 6
 * `-power`: Exponent on LM scores.
 Default: 4.0
 
-* `-lmCharCount`: Number of characters to use for training the LM.  Use -1 to indicate that the full training data should be used.
-Default: -1
+* `-lmCharCount`: Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.
+Default: 0
 
 
 
