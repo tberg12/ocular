@@ -39,7 +39,6 @@ public class TrainLanguageModelGUI {
 	private JLabel label_insertLongS;
 	private JLabel label_removeDiacritics;
 	private JLabel label_explicitCharacterSet;
-	private JLabel label_maxLines;
 	private JLabel label_charN;
 	private JLabel label_power;
 	private JLabel label_lmCharCount;
@@ -53,7 +52,6 @@ public class TrainLanguageModelGUI {
 	private JCheckBox input_insertLongS;
 	private JCheckBox input_removeDiacritics;
 	private JTextField input_explicitCharacterSet;
-	private JTextField input_maxLines;
 	private JTextField input_power;
 	private JTextField input_charN;
 	private JTextField input_lmCharCount;
@@ -137,10 +135,6 @@ public class TrainLanguageModelGUI {
 		label_explicitCharacterSet.setToolTipText("A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters. Not currently implemented. Default: ...");
 		label_explicitCharacterSet.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_explicitCharacterSet);
-		label_maxLines = new JLabel("Maximum number of lines from corpus ");
-		label_maxLines.setToolTipText("Maximum number of lines to use from corpus. Default: 1000000");
-		label_maxLines.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_maxLines);
 		label_charN = new JLabel("N-gram 'n' ");
 		label_charN.setToolTipText("LM character n-gram length. Default: 6");
 		label_charN.setHorizontalAlignment(SwingConstants.TRAILING);
@@ -190,10 +184,6 @@ public class TrainLanguageModelGUI {
 		input_explicitCharacterSet.setToolTipText("A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters. Not currently implemented. Default: ...");
 		panel_inputs.add(input_explicitCharacterSet);
 		TranscribeOrTrainFontGUI.setEnabled(input_explicitCharacterSet, false);
-		input_maxLines = new JTextField();
-		input_maxLines.setToolTipText("Maximum number of lines to use from corpus. Default: 1000000");
-		input_maxLines.setText("1000000");
-		panel_inputs.add(input_maxLines);
 		input_charN = new JTextField();
 		input_charN.setToolTipText("LM character n-gram length. Default: 6");
 		input_charN.setText("6");
@@ -219,7 +209,6 @@ public class TrainLanguageModelGUI {
 				exec.insertLongS = input_insertLongS.isSelected();
 				exec.removeDiacritics = input_removeDiacritics.isSelected();
 				exec.explicitCharacterSet = null; // input_explicitCharacterSet.getText();
-				exec.maxLines = Integer.valueOf(input_maxLines.getText());
 				exec.charN = Integer.valueOf(input_charN.getText());
 				exec.power = Double.valueOf(input_power.getText());
 				exec.lmCharCount = Integer.valueOf(input_lmCharCount.getText());

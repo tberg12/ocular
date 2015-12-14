@@ -38,14 +38,6 @@ public class CollectionHelper {
 		}
 	}
 
-	public static <K, V> V getOrElse(Map<K, V> m, K k, V def) {
-		V v = m.get(k);
-		if (v != null)
-			return v;
-		else
-			return def;
-	}
-
 	public static <A> Set<A> makeSet(Collection<A> xs) {
 		if (xs.size() == 0)
 			return Collections.<A> emptySet();

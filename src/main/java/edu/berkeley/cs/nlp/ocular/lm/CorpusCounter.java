@@ -127,9 +127,6 @@ public class CorpusCounter {
    * @param lineIdx
    */
   public void countLine(int[] line, int lineIdx) {
-//    if (lineIdx % 100000 == 0) {
-//      printStats(lineIdx);
-//    }
     // Put in two start of sentence tokens
     int[] ngramArr = new int[maxNgramOrder];
     Arrays.fill(ngramArr, -1);
@@ -143,8 +140,9 @@ public class CorpusCounter {
       if (line[charIdx] != -1) {
         incrementCounts(ngramArr, maxNgramOrder - (firstMinusOneLookingBack(ngramArr) + 1));
         
-        this.activeCharacters.add(line[charIdx]);
-        this.unigramCounts.put(line[charIdx], this.unigramCounts.getOrDefault(line[charIdx], 0) + 1);
+        int c = line[charIdx];
+        this.activeCharacters.add(c);
+        this.unigramCounts.put(c, this.unigramCounts.getOrDefault(c, 0) + 1);
       }
       tokenCount++;
       for (int i = 0; i < counts.length; i++) {

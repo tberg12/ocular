@@ -51,22 +51,6 @@ public class CollectionHelperTests {
 	}
 
 	@Test
-	public void test_Map_getOrElse() {
-		Tuple2<String, Integer> t1 = Tuple2.makeTuple2("one", 21);
-		Tuple2<String, Integer> t2 = Tuple2.makeTuple2("two", 22);
-		Map<String, Integer> m2 = CollectionHelper.makeMap(t1, t2);
-
-		assertEquals(2, m2.size());
-		assertEquals(Integer.valueOf(21), m2.get("one"));
-		assertEquals(Integer.valueOf(22), m2.get("two"));
-		assertNull(m2.get("four"));
-
-		assertEquals(Integer.valueOf(21), CollectionHelper.getOrElse(m2, "one", Integer.valueOf(131)));
-		assertEquals(Integer.valueOf(22), CollectionHelper.getOrElse(m2, "two", Integer.valueOf(132)));
-		assertEquals(Integer.valueOf(134), CollectionHelper.getOrElse(m2, "four", Integer.valueOf(134)));
-	}
-
-	@Test
 	public void test_makeSet_collection() {
 		Set<String> m0 = CollectionHelper.makeSet(new ArrayList<String>());
 		assertEquals(0, m0.size());

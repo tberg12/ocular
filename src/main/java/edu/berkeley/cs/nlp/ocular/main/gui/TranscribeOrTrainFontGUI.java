@@ -40,8 +40,8 @@ public class TranscribeOrTrainFontGUI {
 	private JLabel label_inputPath;
 	private JLabel label_numDocs;
 	private JLabel label_lmPath;
-	private JLabel label_initFontPath;
-	private JLabel label_learnFont;
+	private JLabel label_inputFontPath;
+	private JLabel label_trainFont;
 	private JLabel label_numEMIters;
 	private JLabel label_outputPath;
 	private JLabel label_extractedLinesPath;
@@ -68,8 +68,8 @@ public class TranscribeOrTrainFontGUI {
 	private JTextField input_inputPath;
 	private JTextField input_numDocs;
 	private JTextField input_lmPath;
-	private JTextField input_initFontPath;
-	private JCheckBox input_learnFont;
+	private JTextField input_inputFontPath;
+	private JCheckBox input_trainFont;
 	private JTextField input_numEMIters;
 	private JTextField input_outputPath;
 	private JTextField input_extractedLinesPath;
@@ -154,15 +154,15 @@ public class TranscribeOrTrainFontGUI {
 		label_lmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
 		label_lmPath.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_lmPath);
-		label_initFontPath = new JLabel("Initial font path ");
-		label_initFontPath.setToolTipText("Path of the font initializer file. Required.");
-		label_initFontPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		label_initFontPath.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_initFontPath);
-		label_learnFont = new JLabel("Learn font? ");
-		label_learnFont.setToolTipText("Whether to learn the font from the input documents and write the font to a file. Default: false");
-		label_learnFont.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_learnFont);
+		label_inputFontPath = new JLabel("Initial font path ");
+		label_inputFontPath.setToolTipText("Path of the font initializer file. Required.");
+		label_inputFontPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		label_inputFontPath.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_inputFontPath);
+		label_trainFont = new JLabel("Learn font? ");
+		label_trainFont.setToolTipText("Whether to learn the font from the input documents and write the font to a file. Default: false");
+		label_trainFont.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_trainFont);
 		label_numEMIters = new JLabel("Number of EM iterations ");
 		label_numEMIters.setToolTipText("Number of iterations of EM to use for font learning. Default: 3");
 		label_numEMIters.setHorizontalAlignment(SwingConstants.TRAILING);
@@ -177,11 +177,11 @@ public class TranscribeOrTrainFontGUI {
 		label_extractedLinesPath.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_extractedLinesPath);
 		label_outputFontPath = new JLabel("Output font path ");
-		label_outputFontPath.setToolTipText("Path to write the learned font file to. (Only if learnFont is set to true.) Required if learnFont=true, otherwise ignored.");
+		label_outputFontPath.setToolTipText("Path to write the learned font file to. (Only if trainFont is set to true.) Required if trainFont=true, otherwise ignored.");
 		label_outputFontPath.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_outputFontPath);
 		label_outputLmPath = new JLabel("Output LM path ");
-		label_outputLmPath.setToolTipText("Path to write the learned language model file to. (Only if learnFont is set to true.) Default: null (Don't write out the trained LM.)");
+		label_outputLmPath.setToolTipText("Path to write the learned language model file to. (Only if trainFont is set to true.) Default: null (Don't write out the trained LM.)");
 		label_outputLmPath.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_outputLmPath);
 		label_allowLanguageSwitchOnPunct = new JLabel("Allow language switch on punctuation? ");
@@ -266,15 +266,15 @@ public class TranscribeOrTrainFontGUI {
 		input_lmPath = new JTextField();
 		input_lmPath.setToolTipText("Path to the language model file. Required.");
 		panel_inputs.add(input_lmPath);
-		input_initFontPath = new JTextField();
-		input_initFontPath.setToolTipText("Path of the font initializer file. Required.");
-		panel_inputs.add(input_initFontPath);
-		input_learnFont = new JCheckBox();
-		input_learnFont.setToolTipText("Whether to learn the font from the input documents and write the font to a file. Default: false");
-		panel_inputs.add(input_learnFont);
-		input_learnFont.addActionListener(new ActionListener() {
+		input_inputFontPath = new JTextField();
+		input_inputFontPath.setToolTipText("Path of the font initializer file. Required.");
+		panel_inputs.add(input_inputFontPath);
+		input_trainFont = new JCheckBox();
+		input_trainFont.setToolTipText("Whether to learn the font from the input documents and write the font to a file. Default: false");
+		panel_inputs.add(input_trainFont);
+		input_trainFont.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				handleLearnFontAction();
+				handletrainFontAction();
 			}
 		});
 		input_numEMIters = new JTextField();
@@ -288,10 +288,10 @@ public class TranscribeOrTrainFontGUI {
 		input_extractedLinesPath.setToolTipText("Path of the directory where the line-extraction images should be read/written. If the line files exist here, they will be used; if not, they will be extracted and then written here. Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document. If ignored, the document will simply be read from the original document image file, and no line images will be written.\nDefault: null (Don't read or write line image files.)");
 		panel_inputs.add(input_extractedLinesPath);
 		input_outputFontPath = new JTextField();
-		input_outputFontPath.setToolTipText("Path to write the learned font file to. (Only if learnFont is set to true.) Required if learnFont=true, otherwise ignored.");
+		input_outputFontPath.setToolTipText("Path to write the learned font file to. (Only if trainFont is set to true.) Required if trainFont=true, otherwise ignored.");
 		panel_inputs.add(input_outputFontPath);
 		input_outputLmPath = new JTextField();
-		input_outputLmPath.setToolTipText("Path to write the learned language model file to. (Only if learnFont is set to true.) Default: null (Don't write out the trained LM.)");
+		input_outputLmPath.setToolTipText("Path to write the learned language model file to. (Only if trainFont is set to true.) Default: null (Don't write out the trained LM.)");
 		panel_inputs.add(input_outputLmPath);
 		input_allowLanguageSwitchOnPunct = new JCheckBox();
 		input_allowLanguageSwitchOnPunct.setToolTipText("A language model to be used to assign diacritics to the transcription output. Default: true");
@@ -370,9 +370,9 @@ public class TranscribeOrTrainFontGUI {
 				// println(f"""exec.$n%-30s = input_$n%-30s.getText();"""))
 				exec.inputPath = input_inputPath.getText();
 				exec.numDocs = Integer.valueOf(input_numDocs.getText());
-				exec.lmPath = input_lmPath.getText();
-				exec.initFontPath = input_initFontPath.getText();
-				exec.learnFont = input_learnFont.isSelected();
+				exec.inputLmPath = input_lmPath.getText();
+				exec.inputFontPath = input_inputFontPath.getText();
+				exec.trainFont = input_trainFont.isSelected();
 				exec.numEMIters = Integer.valueOf(input_numEMIters.getText());
 				exec.outputPath = input_outputPath.getText();
 				exec.extractedLinesPath = input_extractedLinesPath.getText();
@@ -412,16 +412,16 @@ public class TranscribeOrTrainFontGUI {
 		input_go.setText("Transcribe or Train Font");
 		panel_inputs.add(input_go);
 
-		handleLearnFontAction();
+		handletrainFontAction();
 	}
 
-	private void handleLearnFontAction() {
-		boolean active = input_learnFont.isSelected();
+	private void handletrainFontAction() {
+		boolean active = input_trainFont.isSelected();
 
 		setEnabled(input_outputFontPath, active);
 		setEnabled(input_outputLmPath, active);
 
-		input_go.setText(input_learnFont.isSelected() ? "Train font" : "Transcribe");
+		input_go.setText(input_trainFont.isSelected() ? "Train font" : "Transcribe");
 	}
 
 	public static void setEnabled(JTextField x, boolean enabled) {

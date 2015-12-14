@@ -69,9 +69,6 @@ public class TrainLanguageModel implements Runnable {
 	@Option(gloss = "A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters.")
 	public static Set<String> explicitCharacterSet = null;
 
-	@Option(gloss = "Maximum number of lines to use from corpus.")
-	public static int maxLines = 1000000;
-	
 	@Option(gloss = "LM character n-gram length.")
 	public static int charN = 6;
 	
