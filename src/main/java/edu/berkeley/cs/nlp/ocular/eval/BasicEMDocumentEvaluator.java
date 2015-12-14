@@ -27,10 +27,13 @@ import indexer.Indexer;
 public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 	private Indexer<String> charIndexer;
 	private Indexer<String> langIndexer;
+	boolean allowGlyphSubstitution;
 	
-	public BasicEMDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer) {
+	public BasicEMDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer,
+			boolean allowGlyphSubstitution) {
 		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
+		this.allowGlyphSubstitution = allowGlyphSubstitution;
 	}
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
@@ -142,7 +145,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		// Transcription output with substitutions
 		//
 		List<String> transcriptionWithSubsOutputLines = new ArrayList<String>();
-		{
+		if (allowGlyphSubstitution) {
 		System.out.println("Transcription with substitutions");
 		for (int line = 0; line < numLines; ++line) {
 			StringBuilder lineBuffer = new StringBuilder();
@@ -168,7 +171,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		//
 		// Transcription with widths
 		//
-		{
+		if (allowGlyphSubstitution) {
 		System.out.println("Transcription with widths");
 		StringBuffer transcriptionWithWidthsOutputBuffer = new StringBuffer();
 		for (int line = 0; line < numLines; ++line) {
@@ -198,6 +201,8 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 				goldLmCharSequences[line] = new ArrayList<String>();
 				for (int i = 0; i < text[line].length; ++i) {
 					goldCharSequences[line].add(text[line][i]);
+				}
+				for (int i = 0; i < lmText[line].length; ++i) {
 					goldLmCharSequences[line].add(lmText[line][i]);
 				}
 			}
@@ -234,7 +239,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			//
 			// Make comparison file with substitutions
 			//
-			{
+			if (allowGlyphSubstitution) {
 			System.out.println("Transcription with substitutions");
 			StringBuffer goldComparisonWithSubsOutputBuffer = new StringBuffer();
 			goldComparisonWithSubsOutputBuffer.append("MODEL OUTPUT vs. GOLD TRANSCRIPTION\n\n");

@@ -68,8 +68,10 @@ public class Evaluator {
 
 	public static Map<String,EvalSuffStats> getUnsegmentedEval(List<String>[] guessChars, List<String>[] goldChars) {
 		Map<String,EvalSuffStats> evals = new HashMap<String,EvalSuffStats>();
-		evals.put("CER, allow f->s", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, true)));
-		evals.put("CER", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, false)));
+		evals.put("CER, keep punc, allow f->s", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, true)));
+		evals.put("CER, keep punc", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, false)));
+		evals.put("CER, remove punc, allow f->s", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, true, true)));
+		evals.put("CER, remove punc", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, true, false)));
 		evals.put("WER, keep punc, allow f->s", new EvalSuffStats(getWERSuffStats(guessChars, goldChars, false, true)));
 		evals.put("WER, keep punc", new EvalSuffStats(getWERSuffStats(guessChars, goldChars, false, false)));
 		evals.put("WER, remove punc, allow f->s", new EvalSuffStats(getWERSuffStats(guessChars, goldChars, true, true)));

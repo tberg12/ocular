@@ -228,7 +228,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
 
 		DecoderEM decoderEM = new DecoderEM(emissionInnerLoop, allowGlyphSubstitution, noCharSubPrior, allowLanguageSwitchOnPunct, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize, charIndexer);
-		EMDocumentEvaluator emDocumentEvaluator = new BasicEMDocumentEvaluator(charIndexer, langIndexer);
+		EMDocumentEvaluator emDocumentEvaluator = new BasicEMDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution);
 		
 		List<Document> evalDocuments = null;
 		EMIterationEvaluator emEvalSetIterationEvaluator;

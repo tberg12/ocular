@@ -204,8 +204,10 @@ public class FontTrainEM {
 			double avgLogProb = ((double)totalIterationJointLogProb) / numUsableDocs;
 			System.out.println("Iteration "+iter+" avg joint log prob: " + avgLogProb);
 			if (new File(inputPath).isDirectory()) {
-				printEvaluation(allTrainEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+".txt");
-				printEvaluation(allTrainLmEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+"_lmeval.txt");
+				if (!allTrainEvals.isEmpty())
+					printEvaluation(allTrainEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+".txt");
+				if (!allTrainLmEvals.isEmpty())
+					printEvaluation(allTrainLmEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+"_lmeval.txt");
 			}
 			
 			if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
