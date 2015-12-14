@@ -224,6 +224,7 @@ public class TrainLanguageModel implements Runnable {
 				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2));
 				if (entry._1 < 10) activeChars.remove(entry._2); // remove low-count characters
 			}
+			for (String c : Charset.UNIV_PUNC) activeChars.add(charIndexer.getIndex(c));
 			
 			List<String> langChars = new ArrayList<String>();
 			for (int i : activeChars)
