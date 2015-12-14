@@ -242,7 +242,7 @@ Required.
 * `-inputFontPath`: Path of the input font file.
 Required.
 
-* `-numDocs`: Number of documents (pages) to use, counting alphabetically. Ignore or use -1 to use all documents.
+* `-numDocs`: Number of documents (pages) to use, counting alphabetically. Ignore or use 0 to use all documents.
 Default: use all documents
 
 * `-numDocsToSkip`: Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks without having to actually create separate directories.
@@ -263,7 +263,7 @@ Required if learnFont is set to true, otherwise ignored.
 (Only relevant if learnFont is set to true.)
 Default: 3
 
-* `-updateBatchSize`: Number of documents to process for each parameter update.  (Only relevant if learnFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.
+* `-updateDocBatchSize`: Number of documents to process for each parameter update.  (Only relevant if learnFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.
 
 * `-accumulateBatchesWithinIter`: Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.  (Only relevant if learnFont is set to true and updateDocBatchSize is used.)  Default: true
   
