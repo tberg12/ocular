@@ -86,6 +86,10 @@ public class CachingEmissionModel implements EmissionModel {
 		return padAndTemplateAllowedWidths[c];
 	}
 	
+	public int[] allowedWidths(TransitionState ts) {
+		return allowedWidths(ts.getGlyphChar().templateCharIndex);
+	}
+	
 	public float logProb(int d, int t, int c, int w) {
 		return cachedLogProbs[d][t][c][w-padAndTemplateMinWidths[c]];
 	}

@@ -14,6 +14,8 @@ public interface EmissionModel {
 
 	public abstract int sequenceLength(int d);
 
+	public abstract int[] allowedWidths(TransitionState ts);
+
 	public abstract int[] allowedWidths(int c);
 
 	public abstract float logProb(int d, int t, TransitionState ts, int w);

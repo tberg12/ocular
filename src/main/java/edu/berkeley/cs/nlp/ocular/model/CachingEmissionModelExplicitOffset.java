@@ -83,6 +83,11 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 		return padAndTemplateAllowedWidths[c];
 	}
 	
+	public int[] allowedWidths(TransitionState ts) {
+		return allowedWidths(ts.getGlyphChar().templateCharIndex);
+	}
+	
+	
 	public float logProb(int d, int t, int c, int w) {
 		float result = Float.NEGATIVE_INFINITY;
 		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {

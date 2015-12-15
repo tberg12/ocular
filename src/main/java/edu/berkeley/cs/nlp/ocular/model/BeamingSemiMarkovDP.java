@@ -148,8 +148,7 @@ public class BeamingSemiMarkovDP {
 					TransitionState nextTs = startBeamState.transState;
 					double startLogProb = startBeamState.score;
 					if (startLogProb != Double.NEGATIVE_INFINITY) {
-						int c = nextTs.getGlyphChar().templateCharIndex; 
-						for (int w : emissionModel.allowedWidths(c)) {
+						for (int w : emissionModel.allowedWidths(nextTs)) {
 							if (t + w < emissionModel.sequenceLength(d)+1) {
 								int nextT = t + w;
 								double emissionLogProb = emissionModel.logProb(d, t, nextTs, nextT-t);
@@ -167,8 +166,7 @@ public class BeamingSemiMarkovDP {
 					for (Tuple2<TransitionState,Double> trans : allowedTrans) {
 						TransitionState nextTs = trans._1;
 						double transLogProb = trans._2;
-						int c = nextTs.getGlyphChar().templateCharIndex;
-						for (int w : emissionModel.allowedWidths(c)) {
+						for (int w : emissionModel.allowedWidths(nextTs)) {
 							if (t + w < emissionModel.sequenceLength(d)+1) {
 								int nextT = t + w;
 								double emissionLogProb = emissionModel.logProb(d, t, nextTs, nextT-t);
@@ -296,14 +294,15 @@ public class BeamingSemiMarkovDP {
 	}
 	
 	private void doDenseCoarseBackwardPassLogSpace(int d, double[][] betas) {
+		int numChars = emissionModel.getCharIndexer().size();
 		for (int t=emissionModel.sequenceLength(d); t>=0; --t) {
 			Arrays.fill(betas[t], Double.NEGATIVE_INFINITY);
 			if (t==emissionModel.sequenceLength(d)) {
-				for (int c=0; c<emissionModel.getCharIndexer().size(); ++c) {
+				for (int c=0; c<numChars; ++c) {
 					betas[t][c] = backwardTransitionModel.endLogProb(c);
 				}
 			} else {
-				for (int nextC=0; nextC<emissionModel.getCharIndexer().size(); ++nextC) {
+				for (int nextC=0; nextC<numChars; ++nextC) {
 					double betaWithoutTrans = Double.NEGATIVE_INFINITY;
 					int[] allowedWidths = emissionModel.allowedWidths(nextC);
 					for (int w : allowedWidths) {
@@ -314,7 +313,7 @@ public class BeamingSemiMarkovDP {
 					}
 					double[] betasCol = betas[t];
 					double[] logTransProbs = backwardTransitionModel.backwardTransitions(nextC);
-					for (int c=0; c<emissionModel.getCharIndexer().size(); ++c) {
+					for (int c=0; c<numChars; ++c) {
 						betasCol[c] = Math.max(betasCol[c], logTransProbs[c] + betaWithoutTrans);
 					}
 				}
