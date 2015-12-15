@@ -62,6 +62,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 	private Indexer<String> langIndexer;
 	private Indexer<String> charIndexer;
+	private int spaceCharIndex;
 
 	//private int numGlyphs;
 	private int GLYPH_ELISION_TILDE;
@@ -76,6 +77,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			Indexer<String> langIndexer, Indexer<String> charIndexer) {
 		this.langIndexer = langIndexer;
 		this.charIndexer = charIndexer;
+		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		
 		int numChars = charIndexer.size();
 		//this.numGlyphs = numChars + 2;
@@ -89,9 +91,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 	// P( glyph[c1..cN,elisonTilde,elided] | prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar, lmChar )
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-		GlyphType currGlyphType = glyphChar.toGlyphType();
-		int glyph = (currGlyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (currGlyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : glyphChar.templateCharIndex);
-		double p = probs[language][prevGlyphType.ordinal()][(gsmIgnorePrevLmChar ? 0 : prevLmChar)][lmChar][glyph];
+		int prevLmCharForLookup = (gsmIgnorePrevLmChar ? 0 : (glyphChar.isElided ? prevLmChar : spaceCharIndex)); // don't actually condition on the prev lm char unless we're trying to elide the current char
+
+		int glyph = (glyphChar.isElided ? GLYPH_ELIDED : (glyphChar.hasElisionTilde) ? GLYPH_ELISION_TILDE : glyphChar.templateCharIndex);
+		double p = probs[language][prevGlyphType.ordinal()][prevLmCharForLookup][lmChar][glyph];
 		return Math.pow(p, gsmPower);
 	}
 
@@ -106,6 +109,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	
 	public static class BasicGlyphSubstitutionModelFactory {
 		private double gsmSmoothingCount;
+		private double elisionSmoothingCountMultiplier;
 		private Indexer<String> langIndexer;
 		private Indexer<String> charIndexer;
 		private Set<Integer>[] activeCharacterSets;
@@ -120,8 +124,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private int numChars;
 		private int numGlyphTypes;
 		private int numGlyphs;
-		private int GLYPH_ELISION_TILDE;
-		private int GLYPH_ELIDED;
+		public int GLYPH_ELISION_TILDE;
+		public int GLYPH_ELIDED;
 		
 		private boolean gsmIgnorePrevLmChar;
 		private double gsmPower;
@@ -135,12 +139,14 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		
 		public BasicGlyphSubstitutionModelFactory(
 				double gsmSmoothingCount,
+				double elisionSmoothingCountMultiplier,
 				Indexer<String> langIndexer,
 				Indexer<String> charIndexer,
 				Set<Integer>[] activeCharacterSets,
 				boolean gsmIgnorePrevLmChar, double gsmPower, int minCountsForEvalGsm,
 				String inputPath, String outputPath, List<Document> documents, List<Document> evalDocuments) {
 			this.gsmSmoothingCount = gsmSmoothingCount;
+			this.elisionSmoothingCountMultiplier = elisionSmoothingCountMultiplier;
 			this.langIndexer = langIndexer;
 			this.charIndexer = charIndexer;
 			this.activeCharacterSets = activeCharacterSets;
@@ -178,48 +184,58 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		public double[][][][][] initializeNewCountsMatrix() {
 			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts = new double[numLanguages][numGlyphTypes][(gsmIgnorePrevLmChar ? 1 : numChars)][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
-				Set<Integer> langActiveChars = activeCharacterSets[language];
 				for (GlyphType prevGlyph : GlyphType.values()) {
-					for (int prevLmChar = 0; prevLmChar < (gsmIgnorePrevLmChar ? 1 : numChars); ++prevLmChar) {
+					for (int prevLmChar = 0; prevLmChar < numChars; ++prevLmChar) {
 						for (int lmChar = 0; lmChar < numChars; ++lmChar) {
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
-								counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = gsmSmoothingCount;
-	
-								if (langActiveChars.contains(lmChar)) {
-									if (glyph == GLYPH_ELISION_TILDE) {
-										if (prevGlyph != GlyphType.ELISION_TILDE) {
-											if (addTilde.get(lmChar) != null) {
-												counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = gsmSmoothingCount;
-											}
-										}
-									}
-									else if (glyph == GLYPH_ELIDED) {
-										if (prevGlyph != GlyphType.NORMAL_CHAR) {
-											if (canBeElided.contains(lmChar)) {
-												counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = gsmSmoothingCount;
-											}
-										}
-									}
-									else { // glyph is a normal character
-										if (langActiveChars.contains(glyph)) {
-											if (prevGlyph != GlyphType.ELISION_TILDE) {
-												Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(lmChar);
-												if (lmChar == glyph ||
-													(canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph)) ||
-													(diacriticDisregardSet != null && diacriticDisregardSet.contains(glyph))) {
-														counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = gsmSmoothingCount;
-												}
-											}
-										}
-									}
-								}
-								
+								counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] = getSmoothingValue(language, prevGlyph, prevLmChar, lmChar, glyph);
 							}
 						}
 					}
 				}
 			}
 			return counts;
+		}
+		
+		public double getSmoothingValue(int language, GlyphType prevGlyph, int prevLmChar, int lmChar, int glyph) {
+//			if (gsmIgnorePrevLmChar && prevLmChar != spaceCharIndex) continue;                      // if we aren't conditioning on the previous lm char, then the only allowable previous lm char is a space
+			if (!gsmIgnorePrevLmChar) {
+				
+				if (!activeCharacterSets[language].contains(lmChar)) return 0.0;                          // lm char must be valid for the language
+				if (glyph == GLYPH_ELIDED && !canBeElided.contains(lmChar)) return 0.0;                   // an elided char must be elidable
+				if (prevGlyph == GlyphType.ELIDED && glyph == GLYPH_ELIDED && !canBeElided.contains(prevLmChar)) return 0.0;       // an elided previous char must be elidable
+				if (prevGlyph == GlyphType.ELIDED && glyph != GLYPH_ELIDED && prevLmChar != spaceCharIndex) return 0.0;       // an elided previous char must be elidable
+				if (glyph == GLYPH_ELISION_TILDE && addTilde.get(lmChar) == null) return 0.0;             // an elision-tilde-decorated char must be elision-tilde-decoratable
+				if (prevGlyph == GlyphType.ELISION_TILDE && addTilde.get(prevLmChar) == null) return 0.0; // a previous elision-tilde-decorated char must be elision-tilde-decoratable
+
+				if (prevGlyph == GlyphType.ELISION_TILDE && glyph != GLYPH_ELIDED) return 0.0;            // an elision-tilde-decorated char must be followed by an elision
+				if (prevGlyph == GlyphType.NORMAL_CHAR && glyph == GLYPH_ELIDED) return 0.0;              // a normal char may not be followed by an elision
+				// elided chars can be followed by anything
+
+				if (glyph < numChars && prevLmChar != spaceCharIndex) return 0.0;                         // if trying to emit a normal char, then do not condition on the prev lm char
+				if (glyph == GLYPH_ELISION_TILDE && prevLmChar != spaceCharIndex) return 0.0;             // if trying to emit an elision-tilde char, then do not condition on the prev lm char
+				// elided chars are conditioned on the previous lm char
+				
+				
+				if (glyph == GLYPH_ELISION_TILDE) {
+					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+				}
+				else if (glyph == GLYPH_ELIDED) {
+					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+				}
+				else { // glyph is a normal character
+					Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(lmChar);
+					if (diacriticDisregardSet != null && diacriticDisregardSet.contains(glyph))
+						return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+					else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph))
+						return gsmSmoothingCount;
+					else if (lmChar == glyph)
+						return gsmSmoothingCount;
+				}
+				
+				return 0.0;
+			}
+			else throw new RuntimeException("gsmIgnorePrevLmChar == true");
 		}
 		
 		/**
@@ -233,12 +249,16 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				int language = currTs.getLanguageIndex();
 				if (language >= 0) {
 					GlyphType prevGlyph = (prevTs != null ? prevTs.getGlyphChar().toGlyphType() : GlyphType.NORMAL_CHAR);
-					int prevLmChar = (gsmIgnorePrevLmChar ? 0 : (prevTs != null ? prevTs.getLmCharIndex() : spaceCharIndex));
+					GlyphChar currGlyphChar = currTs.getGlyphChar();
 					int lmChar = currTs.getLmCharIndex();
 					
-					GlyphChar currGlyphChar = currTs.getGlyphChar();
-					GlyphType currGlyphType = currGlyphChar.toGlyphType();
-					int glyph = (currGlyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (currGlyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : currGlyphChar.templateCharIndex);
+					int prevLmChar;
+					if (gsmIgnorePrevLmChar) prevLmChar = 0;
+					else if (prevTs == null) prevLmChar = spaceCharIndex;
+					else if (currGlyphChar.isElided) prevLmChar = prevTs.getLmCharIndex(); // the only time we care about the prev lm char is when we are deciding to elide
+					else prevLmChar = spaceCharIndex; 
+					
+					int glyph = (currGlyphChar.isElided ? GLYPH_ELIDED : (currGlyphChar.hasElisionTilde) ? GLYPH_ELISION_TILDE : currGlyphChar.templateCharIndex);
 					
 					if (counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] < gsmSmoothingCount-1e-9) throw new RuntimeException("Illegal state found in viterbi decoding result:  language="+language + ", prevGlyph="+prevGlyph + ", prevLmChar="+prevLmChar + ", lmChar="+lmChar + ", glyph="+glyph);
 					counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] += 1;
@@ -334,7 +354,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 							// figure out what the lowest count is, and then exclude things with that count
 							double lowProb = ArrayHelper.min(probs[language][prevGlyph.ordinal()][prevLmChar][lmChar]);
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
-								String sglyph = glyph < numChars ? charIndexer.getObject(glyph) : (glyph == numGlyphs ? "EpsilonTilde": "Elided");
+								String sglyph = glyph < numChars ? charIndexer.getObject(glyph) : (glyph == GLYPH_ELISION_TILDE ? "ElisionTilde": "Elided");
 								
 								double p = probs[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];
 								double c = counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];

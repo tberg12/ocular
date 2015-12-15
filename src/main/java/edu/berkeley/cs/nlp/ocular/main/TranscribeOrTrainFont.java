@@ -112,6 +112,9 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation. Default: 1.0")
 	public static double gsmSmoothingCount = 1.0;
 	
+	@Option(gloss = "gsmElisionSmoothingCountMultiplier. Default: 1.0")
+	public static double gsmElisionSmoothingCountMultiplier = 1.0;
+	
 	@Option(gloss = "Should the GSM consider (condition on) the previous LM char when deciding the glyph to output? (Only relevant if allowGlyphSubstitution is set to true. Default: false")
 	public static boolean gsmUsePrevLmChar = false;
 	
@@ -262,7 +265,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		@SuppressWarnings("unchecked")
 		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
 		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = codeSwitchLM.get(l).getActiveCharacters();
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, langIndexer, charIndexer, activeCharacterSets, !gsmUsePrevLmChar, gsmPower, gsmMinCountsForEval, inputPath, outputPath, trainDocuments, evalDocuments);
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, !gsmUsePrevLmChar, gsmPower, gsmMinCountsForEval, inputPath, outputPath, trainDocuments, evalDocuments);
 		GlyphSubstitutionModel codeSwitchGSM = getGlyphSubstituionModel(gsmFactory, langIndexer, charIndexer);
 
 		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, decoderEM, gsmFactory, emDocumentEvaluator, accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, numMstepThreads, emEvalSetIterationEvaluator, evalFreq, evalBatches, outputFontPath != null, outputLmPath != null, outputGsmPath != null);

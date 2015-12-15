@@ -451,6 +451,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	public static final double LINE_END_HYPHEN_PROB = 1e-8;
 
 	private int n;
+	private Indexer<String> langIndexer;
 	private Indexer<String> charIndexer;
 	private int GLYPH_ELISION_TILDE;
 	private int GLYPH_ELIDED;
@@ -504,6 +505,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.noCharSubPrior = noCharSubPrior;
 
+		this.langIndexer = lm.getLanguageIndexer();
 		this.charIndexer = lm.getCharacterIndexer();
 		int numChars = charIndexer.size();
 		this.GLYPH_ELISION_TILDE = numChars;
@@ -656,6 +658,18 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			int glyph = (glyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (glyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : nextGlyphChar.templateCharIndex);
 			double p = (1.0 - noCharSubPrior) * gsm.glyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
 			double pWithBias = (glyph == nextLmChar ? noCharSubPrior + p : p);
+			
+//			if (pWithBias > 0.0) {
+//				String s = "siogjsoiej    calculateGlyphLogProb("+nextType+", "+
+//							langIndexer.getObject(nextLanguage)+", "+
+//							glyphType+", ["+
+//							charIndexer.getObject(lmCharIndex)+"] (["+charIndexer.getObject((nextGlyphChar.isElided ? lmCharIndex : spaceCharIndex))+"]), ["+
+//							charIndexer.getObject(nextLmChar)+"], "+
+//							(nextGlyphChar.isElided ? "Elided" : (nextGlyphChar.hasElisionTilde ? "ElisionTilde" : "["+charIndexer.getObject(nextGlyphChar.templateCharIndex)+"]" )) +") = "+
+//							pWithBias;
+//			  if (s.contains("Eli")) System.out.println(s);
+//			}
+			
 			return Math.log(pWithBias);
 		}
 	}

@@ -137,7 +137,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		for (int line = 0; line < numLines; ++line) {
 			transcriptionOutputBuffer.append(StringHelper.join(viterbiChars[line], "") + "\n");
 		}
-		System.out.println(transcriptionOutputBuffer.toString() + "\n\n");
+		//System.out.println(transcriptionOutputBuffer.toString() + "\n\n");
 		FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
 		}
 
@@ -164,7 +164,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			transcriptionWithSubsOutputLines.add(lineBuffer.toString() + "\n");
 		}
 		String transcriptionWithSubsOutputBuffer = StringHelper.join(transcriptionWithSubsOutputLines, "");
-		//System.out.println(transcriptionWithSubsOutputBuffer.toString() + "\n\n");
+		System.out.println(transcriptionWithSubsOutputBuffer.toString() + "\n\n");
 		FileHelper.writeString(transcriptionWithSubsOutputFilename, transcriptionWithSubsOutputBuffer.toString());
 		}
 
