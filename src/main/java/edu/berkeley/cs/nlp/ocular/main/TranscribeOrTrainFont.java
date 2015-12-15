@@ -172,6 +172,9 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "When using -evalInputPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
 	public static String evalExtractedLinesPath = null;
 
+	@Option(gloss = "When using -evalInputPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. Default: use all documents")
+	public static int evalNumDocs = Integer.MAX_VALUE;
+
 	@Option(gloss = "When using -evalInputPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
 	public static int evalFreq = Integer.MAX_VALUE;
 	
@@ -245,7 +248,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		List<Document> evalDocuments = null;
 		EMIterationEvaluator emEvalSetIterationEvaluator;
 		if (evalInputPath != null) {
-			evalDocuments = loadDocuments(evalInputPath, evalExtractedLinesPath, numDocs, numDocsToSkip);
+			evalDocuments = loadDocuments(evalInputPath, evalExtractedLinesPath, evalNumDocs, numDocsToSkip);
 			emEvalSetIterationEvaluator = new BasicEMIterationEvaluator(evalDocuments, evalInputPath, outputPath, trainFont, numEMIters, decoderEM, emDocumentEvaluator, charIndexer);
 		}
 		else {

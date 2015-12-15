@@ -367,6 +367,9 @@ The following options are only relevant if a value was given to -evalInputPath.
 
 * `-evalExtractedLinesPath`: This is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
 
+* `-evalNumDocs`: When using -evalInputPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. 
+Default: use all documents in the specified path.
+
 * `-evalFreq`: The font trainer will perform an evaluation every this many iterations. 
 Default: Evaluate only after all iterations have completed.
 
