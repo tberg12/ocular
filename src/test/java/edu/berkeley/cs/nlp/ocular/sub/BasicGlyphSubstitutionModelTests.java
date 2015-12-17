@@ -31,10 +31,10 @@ public class BasicGlyphSubstitutionModelTests {
 		List<Integer> charIndices = new ArrayList<Integer>(); 
 		for (String c : chars) charIndices.add(charIndexer.getIndex(c)); 
 		Set<Integer> fullCharSet = makeSet(charIndices);
+		@SuppressWarnings("unchecked")
 		Set<Integer>[] activeCharacterSets = new Set[] {fullCharSet, fullCharSet};
 		for (String c : new String[] {"a","b","c","d","e","k","n","s"}) charIndices.add(charIndexer.getIndex(TILDE_ESCAPE+c)); 
 		charIndexer.lock();
-		boolean gsmIgnorePrevLmChar = false; 
 		double gsmPower = 2.0; 
 		int minCountsForEvalGsm = 2;
 		String inputPath = ""; 
@@ -48,7 +48,6 @@ public class BasicGlyphSubstitutionModelTests {
 				langIndexer, 
 				charIndexer, 
 				activeCharacterSets, 
-				gsmIgnorePrevLmChar, 
 				gsmPower, 
 				minCountsForEvalGsm, 
 				inputPath, 

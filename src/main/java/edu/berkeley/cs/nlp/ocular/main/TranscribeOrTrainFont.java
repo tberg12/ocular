@@ -115,9 +115,6 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "gsmElisionSmoothingCountMultiplier. Default: 1.0")
 	public static double gsmElisionSmoothingCountMultiplier = 1.0;
 	
-	@Option(gloss = "Should the GSM consider (condition on) the previous LM char when deciding the glyph to output? (Only relevant if allowGlyphSubstitution is set to true. Default: false")
-	public static boolean gsmUsePrevLmChar = false;
-	
 	@Option(gloss = "A glyph-context combination must be seen at least this many times in the last training iteration if it is to be allowed in the evaluation GSM.  This restricts spurious substitutions during evaluation.  (Only relevant if allowGlyphSubstitution is set to true.)  Default: 2")
 	public static int gsmMinCountsForEval = 2;
 
@@ -265,7 +262,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		@SuppressWarnings("unchecked")
 		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
 		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = codeSwitchLM.get(l).getActiveCharacters();
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, !gsmUsePrevLmChar, gsmPower, gsmMinCountsForEval, inputPath, outputPath, trainDocuments, evalDocuments);
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, gsmPower, gsmMinCountsForEval, inputPath, outputPath, trainDocuments, evalDocuments);
 		GlyphSubstitutionModel codeSwitchGSM = getGlyphSubstituionModel(gsmFactory, langIndexer, charIndexer);
 
 		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, decoderEM, gsmFactory, emDocumentEvaluator, accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, numMstepThreads, emEvalSetIterationEvaluator, evalFreq, evalBatches, outputFontPath != null, outputLmPath != null, outputGsmPath != null);

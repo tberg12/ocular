@@ -13,6 +13,7 @@ import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
@@ -89,15 +90,14 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		//
 		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[numLines];
-		@SuppressWarnings("unchecked")
-		List<String>[] viterbiLmChars = new List[numLines];
+		List<String> viterbiLmChars = new ArrayList<String>();
 		@SuppressWarnings("unchecked")
 		List<TransitionState>[] viterbiTransStates = new List[numLines];
 		@SuppressWarnings("unchecked")
 		List<Integer>[] viterbiWidths = new List[numLines];
+		//boolean inHyphenation = false;
 		for (int line = 0; line < numLines; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
-			viterbiLmChars[line] = new ArrayList<String>();
 			viterbiTransStates[line] = new ArrayList<TransitionState>();
 			viterbiWidths[line] = new ArrayList<Integer>();
 			for (int i = 0; i < decodeStates[line].length; ++i) {
@@ -107,12 +107,28 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 					if (!ts.getGlyphChar().isElided) {
 						viterbiChars[line].add(charIndexer.getObject(c));
 					}
-					viterbiLmChars[line].add(charIndexer.getObject(ts.getLmCharIndex()));
+					
+					switch(ts.getType()) {
+						case RMRGN_HPHN_INIT:
+						case RMRGN_HPHN:
+						case LMRGN_HPHN:
+							//inHyphenation = true;
+							break;
+						case LMRGN:
+						case RMRGN:
+							viterbiLmChars.add(" ");
+							break;
+						case TMPL:
+							viterbiLmChars.add(charIndexer.getObject(ts.getLmCharIndex()));
+					}
+					
 					viterbiTransStates[line].add(ts);
 					viterbiWidths[line].add(decodeWidths[line][i]);
 				}
 			}
 		}
+		
+		System.out.println("Viterbi LM Chars: " + StringHelper.join(viterbiLmChars));
 
 		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
@@ -214,8 +230,9 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 			if (allEvals != null) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
 			}
-			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(viterbiLmChars, goldLmCharSequences);
 			if (allLmEvals != null) {
+				@SuppressWarnings("unchecked")
+				Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(new List[]{viterbiLmChars}, goldLmCharSequences);
 				allLmEvals.add(makeTuple2(doc.baseName(), lmEvals));
 			}
 			

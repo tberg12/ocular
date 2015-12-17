@@ -175,9 +175,8 @@ public class FontTrainEM {
 					if (retrainGSM) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
 						evalGsm = gsmFactory.makeForEval(gsmCounts, iter, completedBatchesInIteration);
-						if (writeTrainedGsm) GlyphSubstitutionModel.writeGSM(evalGsm, outputPath + "/gsm/" + outputFilePrefix + ".gsmser");
+						if (evalGsm != null && writeTrainedGsm) GlyphSubstitutionModel.writeGSM(evalGsm, outputPath + "/gsm/" + outputFilePrefix + ".gsmser");
 					}
-
 
 					if (!accumulateBatchesWithinIter) {
 						// Clear counts at the end of a batch, if necessary
@@ -189,7 +188,7 @@ public class FontTrainEM {
 					
 					double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
 					System.out.println("Completed Batch: Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-					if (evalBatches) {
+					if (evalGsm != null && evalBatches) {
 						if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 							if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
 								emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, evalGsm, font);
@@ -362,7 +361,7 @@ public class FontTrainEM {
 			}
 		}
 
-		buf.append("\nMarco-avg total eval:\n");
+		buf.append("\nMacro-avg total eval:\n");
 		buf.append(Evaluator.renderEval(totalSuffStats) + "\n");
 
 		FileHelper.writeString(outputPath, buf.toString());

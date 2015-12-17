@@ -189,7 +189,7 @@ public class Evaluator {
 		//    String str = convertToOneLineRemoveDashes(chars);
 		String str = convertToOneLine(chars);
 		//    System.out.println(str);
-		str = str.replaceAll("\\|", "s");
+		//str = str.replaceAll("\\|", "s");
 		if (splitOutPunc) {
 			str = splitOutPunc(str);
 		}
@@ -238,9 +238,7 @@ public class Evaluator {
 		for (String c: textReader.readCharacters(str)) {
 			if (!Charset.isPunctuationChar(c)) buf.append(c);
 		}
-		String result = buf.toString();
-		result = result.replaceAll("\\s+", " ");
-		return result;
+		return normalizeWhitespace(buf.toString());
 	}
 
 	public static void main(String[] args) {
