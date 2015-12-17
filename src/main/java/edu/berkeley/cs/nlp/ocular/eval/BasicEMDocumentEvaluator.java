@@ -201,7 +201,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 				TransitionState ts = viterbiTransStates[line].get(i);
 				int w = viterbiWidths[line].get(i);
 				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(ts.getGlyphChar().templateCharIndex));
-				transcriptionWithWidthsOutputBuffer.append(sglyphChar + "[" + w + "]\n");
+				transcriptionWithWidthsOutputBuffer.append(sglyphChar + "[" + ts.getGlyphChar().toString(charIndexer) + "][" + w + "]\n");
 			}
 			transcriptionWithWidthsOutputBuffer.append("\n");
 		}
