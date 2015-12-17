@@ -55,9 +55,12 @@ public class BasicGlyphSubstitutionModelTests {
 				documents, 
 				evalDocuments);
 
-		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, ELISION_TILDE, charIndexer.getIndex("s"), charIndexer.getIndex("k"), gsmf.GLYPH_ELIDED), 1e-9);
-		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, ELIDED, charIndexer.getIndex(" "), charIndexer.getIndex("a"), charIndexer.getIndex("a")), 1e-9);
-		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, ELISION_TILDE, charIndexer.getIndex("e"), charIndexer.getIndex("n"), gsmf.GLYPH_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, FIRST_ELIDED, charIndexer.getIndex(" "), charIndexer.getIndex("k"), charIndexer.getIndex("k")), 1e-9);
+		assertEquals(0.0, gsmf.getSmoothingValue(0, NORMAL_CHAR, charIndexer.getIndex("n"), charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, NORMAL_CHAR, charIndexer.getIndex(" "), charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, ELISION_TILDE, charIndexer.getIndex("s"), charIndexer.getIndex("k"), gsmf.GLYPH_TILDE_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, TILDE_ELIDED, charIndexer.getIndex(" "), charIndexer.getIndex("a"), charIndexer.getIndex("a")), 1e-9);
+		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, ELISION_TILDE, charIndexer.getIndex("e"), charIndexer.getIndex("n"), gsmf.GLYPH_TILDE_ELIDED), 1e-9);
 		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, NORMAL_CHAR, charIndexer.getIndex(" "), charIndexer.getIndex("a"), charIndexer.getIndex("a")), 1e-9);
 
 	}

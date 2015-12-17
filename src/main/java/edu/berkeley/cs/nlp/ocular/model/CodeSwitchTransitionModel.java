@@ -97,7 +97,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		
 		private void addNoSubGlyphStates(List<Tuple2<TransitionState, Double>> result, int nextLmChar, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
 			if (!allowGlyphSubstitution)
-				addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, false, false), transitionScore);
+				addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR), transitionScore);
 			else {
 				GlyphType glyphType = glyphChar.toGlyphType();
 				
@@ -110,7 +110,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					 * (non-hyphen) margins are treated as spaces, and spaces can't be elided
 					 * and can't follow tilde-elision states.
 					 */
-					GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, glyphChar.hasElisionTilde, glyphChar.isElided);
+					GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, glyphChar.glyphType);
 					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
 					addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 				}
@@ -125,7 +125,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					 */
 					if (glyphType != GlyphType.ELISION_TILDE) {
 						// 1. Next state's glyph is just the rendering of the LM character
-						GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, false, false);
+						GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR);
 						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
 						addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 					}
@@ -139,43 +139,44 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		 *   1. Next state's glyph is just the rendering of the LM character
 		 *   2. Next state's glyph is a substitution of the LM character
 		 *   3. Next state's glyph is an elision-decorated version of the LM character
-		 *   4. Next state's glyph is elided
+		 *   4. Next state's glyph is an elision after a tilde-decorated character
 		 *   5. Next state's glyph is the LM char, stripped of its accents
+		 *   6. Next state's glyph is an elision after a space
 		 * 
 		 */
 		private void addGlyphStates(List<Tuple2<TransitionState, Double>> result, int nextLmChar, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
 			if (!allowGlyphSubstitution)
-				addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, false, false), transitionScore);
+				addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR), transitionScore);
 			else {
 				List<GlyphChar> potentialNextGlyphChars = new ArrayList<GlyphChar>(); 
 				GlyphType glyphType = glyphChar.toGlyphType();
 				if (glyphType == GlyphType.ELISION_TILDE) {
-					// 4. An elision-tilde'd character must be followed by an elision
+					// 4. An elision-tilde'd character must be followed by a tilde-elision
 					if (canBeElided.contains(nextLmChar)) {
-						potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, false, true));
+						potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.TILDE_ELIDED));
 					}
 				}
 				else {
 					// 1. Next state's glyph is just the rendering of the LM character
-					potentialNextGlyphChars.add(new GlyphChar(nextLmChar, false, false));
+					potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
 					
 					// 2. Next state's glyph is a substitution of the LM character
 					if (canBeReplaced.contains(nextLmChar)) {
 						for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
-							potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, false, false));
+							potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
 						}
 					}
 					
 					// 3. Next state's glyph is an elision-decorated version of the LM character
 					Integer tildeLmCharIndex = addTilde.get(nextLmChar);
 					if (tildeLmCharIndex != null) {
-						potentialNextGlyphChars.add(new GlyphChar(tildeLmCharIndex, true, false));
+						potentialNextGlyphChars.add(new GlyphChar(tildeLmCharIndex, GlyphType.ELISION_TILDE));
 					}
 	
 					// 4. Next state's glyph is elided --- No elision can take place after a normal character 
-					if (glyphType == GlyphType.ELIDED) {
+					if (glyphType == GlyphType.TILDE_ELIDED) {
 						if (canBeElided.contains(nextLmChar)) {
-							potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, false, true)); // TODO: commenting this out will ensure that only single-char elisions will be allowed
+							potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.TILDE_ELIDED));
 						}
 					}
 					
@@ -183,7 +184,20 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(nextLmChar);
 					if (diacriticDisregardSet != null) {
 						for (Integer replacementChar : diacriticDisregardSet) {
-							potentialNextGlyphChars.add(new GlyphChar(replacementChar, false, false));
+							potentialNextGlyphChars.add(new GlyphChar(replacementChar, GlyphType.NORMAL_CHAR));
+						}
+					}
+					
+					// 6. Next state's glyph is an elision after a space
+					if (glyphType != GlyphType.FIRST_ELIDED) { // TODO: Comment this out if we want to allow multiple characters to be elided from the front of a word
+						if (lmCharIndex == spaceCharIndex) {
+							if (type != TransitionStateType.LMRGN_HPHN && type != TransitionStateType.RMRGN_HPHN_INIT && type != TransitionStateType.RMRGN_HPHN) { // only allowed at the start of a word, not in the middle of a hyphenated word
+								if (nextType == TransitionStateType.TMPL) {
+									if (canBeElided.contains(nextLmChar)) {
+										potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.FIRST_ELIDED));
+									}
+								}
+							}
 						}
 					}
 				}
@@ -451,10 +465,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	public static final double LINE_END_HYPHEN_PROB = 1e-8;
 
 	private int n;
-	private Indexer<String> langIndexer;
 	private Indexer<String> charIndexer;
-	private int GLYPH_ELISION_TILDE;
-	private int GLYPH_ELIDED;
 	private int spaceCharIndex;
 	private int hyphenCharIndex;
 	private Set<Integer> punctSet;
@@ -505,11 +516,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.noCharSubPrior = noCharSubPrior;
 
-		this.langIndexer = lm.getLanguageIndexer();
 		this.charIndexer = lm.getCharacterIndexer();
-		int numChars = charIndexer.size();
-		this.GLYPH_ELISION_TILDE = numChars;
-		this.GLYPH_ELIDED = numChars + 1;
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 		this.punctSet = makePunctSet(charIndexer);
@@ -528,10 +535,10 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 	private void addNoSubGlyphStartState(List<Tuple2<TransitionState, Double>> result, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
 		if (!allowGlyphSubstitution)
-			addState(result, nextContext, nextType, nextLanguage, new GlyphChar(spaceCharIndex, false, false), transitionScore);
+			addState(result, nextContext, nextType, nextLanguage, new GlyphChar(spaceCharIndex, GlyphType.NORMAL_CHAR), transitionScore);
 		else {
 			// 1. Next state's glyph is just the rendering of the LM character
-			GlyphChar nextGlyphChar = new GlyphChar(spaceCharIndex, false, false);
+			GlyphChar nextGlyphChar = new GlyphChar(spaceCharIndex, GlyphType.NORMAL_CHAR);
 			double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, spaceCharIndex, nextGlyphChar);
 			addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 		}
@@ -545,38 +552,46 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 *   3. Next state's glyph is an elision-decorated version of the LM character
 	 * X 4. Next state's glyph is elided
 	 *   5. Next state's glyph is the LM char, stripped of its accents
+	 *   6. Next state's glyph is an elision after a space
 	 * 
 	 */
 	private void addGlyphStartStates(List<Tuple2<TransitionState, Double>> result, int nextLmChar, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
 		if (!allowGlyphSubstitution)
-			addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, false, false), transitionScore);
+			addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR), transitionScore);
 		else {
 			List<GlyphChar> potentialNextGlyphChars = new ArrayList<GlyphChar>(); 
 	
 			// 1. Next state's glyph is just the rendering of the LM character
-			potentialNextGlyphChars.add(new GlyphChar(nextLmChar, false, false));
+			potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
 			
 			// 2. Next state's glyph is a substitution of the LM character
 			if (canBeReplaced.contains(nextLmChar)) {
 				for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
-					potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, false, false));
+					potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
 				}
 			}
 			
 			// 3. Next state's glyph is an elision-decorated version of the LM character
 			Integer tildeLmCharIndex = addTilde.get(nextLmChar);
 			if (tildeLmCharIndex != null) {
-				potentialNextGlyphChars.add(new GlyphChar(tildeLmCharIndex, true, false));
+				potentialNextGlyphChars.add(new GlyphChar(tildeLmCharIndex, GlyphType.ELISION_TILDE));
 			}
 			
 			// 5. Next state's glyph is the LM char, stripped of its accents
 			Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(nextLmChar);
 			if (diacriticDisregardSet != null) {
 				for (Integer replacementChar : diacriticDisregardSet) {
-					potentialNextGlyphChars.add(new GlyphChar(replacementChar, false, false));
+					potentialNextGlyphChars.add(new GlyphChar(replacementChar, GlyphType.NORMAL_CHAR));
 				}
 			}
-	
+
+			// 6. Next state's glyph is an elision after a space --- and the start state is always a "space"
+			if (nextType == TransitionStateType.TMPL) {
+				if (canBeElided.contains(nextLmChar)) {
+					potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.FIRST_ELIDED));
+				}
+			}
+
 			// Create states for all the potential next glyphs
 			for (GlyphChar nextGlyphChar : potentialNextGlyphChars) {
 				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, nextLmChar, nextGlyphChar);
@@ -655,9 +670,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				return Double.NEGATIVE_INFINITY; // log(0)
 		}
 		else {
-			int glyph = (glyphType == GlyphType.ELIDED ? GLYPH_ELIDED : (glyphType == GlyphType.ELISION_TILDE) ? GLYPH_ELISION_TILDE : nextGlyphChar.templateCharIndex);
 			double p = (1.0 - noCharSubPrior) * gsm.glyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
-			double pWithBias = (glyph == nextLmChar ? noCharSubPrior + p : p);
+			double pWithBias = ((glyphType == GlyphType.NORMAL_CHAR && nextGlyphChar.templateCharIndex == nextLmChar) ? noCharSubPrior + p : p);
 			
 //			if (pWithBias > 0.0) {
 //				String s = "siogjsoiej    calculateGlyphLogProb("+nextType+", "+

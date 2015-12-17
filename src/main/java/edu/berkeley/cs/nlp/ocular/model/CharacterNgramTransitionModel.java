@@ -11,6 +11,7 @@ import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
@@ -205,7 +206,7 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 		
 		public GlyphChar getGlyphChar() {
 			// Always render the character proposed by the language model
-			return new GlyphChar(lmCharIndex, false, false);
+			return new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
 		}
 		
 		public int getOffset() {

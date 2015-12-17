@@ -63,11 +63,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	private Indexer<String> langIndexer;
 	private Indexer<String> charIndexer;
 	private int spaceCharIndex;
+	private int numChars;
 
-	//private int numGlyphs;
-	private int GLYPH_ELISION_TILDE;
-	private int GLYPH_ELIDED;
-	
 	private double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs;
 	private double gsmPower;
 
@@ -77,21 +74,18 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		this.langIndexer = langIndexer;
 		this.charIndexer = charIndexer;
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
+		this.numChars = charIndexer.size();
 		
-		int numChars = charIndexer.size();
-		//this.numGlyphs = numChars + 2;
-		this.GLYPH_ELISION_TILDE = numChars;
-		this.GLYPH_ELIDED = numChars + 1;
-
 		this.probs = probs;
 		this.gsmPower = gsmPower;
 	}
 
 	// P( glyph[c1..cN,elisonTilde,elided] | prevGlyph[elisionTilde,elided,char(!elisionTilde&&!elided)], prevLmChar, lmChar )
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-		int prevLmCharForLookup = (glyphChar.isElided ? prevLmChar : spaceCharIndex); // don't actually condition on the prev lm char unless we're trying to elide the current char
+		int prevLmCharForLookup = (glyphChar.isElided() ? prevLmChar : spaceCharIndex); // don't actually condition on the prev lm char unless we're trying to elide the current char
 
-		int glyph = (glyphChar.isElided ? GLYPH_ELIDED : (glyphChar.hasElisionTilde) ? GLYPH_ELISION_TILDE : glyphChar.templateCharIndex);
+		GlyphType glyphType = glyphChar.toGlyphType();
+		int glyph = (glyphType == GlyphType.NORMAL_CHAR) ? glyphChar.templateCharIndex : (numChars + glyphType.ordinal());
 		double p = probs[language][prevGlyphType.ordinal()][prevLmCharForLookup][lmChar][glyph];
 		return Math.pow(p, gsmPower);
 	}
@@ -123,7 +117,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private int numGlyphTypes;
 		private int numGlyphs;
 		public int GLYPH_ELISION_TILDE;
-		public int GLYPH_ELIDED;
+		public int GLYPH_TILDE_ELIDED;
+		public int GLYPH_FIRST_ELIDED;
 		
 		private double gsmPower;
 		private int minCountsForEvalGsm;
@@ -160,9 +155,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.numLanguages = langIndexer.size();
 			this.numChars = charIndexer.size();
 			this.numGlyphTypes = GlyphType.values().length;
-			this.numGlyphs = numChars + 2;
-			this.GLYPH_ELISION_TILDE = numChars;
-			this.GLYPH_ELIDED = numChars + 1;
+			this.numGlyphs = numChars + GlyphType.values().length-1;
+			this.GLYPH_ELISION_TILDE = numChars + GlyphType.ELISION_TILDE.ordinal();
+			this.GLYPH_TILDE_ELIDED = numChars + GlyphType.TILDE_ELIDED.ordinal();
+			this.GLYPH_FIRST_ELIDED = numChars + GlyphType.FIRST_ELIDED.ordinal();
 			
 			this.documents = documents;
 			this.evalDocuments = evalDocuments;
@@ -193,27 +189,40 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			return counts;
 		}
 		
+		private boolean isElided(int glyph) {
+			return glyph == GLYPH_TILDE_ELIDED || glyph == GLYPH_FIRST_ELIDED;
+		}
+		
 		public double getSmoothingValue(int language, GlyphType prevGlyph, int prevLmChar, int lmChar, int glyph) {
 			if (!activeCharacterSets[language].contains(lmChar)) return 0.0;                          // lm char must be valid for the language
-			if (glyph == GLYPH_ELIDED && !canBeElided.contains(lmChar)) return 0.0;                   // an elided char must be elidable
-			if (prevGlyph == GlyphType.ELIDED && glyph == GLYPH_ELIDED && !canBeElided.contains(prevLmChar)) return 0.0;       // an elided previous char must be elidable
-			if (prevGlyph == GlyphType.ELIDED && glyph != GLYPH_ELIDED && prevLmChar != spaceCharIndex) return 0.0;       // an elided previous char must be elidable
-			if (glyph == GLYPH_ELISION_TILDE && addTilde.get(lmChar) == null) return 0.0;             // an elision-tilde-decorated char must be elision-tilde-decoratable
-			if (prevGlyph == GlyphType.ELISION_TILDE && addTilde.get(prevLmChar) == null) return 0.0; // a previous elision-tilde-decorated char must be elision-tilde-decoratable
+			
+			if (isElided(glyph) && !canBeElided.contains(lmChar)) return 0.0;       // an elided char must be elidable
+			if (!isElided(glyph) && prevLmChar != spaceCharIndex) return 0.0;       // unless we are trying to elide the current char, the previous char must be marked as a "space" since we don't want to actually condition on it. 
 
-			if (prevGlyph == GlyphType.ELISION_TILDE && glyph != GLYPH_ELIDED) return 0.0;            // an elision-tilde-decorated char must be followed by an elision
-			if (prevGlyph == GlyphType.NORMAL_CHAR && glyph == GLYPH_ELIDED) return 0.0;              // a normal char may not be followed by an elision
+			if (prevGlyph == GlyphType.ELISION_TILDE && glyph != GLYPH_TILDE_ELIDED) return 0.0;   // an elision-tilde-decorated char must be followed by an elision
+			if (glyph == GLYPH_TILDE_ELIDED && !(prevGlyph == GlyphType.ELISION_TILDE || prevGlyph == GlyphType.TILDE_ELIDED)) return 0.0;   // an elision must be preceded by an elision-tilde-decorated char
+			if (prevGlyph == GlyphType.NORMAL_CHAR && glyph == GLYPH_TILDE_ELIDED) return 0.0;     // a normal char may not be followed by an elision
+			if (glyph == GLYPH_FIRST_ELIDED && !(prevGlyph == GlyphType.NORMAL_CHAR && prevLmChar == spaceCharIndex)) return 0.0; // for a glyph to be first_elided, it must come after a normal space char
 			// elided chars can be followed by anything
 
+			if (glyph == GLYPH_ELISION_TILDE && addTilde.get(lmChar) == null) return 0.0;             // an elision-tilde-decorated char must be elision-tilde-decoratable
+			if (prevGlyph == GlyphType.ELISION_TILDE && addTilde.get(prevLmChar) == null) return 0.0; // a previous elision-tilde-decorated char must be elision-tilde-decoratable
+			
 			if (glyph < numChars && prevLmChar != spaceCharIndex) return 0.0;                         // if trying to emit a normal char, then do not condition on the prev lm char
 			if (glyph == GLYPH_ELISION_TILDE && prevLmChar != spaceCharIndex) return 0.0;             // if trying to emit an elision-tilde char, then do not condition on the prev lm char
 			// elided chars are conditioned on the previous lm char
 			
-			
+			if (prevGlyph == GlyphType.TILDE_ELIDED && glyph == GLYPH_TILDE_ELIDED && !canBeElided.contains(prevLmChar)) return 0.0;  // an elided previous char must be elidable, if we are trying to elide the current char (since we are conditioning on the actual character)
+			if (prevGlyph == GlyphType.TILDE_ELIDED && glyph != GLYPH_TILDE_ELIDED && prevLmChar != spaceCharIndex) return 0.0;       //     ... otherwise the previous state must be marked as a "space" since we don't want to condition on the actual character
+			//if (prevGlyph == GlyphType.FIRST_ELIDED && !canBeElided.contains(prevLmChar)) return 0.0;  // an first-elided previous char must be elidable (it can't be followed by another elision)
+
 			if (glyph == GLYPH_ELISION_TILDE) {
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
-			else if (glyph == GLYPH_ELIDED) {
+			else if (glyph == GLYPH_TILDE_ELIDED) {
+				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+			}
+			else if (glyph == GLYPH_FIRST_ELIDED) {
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
 			else { // glyph is a normal character
@@ -245,10 +254,11 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					
 					int prevLmChar;
 					if (prevTs == null) prevLmChar = spaceCharIndex;
-					else if (currGlyphChar.isElided) prevLmChar = prevTs.getLmCharIndex(); // the only time we care about the prev lm char is when we are deciding to elide
-					else prevLmChar = spaceCharIndex; 
+					else if (currGlyphChar.glyphType == GlyphType.TILDE_ELIDED) prevLmChar = prevTs.getLmCharIndex(); // the only time we care about the prev lm char is when we are deciding to elide
+					else prevLmChar = spaceCharIndex;
 					
-					int glyph = (currGlyphChar.isElided ? GLYPH_ELIDED : (currGlyphChar.hasElisionTilde) ? GLYPH_ELISION_TILDE : currGlyphChar.templateCharIndex);
+					GlyphType currGlyphType = currGlyphChar.toGlyphType();
+					int glyph = (currGlyphType == GlyphType.NORMAL_CHAR) ? currGlyphChar.templateCharIndex : (numChars + currGlyphType.ordinal());
 					
 					if (counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] < gsmSmoothingCount-1e-9) 
 						throw new RuntimeException("Illegal state found in viterbi decoding result:  "
@@ -256,7 +266,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 								", prevGlyph="+prevGlyph + 
 								", prevLmChar="+charIndexer.getObject(prevLmChar) + 
 								", lmChar="+charIndexer.getObject(lmChar) + 
-								", glyph="+(currGlyphChar.isElided ? "Elided" : (currGlyphChar.hasElisionTilde) ? "ElisionTilde" : charIndexer.getObject(currGlyphChar.templateCharIndex)));
+								", glyph="+(currGlyphType == GlyphType.NORMAL_CHAR ? charIndexer.getObject(currGlyphChar.templateCharIndex) : currGlyphType));
 					counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] += 1;
 					//System.out.println("lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+charIndexer.getObject(glyph)+"("+glyph+")");
 				}
@@ -352,7 +362,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 							// figure out what the lowest count is, and then exclude things with that count
 							double lowProb = ArrayHelper.min(probs[language][prevGlyph.ordinal()][prevLmChar][lmChar]);
 							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
-								String sglyph = glyph < numChars ? charIndexer.getObject(glyph) : (glyph == GLYPH_ELISION_TILDE ? "ElisionTilde": "Elided");
+								String sglyph = glyph < numChars ? charIndexer.getObject(glyph) : GlyphType.values()[glyph-numChars].toString();
 								
 								double p = probs[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];
 								double c = counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph];

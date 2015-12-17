@@ -13,8 +13,8 @@ import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
-import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
@@ -104,7 +104,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 				TransitionState ts = decodeStates[line][i];
 				int c = ts.getGlyphChar().templateCharIndex;
 				if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
-					if (!ts.getGlyphChar().isElided) {
+					if (!ts.getGlyphChar().isElided()) {
 						viterbiChars[line].add(charIndexer.getObject(c));
 					}
 					
@@ -170,8 +170,8 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 				GlyphChar glyph = ts.getGlyphChar();
 				int glyphChar = glyph.templateCharIndex;
 				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
-				if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided) {
-					lineBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
+				if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
+					lineBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided() ? "" : sglyphChar) + "]");
 				}
 				else {
 					lineBuffer.append(sglyphChar);
@@ -301,8 +301,8 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 					outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 				}
 				
-				if (lmChar != glyphChar || glyph.hasElisionTilde || glyph.isElided)
-					outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided ? "" : sglyphChar) + "]");
+				if (lmChar != glyphChar || glyph.toGlyphType() != GlyphType.NORMAL_CHAR)
+					outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided() ? "" : sglyphChar) + "]");
 				else
 					outputBuffer.append(sglyphChar);
 				

@@ -11,6 +11,7 @@ import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
@@ -254,7 +255,7 @@ public class CharacterNgramTransitionModelMarkovOffset implements SparseTransiti
 		}
 		
 		public GlyphChar getGlyphChar() {
-			return new GlyphChar(charIndex, false, false);
+			return new GlyphChar(charIndex, GlyphType.NORMAL_CHAR);
 		}
 		
 		public int getOffset() {
