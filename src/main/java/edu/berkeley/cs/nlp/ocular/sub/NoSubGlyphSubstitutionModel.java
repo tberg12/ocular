@@ -26,7 +26,7 @@ public class NoSubGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	}
 	
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
-		return (glyphChar.toGlyphType() == GlyphType.NORMAL_CHAR && lmChar == glyphChar.templateCharIndex) ? 1.0 : 0.0;
+		return (glyphChar.glyphType == GlyphType.NORMAL_CHAR && lmChar == glyphChar.templateCharIndex) ? 1.0 : 0.0;
 	}
 	
 }

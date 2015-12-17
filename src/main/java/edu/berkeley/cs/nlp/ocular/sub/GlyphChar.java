@@ -10,7 +10,7 @@ import indexer.Indexer;
 public class GlyphChar implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	public enum GlyphType { ELISION_TILDE, TILDE_ELIDED, FIRST_ELIDED, NORMAL_CHAR };
+	public enum GlyphType { ELISION_TILDE, TILDE_ELIDED, FIRST_ELIDED, DOUBLED, NORMAL_CHAR };
 	
 	public final int templateCharIndex;
 	public final GlyphType glyphType;
@@ -22,10 +22,6 @@ public class GlyphChar implements Serializable {
 	
 	public boolean isElided() {
 		return glyphType == GlyphType.TILDE_ELIDED || glyphType == GlyphType.FIRST_ELIDED;
-	}
-	
-	public GlyphType toGlyphType() {
-		return glyphType;
 	}
 	
 	public boolean equals(Object o) {

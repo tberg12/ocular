@@ -108,18 +108,20 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 						viterbiChars[line].add(charIndexer.getObject(c));
 					}
 					
-					switch(ts.getType()) {
-						case RMRGN_HPHN_INIT:
-						case RMRGN_HPHN:
-						case LMRGN_HPHN:
-							//inHyphenation = true;
-							break;
-						case LMRGN:
-						case RMRGN:
-							viterbiLmChars.add(" ");
-							break;
-						case TMPL:
-							viterbiLmChars.add(charIndexer.getObject(ts.getLmCharIndex()));
+					if (ts.getGlyphChar().glyphType != GlyphType.DOUBLED) { // the first in a pair of doubled characters isn't part of the language model transcription
+						switch(ts.getType()) {
+							case RMRGN_HPHN_INIT:
+							case RMRGN_HPHN:
+							case LMRGN_HPHN:
+								//inHyphenation = true;
+								break;
+							case LMRGN:
+							case RMRGN:
+								viterbiLmChars.add(" ");
+								break;
+							case TMPL:
+								viterbiLmChars.add(charIndexer.getObject(ts.getLmCharIndex()));
+						}
 					}
 					
 					viterbiTransStates[line].add(ts);
@@ -170,7 +172,10 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 				GlyphChar glyph = ts.getGlyphChar();
 				int glyphChar = glyph.templateCharIndex;
 				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
-				if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
+				if (glyph.glyphType == GlyphType.DOUBLED) {
+					lineBuffer.append("[2x]");
+				}
+				else if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
 					lineBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided() ? "" : sglyphChar) + "]");
 				}
 				else {
@@ -301,7 +306,10 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 					outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 				}
 				
-				if (lmChar != glyphChar || glyph.toGlyphType() != GlyphType.NORMAL_CHAR)
+				if (glyph.glyphType == GlyphType.DOUBLED) {
+					outputBuffer.append("[2x]");
+				}
+				else if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR)
 					outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided() ? "" : sglyphChar) + "]");
 				else
 					outputBuffer.append(sglyphChar);

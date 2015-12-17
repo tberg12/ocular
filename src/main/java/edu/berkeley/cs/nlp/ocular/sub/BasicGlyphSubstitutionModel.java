@@ -84,7 +84,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
 		int prevLmCharForLookup = (glyphChar.isElided() ? prevLmChar : spaceCharIndex); // don't actually condition on the prev lm char unless we're trying to elide the current char
 
-		GlyphType glyphType = glyphChar.toGlyphType();
+		GlyphType glyphType = glyphChar.glyphType;
 		int glyph = (glyphType == GlyphType.NORMAL_CHAR) ? glyphChar.templateCharIndex : (numChars + glyphType.ordinal());
 		double p = probs[language][prevGlyphType.ordinal()][prevLmCharForLookup][lmChar][glyph];
 		return Math.pow(p, gsmPower);
@@ -119,6 +119,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		public int GLYPH_ELISION_TILDE;
 		public int GLYPH_TILDE_ELIDED;
 		public int GLYPH_FIRST_ELIDED;
+		public int GLYPH_DOUBLED;
 		
 		private double gsmPower;
 		private int minCountsForEvalGsm;
@@ -159,6 +160,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.GLYPH_ELISION_TILDE = numChars + GlyphType.ELISION_TILDE.ordinal();
 			this.GLYPH_TILDE_ELIDED = numChars + GlyphType.TILDE_ELIDED.ordinal();
 			this.GLYPH_FIRST_ELIDED = numChars + GlyphType.FIRST_ELIDED.ordinal();
+			this.GLYPH_DOUBLED = numChars + GlyphType.DOUBLED.ordinal();
 			
 			this.documents = documents;
 			this.evalDocuments = evalDocuments;
@@ -216,6 +218,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			if (prevGlyph == GlyphType.TILDE_ELIDED && glyph != GLYPH_TILDE_ELIDED && prevLmChar != spaceCharIndex) return 0.0;       //     ... otherwise the previous state must be marked as a "space" since we don't want to condition on the actual character
 			//if (prevGlyph == GlyphType.FIRST_ELIDED && !canBeElided.contains(prevLmChar)) return 0.0;  // an first-elided previous char must be elidable (it can't be followed by another elision)
 
+			if (glyph == GLYPH_DOUBLED && !canBeReplaced.contains(lmChar)) return 0.0;       // a doubled character has to be doubleable
+
 			if (glyph == GLYPH_ELISION_TILDE) {
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
@@ -223,6 +227,9 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
 			else if (glyph == GLYPH_FIRST_ELIDED) {
+				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+			}
+			else if (glyph == GLYPH_DOUBLED) {
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
 			else { // glyph is a normal character
@@ -248,7 +255,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				
 				int language = currTs.getLanguageIndex();
 				if (language >= 0) {
-					GlyphType prevGlyph = (prevTs != null ? prevTs.getGlyphChar().toGlyphType() : GlyphType.NORMAL_CHAR);
+					GlyphType prevGlyph = (prevTs != null ? prevTs.getGlyphChar().glyphType : GlyphType.NORMAL_CHAR);
 					GlyphChar currGlyphChar = currTs.getGlyphChar();
 					int lmChar = currTs.getLmCharIndex();
 					
@@ -257,7 +264,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					else if (currGlyphChar.glyphType == GlyphType.TILDE_ELIDED) prevLmChar = prevTs.getLmCharIndex(); // the only time we care about the prev lm char is when we are deciding to elide
 					else prevLmChar = spaceCharIndex;
 					
-					GlyphType currGlyphType = currGlyphChar.toGlyphType();
+					GlyphType currGlyphType = currGlyphChar.glyphType;
 					int glyph = (currGlyphType == GlyphType.NORMAL_CHAR) ? currGlyphChar.templateCharIndex : (numChars + currGlyphType.ordinal());
 					
 					if (counts[language][prevGlyph.ordinal()][prevLmChar][lmChar][glyph] < gsmSmoothingCount-1e-9) 

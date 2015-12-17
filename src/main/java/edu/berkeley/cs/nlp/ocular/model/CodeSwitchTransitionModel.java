@@ -99,7 +99,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			if (!allowGlyphSubstitution)
 				addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR), transitionScore);
 			else {
-				GlyphType glyphType = glyphChar.toGlyphType();
+				GlyphType glyphType = glyphChar.glyphType;
 				
 				if (nextType == TransitionStateType.RMRGN_HPHN || nextType == TransitionStateType.RMRGN_HPHN_INIT) {
 					/*
@@ -123,7 +123,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					 * like punctuation or spaces, where substitutions will never
 					 * be allowed.
 					 */
-					if (glyphType != GlyphType.ELISION_TILDE) {
+					if (glyphType != GlyphType.ELISION_TILDE) { // normal state can't follow an elision-marking tilde
 						// 1. Next state's glyph is just the rendering of the LM character
 						GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR);
 						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
@@ -142,6 +142,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		 *   4. Next state's glyph is an elision after a tilde-decorated character
 		 *   5. Next state's glyph is the LM char, stripped of its accents
 		 *   6. Next state's glyph is an elision after a space
+		 *   7. Next state's glyph is a doubled version of the LM character
 		 * 
 		 */
 		private void addGlyphStates(List<Tuple2<TransitionState, Double>> result, int nextLmChar, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
@@ -149,8 +150,13 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR), transitionScore);
 			else {
 				List<GlyphChar> potentialNextGlyphChars = new ArrayList<GlyphChar>(); 
-				GlyphType glyphType = glyphChar.toGlyphType();
-				if (glyphType == GlyphType.ELISION_TILDE) {
+				GlyphType glyphType = glyphChar.glyphType;
+				if (glyphType == GlyphType.DOUBLED) {
+					// Deterministically duplicate the glyph (but no longer marked as "doubled")
+					//potentialNextGlyphChars.add(new GlyphChar(glyphChar.templateCharIndex, GlyphType.NORMAL_CHAR));
+					throw new RuntimeException("This should have been handled elsewhere so that we don't re-include ngram LM scores");
+				}
+				else if (glyphType == GlyphType.ELISION_TILDE) {
 					// 4. An elision-tilde'd character must be followed by a tilde-elision
 					if (canBeElided.contains(nextLmChar)) {
 						potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.TILDE_ELIDED));
@@ -161,10 +167,12 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
 					
 					// 2. Next state's glyph is a substitution of the LM character
+					// 7. Next state's glyph is a doubled version of the LM character
 					if (canBeReplaced.contains(nextLmChar)) {
 						for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
 							potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
 						}
+						potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
 					}
 					
 					// 3. Next state's glyph is an elision-decorated version of the LM character
@@ -200,6 +208,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 							}
 						}
 					}
+					
+					
 				}
 				
 				// Create states for all the potential next glyphs
@@ -215,44 +225,25 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		}
 
 		private void addTransitionsToTmpl(List<Tuple2<TransitionState, Double>> result, int[] context, double prevScore, boolean clearContext) {
-			if (this.langIndex < 0) { // there is no current language
-				for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) { // no current language, can switch to any language
-					SingleLanguageModel destLM = lm.get(destLanguage);
-					for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we have no current language
-						if (c != spaceCharIndex) {
-							double pDestLang = lm.languagePrior(destLanguage); // no language to transition from
-							int[] shrunkenContext = shrinkContext(context, destLM);
-							double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-							int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
-							addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
-						}
-					}
-				}
+			if (glyphChar.glyphType == GlyphType.DOUBLED) {
+				// Duplicate the state: same context, language, lmChar, ...; but Doubled=>Normal
+				GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
+				TransitionStateType nextType = TransitionStateType.TMPL;
+				int nextLanguage = langIndex;
+				int nextLmChar = lmCharIndex;
+				//SingleLanguageModel destLM = lm.get(nextLanguage);
+				//double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
+				double score = prevScore; //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(destLM, context, nextLmChar)) + Math.log(pDestLang); // TODO: Is it necessary to have some sort of LM probability factored in?
+				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.DOUBLED, lmCharIndex, nextLmChar, nextGlyphChar);
+				addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
 			}
-			else { // there is a current language
-				boolean switchAllowed = lmCharIndex == spaceCharIndex; // can switch if its (a non-space character) after a space
-				if (switchAllowed) { // switch permitted
-					for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) {
+			else {
+				if (this.langIndex < 0) { // there is no current language
+					for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) { // no current language, can switch to any language
 						SingleLanguageModel destLM = lm.get(destLanguage);
-						for (int c : destLM.getActiveCharacters()) {
-							if (punctSet.contains(c)) {
-								if (allowLanguageSwitchOnPunct) {
-									double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
-									int[] shrunkenContext = shrinkContext(context, destLM);
-									double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-									int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
-									addNoSubGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
-								}
-								else if (this.langIndex == destLanguage) { // switching not allowed, but this is the same language
-									double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-									int[] shrunkenContext = shrinkContext(context, destLM);
-									double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-									int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
-									addNoSubGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
-								}
-							}
-							else if (c != spaceCharIndex) {
-								double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
+						for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we have no current language
+							if (c != spaceCharIndex) {
+								double pDestLang = lm.languagePrior(destLanguage); // no language to transition from
 								int[] shrunkenContext = shrinkContext(context, destLM);
 								double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
 								int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
@@ -261,42 +252,75 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						}
 					}
 				}
-				else { // no switching allowed
-					int destLanguage = this.langIndex; // there will always be a current language here
-					SingleLanguageModel destLM = lm.get(destLanguage);
-					for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we're definitely not switching anyway
-						if (c != spaceCharIndex) {
-							double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-							int[] shrunkenContext = shrinkContext(context, destLM);
-							double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-							int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
-							addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
+				else { // there is a current language
+					boolean switchAllowed = lmCharIndex == spaceCharIndex; // can switch if its (a non-space character) after a space
+					if (switchAllowed) { // switch permitted
+						for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) {
+							SingleLanguageModel destLM = lm.get(destLanguage);
+							for (int c : destLM.getActiveCharacters()) {
+								if (punctSet.contains(c)) {
+									if (allowLanguageSwitchOnPunct) {
+										double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
+										int[] shrunkenContext = shrinkContext(context, destLM);
+										double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
+										int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+										addNoSubGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
+									}
+									else if (this.langIndex == destLanguage) { // switching not allowed, but this is the same language
+										double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
+										int[] shrunkenContext = shrinkContext(context, destLM);
+										double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
+										int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+										addNoSubGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
+									}
+								}
+								else if (c != spaceCharIndex) {
+									double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
+									int[] shrunkenContext = shrinkContext(context, destLM);
+									double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
+									int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+									addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
+								}
+							}
+						}
+					}
+					else { // no switching allowed
+						int destLanguage = this.langIndex; // there will always be a current language here
+						SingleLanguageModel destLM = lm.get(destLanguage);
+						for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we're definitely not switching anyway
+							if (c != spaceCharIndex) {
+								double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
+								int[] shrunkenContext = shrinkContext(context, destLM);
+								double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
+								int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+								addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
+							}
 						}
 					}
 				}
-			}
-
-			{ // space character: switching is never allowed
-				SingleLanguageModel thisLM = lm.get(this.langIndex);
-				// TODO: If current lmCharIndex==spaceCharIndex, sum over all languages?
-				double pTransition = 0.0;
-				//				if (lmCharIndex == spaceCharIndex) {
-				double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-				int[] shrunkenContext = shrinkContext(context, thisLM);
-				pTransition += getNgramProb(thisLM, shrunkenContext, spaceCharIndex) * pDestLang;
-				//				}
-				//				else {
-				//					// total probability of transitioning to a space, regardless of language
-				//					for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) {
-				//						SingleLanguageModel destLM = lm.get(destLanguage);
-				//						double pDestLang = lm.languageTransitionPrior(this.langIndex, destLanguage);
-				//						int[] shrunkenContext = shrinkContext(context, thisLM);
-				//						pTransition += getNgramProb(thisLM, shrunkenContext, spaceCharIndex) * pDestLang;
-				//					}
-				//				}
-				double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(pTransition);
-				int[] nextContext = (!clearContext ? a.append(shrunkenContext, spaceCharIndex) : new int[] { spaceCharIndex });
-				addNoSubGlyphStates(result, spaceCharIndex, nextContext, TransitionStateType.TMPL, this.langIndex, score);
+	
+				{ // space character: switching is never allowed
+					SingleLanguageModel thisLM = lm.get(this.langIndex);
+					// TODO: If current lmCharIndex==spaceCharIndex, sum over all languages?
+					double pTransition = 0.0;
+					//				if (lmCharIndex == spaceCharIndex) {
+					double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
+					int[] shrunkenContext = shrinkContext(context, thisLM);
+					pTransition += getNgramProb(thisLM, shrunkenContext, spaceCharIndex) * pDestLang;
+					//				}
+					//				else {
+					//					// total probability of transitioning to a space, regardless of language
+					//					for (int destLanguage = 0; destLanguage < numLanguages; ++destLanguage) {
+					//						SingleLanguageModel destLM = lm.get(destLanguage);
+					//						double pDestLang = lm.languageTransitionPrior(this.langIndex, destLanguage);
+					//						int[] shrunkenContext = shrinkContext(context, thisLM);
+					//						pTransition += getNgramProb(thisLM, shrunkenContext, spaceCharIndex) * pDestLang;
+					//					}
+					//				}
+					double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(pTransition);
+					int[] nextContext = (!clearContext ? a.append(shrunkenContext, spaceCharIndex) : new int[] { spaceCharIndex });
+					addNoSubGlyphStates(result, spaceCharIndex, nextContext, TransitionStateType.TMPL, this.langIndex, score);
+				}
 			}
 		}
 
@@ -334,12 +358,24 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				}
 
 				if (this.langIndex >= 0) { // can't have a hyphen if there is no language, since that means there have been no characters so far
-					for (int c : thisLM.getActiveCharacters()) {
-						if (c != spaceCharIndex && !punctSet.contains(c)) { // can't start a line after hyphen with space or punct 
-							int[] shrunkenContext = shrinkContext(context, thisLM);
-							double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, shrunkenContext, c)) /*+ Math.log(1.0)*/;
-							int[] nextContext = a.append(shrunkenContext, c);
-							addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, this.langIndex, score);
+					if (glyphChar.glyphType == GlyphType.DOUBLED) {
+						// Duplicate the state: same context, language, lmChar, ...; but Doubled=>Normal
+						GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
+						TransitionStateType nextType = TransitionStateType.TMPL;
+						int nextLanguage = langIndex;
+						int nextLmChar = lmCharIndex;
+						double score = Math.log(1.0); //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, nextLmChar)) + Math.log(1.0); // TODO: Is it necessary to have some sort of LM probability factored in?
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.DOUBLED, lmCharIndex, nextLmChar, nextGlyphChar);
+						addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+					}
+					else {
+						for (int c : thisLM.getActiveCharacters()) {
+							if (c != spaceCharIndex && !punctSet.contains(c)) { // can't start a line after hyphen with space or punct 
+								int[] shrunkenContext = shrinkContext(context, thisLM);
+								double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, shrunkenContext, c)) /*+ Math.log(1.0)*/;
+								int[] nextContext = a.append(shrunkenContext, c);
+								addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, this.langIndex, score);
+							}
 						}
 					}
 				}
@@ -385,13 +421,26 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				}
 
 				if (this.langIndex >= 0) { // can't have a hyphen if there is no language, since that means there have been no characters so far
-					for (int c : thisLM.getActiveCharacters()) {
-						if (c != spaceCharIndex && !punctSet.contains(c)) { // can't start a line after hyphen with space or punct 
-							double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-							int[] shrunkenContext = shrinkContext(context, thisLM);
-							double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, shrunkenContext, c)) + Math.log(pDestLang);
-							int[] nextContext = a.append(shrunkenContext, c);
-							addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, this.langIndex, score);
+					if (glyphChar.glyphType == GlyphType.DOUBLED) {
+						// Duplicate the state: same context, language, lmChar, ...; but Doubled=>Normal
+						GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
+						TransitionStateType nextType = TransitionStateType.TMPL;
+						int nextLanguage = langIndex;
+						int nextLmChar = lmCharIndex;
+						//double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
+						double score = Math.log(1.0); //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, nextLmChar)) + Math.log(pDestLang); // TODO: Is it necessary to have some sort of LM probability factored in?
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.DOUBLED, lmCharIndex, nextLmChar, nextGlyphChar);
+						addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+					}
+					else {
+						for (int c : thisLM.getActiveCharacters()) {
+							if (c != spaceCharIndex && !punctSet.contains(c)) { // can't start a line after hyphen with space or punct 
+								double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
+								int[] shrunkenContext = shrinkContext(context, thisLM);
+								double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, shrunkenContext, c)) + Math.log(pDestLang);
+								int[] nextContext = a.append(shrunkenContext, c);
+								addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, this.langIndex, score);
+							}
 						}
 					}
 				}
@@ -553,6 +602,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 * X 4. Next state's glyph is elided
 	 *   5. Next state's glyph is the LM char, stripped of its accents
 	 *   6. Next state's glyph is an elision after a space
+	 *   7. Next state's glyph is a doubled version of the LM character
 	 * 
 	 */
 	private void addGlyphStartStates(List<Tuple2<TransitionState, Double>> result, int nextLmChar, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
@@ -565,10 +615,12 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
 			
 			// 2. Next state's glyph is a substitution of the LM character
+			// 7. Next state's glyph is a doubled version of the LM character
 			if (canBeReplaced.contains(nextLmChar)) {
 				for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
 					potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
 				}
+				potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
 			}
 			
 			// 3. Next state's glyph is an elision-decorated version of the LM character
@@ -663,7 +715,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	//	}
 
 	private double calculateGlyphLogProb(TransitionStateType nextType, int nextLanguage, GlyphType glyphType, int lmCharIndex, int nextLmChar, GlyphChar nextGlyphChar) {
-		if (nextLanguage == -1) {
+		if (nextLanguage < 0) {
 			if (this.alwaysSpaceTransitionTypes.contains(nextType) && nextGlyphChar.templateCharIndex == spaceCharIndex)
 				return 0.0; // log(1)
 			else
