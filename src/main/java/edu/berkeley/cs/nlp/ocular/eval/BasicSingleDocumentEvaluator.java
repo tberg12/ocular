@@ -233,9 +233,10 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			if (allEvals != null) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
 			}
+			@SuppressWarnings("unchecked")
+			List<String>[] viterbiLmCharsArray = new List[]{viterbiLmChars};
+			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(viterbiLmCharsArray, goldLmCharSequences);
 			if (allLmEvals != null) {
-				@SuppressWarnings("unchecked")
-				Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(new List[]{viterbiLmChars}, goldLmCharSequences);
 				allLmEvals.add(makeTuple2(doc.baseName(), lmEvals));
 			}
 			
@@ -272,6 +273,15 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			System.out.println("Writing gold comparison with substitutions to " + goldComparisonWithSubsOutputFilename);
 			System.out.println(goldComparisonWithSubsOutputBuffer.toString() + "\n\n");
 			f.writeString(goldComparisonWithSubsOutputFilename, goldComparisonWithSubsOutputBuffer.toString());
+			}
+			
+			//
+			// Print LM evaluation
+			//
+			{
+			System.out.println("MODEL LM OUTPUT vs. GOLD LM TRANSCRIPTION\n\n");
+			System.out.println(Evaluator.renderEval(lmEvals));
+			System.out.println("Writing gold lm comparison to " + goldComparisonOutputFilename);
 			}
 		}
 

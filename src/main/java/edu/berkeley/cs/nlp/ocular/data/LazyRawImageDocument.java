@@ -41,6 +41,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 	private String extractedLinesPath = null;
 
 	private String[][] text = null;
+	private String[][] lmText = null;
 
 	private TextReader textReader = new BasicTextReader();
 
@@ -172,10 +173,10 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 	}
 
 	public String[][] loadLmLineText() {
-		if (text == null) {
+		if (lmText == null) {
 			File textFile = new File(baseName().replaceAll("\\.[^.]*$", "") + "_lm.txt");
 			if (textFile.exists()) {
-				System.out.println("Evaluation text found at " + textFile);
+				System.out.println("LM evaluation text found at " + textFile);
 				List<List<String>> textList = new ArrayList<List<String>>();
 				try {
 					BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
@@ -198,7 +199,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 				System.out.println("No LM evaluation text found at " + textFile + "  (This is only a problem if you were trying to provide a gold transcription to check accuracy.)");
 			}
 		}
-		return text;
+		return lmText;
 	}
 
 	private String multilineExtractionImagePath() { return fullLePreExt() + "." + ext(); }
