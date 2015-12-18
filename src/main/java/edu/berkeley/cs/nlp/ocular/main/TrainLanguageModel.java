@@ -215,7 +215,7 @@ public class TrainLanguageModel implements Runnable {
 			List<Tuple2<Integer,Integer>> reverseUnigramCounts = new ArrayList<Tuple2<Integer,Integer>>();
 			for (Map.Entry<Integer,Integer> entry : counter.getUnigramCounts().entrySet())
 				reverseUnigramCounts.add(makeTuple2(entry.getValue(),entry.getKey()));
-			reverseUnigramCounts.sort(new Tuple2.DefaultLexicographicTuple2Comparator<>());
+			Collections.sort(reverseUnigramCounts, new Tuple2.DefaultLexicographicTuple2Comparator<Integer,Integer>());
 			Collections.reverse(reverseUnigramCounts);
 			for (Tuple2<Integer,Integer> entry : reverseUnigramCounts) {
 				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2));

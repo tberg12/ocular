@@ -30,6 +30,7 @@ import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
@@ -271,7 +272,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		GlyphSubstitutionModel newGsm = trainedModels._3;
 		if (outputFontPath != null) InitializeFont.writeFont(newFont, outputFontPath);
 		if (outputLmPath != null) TrainLanguageModel.writeLM(newLm, outputLmPath);
-		if (outputGsmPath != null) GlyphSubstitutionModel.writeGSM(newGsm, outputGsmPath);
+		if (outputGsmPath != null) GlyphSubstitutionModelReadWrite.writeGSM(newGsm, outputGsmPath);
 	}
 
 	private Map<String, CharacterTemplate> loadFont() {
@@ -320,7 +321,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 		else if (inputGsmPath != null) { // file path given
 			System.out.println("Loading initial GSM from " + inputGsmPath);
-			return GlyphSubstitutionModel.readGSM(inputGsmPath);
+			return GlyphSubstitutionModelReadWrite.readGSM(inputGsmPath);
 		}
 		else {
 			System.out.println("No initial GSM provided; initializing to uniform model.");

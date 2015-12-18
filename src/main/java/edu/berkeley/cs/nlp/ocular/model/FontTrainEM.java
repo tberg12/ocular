@@ -27,6 +27,7 @@ import edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
@@ -78,7 +79,7 @@ public class FontTrainEM {
 				lm = TrainLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
 			}
 			if (retrainGSM) {
-				if (evalGsm != null) gsm = GlyphSubstitutionModel.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+				if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
 			}
 			
 			if (lastCompletedIteration == numEMIters) {
@@ -144,7 +145,7 @@ public class FontTrainEM {
 					if (retrainGSM) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
 						evalGsm = gsmFactory.makeForEval(gsmCounts, iter, completedBatchesInIteration);
-						if (evalGsm != null && writeTrainedGsm) GlyphSubstitutionModel.writeGSM(evalGsm, makeGsmPath(outputPath, iter, completedBatchesInIteration));
+						if (evalGsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(evalGsm, makeGsmPath(outputPath, iter, completedBatchesInIteration));
 					}
 
 					if (!accumulateBatchesWithinIter) {
