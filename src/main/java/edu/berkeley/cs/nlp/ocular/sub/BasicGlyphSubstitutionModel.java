@@ -308,8 +308,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		}
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
-			if (evalDocuments == null) return null;
-			
+			if (evalDocuments != null) {
 			double[][][][][] evalCounts = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
 			
 			//
@@ -346,6 +345,9 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, evalDocuments.get(0)); }
 
 			return new BasicGlyphSubstitutionModel(probs, gsmPower, langIndexer, charIndexer);
+			}
+			else
+				return null;
 		}
 
 		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId, Document doc) {
