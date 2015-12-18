@@ -394,7 +394,10 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		}
 
 		public double endLogProb() {
-			return 0.0;
+			if (glyphChar.glyphType == GlyphType.DOUBLED) // can't end on an incomplete "double glyph"
+				return Double.NEGATIVE_INFINITY;
+			else
+				return 0.0;
 		}
 
 		/**
