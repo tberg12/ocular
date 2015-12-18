@@ -21,27 +21,22 @@ import indexer.Indexer;
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
-public class BasicEMIterationEvaluator implements EMIterationEvaluator {
+public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 	private List<Document> documents;
 	private String inputPath; 
 	private String outputPath;
-	private boolean learnFont;
-	private int numEMIters;
 	private DecoderEM decoderEM;
-	private EMDocumentEvaluator docEvaluator;
+	private SingleDocumentEvaluator docEvaluator;
 	private Indexer<String> charIndexer;
 	
-	public BasicEMIterationEvaluator(
+	public BasicMultiDocumentEvaluator(
 			List<Document> documents, String inputPath, String outputPath,
-			boolean learnFont, int numEMIters,
 			DecoderEM decoderEM,
-			EMDocumentEvaluator docEvaluator,
+			SingleDocumentEvaluator docEvaluator,
 			Indexer<String> charIndexer) {
 		this.documents = documents;
 		this.inputPath = inputPath;
 		this.outputPath = outputPath;
-		this.learnFont = learnFont;
-		this.numEMIters = numEMIters;
 		this.decoderEM = decoderEM;
 		this.docEvaluator = docEvaluator;
 		this.charIndexer = charIndexer;
@@ -67,7 +62,7 @@ public class BasicEMIterationEvaluator implements EMIterationEvaluator {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allEvals, allLmEvals);
+			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, inputPath, outputPath, allEvals, allLmEvals);
 		}
 		double avgLogProb = ((double)totalJointLogProb) / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);

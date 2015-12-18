@@ -25,13 +25,12 @@ import indexer.Indexer;
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
-public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
+public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 	private Indexer<String> charIndexer;
 	private Indexer<String> langIndexer;
 	boolean allowGlyphSubstitution;
 	
-	public BasicEMDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer,
-			boolean allowGlyphSubstitution) {
+	public BasicSingleDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution) {
 		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
@@ -40,8 +39,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
 			Document doc,
 			TransitionState[][] decodeStates, int[][] decodeWidths,
-			boolean learnFont, String inputPath, int numEMIters,
-			String outputPath,
+			String inputPath, String outputPath,
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals) {
 		String[][] text = doc.loadLineText();
@@ -135,7 +133,7 @@ public class BasicEMDocumentEvaluator implements EMDocumentEvaluator {
 		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
 		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
-		if (learnFont && numEMIters > 1) outputFilenameBase += "_iter-" + iter;
+		if (iter > 0) outputFilenameBase += "_iter-" + iter;
 		if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
 		
 		String transcriptionOutputFilename = outputFilenameBase + "_transcription.txt";

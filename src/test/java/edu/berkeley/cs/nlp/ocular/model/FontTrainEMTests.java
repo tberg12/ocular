@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.*;
 import indexer.HashMapIndexer;
@@ -49,7 +50,7 @@ public class FontTrainEMTests {
 	@Test
 	public void test_makeFullViterbiStateSeq() {
 
-		GlyphChar gc = new GlyphChar(-1, false, false);
+		GlyphChar gc = new GlyphChar(-1, GlyphType.NORMAL_CHAR);
 		Indexer<String> charIndexer = new HashMapIndexer<String>();
 		charIndexer.index(new String[] { " ", "-", "a", "b", "c" });
 		TransitionState[][] decodeStates = new TransitionState[][] {

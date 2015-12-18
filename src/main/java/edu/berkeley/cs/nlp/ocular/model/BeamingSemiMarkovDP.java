@@ -60,7 +60,7 @@ public class BeamingSemiMarkovDP {
 		}
 		this.betas = new double[emissionModel.numSequences()][][];
 		for (int d=0; d<emissionModel.numSequences(); ++d) {
-			this.betas[d] = new double[emissionModel.sequenceLength(d)+1][emissionModel.getCharIndexer().size()];
+			this.betas[d] = new double[emissionModel.sequenceLength(d)+1][emissionModel.numChars()];
 		}
 	}
 
@@ -294,7 +294,7 @@ public class BeamingSemiMarkovDP {
 	}
 	
 	private void doDenseCoarseBackwardPassLogSpace(int d, double[][] betas) {
-		int numChars = emissionModel.getCharIndexer().size();
+		int numChars = emissionModel.numChars();
 		for (int t=emissionModel.sequenceLength(d); t>=0; --t) {
 			Arrays.fill(betas[t], Double.NEGATIVE_INFINITY);
 			if (t==emissionModel.sequenceLength(d)) {

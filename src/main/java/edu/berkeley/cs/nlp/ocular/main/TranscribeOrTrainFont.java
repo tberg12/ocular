@@ -3,25 +3,29 @@ package edu.berkeley.cs.nlp.ocular.main;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
-import edu.berkeley.cs.nlp.ocular.eval.BasicEMDocumentEvaluator;
-import edu.berkeley.cs.nlp.ocular.eval.BasicEMIterationEvaluator;
-import edu.berkeley.cs.nlp.ocular.eval.EMDocumentEvaluator;
-import edu.berkeley.cs.nlp.ocular.eval.EMIterationEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.BasicSingleDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.BasicMultiDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel.CachingEmissionModelFactory;
+import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.EmissionModel.EmissionModelFactory;
 import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
@@ -193,13 +197,40 @@ public class TranscribeOrTrainFont implements Runnable {
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });
 		if (!parser.doParse(args)) System.exit(1);
+		validateOptions();
 		main.run();
 	}
 
 	public void run() {
+		CodeSwitchLanguageModel lm = loadLM();
+		Map<String, CharacterTemplate> font = loadFont();
+		BasicGlyphSubstitutionModelFactory gsmFactory = makeGsmFactory(lm);
+		GlyphSubstitutionModel gsm = getGlyphSubstituionModel(gsmFactory);
+		
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		Indexer<String> langIndexer = lm.getLanguageIndexer();
+		
+		DecoderEM decoderEM = makeDecoder(charIndexer);
+
+		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution);
+		
+		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
+		if (trainFont) {
+			MultiDocumentEvaluator evalSetEvaluator = makeEvalSetEvaluator(charIndexer, decoderEM, documentEvaluator);
+			train(documents, lm, font, gsmFactory, gsm, decoderEM, documentEvaluator, evalSetEvaluator);
+		}
+		else { /* transcribe only */
+			MultiDocumentEvaluator evalSetEvaluator = new BasicMultiDocumentEvaluator(documents, inputPath, outputPath, decoderEM, documentEvaluator, charIndexer);
+			System.out.println("Transcribing input data      " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
+			evalSetEvaluator.printTranscriptionWithEvaluation(0, 0, lm, gsm, font);
+		}
+	}
+
+	private static void validateOptions() {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
 		if (!new File(inputPath).exists()) throw new IllegalArgumentException("-inputPath "+inputPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
+		if (trainFont && numEMIters <= 0) new IllegalArgumentException("-numEMIters must be a positive number if -trainFont is true.");
 		if (trainFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath required when -trainFont is true.");
 		if (!trainFont && outputFontPath != null) throw new IllegalArgumentException("-outputFontPath not permitted when -trainFont is false.");
 		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
@@ -209,91 +240,83 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (outputGsmPath != null && !retrainGSM) throw new IllegalArgumentException("-outputGsmPath not permitted if -retrainGsM is false.");
 		if (inputFontPath == null) throw new IllegalArgumentException("-inputFontPath not set");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
+		if (!trainFont && evalInputPath != null) throw new IllegalArgumentException("-evalInputPath not permitted when -trainFont is true (evaluation on the input documents is automatic if gold transcriptions are found).");
 		if (evalExtractedLinesPath != null && evalInputPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputPath.");
-		
 		if (!new File(inputFontPath).exists()) throw new RuntimeException("inputFontPath " + inputFontPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 
-		File outputDir = new File(outputPath);
-		if (!outputDir.exists()) outputDir.mkdirs();
+		// Make the output directory if it doesn't exist yet
+		File outputPathFile = new File(outputPath);
+		if (!outputPathFile.exists()) outputPathFile.mkdirs();
+	}
 
-		List<Document> trainDocuments = loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip);
-
-		/*
-		 * Load LM (and print some info about it)
-		 */
-		System.out.println("Loading initial LM from " + inputLmPath);
-		CodeSwitchLanguageModel codeSwitchLM = TrainLanguageModel.readLM(inputLmPath);
-		System.out.println("Loaded CodeSwitchLanguageModel from " + inputLmPath);
-		for (int i = 0; i < codeSwitchLM.getLanguageIndexer().size(); ++i) {
-			List<String> chars = new ArrayList<String>();
-			for (int j : codeSwitchLM.get(i).getActiveCharacters())
-				chars.add(codeSwitchLM.getCharacterIndexer().getObject(j));
-			Collections.sort(chars);
-			System.out.println("    " + codeSwitchLM.getLanguageIndexer().getObject(i) + ": " + chars);
-		}
-
-		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
-		Indexer<String> langIndexer = codeSwitchLM.getLanguageIndexer();
-
-		List<String> allCharacters = makeList(charIndexer.getObjects());
-		Collections.sort(allCharacters);
-		System.out.println("Characters: " + allCharacters);
-		System.out.println("Num characters: " + charIndexer.size());
-
-		System.out.println("Loading font initializer from " + inputFontPath);
-		Map<String, CharacterTemplate> font = InitializeFont.readFont(inputFontPath);
-
-		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
-
-		DecoderEM decoderEM = new DecoderEM(emissionInnerLoop, allowGlyphSubstitution, gsmNoCharSubPrior, allowLanguageSwitchOnPunct, markovVerticalOffset, paddingMinWidth, paddingMaxWidth, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize, charIndexer);
-		EMDocumentEvaluator emDocumentEvaluator = new BasicEMDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution);
-		
-		List<Document> evalDocuments = null;
-		EMIterationEvaluator emEvalSetIterationEvaluator;
-		if (evalInputPath != null) {
-			evalDocuments = loadDocuments(evalInputPath, evalExtractedLinesPath, evalNumDocs, numDocsToSkip);
-			emEvalSetIterationEvaluator = new BasicEMIterationEvaluator(evalDocuments, evalInputPath, outputPath, trainFont, numEMIters, decoderEM, emDocumentEvaluator, charIndexer);
-		}
-		else {
-			emEvalSetIterationEvaluator = new EMIterationEvaluator.NoOpEMIterationEvaluator();
-		}
-			
-		/*
-		 * Load GSM (and print some info about it)
-		 */
-		int numLanguages = langIndexer.size();
-		@SuppressWarnings("unchecked")
-		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
-		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = codeSwitchLM.get(l).getActiveCharacters();
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, gsmPower, gsmMinCountsForEval, inputPath, outputPath, trainDocuments, evalDocuments);
-		GlyphSubstitutionModel codeSwitchGSM = getGlyphSubstituionModel(gsmFactory, langIndexer, charIndexer);
-
-		FontTrainEM fontTrainEM = new FontTrainEM(langIndexer, charIndexer, decoderEM, gsmFactory, emDocumentEvaluator, accumulateBatchesWithinIter, minDocBatchSize, updateDocBatchSize, numMstepThreads, emEvalSetIterationEvaluator, evalFreq, evalBatches, outputFontPath != null, outputLmPath != null, outputGsmPath != null, continueFromLastCompleteIteration);
-		
-		long overallNanoTime = System.nanoTime();
+	private void train(List<Document> trainDocuments, CodeSwitchLanguageModel lm, Map<String, CharacterTemplate> font,
+			BasicGlyphSubstitutionModelFactory gsmFactory, GlyphSubstitutionModel gsm, DecoderEM decoderEM,
+			SingleDocumentEvaluator documentEvaluator, MultiDocumentEvaluator evalSetIterationEvaluator) {
 		Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> trainedModels = 
-				fontTrainEM.run(trainDocuments, inputPath, outputPath, trainFont, retrainLM, retrainGSM, numEMIters, codeSwitchLM, codeSwitchGSM, font);
+				new FontTrainEM().train(
+						trainDocuments, 
+						lm, gsm, font, 
+						retrainLM, retrainGSM, 
+						continueFromLastCompleteIteration,
+						outputFontPath != null, outputLmPath != null, outputGsmPath != null,
+						decoderEM,
+						gsmFactory, documentEvaluator,
+						numEMIters, updateDocBatchSize, minDocBatchSize, accumulateBatchesWithinIter,
+						numMstepThreads,
+						inputPath, outputPath,
+						evalSetIterationEvaluator, evalFreq, evalBatches);
+		
 		Map<String, CharacterTemplate> newFont = trainedModels._1;
 		CodeSwitchLanguageModel newLm = trainedModels._2;
 		GlyphSubstitutionModel newGsm = trainedModels._3;
 		if (outputFontPath != null) InitializeFont.writeFont(newFont, outputFontPath);
 		if (outputLmPath != null) TrainLanguageModel.writeLM(newLm, outputLmPath);
 		if (outputGsmPath != null) GlyphSubstitutionModel.writeGSM(newGsm, outputGsmPath);
-
-		System.out.println("Overall time: " + (System.nanoTime() - overallNanoTime) / 1e9 + "s");
 	}
 
-	private EmissionCacheInnerLoop getEmissionInnerLoop() {
-		if (emissionEngine == EmissionCacheInnerLoopType.DEFAULT) return new DefaultInnerLoop(numEmissionCacheThreads);
-		if (emissionEngine == EmissionCacheInnerLoopType.OPENCL) return new OpenCLInnerLoop(numEmissionCacheThreads);
-		if (emissionEngine == EmissionCacheInnerLoopType.CUDA) return new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
-		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
+	private Map<String, CharacterTemplate> loadFont() {
+		System.out.println("Loading font from " + inputFontPath);
+		Map<String, CharacterTemplate> font = InitializeFont.readFont(inputFontPath);
+		return font;
+	}
+	
+	private CodeSwitchLanguageModel loadLM() {
+		System.out.println("Loading initial LM from " + inputLmPath);
+		CodeSwitchLanguageModel codeSwitchLM = TrainLanguageModel.readLM(inputLmPath);
+
+		//print some useful info
+		System.out.println("Loaded CodeSwitchLanguageModel from " + inputLmPath);
+		Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
+		for (int i = 0; i < codeSwitchLM.getLanguageIndexer().size(); ++i) {
+			List<String> chars = new ArrayList<String>();
+			for (int j : codeSwitchLM.get(i).getActiveCharacters())
+				chars.add(charIndexer.getObject(j));
+			Collections.sort(chars);
+			System.out.println("    " + codeSwitchLM.getLanguageIndexer().getObject(i) + ": " + chars);
+		}
+		List<String> allCharacters = makeList(charIndexer.getObjects());
+		Collections.sort(allCharacters);
+		System.out.println("Characters: " + allCharacters);
+		System.out.println("Num characters: " + charIndexer.size());
+
+		return codeSwitchLM;
 	}
 
-	private GlyphSubstitutionModel getGlyphSubstituionModel(BasicGlyphSubstitutionModelFactory gsmFactory, Indexer<String> langIndexer, Indexer<String> charIndexer) {
+	private BasicGlyphSubstitutionModelFactory makeGsmFactory(CodeSwitchLanguageModel lm) {
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		Indexer<String> langIndexer = lm.getLanguageIndexer();
+		int numLanguages = langIndexer.size();
+		@SuppressWarnings("unchecked")
+		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
+		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = lm.get(l).getActiveCharacters();
+		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, gsmPower, gsmMinCountsForEval, outputPath);
+		return gsmFactory;
+	}
+
+	private GlyphSubstitutionModel getGlyphSubstituionModel(BasicGlyphSubstitutionModelFactory gsmFactory) {
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
-			return new NoSubGlyphSubstitutionModel(langIndexer, charIndexer);
+			return new NoSubGlyphSubstitutionModel();
 		}
 		else if (inputGsmPath != null) { // file path given
 			System.out.println("Loading initial GSM from " + inputGsmPath);
@@ -305,32 +328,37 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 	}
 	
-	private List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip) {
-		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
-		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
-		List<Document> documents = new ArrayList<Document>();
-
-		List<Document> lazyDocs = loader.readDataset();
-		Collections.sort(lazyDocs, new Comparator<Document>() {
-			public int compare(Document o1, Document o2) {
-				return o1.baseName().compareTo(o2.baseName());
-			}
-		});
-		
-		int actualNumDocsToSkip = Math.min(lazyDocs.size(), numDocsToSkip);
-		int actualNumDocsToUse = Math.min(lazyDocs.size() - actualNumDocsToSkip, numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
-		System.out.println("Using "+actualNumDocsToUse+" documents (skipping "+actualNumDocsToSkip+")");
-		for (int docNum = 0; docNum < actualNumDocsToSkip; ++docNum) {
-			Document lazyDoc = lazyDocs.get(docNum);
-			System.out.println("  Skipping " + lazyDoc.baseName());
-		}
-		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip+actualNumDocsToUse; ++docNum) {
-			Document lazyDoc = lazyDocs.get(docNum);
-			System.out.println("  Using " + lazyDoc.baseName());
-			documents.add(lazyDoc);
-		}
-		if (actualNumDocsToUse < 1) throw new RuntimeException("No documents given!");
-		return documents;
+	private DecoderEM makeDecoder(Indexer<String> charIndexer) {
+		EmissionModelFactory emissionModelFactory = makeEmissionModelFactory(charIndexer);
+		return new DecoderEM(emissionModelFactory, allowGlyphSubstitution, gsmNoCharSubPrior, allowLanguageSwitchOnPunct, markovVerticalOffset, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
 	}
-	
+
+	private EmissionModelFactory makeEmissionModelFactory(Indexer<String> charIndexer) {
+		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
+		return (markovVerticalOffset ? 
+			new CachingEmissionModelExplicitOffsetFactory(charIndexer, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : 
+			new CachingEmissionModelFactory(charIndexer, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+	}
+
+	private EmissionCacheInnerLoop getEmissionInnerLoop() {
+		switch (emissionEngine) {
+			case DEFAULT: return new DefaultInnerLoop(numEmissionCacheThreads);
+			case OPENCL: return new OpenCLInnerLoop(numEmissionCacheThreads);
+			case CUDA: return new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
+		}
+		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
+	}
+
+	private MultiDocumentEvaluator makeEvalSetEvaluator(Indexer<String> charIndexer, DecoderEM decoderEM, SingleDocumentEvaluator documentEvaluator) {
+		MultiDocumentEvaluator evalSetEvaluator;
+		if (evalInputPath != null) {
+			List<Document> evalDocuments = LazyRawImageLoader.loadDocuments(evalInputPath, evalExtractedLinesPath, evalNumDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
+			evalSetEvaluator = new BasicMultiDocumentEvaluator(evalDocuments, evalInputPath, outputPath, decoderEM, documentEvaluator, charIndexer);
+		}
+		else {
+			evalSetEvaluator = new MultiDocumentEvaluator.NoOpMultiDocumentEvaluator();
+		}
+		return evalSetEvaluator;
+	}
+
 }

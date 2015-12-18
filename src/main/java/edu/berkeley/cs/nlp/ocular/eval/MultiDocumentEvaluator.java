@@ -9,7 +9,7 @@ import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
-public interface EMIterationEvaluator {
+public interface MultiDocumentEvaluator {
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
 			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font);
@@ -17,7 +17,7 @@ public interface EMIterationEvaluator {
 	/**
 	 * No-op version of an evaluator 
 	 */
-	public static class NoOpEMIterationEvaluator implements EMIterationEvaluator {
+	public static class NoOpMultiDocumentEvaluator implements MultiDocumentEvaluator {
 		public void printTranscriptionWithEvaluation(int iter, int batchId,
 				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font) {}
 	}

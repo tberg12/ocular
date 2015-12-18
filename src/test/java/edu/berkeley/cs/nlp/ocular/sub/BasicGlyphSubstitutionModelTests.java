@@ -1,8 +1,10 @@
 package edu.berkeley.cs.nlp.ocular.sub;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.TILDE_ESCAPE;
-import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.*;
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
+import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.ELISION_TILDE;
+import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.FIRST_ELIDED;
+import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.NORMAL_CHAR;
+import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.TILDE_ELIDED;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 import static org.junit.Assert.assertEquals;
 
@@ -12,7 +14,6 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import indexer.HashMapIndexer;
 import indexer.Indexer;
@@ -37,10 +38,7 @@ public class BasicGlyphSubstitutionModelTests {
 		charIndexer.lock();
 		double gsmPower = 2.0; 
 		int minCountsForEvalGsm = 2;
-		String inputPath = ""; 
 		String outputPath = ""; 
-		List<Document> documents = makeList(); 
-		List<Document> evalDocuments = makeList();
 		
 		BasicGlyphSubstitutionModelFactory gsmf = new BasicGlyphSubstitutionModelFactory(
 				gsmSmoothingCount,
@@ -50,10 +48,7 @@ public class BasicGlyphSubstitutionModelTests {
 				activeCharacterSets, 
 				gsmPower, 
 				minCountsForEvalGsm, 
-				inputPath, 
-				outputPath, 
-				documents, 
-				evalDocuments);
+				outputPath);
 
 		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, FIRST_ELIDED, charIndexer.getIndex(" "), charIndexer.getIndex("k"), charIndexer.getIndex("k")), 1e-9);
 		assertEquals(0.0, gsmf.getSmoothingValue(0, NORMAL_CHAR, charIndexer.getIndex("n"), charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);

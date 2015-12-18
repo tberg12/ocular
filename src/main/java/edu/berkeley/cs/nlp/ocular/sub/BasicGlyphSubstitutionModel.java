@@ -8,12 +8,10 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubsti
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setUnion;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
@@ -62,6 +60,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 	private Indexer<String> langIndexer;
 	private Indexer<String> charIndexer;
+
 	private int spaceCharIndex;
 	private int numChars;
 
@@ -124,10 +123,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private double gsmPower;
 		private int minCountsForEvalGsm;
 		
-		// stuff for printing out model info
-		private List<Document> documents;
-		private List<Document> evalDocuments;
-		private String inputPath;
 		private String outputPath;
 		
 		public BasicGlyphSubstitutionModelFactory(
@@ -137,7 +132,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				Indexer<String> charIndexer,
 				Set<Integer>[] activeCharacterSets,
 				double gsmPower, int minCountsForEvalGsm,
-				String inputPath, String outputPath, List<Document> documents, List<Document> evalDocuments) {
+				String outputPath) {
 			this.gsmSmoothingCount = gsmSmoothingCount;
 			this.elisionSmoothingCountMultiplier = elisionSmoothingCountMultiplier;
 			this.langIndexer = langIndexer;
@@ -162,9 +157,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.GLYPH_FIRST_ELIDED = numChars + GlyphType.FIRST_ELIDED.ordinal();
 			this.GLYPH_DOUBLED = numChars + GlyphType.DOUBLED.ordinal();
 			
-			this.documents = documents;
-			this.evalDocuments = evalDocuments;
-			this.inputPath = inputPath;
 			this.outputPath = outputPath;
 		}
 		
@@ -282,9 +274,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 		public BasicGlyphSubstitutionModel make(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
 			System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+batchId);
-			//
 			// Normalize counts to get probabilities
-			//
 			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
 				for (GlyphType prevGlyph : GlyphType.values()) {
@@ -302,18 +292,14 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			}
 			
 			System.out.println("Writing out GSM information.");
-			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, documents.get(0)); }
+			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)); }
 			
 			return new BasicGlyphSubstitutionModel(probs, gsmPower, langIndexer, charIndexer);
 		}
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
-			if (evalDocuments != null) {
-			double[][][][][] evalCounts = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
-			
-			//
 			// Normalize counts to get probabilities
-			//
+			double[][][][][] evalCounts = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
 			double[/*language*/][/*prevGlyph*/][/*prevLmChar*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numGlyphTypes][numChars][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
 				for (GlyphType prevGlyph : GlyphType.values()) {
@@ -342,15 +328,12 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			}
 			
 			System.out.println("Writing out GSM information.");
-			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, evalDocuments.get(0)); }
+			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)+"_eval"); }
 
 			return new BasicGlyphSubstitutionModel(probs, gsmPower, langIndexer, charIndexer);
-			}
-			else
-				return null;
 		}
 
-		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId, Document doc) {
+		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][][][] counts, double[][][][][] probs, int iter, int batchId, String outputFilenameBase) {
 			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" "), Charset.LOWERCASE_LATIN_LETTERS);
 //			for (String c : Charset.LOWERCASE_VOWELS) {
 //				CHARS_TO_PRINT.add(Charset.ACUTE_ESCAPE + c);
@@ -393,16 +376,20 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				}
 			}
 		
-			String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
-			String preext = "newGSM";
-			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
-			if (iter > 0) outputFilenameBase += "_iter-" + iter;
-			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
 			String outputFilename = outputFilenameBase + ".tsv";
-
 			System.out.println("Writing info about newly-trained GSM on iteration "+iter+", batch "+batchId+" out to ["+outputFilename+"]");
 			FileHelper.writeString(outputFilename, sb.toString());
 		}
+
+		private String gsmPrintoutFilepath(int iter, int batchId) {
+			String preext = "newGSM";
+			String outputFilenameBase = outputPath + "/gsm/" + preext;
+			if (iter > 0) outputFilenameBase += "_iter-" + iter;
+			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
+			return outputFilenameBase;
+		}
 	}
 
+	public Indexer<String> getLangIndexer() { return langIndexer; }
+	public Indexer<String> getCharIndexer() { return charIndexer; }
 }

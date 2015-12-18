@@ -1,16 +1,15 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
-import gpu.CudaUtil;
-import indexer.Indexer;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import threading.BetterThreader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import gpu.CudaUtil;
+import indexer.Indexer;
+import threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -18,7 +17,7 @@ import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 public class CachingEmissionModelExplicitOffset implements EmissionModel {
 	
 	private EmissionCacheInnerLoop innerLoop;
-	private Indexer<String> charIndexer;
+	private int numChars;
 	private CharacterTemplate[] templates;
 	private PixelType[][][] observations;
 	private float[][] whiteObservations;
@@ -37,7 +36,7 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 	public CachingEmissionModelExplicitOffset(CharacterTemplate[] templates, Indexer<String> charIndexer, PixelType[][][] observations, int padMinWidth, int padMaxWidth, EmissionCacheInnerLoop innerLoop) {
 		this.innerLoop = innerLoop;
 		
-		this.charIndexer = charIndexer;
+		this.numChars = charIndexer.size();
 		this.spaceIndex = charIndexer.getIndex(Charset.SPACE);
 		this.templates = templates;
 		this.observations = observations;
@@ -67,8 +66,8 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 		}
 	}
 	
-	public Indexer<String> getCharIndexer() {
-		return charIndexer;
+	public int numChars() {
+		return numChars;
 	}
 	
 	public int numSequences() {
@@ -153,13 +152,13 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 	public void rebuildCache() {
 		long nanoTime = System.nanoTime();
 		
-		templateAllowedWidths = new int[charIndexer.size()][];
-		templateMinWidths = new int[charIndexer.size()];
-		templateMaxWidths = new int[charIndexer.size()];
-		padAndTemplateMinWidths = new int[charIndexer.size()];
-		padAndTemplateMaxWidths = new int[charIndexer.size()];
-		padAndTemplateAllowedWidths = new int[charIndexer.size()][];
-		for (int c=0; c<charIndexer.size(); ++c) {
+		templateAllowedWidths = new int[numChars][];
+		templateMinWidths = new int[numChars];
+		templateMaxWidths = new int[numChars];
+		padAndTemplateMinWidths = new int[numChars];
+		padAndTemplateMaxWidths = new int[numChars];
+		padAndTemplateAllowedWidths = new int[numChars][];
+		for (int c=0; c<numChars; ++c) {
 			templateAllowedWidths[c] = templates[c].allowedWidths();
 			templateMinWidths[c] = templates[c].templateMinWidth();
 			templateMaxWidths[c] = templates[c].templateMaxWidth();
@@ -205,8 +204,8 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 		for (int d=0; d<numSequences(); ++d) {
 			cachedLogProbs[d] = new float[sequenceLength(d)][][][];
 			for (int t=0; t<sequenceLength(d); ++t) {
-				cachedLogProbs[d][t] = new float[charIndexer.size()][][];
-				for (int c=0; c<charIndexer.size(); ++c) {
+				cachedLogProbs[d][t] = new float[numChars][][];
+				for (int c=0; c<numChars; ++c) {
 					cachedLogProbs[d][t][c] = new float[2*CharacterTemplate.MAX_OFFSET+1][];
 					for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
 						cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET] = new float[padAndTemplateMaxWidths[c]-padAndTemplateMinWidths[c]+1];
@@ -218,12 +217,12 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 		
 		int maxTemplateWidthTmp = Integer.MIN_VALUE;
 		int minTemplateWidthTmp = Integer.MAX_VALUE;
-		for (int c=0; c<charIndexer.size(); ++c) maxTemplateWidthTmp = Math.max(maxTemplateWidthTmp, templateMaxWidths[c]);
-		for (int c=0; c<charIndexer.size(); ++c) minTemplateWidthTmp = Math.min(minTemplateWidthTmp, templateMinWidths[c]);
+		for (int c=0; c<numChars; ++c) maxTemplateWidthTmp = Math.max(maxTemplateWidthTmp, templateMaxWidths[c]);
+		for (int c=0; c<numChars; ++c) minTemplateWidthTmp = Math.min(minTemplateWidthTmp, templateMinWidths[c]);
 		final int maxTemplateWidth = maxTemplateWidthTmp;
 		final int minTemplateWidth = minTemplateWidthTmp;
 		final int numTemplateWidths = (maxTemplateWidth-minTemplateWidth)+1;
-		final int[][][][] templateIndices = new int[numTemplateWidths][charIndexer.size()][CharacterTemplate.EXP_GAINS.length][2*CharacterTemplate.MAX_OFFSET+1]; 
+		final int[][][][] templateIndices = new int[numTemplateWidths][numChars][CharacterTemplate.EXP_GAINS.length][2*CharacterTemplate.MAX_OFFSET+1]; 
 		@SuppressWarnings("unchecked")
 		final List<float[]>[] whiteTemplatesList = new List[numTemplateWidths];
 		@SuppressWarnings("unchecked")
@@ -233,7 +232,7 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 			blackTemplatesList[tw-minTemplateWidth] = new ArrayList<float[]>();
 		}
 		final int[] templateNumIndices = new int[numTemplateWidths];
-		for (int c=0; c<charIndexer.size(); ++c) {
+		for (int c=0; c<numChars; ++c) {
 			for (int tw : templateAllowedWidths[c]) {
 				for (int e=0; e<CharacterTemplate.EXP_GAINS.length; ++e) {
 					for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
@@ -283,7 +282,7 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 	
 	private void populate(final int d, final float[] scores, final int minTemplateWidth, final float[][][] logColumnProbsWhitespace, final int[][][][] templateIndices, final int[] templateNumIndices, final int[] templateIndicesOffsets, int numThreads) {
 		BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer t, Object ignore){
-			for (int c=0; c<charIndexer.size(); ++c) {
+			for (int c=0; c<numChars; ++c) {
 				int[] templateWidths = templateAllowedWidths[c];
 				for (int tw : templateWidths) {
 					double templateWidthLogProb = templates[c].widthLogProb(tw);
@@ -358,4 +357,19 @@ public class CachingEmissionModelExplicitOffset implements EmissionModel {
 		return 4 * elementsOfCache / 1e9;
 	}
 	
+	public static class CachingEmissionModelExplicitOffsetFactory implements EmissionModel.EmissionModelFactory {
+		Indexer<String> charIndexer;
+		int padMinWidth;
+		int padMaxWidth;
+		EmissionCacheInnerLoop innerLoop;
+		public CachingEmissionModelExplicitOffsetFactory(Indexer<String> charIndexer, int padMinWidth, int padMaxWidth, EmissionCacheInnerLoop innerLoop) {
+			this.charIndexer = charIndexer;
+			this.padMinWidth = padMinWidth;
+			this.padMaxWidth = padMaxWidth;
+			this.innerLoop = innerLoop;
+		}
+		public EmissionModel make(CharacterTemplate[] templates, PixelType[][][] observations) {
+			return new CachingEmissionModelExplicitOffset(templates, charIndexer, observations, padMinWidth, padMaxWidth, innerLoop);
+		}
+	}
 }

@@ -15,8 +15,8 @@ import java.util.Map;
 
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.eval.EMDocumentEvaluator;
-import edu.berkeley.cs.nlp.ocular.eval.EMIterationEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
@@ -40,81 +40,31 @@ import threading.BetterThreader;
  */
 public class FontTrainEM {
 	
-	private BasicGlyphSubstitutionModelFactory gsmFactory;
-	private DecoderEM decoderEM;
-	private EMDocumentEvaluator emDocumentEvaluator;
-
-	private Indexer<String> langIndexer;
-	private Indexer<String> charIndexer;
-	
-	private boolean accumulateBatchesWithinIter;
-	private int minDocBatchSize;
-	private int updateDocBatchSize;
-	
-	private int numMstepThreads;
-	
-	private EMIterationEvaluator emEvalSetIterationEvaluator;
-	private int evalFreq;
-	private boolean evalBatches;
-	
-	private boolean writeTrainedFont;
-	private boolean writeTrainedLm;
-	private boolean writeTrainedGsm;
-	private boolean continueFromLastCompleteIteration;
-
-	public FontTrainEM(
-			Indexer<String> langIndexer,
-			Indexer<String> charIndexer,
-			DecoderEM decoderEM,
-			BasicGlyphSubstitutionModelFactory gsmFactory,
-			EMDocumentEvaluator emDocumentEvaluator,
-			boolean accumulateBatchesWithinIter, int minDocBatchSize, int updateDocBatchSize,
-			int numMstepThreads,
-			EMIterationEvaluator emEvalSetIterationEvaluator, int evalFreq, boolean evalBatches,
-			boolean writeTrainedFont, boolean writeTrainedLm, boolean writeTrainedGsm,
-			boolean continueFromLastCompleteIteration) {
+	public Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> train(
+				List<Document> trainDocuments,  
+				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font,
+				boolean retrainLM, boolean retrainGSM,
+				boolean continueFromLastCompleteIteration,
+				boolean writeTrainedFont, boolean writeTrainedLm, boolean writeTrainedGsm,
+				DecoderEM decoderEM,
+				BasicGlyphSubstitutionModelFactory gsmFactory,
+				SingleDocumentEvaluator documentEvaluator,
+				int numEMIters, int updateDocBatchSize, int minDocBatchSize, boolean accumulateBatchesWithinIter,
+				int numMstepThreads,
+				String inputPath, String outputPath,
+				MultiDocumentEvaluator evalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
 		
-		this.langIndexer = langIndexer;
-		this.charIndexer = charIndexer;
-
-		this.gsmFactory = gsmFactory;
-		this.decoderEM = decoderEM;
-		this.emDocumentEvaluator = emDocumentEvaluator;
-
-		this.accumulateBatchesWithinIter = accumulateBatchesWithinIter;
-		this.minDocBatchSize = minDocBatchSize;
-		this.updateDocBatchSize = updateDocBatchSize;
-		this.numMstepThreads = numMstepThreads;
-		
-		this.emEvalSetIterationEvaluator = emEvalSetIterationEvaluator;
-		this.evalFreq = evalFreq;
-		this.evalBatches = evalBatches;
-		
-		this.writeTrainedFont = writeTrainedFont;
-		this.writeTrainedLm = writeTrainedLm;
-		this.writeTrainedGsm = writeTrainedGsm;
-		this.continueFromLastCompleteIteration = continueFromLastCompleteIteration;
-	}
-
-	public Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> run(
-				List<Document> documents, String inputPath, String outputPath,
-				boolean learnFont,
-				boolean retrainLM,
-				boolean retrainGSM,
-				int numEMIters,
-				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font) {
-		int numUsableDocs = documents.size();
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		Indexer<String> langIndexer = lm.getLanguageIndexer();
+		int numUsableDocs = trainDocuments.size();
 		int numLanguages = langIndexer.size();
 		GlyphSubstitutionModel evalGsm = gsmFactory.makeForEval(gsmFactory.initializeNewCountsMatrix(), 0, 0);
 		
-		if (!learnFont) numEMIters = 0;
-		else if (numEMIters <= 0) new RuntimeException("If learnFont=true, then numEMIters must be a positive number.");
-
 		// If requested, try and pick up where we left off
 		int lastCompletedIteration = 0;
-		if (learnFont && continueFromLastCompleteIteration) {
+		if (continueFromLastCompleteIteration) {
 			String fontPath = null;
-			int lastBatchNumOfIteration = getLastBatchNumOfIteration(numUsableDocs);
+			int lastBatchNumOfIteration = getLastBatchNumOfIteration(numUsableDocs, updateDocBatchSize, minDocBatchSize);
 			for (int iter = 1; iter <= numEMIters; ++iter) {
 				fontPath = makeFontPath(outputPath, iter, lastBatchNumOfIteration);
 				if (new File(fontPath).exists()) {
@@ -143,9 +93,8 @@ public class FontTrainEM {
 		
 		//long overallEmissionCacheNanoTime = 0;
 		
-		for (int iter = lastCompletedIteration+1; (/* learnFont && */ iter <= numEMIters) || (/* !learnFont && */ iter == 1); ++iter) {
-			if (learnFont) System.out.println("Training iteration: " + iter + "  (learnFont=true).   " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-			else System.out.println("Transcribing (learnFont = false).");
+		for (int iter = lastCompletedIteration+1; (/* trainFont && */ iter <= numEMIters) || (/* !trainFont && */ iter == 1); ++iter) {
+			System.out.println("Training iteration: " + iter + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allTrainLmEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
@@ -162,13 +111,12 @@ public class FontTrainEM {
 			int completedBatchesInIteration = 0;
 			int batchDocsCounter = 0;
 			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
-				Document doc = documents.get(docNum);
-				if (learnFont) System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-				else System.out.println("Transcribing document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName());
+				Document doc = trainDocuments.get(docNum);
+				System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 				doc.loadLineText();
 
 				// e-step
-				Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, learnFont, lm, gsm, templates, backwardTransitionModel);
+				Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, true, lm, gsm, templates, backwardTransitionModel);
 				final TransitionState[][] decodeStates = decodeResults._1._1;
 				final int[][] decodeWidths = decodeResults._1._2;
 				totalIterationJointLogProb += decodeResults._2;
@@ -178,15 +126,15 @@ public class FontTrainEM {
 				gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 				
 				// evaluate
-				emDocumentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, learnFont, inputPath, numEMIters, outputPath, allTrainEvals, allTrainLmEvals);
+				documentEvaluator.printTranscriptionWithEvaluation(iter, 0, doc, decodeStates, decodeWidths, inputPath, outputPath, allTrainEvals, allTrainLmEvals);
 
 				// m-step
-				if (isBatchComplete(numUsableDocs, docNum)) {
+				if (isBatchComplete(numUsableDocs, docNum, updateDocBatchSize, minDocBatchSize)) {
 					++completedBatchesInIteration;
 					++batchDocsCounter;
 					
-					if (learnFont) {
-						updateFontParameters(templates);
+					/* retrainFont */ {
+						updateFontParameters(templates, numMstepThreads);
 						if (writeTrainedFont) InitializeFont.writeFont(font, makeFontPath(outputPath, iter, completedBatchesInIteration));
 					}
 					if (retrainLM) {
@@ -212,7 +160,7 @@ public class FontTrainEM {
 					if (evalGsm != null && evalBatches) {
 						if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 							if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
-								emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, evalGsm, font);
+								evalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, lm, evalGsm, font);
 							}
 						}
 					}
@@ -220,6 +168,8 @@ public class FontTrainEM {
 					batchDocsCounter = 0;
 				} // end: m-step
 			} // end: for (doc in usableDocs)
+			
+			// evaluate on training data
 			double avgLogProb = ((double)totalIterationJointLogProb) / numUsableDocs;
 			System.out.println("Iteration "+iter+" avg joint log prob: " + avgLogProb);
 			if (new File(inputPath).isDirectory()) {
@@ -229,9 +179,10 @@ public class FontTrainEM {
 					printEvaluation(allTrainLmEvals, outputPath + "/" + new File(inputPath).getName() + "/eval_iter-"+iter+"_lmeval.txt");
 			}
 			
+			// evaluate on dev data, if requested
 			if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 				System.out.println("Evaluating dev data at the end of iteration "+iter+"    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-				emEvalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, evalGsm, font);
+				evalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, lm, evalGsm, font);
 			}
 		} // end: for iteration
 		
@@ -240,19 +191,19 @@ public class FontTrainEM {
 		return makeTuple3(font, lm, gsm);
 	}
 
-	private int getLastBatchNumOfIteration(int numUsableDocs) {
+	private int getLastBatchNumOfIteration(int numUsableDocs, int updateDocBatchSize, int minDocBatchSize) {
 		int completedBatchesInIteration = 0;
 		for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
-			if (isBatchComplete(numUsableDocs, docNum)) {
+			if (isBatchComplete(numUsableDocs, docNum, updateDocBatchSize, minDocBatchSize)) {
 				++completedBatchesInIteration;
 			}
 		}
 		return completedBatchesInIteration;
 	}
 
-	private boolean isBatchComplete(int numUsableDocs, int docNum) {
+	private boolean isBatchComplete(int numUsableDocs, int docNum, int updateDocBatchSize, int minDocBatchSize) {
 		boolean batchComplete = false;
-		int trueMinBatchSize = Math.min(minDocBatchSize, updateDocBatchSize); // min batch size may not exceed standard batch size
+		int trueMinBatchSize = Math.min(updateDocBatchSize, minDocBatchSize); // min batch size may not exceed standard batch size
 		if (docNum+1 == numUsableDocs) { // last document of the set
 			batchComplete = true;
 		}
@@ -300,7 +251,7 @@ public class FontTrainEM {
 		}
 	}
 
-	private void updateFontParameters(final CharacterTemplate[] templates) {
+	private void updateFontParameters(final CharacterTemplate[] templates, int numMstepThreads) {
 		long nanoTime = System.nanoTime();
 		BetterThreader.Function<Integer, Object> func = new BetterThreader.Function<Integer, Object>() {
 			public void call(Integer c, Object ignore) {
@@ -342,12 +293,12 @@ public class FontTrainEM {
 		}
 
 		// Construct the new LM
-		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), langIndexer, lm.getProbKeepSameLanguage(), lm.getMaxOrder());
+		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getLanguageIndexer(), lm.getProbKeepSameLanguage(), lm.getMaxOrder());
 
 		// Print out some statistics
 		StringBuilder sb = new StringBuilder("Updating language probabilities: ");
 		for (int language = 0; language < languageCounts.length; ++language)
-			sb.append(langIndexer.getObject(language)).append("->").append(languageCounts[language] / languageCountSum).append("  ");
+			sb.append(lm.getLanguageIndexer().getObject(language)).append("->").append(languageCounts[language] / languageCountSum).append("  ");
 		System.out.println(sb);
 		
 		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");

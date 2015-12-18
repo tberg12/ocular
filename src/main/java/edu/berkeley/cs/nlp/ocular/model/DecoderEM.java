@@ -9,10 +9,10 @@ import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
+import edu.berkeley.cs.nlp.ocular.model.EmissionModel.EmissionModelFactory;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import indexer.Indexer;
 import threading.BetterThreader;
 
 /**
@@ -21,44 +21,37 @@ import threading.BetterThreader;
  */
 public class DecoderEM {
 
-	private EmissionCacheInnerLoop emissionInnerLoop;
+	private EmissionModelFactory emissionModelFactory;
 
 	private boolean allowGlyphSubstitution;
 	private double noCharSubPrior;
 	private boolean allowLanguageSwitchOnPunct;
 	private boolean markovVerticalOffset;
 	
-	private int paddingMinWidth;
-	private int paddingMaxWidth;
-	
 	private int beamSize;
 	private int numDecodeThreads;
 	private int numMstepThreads;
 	private int decodeBatchSize;
 	
-	private Indexer<String> charIndexer;
-
-	public DecoderEM(EmissionCacheInnerLoop emissionInnerLoop, boolean allowGlyphSubstitution, double noCharSubPrior,
-			boolean allowLanguageSwitchOnPunct, boolean markovVerticalOffset, int paddingMinWidth, int paddingMaxWidth,
-			int beamSize, int numDecodeThreads, int numMstepThreads, int decodeBatchSize, Indexer<String> charIndexer) {
-		this.emissionInnerLoop = emissionInnerLoop;
+	public DecoderEM(EmissionModelFactory emissionModelFactory, boolean allowGlyphSubstitution, double noCharSubPrior,
+			boolean allowLanguageSwitchOnPunct, boolean markovVerticalOffset,
+			int beamSize, int numDecodeThreads, int numMstepThreads, int decodeBatchSize) {
+		this.emissionModelFactory = emissionModelFactory;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.noCharSubPrior = noCharSubPrior;
 		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
 		this.markovVerticalOffset = markovVerticalOffset;
-		this.paddingMinWidth = paddingMinWidth;
-		this.paddingMaxWidth = paddingMaxWidth;
 		this.beamSize = beamSize;
 		this.numDecodeThreads = numDecodeThreads;
 		this.numMstepThreads = numMstepThreads;
 		this.decodeBatchSize = decodeBatchSize;
-		this.charIndexer = charIndexer;
 	}
 
 	public Tuple2<Tuple2<TransitionState[][], int[][]>, Double> computeEStep(
-			Document doc, boolean learnFont,
+			Document doc, boolean updateFontParameterCounts,
 			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, final CharacterTemplate[] templates,
 			DenseBigramTransitionModel backwardTransitionModel) {
+		
 		final PixelType[][][] pixels = doc.loadLineImages();
 		TransitionState[][] decodeStates = new TransitionState[pixels.length][0];
 		int[][] decodeWidths = new int[pixels.length][0];
@@ -81,13 +74,11 @@ public class DecoderEM {
 			}
 
 			System.out.println("Initializing EmissionModel    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-			final EmissionModel emissionModel = (markovVerticalOffset ? 
-					new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : 
-					new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+			final EmissionModel emissionModel = emissionModelFactory.make(templates, batchPixels);
 			System.out.println("Rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//long emissionCacheNanoTime = System.nanoTime();
 			emissionModel.rebuildCache();
-                        System.out.println("Done rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
+			System.out.println("Done rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 
 			long nanoTime = System.nanoTime();
@@ -96,7 +87,7 @@ public class DecoderEM {
 			BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
 			System.out.println("Ready to run decoder");
 			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
-                        System.out.println("Done running decoder");
+			System.out.println("Done running decoder");
 			totalNanoTime += (System.nanoTime() - nanoTime);
 			final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
 			final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
@@ -106,7 +97,7 @@ public class DecoderEM {
 				decodeWidths[startLine + line] = batchDecodeWidths[line];
 			}
 
-			if (learnFont) {
+			if (updateFontParameterCounts) {
 				System.out.println("Ready to run increment counts");
 				incrementCounts(emissionModel, batchDecodeStates, batchDecodeWidths);
 			}

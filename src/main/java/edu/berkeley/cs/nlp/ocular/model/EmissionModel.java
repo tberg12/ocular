@@ -1,14 +1,14 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
-import indexer.Indexer;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  */
 public interface EmissionModel {
 
-	public abstract Indexer<String> getCharIndexer();
+	public abstract int numChars();
 
 	public abstract int numSequences();
 
@@ -36,4 +36,9 @@ public interface EmissionModel {
 
 	public abstract void incrementCounts(int d, TransitionState[] transitionStates, int[] widths);
 
+	
+	public static interface EmissionModelFactory {
+		public EmissionModel make(CharacterTemplate[] templates, PixelType[][][] observations);
+	}
+	
 }

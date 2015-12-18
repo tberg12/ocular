@@ -11,15 +11,12 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
-import indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhg@cs.utexas.edu)
  */
 public interface GlyphSubstitutionModel extends Serializable {
 
-	public Indexer<String> getLanguageIndexer();
-	public Indexer<String> getCharacterIndexer();
 	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar);
 
 	public static GlyphSubstitutionModel readGSM(String gsmPath) {
