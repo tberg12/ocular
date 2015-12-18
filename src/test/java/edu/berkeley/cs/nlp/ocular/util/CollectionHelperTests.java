@@ -209,7 +209,7 @@ public class CollectionHelperTests {
 		assertEquals("two", l1.get(1));
 		assertEquals("three", l1.get(2));
 		
-		List<String> l2 = CollectionHelper.listCat(Arrays.asList("one", "two", "three"), Arrays.asList(), Arrays.asList("four", "five"));
+		List<String> l2 = CollectionHelper.listCat(Arrays.asList("one", "two", "three"), Arrays.<String>asList(), Arrays.asList("four", "five"));
 		assertEquals(5, l2.size());
 		assertEquals("one", l2.get(0));
 		assertEquals("two", l2.get(1));

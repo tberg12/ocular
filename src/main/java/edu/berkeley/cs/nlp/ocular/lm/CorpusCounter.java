@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -144,7 +145,7 @@ public class CorpusCounter {
         incrementCounts(ngramArr, maxNgramOrder - (firstMinusOneLookingBack(ngramArr) + 1));
         
         this.activeCharacters.add(line[charIdx]);
-        this.unigramCounts.put(line[charIdx], this.unigramCounts.getOrDefault(line[charIdx], 0) + 1);
+        this.unigramCounts.put(line[charIdx], CollectionHelper.getOrElse(this.unigramCounts, line[charIdx], 0) + 1);
       }
       tokenCount++;
       for (int i = 0; i < counts.length; i++) {

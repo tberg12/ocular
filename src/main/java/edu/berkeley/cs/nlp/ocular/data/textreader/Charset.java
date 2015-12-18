@@ -299,7 +299,7 @@ public class Charset {
 		if (offset >= lineLen) throw new RuntimeException("offset must be less than the line length");
 		
 		if (lineLen - offset >= 2 && line.substring(offset, offset + 2).equals("\\\\"))
-			return makeTuple3(new ArrayList<String>(), "\\\\", 2); // "\\" is its own character (for "\"), not an escaped diacritic
+			return makeTuple3((List<String>)new ArrayList<String>(), "\\\\", 2); // "\\" is its own character (for "\"), not an escaped diacritic
 		
 		List<String> diacritics = new ArrayList<String>();
 
