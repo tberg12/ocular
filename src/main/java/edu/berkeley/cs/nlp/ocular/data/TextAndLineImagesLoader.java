@@ -52,7 +52,7 @@ public class TextAndLineImagesLoader implements ImageLoader {
 			return text;
 		}
 		
-		public String[][] loadLmLineText() {
+		public List<String> loadLmText() {
 			return null;
 		}
 		

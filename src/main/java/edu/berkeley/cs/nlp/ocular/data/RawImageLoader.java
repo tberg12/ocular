@@ -49,7 +49,7 @@ public class RawImageLoader implements ImageLoader {
 			return null;
 		}
 		
-		public String[][] loadLmLineText() {
+		public List<String> loadLmText() {
 			return null;
 		}
 		

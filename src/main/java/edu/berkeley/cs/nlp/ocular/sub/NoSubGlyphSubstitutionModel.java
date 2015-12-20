@@ -11,7 +11,7 @@ public class NoSubGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	public NoSubGlyphSubstitutionModel() {
 	}
 	
-	public double glyphProb(int language, GlyphType prevGlyphType, int prevLmChar, int lmChar, GlyphChar glyphChar) {
+	public double glyphProb(int language, int lmChar, GlyphChar glyphChar) {
 		return (glyphChar.glyphType == GlyphType.NORMAL_CHAR && lmChar == glyphChar.templateCharIndex) ? 1.0 : 0.0;
 	}
 	

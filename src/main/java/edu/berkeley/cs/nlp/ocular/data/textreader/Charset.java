@@ -221,6 +221,7 @@ public class Charset {
 	
 	public static final Set<String> CHARS_THAT_CAN_BE_REPLACED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> VALID_CHAR_SUBSTITUTIONS = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	public static final Set<String> CHARS_THAT_CAN_DOUBLED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_ELIDED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> ESCAPE_DIACRITICS_THAT_CAN_BE_DISREGARDED = makeSet(GRAVE_ESCAPE, ACUTE_ESCAPE);
@@ -249,6 +250,14 @@ public class Charset {
 				validSubstitutionChars.add(charIndexer.getIndex(c));
 		}
 		return validSubstitutionChars;
+	}
+	public static Set<Integer> makeValidDoublableSet(Indexer<String> charIndexer) {
+		Set<Integer> validDoublableChars = new HashSet<Integer>();
+		for (String c : charIndexer.getObjects()) {
+			if (Charset.CHARS_THAT_CAN_DOUBLED.contains(c))
+				validDoublableChars.add(charIndexer.getIndex(c));
+		}
+		return validDoublableChars;
 	}
 	public static Set<Integer> makeCanBeElidedSet(Indexer<String> charIndexer) {
 		Set<Integer> canBeElided = new HashSet<Integer>();

@@ -43,14 +43,13 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals) {
 		String[][] text = doc.loadLineText();
-		String[][] lmText = doc.loadLmLineText();
+		List<String> goldLmChars = doc.loadLmText();
 		
 		//
 		// Make sure the decoded states and the text have the same number of lines (numLines)
 		//
 		int numLines = decodeStates.length;
 		if (text != null && text.length > numLines) numLines = text.length; // in case gold and viterbi have different line counts
-		if (lmText != null && lmText.length > numLines) numLines = lmText.length; // in case gold and viterbi have different line counts
 		
 		if (text != null && text.length < numLines) {
 			String[][] newText = new String[numLines][];
@@ -61,16 +60,6 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 					newText[line] = new String[0];
 			}
 			text = newText;
-		}
-		if (lmText != null && lmText.length < numLines) {
-			String[][] newLmText = new String[numLines][];
-			for (int line = 0; line < numLines; ++line) {
-				if (line < lmText.length)
-					newLmText[line] = lmText[line];
-				else
-					newLmText[line] = new String[0];
-			}
-			lmText = newLmText;
 		}
 		if (decodeStates.length < numLines) {
 			TransitionState[][] newDecodeStates = new TransitionState[numLines][];
@@ -118,7 +107,9 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 								viterbiLmChars.add(" ");
 								break;
 							case TMPL:
-								viterbiLmChars.add(charIndexer.getObject(ts.getLmCharIndex()));
+								String s = charIndexer.getObject(ts.getLmCharIndex());
+								if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "canonical" transcriptions
+								viterbiLmChars.add(s);
 						}
 					}
 					
@@ -213,16 +204,10 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			//
 			@SuppressWarnings("unchecked")
 			List<String>[] goldCharSequences = new List[numLines];
-			@SuppressWarnings("unchecked")
-			List<String>[] goldLmCharSequences = new List[numLines];
 			for (int line = 0; line < numLines; ++line) {
 				goldCharSequences[line] = new ArrayList<String>();
-				goldLmCharSequences[line] = new ArrayList<String>();
 				for (int i = 0; i < text[line].length; ++i) {
 					goldCharSequences[line].add(text[line][i]);
-				}
-				for (int i = 0; i < lmText[line].length; ++i) {
-					goldLmCharSequences[line].add(lmText[line][i]);
 				}
 			}
 
@@ -232,12 +217,6 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
 			if (allEvals != null) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
-			}
-			@SuppressWarnings("unchecked")
-			List<String>[] viterbiLmCharsArray = new List[]{viterbiLmChars};
-			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(viterbiLmCharsArray, goldLmCharSequences);
-			if (allLmEvals != null) {
-				allLmEvals.add(makeTuple2(doc.baseName(), lmEvals));
 			}
 			
 			//
@@ -274,12 +253,23 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			System.out.println(goldComparisonWithSubsOutputBuffer.toString() + "\n\n");
 			f.writeString(goldComparisonWithSubsOutputFilename, goldComparisonWithSubsOutputBuffer.toString());
 			}
+		}
+		
+		if (goldLmChars != null) {
+			//
+			// Evaluate the comparison
+			//
+			@SuppressWarnings("unchecked")
+			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(new List[]{viterbiLmChars}, new List[]{goldLmChars});
+			if (allLmEvals != null) {
+				allLmEvals.add(makeTuple2(doc.baseName(), lmEvals));
+			}
 			
 			//
 			// Print LM evaluation
 			//
 			{
-			System.out.println("MODEL LM OUTPUT vs. GOLD LM TRANSCRIPTION\n\n");
+			System.out.println("LM TRANSCRIPTION EVALUATION\n\n");
 			System.out.println(Evaluator.renderEval(lmEvals));
 			System.out.println("Writing gold lm comparison to " + goldComparisonOutputFilename);
 			}

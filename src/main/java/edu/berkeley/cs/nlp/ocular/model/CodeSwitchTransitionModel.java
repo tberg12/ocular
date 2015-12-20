@@ -5,9 +5,9 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElided
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeReplacedSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeDiacriticDisregardMap;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makePunctSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidDoublableSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubstitutionCharsSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
-import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setIntersection;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			else {
 				GlyphType glyphType = glyphChar.glyphType;
 				
-				if (nextType == TransitionStateType.RMRGN_HPHN || nextType == TransitionStateType.RMRGN_HPHN_INIT) {
+				if (nextType == TransitionStateType.RMRGN_HPHN_INIT || nextType == TransitionStateType.RMRGN_HPHN) {
 					/*
 					 * This always maintains whether it is marked as a tilde-elision character 
 					 * or an elided character.  This is necessary right-margin-hyphen states 
@@ -111,7 +111,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					 * and can't follow tilde-elision states.
 					 */
 					GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, glyphChar.glyphType);
-					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
 					addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 				}
 				else {
@@ -126,7 +126,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					if (glyphType != GlyphType.ELISION_TILDE) { // normal state can't follow an elision-marking tilde
 						// 1. Next state's glyph is just the rendering of the LM character
 						GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR);
-						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
 						addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 					}
 				}
@@ -167,12 +167,12 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
 					
 					// 2. Next state's glyph is a substitution of the LM character
-					// 7. Next state's glyph is a doubled version of the LM character
 					if (canBeReplaced.contains(nextLmChar)) {
-						for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
-							potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
+						for (int nextGlyphCharIndex : lm.get(nextLanguage).getActiveCharacters()) {
+							if (validSubstitutionChars.contains(nextGlyphCharIndex)) {
+								potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
+							}
 						}
-						potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
 					}
 					
 					// 3. Next state's glyph is an elision-decorated version of the LM character
@@ -209,12 +209,16 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						}
 					}
 					
-					
+					// 7. Next state's glyph is a doubled version of the LM character
+					if (validDoublableSet.contains(nextLmChar)) {
+						potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
+					}
+
 				}
 				
 				// Create states for all the potential next glyphs
 				for (GlyphChar nextGlyphChar : potentialNextGlyphChars) {
-					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
+					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
 					addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 				}
 			}
@@ -234,7 +238,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				//SingleLanguageModel destLM = lm.get(nextLanguage);
 				//double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
 				double score = prevScore; //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(destLM, context, nextLmChar)) + Math.log(pDestLang); // TODO: Is it necessary to have some sort of LM probability factored in?
-				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.DOUBLED, lmCharIndex, nextLmChar, nextGlyphChar);
+				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
 				addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
 			}
 			else {
@@ -365,7 +369,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						int nextLanguage = langIndex;
 						int nextLmChar = lmCharIndex;
 						double score = Math.log(1.0); //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, nextLmChar)) + Math.log(1.0); // TODO: Is it necessary to have some sort of LM probability factored in?
-						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.DOUBLED, lmCharIndex, nextLmChar, nextGlyphChar);
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
 						addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
 					}
 					else {
@@ -394,7 +398,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		}
 
 		public double endLogProb() {
-			if (glyphChar.glyphType == GlyphType.DOUBLED) // can't end on an incomplete "double glyph"
+			if (glyphChar.glyphType == GlyphType.DOUBLED || glyphChar.glyphType == GlyphType.ELISION_TILDE) // can't end on an incomplete "double glyph"
 				return Double.NEGATIVE_INFINITY;
 			else
 				return 0.0;
@@ -432,7 +436,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						int nextLmChar = lmCharIndex;
 						//double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
 						double score = Math.log(1.0); //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, nextLmChar)) + Math.log(pDestLang); // TODO: Is it necessary to have some sort of LM probability factored in?
-						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.DOUBLED, lmCharIndex, nextLmChar, nextGlyphChar);
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
 						addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
 					}
 					else {
@@ -524,6 +528,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	
 	private Set<Integer> canBeReplaced;
 	private Set<Integer> validSubstitutionChars;
+	private Set<Integer> validDoublableSet;
 	private Set<Integer> canBeElided;
 	private Map<Integer, Integer> addTilde;
 	private Map<Integer,Set<Integer>> diacriticDisregardMap;
@@ -574,6 +579,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.punctSet = makePunctSet(charIndexer);
 		this.canBeReplaced = makeCanBeReplacedSet(charIndexer);
 		this.validSubstitutionChars = makeValidSubstitutionCharsSet(charIndexer);
+		this.validDoublableSet = makeValidDoublableSet(charIndexer);
 		this.canBeElided = makeCanBeElidedSet(charIndexer);
 		this.addTilde = makeAddTildeMap(charIndexer);
 		this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
@@ -591,7 +597,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		else {
 			// 1. Next state's glyph is just the rendering of the LM character
 			GlyphChar nextGlyphChar = new GlyphChar(spaceCharIndex, GlyphType.NORMAL_CHAR);
-			double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, spaceCharIndex, nextGlyphChar);
+			double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, spaceCharIndex, nextGlyphChar);
 			addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 		}
 	}
@@ -618,12 +624,12 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
 			
 			// 2. Next state's glyph is a substitution of the LM character
-			// 7. Next state's glyph is a doubled version of the LM character
 			if (canBeReplaced.contains(nextLmChar)) {
-				for (int nextGlyphCharIndex : setIntersection(lm.get(nextLanguage).getActiveCharacters(), validSubstitutionChars)) {
-					potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
+				for (int nextGlyphCharIndex : lm.get(nextLanguage).getActiveCharacters()) {
+					if (validSubstitutionChars.contains(nextGlyphCharIndex)) {
+						potentialNextGlyphChars.add(new GlyphChar(nextGlyphCharIndex, GlyphType.NORMAL_CHAR));
+					}
 				}
-				potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
 			}
 			
 			// 3. Next state's glyph is an elision-decorated version of the LM character
@@ -647,9 +653,14 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				}
 			}
 
+			// 7. Next state's glyph is a doubled version of the LM character
+			if (validDoublableSet.contains(nextLmChar)) {
+				potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
+			}
+			
 			// Create states for all the potential next glyphs
 			for (GlyphChar nextGlyphChar : potentialNextGlyphChars) {
-				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, GlyphType.NORMAL_CHAR, spaceCharIndex, nextLmChar, nextGlyphChar);
+				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
 				addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
 			}
 		}
@@ -717,7 +728,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	//		return shrinkContext(a.append(originalContext, c), slm);
 	//	}
 
-	private double calculateGlyphLogProb(TransitionStateType nextType, int nextLanguage, GlyphType glyphType, int lmCharIndex, int nextLmChar, GlyphChar nextGlyphChar) {
+	private double calculateGlyphLogProb(TransitionStateType nextType, int nextLanguage, int nextLmChar, GlyphChar nextGlyphChar) {
 		if (nextLanguage < 0) {
 			if (this.alwaysSpaceTransitionTypes.contains(nextType) && nextGlyphChar.templateCharIndex == spaceCharIndex)
 				return 0.0; // log(1)
@@ -725,8 +736,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				return Double.NEGATIVE_INFINITY; // log(0)
 		}
 		else {
-			double p = (1.0 - noCharSubPrior) * gsm.glyphProb(nextLanguage, glyphType, lmCharIndex, nextLmChar, nextGlyphChar);
-			double pWithBias = ((glyphType == GlyphType.NORMAL_CHAR && nextGlyphChar.templateCharIndex == nextLmChar) ? noCharSubPrior + p : p);
+			double p = (1.0 - noCharSubPrior) * gsm.glyphProb(nextLanguage, nextLmChar, nextGlyphChar);
+			double pWithBias = ((nextGlyphChar.glyphType == GlyphType.NORMAL_CHAR && nextGlyphChar.templateCharIndex == nextLmChar) ? noCharSubPrior + p : p);
 			
 //			if (pWithBias > 0.0) {
 //				String s = "siogjsoiej    calculateGlyphLogProb("+nextType+", "+

@@ -1,10 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.sub;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.TILDE_ESCAPE;
-import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.ELISION_TILDE;
-import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.FIRST_ELIDED;
-import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.NORMAL_CHAR;
-import static edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType.TILDE_ELIDED;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 import static org.junit.Assert.assertEquals;
 
@@ -50,13 +46,13 @@ public class BasicGlyphSubstitutionModelTests {
 				minCountsForEvalGsm, 
 				outputPath);
 
-		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, FIRST_ELIDED, charIndexer.getIndex(" "), charIndexer.getIndex("k"), charIndexer.getIndex("k")), 1e-9);
-		assertEquals(0.0, gsmf.getSmoothingValue(0, NORMAL_CHAR, charIndexer.getIndex("n"), charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);
-		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, NORMAL_CHAR, charIndexer.getIndex(" "), charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);
-		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, ELISION_TILDE, charIndexer.getIndex("s"), charIndexer.getIndex("k"), gsmf.GLYPH_TILDE_ELIDED), 1e-9);
-		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, TILDE_ELIDED, charIndexer.getIndex(" "), charIndexer.getIndex("a"), charIndexer.getIndex("a")), 1e-9);
-		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, ELISION_TILDE, charIndexer.getIndex("e"), charIndexer.getIndex("n"), gsmf.GLYPH_TILDE_ELIDED), 1e-9);
-		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, NORMAL_CHAR, charIndexer.getIndex(" "), charIndexer.getIndex("a"), charIndexer.getIndex("a")), 1e-9);
+		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, charIndexer.getIndex("k"), charIndexer.getIndex("k")), 1e-9);
+		assertEquals(0.0, gsmf.getSmoothingValue(0, charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, charIndexer.getIndex("k"), gsmf.GLYPH_TILDE_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, charIndexer.getIndex("a"), charIndexer.getIndex("a")), 1e-9);
+		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, charIndexer.getIndex("n"), gsmf.GLYPH_TILDE_ELIDED), 1e-9);
+		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, charIndexer.getIndex("a"), charIndexer.getIndex("a")), 1e-9);
 
 	}
 	

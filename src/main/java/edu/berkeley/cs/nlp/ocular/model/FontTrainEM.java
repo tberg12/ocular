@@ -90,7 +90,7 @@ public class FontTrainEM {
 		// Containers for counts that will be accumulated
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
 		int[] languageCounts = new int[numLanguages]; // The number of characters assigned to a particular language (to re-estimate language probabilities).
-		double[][][][][] gsmCounts;
+		double[][][] gsmCounts;
 		
 		//long overallEmissionCacheNanoTime = 0;
 		

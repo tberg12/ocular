@@ -41,7 +41,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 	private String extractedLinesPath = null;
 
 	private String[][] text = null;
-	private String[][] lmText = null;
+	private List<String> lmText = null;
 
 	private TextReader textReader = new BasicTextReader();
 
@@ -172,27 +172,22 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 		return text;
 	}
 
-	public String[][] loadLmLineText() {
+	public List<String> loadLmText() {
 		if (lmText == null) {
 			File textFile = new File(baseName().replaceAll("\\.[^.]*$", "") + "_lm.txt");
 			if (textFile.exists()) {
 				System.out.println("LM evaluation text found at " + textFile);
-				List<List<String>> textList = new ArrayList<List<String>>();
+				lmText = new ArrayList<String>();
 				try {
 					BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
 					while (in.ready()) {
-						textList.add(textReader.readCharacters(in.readLine()));
+						lmText.addAll(textReader.readCharacters(in.readLine()));
+						lmText.add(" ");
 					}
 					in.close();
 				}
 				catch (IOException e) {
 					throw new RuntimeException(e);
-				}
-
-				text = new String[textList.size()][];
-				for (int i = 0; i < text.length; ++i) {
-					List<String> line = textList.get(i);
-					text[i] = line.toArray(new String[line.size()]);
 				}
 			}
 			else {
