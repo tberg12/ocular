@@ -176,9 +176,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					}
 					
 					// 3. Next state's glyph is an elision-decorated version of the LM character
-					Integer tildeLmCharIndex = addTilde.get(nextLmChar);
-					if (tildeLmCharIndex != null) {
-						potentialNextGlyphChars.add(new GlyphChar(tildeLmCharIndex, GlyphType.ELISION_TILDE));
+					Integer tildeDecorated = addTilde.get(nextLmChar);
+					if (tildeDecorated != null) {
+						potentialNextGlyphChars.add(new GlyphChar(tildeDecorated, GlyphType.ELISION_TILDE));
 					}
 	
 					// 4. Next state's glyph is elided --- No elision can take place after a normal character 
@@ -189,11 +189,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					}
 					
 					// 5. Next state's glyph is the LM char, stripped of its accents
-					Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(nextLmChar);
-					if (diacriticDisregardSet != null) {
-						for (Integer replacementChar : diacriticDisregardSet) {
-							potentialNextGlyphChars.add(new GlyphChar(replacementChar, GlyphType.NORMAL_CHAR));
-						}
+					Integer baseChar = diacriticDisregardMap.get(nextLmChar);
+					if (baseChar != null) {
+						potentialNextGlyphChars.add(new GlyphChar(baseChar, GlyphType.NORMAL_CHAR));
 					}
 					
 					// 6. Next state's glyph is an elision after a space
@@ -531,7 +529,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private Set<Integer> validDoublableSet;
 	private Set<Integer> canBeElided;
 	private Map<Integer, Integer> addTilde;
-	private Map<Integer,Set<Integer>> diacriticDisregardMap;
+	private Map<Integer,Integer> diacriticDisregardMap;
 
 	private int numLanguages;
 	private CodeSwitchLanguageModel lm;
@@ -633,17 +631,15 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			}
 			
 			// 3. Next state's glyph is an elision-decorated version of the LM character
-			Integer tildeLmCharIndex = addTilde.get(nextLmChar);
-			if (tildeLmCharIndex != null) {
-				potentialNextGlyphChars.add(new GlyphChar(tildeLmCharIndex, GlyphType.ELISION_TILDE));
+			Integer tildeDecorated = addTilde.get(nextLmChar);
+			if (tildeDecorated != null) {
+				potentialNextGlyphChars.add(new GlyphChar(tildeDecorated, GlyphType.ELISION_TILDE));
 			}
 			
 			// 5. Next state's glyph is the LM char, stripped of its accents
-			Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(nextLmChar);
-			if (diacriticDisregardSet != null) {
-				for (Integer replacementChar : diacriticDisregardSet) {
-					potentialNextGlyphChars.add(new GlyphChar(replacementChar, GlyphType.NORMAL_CHAR));
-				}
+			Integer baseChar = diacriticDisregardMap.get(nextLmChar);
+			if (baseChar != null) {
+				potentialNextGlyphChars.add(new GlyphChar(baseChar, GlyphType.NORMAL_CHAR));
 			}
 
 			// 6. Next state's glyph is an elision after a space --- and the start state is always a "space"

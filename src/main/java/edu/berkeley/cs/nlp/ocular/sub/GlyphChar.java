@@ -10,7 +10,12 @@ import indexer.Indexer;
 public class GlyphChar implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	public enum GlyphType { ELISION_TILDE, TILDE_ELIDED, FIRST_ELIDED, DOUBLED, NORMAL_CHAR };
+	public enum GlyphType { 
+		ELISION_TILDE, //                 this glyph is marked with a tilde indicating that some subsequent letter have been elided   
+		TILDE_ELIDED, //                  this (empty) glyph appears after an "elision tilde"
+		FIRST_ELIDED, //                  this (empty) glyph results from the elision of the first letter of a word  
+		DOUBLED, //                       this glyph marks an empty LM character whose glyph is a duplicate of the next glyph, which is just a rendering of its LM character 
+		NORMAL_CHAR }; //                 
 	
 	public final int templateCharIndex;
 	public final GlyphType glyphType;
@@ -21,7 +26,13 @@ public class GlyphChar implements Serializable {
 	}
 	
 	public boolean isElided() {
-		return glyphType == GlyphType.TILDE_ELIDED || glyphType == GlyphType.FIRST_ELIDED;
+		switch (glyphType) {
+			case TILDE_ELIDED:
+			case FIRST_ELIDED:
+				return true;
+			default:
+				return false;
+		}
 	}
 	
 	public boolean equals(Object o) {

@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import indexer.HashMapIndexer;
 import indexer.Indexer;
@@ -22,7 +23,7 @@ public class BasicGlyphSubstitutionModelTests {
 		double gsmSmoothingCount = 0.1;
 		double gsmElisionSmoothingCountMultiplier = 500.0;
 		Indexer<String> langIndexer = new HashMapIndexer<String>(); langIndexer.index(new String[] {"spanish", "latin"}); langIndexer.lock();
-		String[] chars = new String[] {" ","a","b","c","d","e","k","n","s"};
+		String[] chars = new String[] {" ","a","b","c","d","e","k","n","s",Charset.LONG_S};
 		Indexer<String> charIndexer = new HashMapIndexer<String>(); charIndexer.index(chars);
 
 		List<Integer> charIndices = new ArrayList<Integer>(); 
@@ -30,7 +31,7 @@ public class BasicGlyphSubstitutionModelTests {
 		Set<Integer> fullCharSet = makeSet(charIndices);
 		@SuppressWarnings("unchecked")
 		Set<Integer>[] activeCharacterSets = new Set[] {fullCharSet, fullCharSet};
-		for (String c : new String[] {"a","b","c","d","e","k","n","s"}) charIndices.add(charIndexer.getIndex(TILDE_ESCAPE+c)); 
+		for (String c : new String[] {"a","b","c","d","e","k","n","s"}) charIndices.add(charIndexer.getIndex(TILDE_ESCAPE+c));
 		charIndexer.lock();
 		double gsmPower = 2.0; 
 		int minCountsForEvalGsm = 2;
@@ -41,7 +42,7 @@ public class BasicGlyphSubstitutionModelTests {
 				gsmElisionSmoothingCountMultiplier,
 				langIndexer, 
 				charIndexer, 
-				activeCharacterSets, 
+				activeCharacterSets,
 				gsmPower, 
 				minCountsForEvalGsm, 
 				outputPath);

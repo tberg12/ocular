@@ -1,6 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeMap;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setIntersection;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
@@ -25,6 +27,7 @@ public class Charset {
 	public static final String HYPHEN = "-";
 	public static final Set<String> LOWERCASE_LATIN_LETTERS = makeSet("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
 	public static final Set<String> LOWERCASE_VOWELS = makeSet("a", "e", "i", "o", "u");
+	public static final Map<String,String> LIGATURES = makeMap(makeTuple2("Æ","AE"), makeTuple2("æ","ae"), makeTuple2("Œ","OE"), makeTuple2("œ","oe"));
 	public static final String LONG_S = "\u017F"; // ſ
 	public static final Set<String> BANNED_CHARS = makeSet("@", "$", "%");
 	/**
@@ -220,7 +223,7 @@ public class Charset {
 	}
 	
 	public static final Set<String> CHARS_THAT_CAN_BE_REPLACED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
-	public static final Set<String> VALID_CHAR_SUBSTITUTIONS = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	public static final Set<String> VALID_CHAR_SUBSTITUTIONS = setIntersection(LOWERCASE_LATIN_LETTERS, makeSet(LONG_S)); // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_DOUBLED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_ELIDED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
@@ -276,17 +279,28 @@ public class Charset {
 		}
 		return m;
 	}
-	public static Map<Integer,Set<Integer>> makeDiacriticDisregardMap(Indexer<String> charIndexer) {
-		Map<Integer,Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+	public static Map<Integer,List<Integer>> makeLigatureMap(Indexer<String> charIndexer) {
+		Map<Integer,List<Integer>> m = new HashMap<Integer, List<Integer>>();
+		TextReader tr = new BasicTextReader();
+		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
+			List<String> ligature = tr.readCharacters(entry.getKey());
+			if (ligature.size() > 1) throw new RuntimeException("Ligature ["+entry.getKey()+"] has more than one character: "+ligature);
+			List<Integer> l = new ArrayList<Integer>();
+			for (String c : tr.readCharacters(entry.getValue()))
+				l.add(charIndexer.getIndex(c));
+			m.put(charIndexer.getIndex(ligature.get(0)), l);
+		}
+		return m;
+	}
+	public static Map<Integer,Integer> makeDiacriticDisregardMap(Indexer<String> charIndexer) {
+		Map<Integer,Integer> m = new HashMap<Integer,Integer>();
 		for (String original : charIndexer.getObjects()) { // find accented letters
 			Tuple2<List<String>,String> originalEscapedDiacriticsAndLetter = escapeCharSeparateDiacritics(original);
 			String baseLetter = originalEscapedDiacriticsAndLetter._2;
-			if (charIndexer.getObjects().contains(baseLetter) && LETTERS_WITH_DISREGARDEDABLE_DIACRITICS.contains(baseLetter)) {
+			if (LETTERS_WITH_DISREGARDEDABLE_DIACRITICS.contains(baseLetter)) {
 				for (String diacritic : originalEscapedDiacriticsAndLetter._1) {
 					if (ESCAPE_DIACRITICS_THAT_CAN_BE_DISREGARDED.contains(diacritic)) {
-						Set<Integer> replacementSet = m.get(original);
-						if (replacementSet == null) replacementSet = new HashSet<Integer>();
-						replacementSet.add(charIndexer.getIndex(baseLetter));
+						m.put(charIndexer.getIndex(original), charIndexer.getIndex(baseLetter));
 						break;
 					}
 				}

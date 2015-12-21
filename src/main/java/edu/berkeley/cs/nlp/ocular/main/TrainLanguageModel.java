@@ -48,19 +48,19 @@ public class TrainLanguageModel implements Runnable {
 	@Option(gloss = "Output LM file path.")
 	public static String lmPath = null;
 	
-	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  If spaces are used, be sure to wrap the whole string with \"quotes\".)")
+	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  Be sure to wrap the whole string with \"quotes\" if multiple languages are used.)")
 	public static String textPath = null;
 	
-	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". If spaces are used, be sure to wrap the whole string with \"quotes\".  Defaults to uniform priors. (Only relevant if multiple languages used.)")
+	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". Be sure to wrap the whole string with \"quotes\".  Defaults to uniform priors. (Only relevant if multiple languages used.)")
 	public static String languagePriors = null;
 	
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)")
 	public static double pKeepSameLanguage = 0.999999;
 
-	@Option(gloss = "Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". If spaces are used, be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
+	@Option(gloss = "Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". Be sure to wrap the whole string with \"quotes\" if multiple languages are used. Any languages for which no replacements are need can be safely ignored.")
 	public static String alternateSpellingReplacementPaths = null;
 	
-	@Option(gloss = "Use separate character type for long s.")
+	@Option(gloss = "Automatically insert \"long s\" characters into the langauge model training data?")
 	public static boolean insertLongS = false;
 	
 	@Option(gloss = "Remove diacritics?")
@@ -238,6 +238,7 @@ public class TrainLanguageModel implements Runnable {
 		 *  associate them with any particular languages since they are not 
 		 *  truly characters in that language.
 		 */
+		charIndexer.getIndex(Charset.LONG_S);
 		for (String c : charIndexer.getObjects()) {
 			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c))
 				charIndexer.getIndex(Charset.TILDE_ESCAPE + c);
@@ -252,6 +253,14 @@ public class TrainLanguageModel implements Runnable {
 					}
 				}
 			}
+		}
+		TextReader tr = new BasicTextReader();
+		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
+			List<String> ligature = tr.readCharacters(entry.getKey());
+			if (ligature.size() > 1) throw new RuntimeException("Ligature ["+entry.getKey()+"] has more than one character: "+ligature);
+			charIndexer.getIndex(ligature.get(0));
+			for (String c : tr.readCharacters(entry.getValue()))
+				charIndexer.getIndex(c);
 		}
 		
 		charIndexer.lock();

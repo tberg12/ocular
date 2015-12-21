@@ -125,7 +125,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	
 	@Option(gloss = "A glyph-context combination must be seen at least this many times in the last training iteration if it is to be allowed in the evaluation GSM.  This restricts spurious substitutions during evaluation.  (Only relevant if allowGlyphSubstitution is set to true.)  Default: 2")
 	public static int gsmMinCountsForEval = 2;
-
+	
 	// Line Extraction Options
 	
 	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
@@ -310,8 +310,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		@SuppressWarnings("unchecked")
 		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
 		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = lm.get(l).getActiveCharacters();
-		BasicGlyphSubstitutionModelFactory gsmFactory = new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, gsmPower, gsmMinCountsForEval, outputPath);
-		return gsmFactory;
+		return new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, gsmPower, gsmMinCountsForEval, outputPath);
 	}
 
 	private GlyphSubstitutionModel getGlyphSubstituionModel(BasicGlyphSubstitutionModelFactory gsmFactory) {

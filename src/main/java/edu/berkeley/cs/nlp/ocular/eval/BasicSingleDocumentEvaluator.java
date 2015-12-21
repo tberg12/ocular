@@ -132,6 +132,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		String transcriptionWithWidthsOutputFilename = outputFilenameBase + "_transcription_withWidths.txt";
 		String goldComparisonOutputFilename = outputFilenameBase + "_vsGold.txt";
 		String goldComparisonWithSubsOutputFilename = outputFilenameBase + "_vsGold_withSubs.txt";
+		String goldLmComparisonOutputFilename = outputFilenameBase + "_lm_vsGold.txt";
 		String htmlOutputFilename = outputFilenameBase + ".html";
 		new File(transcriptionOutputFilename).getParentFile().mkdirs();
 		
@@ -269,9 +270,14 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			// Print LM evaluation
 			//
 			{
-			System.out.println("LM TRANSCRIPTION EVALUATION\n\n");
-			System.out.println(Evaluator.renderEval(lmEvals));
-			System.out.println("Writing gold lm comparison to " + goldComparisonOutputFilename);
+			StringBuffer goldLmComparisonOutputBuffer = new StringBuffer();
+			goldLmComparisonOutputBuffer.append("MODEL LM OUTPUT vs. GOLD LM TRANSCRIPTION\n\n");
+			goldLmComparisonOutputBuffer.append(StringHelper.join(viterbiLmChars)+"\n");
+			goldLmComparisonOutputBuffer.append(StringHelper.join(goldLmChars)+"\n");
+			goldLmComparisonOutputBuffer.append(Evaluator.renderEval(lmEvals));
+			System.out.println("Writing gold lm comparison to " + goldLmComparisonOutputFilename);
+			//System.out.println(goldLmComparisonOutputBuffer.toString());
+			f.writeString(goldLmComparisonOutputFilename, goldLmComparisonOutputBuffer.toString());
 			}
 		}
 

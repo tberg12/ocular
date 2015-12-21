@@ -1,6 +1,11 @@
 package edu.berkeley.cs.nlp.ocular.sub;
 
-import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.*;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeAddTildeMap;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElidedSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeReplacedSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeDiacriticDisregardMap;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidDoublableSet;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubstitutionCharsSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setUnion;
 
@@ -63,13 +68,12 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private Indexer<String> langIndexer;
 		private Indexer<String> charIndexer;
 		private Set<Integer>[] activeCharacterSets;
-		private int spaceCharIndex;
 		private Set<Integer> canBeReplaced;
 		private Set<Integer> canBeDoubled;
 		private Set<Integer> validSubstitutionChars;
 		private Set<Integer> canBeElided;
 		private Map<Integer,Integer> addTilde;
-		private Map<Integer,Set<Integer>> diacriticDisregardMap;
+		private Map<Integer,Integer> diacriticDisregardMap;
 		
 		private int numLanguages;
 		private int numChars;
@@ -100,7 +104,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.gsmPower = gsmPower;
 			this.minCountsForEvalGsm = minCountsForEvalGsm;
 			
-			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 			this.canBeReplaced = makeCanBeReplacedSet(charIndexer);
 			this.canBeDoubled = makeValidDoublableSet(charIndexer);
 			this.validSubstitutionChars = makeValidSubstitutionCharsSet(charIndexer);
@@ -179,8 +182,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
 			else { // glyph is a normal character
-				Set<Integer> diacriticDisregardSet = diacriticDisregardMap.get(lmChar);
-				if (diacriticDisregardSet != null && diacriticDisregardSet.contains(glyph))
+				Integer baseChar = diacriticDisregardMap.get(lmChar);
+				if (baseChar != null && baseChar.equals(glyph))
 					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 				else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph))
 					return gsmSmoothingCount;
@@ -206,7 +209,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					int lmChar = currTs.getLmCharIndex();
 					
 					GlyphType prevGlyph = (prevTs != null ? prevTs.getGlyphChar().glyphType : GlyphType.NORMAL_CHAR);
-					int prevLmChar = getPrevLmCharToIndex(prevTs, currGlyphChar);
 					
 					GlyphType currGlyphType = currGlyphChar.glyphType;
 					int glyph = (currGlyphType == GlyphType.NORMAL_CHAR) ? currGlyphChar.templateCharIndex : (numChars + currGlyphType.ordinal());
@@ -215,27 +217,11 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 						throw new RuntimeException("Illegal state found in viterbi decoding result:  "
 								+ "language="+langIndexer.getObject(language) + 
 								", prevGlyph="+prevGlyph + 
-								", prevLmChar="+charIndexer.getObject(prevLmChar) + 
 								", lmChar="+charIndexer.getObject(lmChar) + 
 								", glyph="+(currGlyphType == GlyphType.NORMAL_CHAR ? charIndexer.getObject(currGlyphChar.templateCharIndex) : currGlyphType));
 					counts[language][lmChar][glyph] += 1;
-					//System.out.println("lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+charIndexer.getObject(glyph)+"("+glyph+")");
 				}
 			}
-		}
-
-		/**
-		 * The only time we actually want to condition on the previous LM char is 
-		 * when we are trying to decide whether to mark a letter as "tilde-elided".  
-		 * Otherwise, just say the previous LM char is a space so that all possible
-		 * previous LM char values are collapsed (and, thus, not conditioned upon).
-		 */
-		private int getPrevLmCharToIndex(TransitionState prevTs, GlyphChar currGlyphChar) {
-			int prevLmChar;
-			if (prevTs == null) prevLmChar = spaceCharIndex;
-			else if (currGlyphChar.glyphType == GlyphType.TILDE_ELIDED) prevLmChar = prevTs.getLmCharIndex(); // the only time we care about the prev lm char is when we are deciding to elide
-			else prevLmChar = spaceCharIndex;
-			return prevLmChar;
 		}
 
 		public BasicGlyphSubstitutionModel make(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {

@@ -1,21 +1,16 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import indexer.Indexer;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import threading.BetterThreader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
@@ -23,6 +18,8 @@ import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
 import fig.OptionsParser;
+import indexer.Indexer;
+import threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -67,16 +64,16 @@ public class InitializeFont implements Runnable {
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		final PixelType[][][][] fontPixelData = FontRenderer.getRenderedFont(charIndexer, CharacterTemplate.LINE_HEIGHT);
-		final PixelType[][][] fAndBarFontPixelData = buildFAndBarFontPixelData(charIndexer, fontPixelData);
+//		final PixelType[][][] fAndBarFontPixelData = buildFAndBarFontPixelData(charIndexer, fontPixelData);
 		BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer c, Object ignore){
 			String currChar = charIndexer.getObject(c);
 			if (!currChar.equals(Charset.SPACE)) {
 				templates[c] = new CharacterTemplate(currChar, (float) templateMaxWidthFraction, (float) templateMinWidthFraction);
-				if (currChar.equals(Charset.LONG_S)) {
-					templates[c].initializeAndSetPriorFromFontData(fAndBarFontPixelData);
-				} else {
+//				if (currChar.equals(Charset.LONG_S)) {
+//					templates[c].initializeAndSetPriorFromFontData(fAndBarFontPixelData);
+//				} else {
 					templates[c].initializeAndSetPriorFromFontData(fontPixelData[c]);
-				}
+//				}
 			} else {
 				templates[c] = new CharacterTemplate(Charset.SPACE, (float) spaceMaxWidthFraction, (float) spaceMinWidthFraction);
 			}
@@ -110,22 +107,22 @@ public class InitializeFont implements Runnable {
 		return lm;
 	}
 
-	private static PixelType[][][] buildFAndBarFontPixelData(Indexer<String> charIndexer, PixelType[][][][] fontPixelData) {
-		List<PixelType[][]> fAndBarFontPixelData = new ArrayList<PixelType[][]>();
-		if (charIndexer.contains("f")) {
-			int c = charIndexer.getIndex("f");
-			for (PixelType[][] datum : fontPixelData[c]) {
-				fAndBarFontPixelData.add(datum);
-			}
-		}
-		if (charIndexer.contains("|")) {
-			int c = charIndexer.getIndex("|");
-			for (PixelType[][] datum : fontPixelData[c]) {
-				fAndBarFontPixelData.add(datum);
-			}
-		}
-		return fAndBarFontPixelData.toArray(new PixelType[0][][]);
-	}
+//	private static PixelType[][][] buildFAndBarFontPixelData(Indexer<String> charIndexer, PixelType[][][][] fontPixelData) {
+//		List<PixelType[][]> fAndBarFontPixelData = new ArrayList<PixelType[][]>();
+//		if (charIndexer.contains("f")) {
+//			int c = charIndexer.getIndex("f");
+//			for (PixelType[][] datum : fontPixelData[c]) {
+//				fAndBarFontPixelData.add(datum);
+//			}
+//		}
+//		if (charIndexer.contains("|")) {
+//			int c = charIndexer.getIndex("|");
+//			for (PixelType[][] datum : fontPixelData[c]) {
+//				fAndBarFontPixelData.add(datum);
+//			}
+//		}
+//		return fAndBarFontPixelData.toArray(new PixelType[0][][]);
+//	}
 	
 	@SuppressWarnings("unchecked")
 	public static Map<String,CharacterTemplate> readFont(String fontPath) {
