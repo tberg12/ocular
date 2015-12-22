@@ -74,6 +74,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private Set<Integer> canBeElided;
 		private Map<Integer,Integer> addTilde;
 		private Map<Integer,Integer> diacriticDisregardMap;
+		private int sCharIndex;
+		private int longsCharIndex;
 		
 		private int numLanguages;
 		private int numChars;
@@ -110,6 +112,9 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.canBeElided = makeCanBeElidedSet(charIndexer);
 			this.addTilde = makeAddTildeMap(charIndexer);
 			this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
+			
+			this.sCharIndex = charIndexer.getIndex("s");
+			this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
 			
 			this.numLanguages = langIndexer.size();
 			this.numChars = charIndexer.size();
@@ -183,8 +188,11 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			}
 			else { // glyph is a normal character
 				Integer baseChar = diacriticDisregardMap.get(lmChar);
-				if (baseChar != null && baseChar.equals(glyph))
+				if (baseChar != null && baseChar.equals(glyph)) {
 					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+				}
+				else if (lmChar == sCharIndex && glyph == longsCharIndex)
+					return gsmSmoothingCount;
 				else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph))
 					return gsmSmoothingCount;
 				else if (lmChar == glyph)

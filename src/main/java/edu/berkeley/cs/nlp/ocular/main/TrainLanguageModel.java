@@ -111,6 +111,11 @@ public class TrainLanguageModel implements Runnable {
 		System.out.println(priorsSb.substring(0, priorsSb.length() - 2));
 		System.out.println("charN = " + charN);
 
+		List<String> chars = new ArrayList<String>();
+		for (String c : charIndexer.getObjects()) chars.add(c);
+		Collections.sort(chars);
+		System.out.println("ALL POSSIBLE CHARACTERS: " + chars);
+
 		CodeSwitchLanguageModel codeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, langIndexer, pKeepSameLanguage, charN);
 		System.out.println("writing LM to " + lmPath);
 		writeLM(codeSwitchLM, lmPath);

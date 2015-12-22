@@ -13,6 +13,7 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -149,7 +150,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			if (!allowGlyphSubstitution)
 				addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR), transitionScore);
 			else {
-				List<GlyphChar> potentialNextGlyphChars = new ArrayList<GlyphChar>(); 
+				Set<GlyphChar> potentialNextGlyphChars = new HashSet<GlyphChar>(); 
 				GlyphType glyphType = glyphChar.glyphType;
 				if (glyphType == GlyphType.DOUBLED) {
 					// Deterministically duplicate the glyph (but no longer marked as "doubled")
@@ -165,7 +166,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				else {
 					// 1. Next state's glyph is just the rendering of the LM character
 					potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
-					
+
 					// 2. Next state's glyph is a substitution of the LM character
 					if (canBeReplaced.contains(nextLmChar)) {
 						for (int nextGlyphCharIndex : lm.get(nextLanguage).getActiveCharacters()) {
@@ -174,6 +175,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 							}
 						}
 					}
+					if (nextLmChar == sCharIndex)
+						potentialNextGlyphChars.add(new GlyphChar(longsCharIndex, GlyphType.NORMAL_CHAR));
 					
 					// 3. Next state's glyph is an elision-decorated version of the LM character
 					Integer tildeDecorated = addTilde.get(nextLmChar);
@@ -522,6 +525,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private Indexer<String> charIndexer;
 	private int spaceCharIndex;
 	private int hyphenCharIndex;
+	private int sCharIndex;
+	private int longsCharIndex;
 	private Set<Integer> punctSet;
 	
 	private Set<Integer> canBeReplaced;
@@ -574,6 +579,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.charIndexer = lm.getCharacterIndexer();
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
+		this.sCharIndex = charIndexer.getIndex("s");
+		this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
 		this.punctSet = makePunctSet(charIndexer);
 		this.canBeReplaced = makeCanBeReplacedSet(charIndexer);
 		this.validSubstitutionChars = makeValidSubstitutionCharsSet(charIndexer);
@@ -616,7 +623,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		if (!allowGlyphSubstitution)
 			addState(result, nextContext, nextType, nextLanguage, new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR), transitionScore);
 		else {
-			List<GlyphChar> potentialNextGlyphChars = new ArrayList<GlyphChar>(); 
+			Set<GlyphChar> potentialNextGlyphChars = new HashSet<GlyphChar>(); 
 	
 			// 1. Next state's glyph is just the rendering of the LM character
 			potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.NORMAL_CHAR));
@@ -629,6 +636,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					}
 				}
 			}
+			if (nextLmChar == sCharIndex)
+				potentialNextGlyphChars.add(new GlyphChar(longsCharIndex, GlyphType.NORMAL_CHAR));
 			
 			// 3. Next state's glyph is an elision-decorated version of the LM character
 			Integer tildeDecorated = addTilde.get(nextLmChar);
