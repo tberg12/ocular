@@ -544,7 +544,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private double noCharSubPrior;
 
 	private Set<TransitionStateType> alwaysSpaceTransitionTypes;
-	private Set<TransitionStateType> alwaysHyphenTransitionTypes;
 	
 	/**
 	 * character index is the last letter of the context.
@@ -558,7 +557,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		if (context.length == 0 || this.alwaysSpaceTransitionTypes.contains(type)) {
 			return spaceCharIndex;
 		}
-		else if (this.alwaysHyphenTransitionTypes.contains(type)) {
+		else if (type == TransitionStateType.RMRGN_HPHN_INIT) {
 			return hyphenCharIndex;
 		}
 		else {
@@ -593,7 +592,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 		this.numLanguages = lm.getLanguageIndexer().size();
 		this.alwaysSpaceTransitionTypes = makeSet(TransitionStateType.LMRGN, TransitionStateType.LMRGN_HPHN, TransitionStateType.RMRGN, TransitionStateType.RMRGN_HPHN);
-		this.alwaysHyphenTransitionTypes = makeSet(TransitionStateType.RMRGN_HPHN_INIT);
 	}
 
 	private void addNoSubGlyphStartState(List<Tuple2<TransitionState, Double>> result, int[] nextContext, TransitionStateType nextType, int nextLanguage, double transitionScore) {
@@ -743,18 +741,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		else {
 			double p = (1.0 - noCharSubPrior) * gsm.glyphProb(nextLanguage, nextLmChar, nextGlyphChar);
 			double pWithBias = ((nextGlyphChar.glyphType == GlyphType.NORMAL_CHAR && nextGlyphChar.templateCharIndex == nextLmChar) ? noCharSubPrior + p : p);
-			
-//			if (pWithBias > 0.0) {
-//				String s = "siogjsoiej    calculateGlyphLogProb("+nextType+", "+
-//							langIndexer.getObject(nextLanguage)+", "+
-//							glyphType+", ["+
-//							charIndexer.getObject(lmCharIndex)+"] (["+charIndexer.getObject((nextGlyphChar.isElided ? lmCharIndex : spaceCharIndex))+"]), ["+
-//							charIndexer.getObject(nextLmChar)+"], "+
-//							(nextGlyphChar.isElided ? "Elided" : (nextGlyphChar.hasElisionTilde ? "ElisionTilde" : "["+charIndexer.getObject(nextGlyphChar.templateCharIndex)+"]" )) +") = "+
-//							pWithBias;
-//			  if (s.contains("Eli")) System.out.println(s);
-//			}
-			
 			return Math.log(pWithBias);
 		}
 	}

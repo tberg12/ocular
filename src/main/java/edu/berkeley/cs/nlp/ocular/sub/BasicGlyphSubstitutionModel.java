@@ -189,6 +189,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			else { // glyph is a normal character
 				Integer baseChar = diacriticDisregardMap.get(lmChar);
 				if (baseChar != null && baseChar.equals(glyph)) {
+					System.out.println("eoifjsoiejs   lmChar="+charIndexer.getObject(lmChar)+", baseChar="+charIndexer.getObject(baseChar)+", glyph="+charIndexer.getObject(glyph));
 					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 				}
 				else if (lmChar == sCharIndex && glyph == longsCharIndex)
@@ -208,25 +209,14 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		 */
 		public void incrementCounts(double[/*language*/][/*lmChar*/][/*glyph*/] counts, List<TransitionState> fullViterbiStateSeq) {
 			for (int i = 0; i < fullViterbiStateSeq.size(); ++i) {
-				TransitionState prevTs = ((i > 0) ? fullViterbiStateSeq.get(i-1) : null);
 				TransitionState currTs = fullViterbiStateSeq.get(i);
 				
 				int language = currTs.getLanguageIndex();
 				if (language >= 0) {
 					GlyphChar currGlyphChar = currTs.getGlyphChar();
 					int lmChar = currTs.getLmCharIndex();
-					
-					GlyphType prevGlyph = (prevTs != null ? prevTs.getGlyphChar().glyphType : GlyphType.NORMAL_CHAR);
-					
 					GlyphType currGlyphType = currGlyphChar.glyphType;
 					int glyph = (currGlyphType == GlyphType.NORMAL_CHAR) ? currGlyphChar.templateCharIndex : (numChars + currGlyphType.ordinal());
-					
-					if (counts[language][lmChar][glyph] < gsmSmoothingCount-1e-9) 
-						throw new RuntimeException("Illegal state found in viterbi decoding result:  "
-								+ "language="+langIndexer.getObject(language) + 
-								", prevGlyph="+prevGlyph + 
-								", lmChar="+charIndexer.getObject(lmChar) + 
-								", glyph="+(currGlyphType == GlyphType.NORMAL_CHAR ? charIndexer.getObject(currGlyphChar.templateCharIndex) : currGlyphType));
 					counts[language][lmChar][glyph] += 1;
 				}
 			}

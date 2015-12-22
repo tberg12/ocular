@@ -14,11 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
-import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
@@ -123,7 +122,7 @@ public class FontTrainEM {
 				totalIterationJointLogProb += decodeResults._2;
 				totalBatchJointLogProb += decodeResults._2;
 				List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
-				incrementLmCounts(languageCounts, fullViterbiStateSeq);
+				incrementLmCounts(languageCounts, fullViterbiStateSeq, charIndexer);
 				gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 				
 				// evaluate
@@ -269,10 +268,11 @@ public class FontTrainEM {
 	/**
 	 * Pass over the decoded states to accumulate counts
 	 */
-	private void incrementLmCounts(int[] languageCounts, List<TransitionState> fullViterbiStateSeq) {
+	private void incrementLmCounts(int[] languageCounts, List<TransitionState> fullViterbiStateSeq, Indexer<String> charIndexer) {
+		int spaceCharIndex = charIndexer.getIndex(" ");
 		for (TransitionState ts : fullViterbiStateSeq) {
 			int currLanguage = ts.getLanguageIndex();
-			if (currLanguage >= 0) { 
+			if (currLanguage >= 0 && ts.getType() == TransitionStateType.TMPL && ts.getLmCharIndex() != spaceCharIndex) { 
 				languageCounts[currLanguage] += 1;
 			}
 		}
@@ -310,8 +310,6 @@ public class FontTrainEM {
 	 * Make a single sequence of states
 	 */
 	public static List<TransitionState> makeFullViterbiStateSeq(TransitionState[][] decodeStates, Indexer<String> charIndexer) {
-		int spaceIndex = charIndexer.getIndex(Charset.SPACE);
-		int hyphenIndex = charIndexer.getIndex(Charset.HYPHEN);
 		int numLines = decodeStates.length;
 		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[numLines];
@@ -321,29 +319,13 @@ public class FontTrainEM {
 			if (line < decodeStates.length) {
 				int lineLength = decodeStates[line].length;
 				
-				// Figure out stuff about the end of the line hyphen whatever
-				int lastCharOfLine = -1;
-				boolean endsInRightHyphen = false;
-				for (int i = 0; i < lineLength; ++i) {
-					TransitionState ts = decodeStates[line][i];
-					TransitionStateType tsType = ts.getType();
-					if (tsType == TransitionStateType.TMPL && ts.getGlyphChar().templateCharIndex != spaceIndex) {
-						lastCharOfLine = i;
-					}
-					endsInRightHyphen = (tsType == TransitionStateType.RMRGN_HPHN_INIT || tsType == TransitionStateType.RMRGN_HPHN);
-				}
-				
 				// Handle all the states
 				for (int i = 0; i < lineLength; ++i) {
 					TransitionState ts = decodeStates[line][i];
 					int c = ts.getGlyphChar().templateCharIndex;
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 						viterbiChars[line].add(charIndexer.getObject(c));
-						if (ts.getType() == TransitionStateType.TMPL) {
-							if (c != hyphenIndex || !endsInRightHyphen || i != lastCharOfLine) {
-								fullViterbiStateSeq.add(ts);
-							}
-						}
+						fullViterbiStateSeq.add(ts);
 					}
 				}
 			}
