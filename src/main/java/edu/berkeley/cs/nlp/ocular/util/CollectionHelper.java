@@ -131,6 +131,16 @@ public class CollectionHelper {
 		}
 	}
 
+	public static <A> List<A> flatten(List<List<A>> list) {
+		List<A> r = new ArrayList<A>();
+		for (List<A> l : list) {
+			for (A a : l) {
+				r.add(a);
+			}
+		}
+		return r;
+	}
+
 	public static <A> Iterator<List<A>> sliding(List<A> list, int n) {
 		return new SlidingIterator<A>(list, n);
 	}
