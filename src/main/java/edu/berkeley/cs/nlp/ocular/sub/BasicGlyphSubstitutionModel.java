@@ -15,6 +15,7 @@ import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
@@ -76,6 +77,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private Map<Integer,Integer> diacriticDisregardMap;
 		private int sCharIndex;
 		private int longsCharIndex;
+		private int hyphenCharIndex;
 		
 		private int numLanguages;
 		private int numChars;
@@ -84,6 +86,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		public final int GLYPH_TILDE_ELIDED;
 		public final int GLYPH_FIRST_ELIDED;
 		public final int GLYPH_DOUBLED;
+		public final int GLYPH_RMRGN_HPHN_DROP;
 		
 		private double gsmPower;
 		private int minCountsForEvalGsm;
@@ -115,6 +118,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			
 			this.sCharIndex = charIndexer.getIndex("s");
 			this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
+			this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 			
 			this.numLanguages = langIndexer.size();
 			this.numChars = charIndexer.size();
@@ -123,6 +127,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.GLYPH_TILDE_ELIDED = numChars + GlyphType.TILDE_ELIDED.ordinal();
 			this.GLYPH_FIRST_ELIDED = numChars + GlyphType.FIRST_ELIDED.ordinal();
 			this.GLYPH_DOUBLED = numChars + GlyphType.DOUBLED.ordinal();
+			this.GLYPH_RMRGN_HPHN_DROP = numChars + GlyphType.RMRGN_HPHN_DROP.ordinal();
 			
 			this.outputPath = outputPath;
 		}
@@ -168,7 +173,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 			
 			
-			if (!activeCharacterSets[language].contains(lmChar)) return 0.0; // lm char must be valid for the language
+			if (!(activeCharacterSets[language].contains(lmChar) || lmChar == hyphenCharIndex)) return 0.0; // lm char must be valid for the language
 			
 			if (glyph == GLYPH_ELISION_TILDE) {
 				if (addTilde.get(lmChar) == null) return 0.0; // an elision-tilde-decorated char must be elision-tilde-decoratable
@@ -185,6 +190,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			else if (glyph == GLYPH_DOUBLED) {
 				if (!canBeDoubled.contains(lmChar)) return 0.0; // a doubled character has to be doubleable
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+			}
+			else if (glyph == GLYPH_RMRGN_HPHN_DROP) {
+				if (lmChar != hyphenCharIndex) return 0.0; // only a hyphen can be hyphen-dropped
+				return gsmSmoothingCount;
 			}
 			else { // glyph is a normal character
 				Integer baseChar = diacriticDisregardMap.get(lmChar);
@@ -210,16 +219,30 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		public void incrementCounts(double[/*language*/][/*lmChar*/][/*glyph*/] counts, List<TransitionState> fullViterbiStateSeq) {
 			for (int i = 0; i < fullViterbiStateSeq.size(); ++i) {
 				TransitionState currTs = fullViterbiStateSeq.get(i);
-				
-				int language = currTs.getLanguageIndex();
-				if (language >= 0) {
-					GlyphChar currGlyphChar = currTs.getGlyphChar();
-					int lmChar = currTs.getLmCharIndex();
-					GlyphType currGlyphType = currGlyphChar.glyphType;
-					int glyph = (currGlyphType == GlyphType.NORMAL_CHAR) ? currGlyphChar.templateCharIndex : (numChars + currGlyphType.ordinal());
-					counts[language][lmChar][glyph] += 1;
+				TransitionStateType currType = currTs.getType();
+				if (currType == TransitionStateType.TMPL) {
+					int language = currTs.getLanguageIndex();
+					if (language >= 0) {
+						int lmChar = currTs.getLmCharIndex();
+						int glyph = glyphIndex(currTs.getGlyphChar());
+						counts[language][lmChar][glyph] += 1;
+					}
+				}
+				else if (currType == TransitionStateType.RMRGN_HPHN_INIT) {
+					int language = currTs.getLanguageIndex();
+					if (language >= 0) {
+						GlyphChar currGlyphChar = currTs.getGlyphChar();
+						if (currGlyphChar.glyphType == GlyphType.RMRGN_HPHN_DROP) {
+							int glyph = glyphIndex(currGlyphChar);
+							counts[language][hyphenCharIndex][glyph] += 1;
+						}
+					}
 				}
 			}
+		}
+		
+		private int glyphIndex(GlyphChar glyphChar) {
+			return glyphChar.glyphType == GlyphType.NORMAL_CHAR ? glyphChar.templateCharIndex : (numChars + glyphChar.glyphType.ordinal());
 		}
 
 		public BasicGlyphSubstitutionModel make(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
@@ -247,7 +270,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
 			// Normalize counts to get probabilities
-			double[][][] evalCounts = new double[numLanguages][numChars][numGlyphs];
+			double[/*language*/][/*lmChar*/][/*glyph*/] evalCounts = new double[numLanguages][numChars][numGlyphs];
 			double[/*language*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
 				for (int lmChar = 0; lmChar < numChars; ++lmChar) {
@@ -278,7 +301,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		}
 
 		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][] counts, double[][][] probs, int iter, int batchId, String outputFilenameBase) {
-			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" "), Charset.LOWERCASE_LATIN_LETTERS);
+			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" ","-","a","b","c","d"));
 //			for (String c : Charset.LOWERCASE_VOWELS) {
 //				CHARS_TO_PRINT.add(Charset.ACUTE_ESCAPE + c);
 //				CHARS_TO_PRINT.add(Charset.GRAVE_ESCAPE + c);

@@ -5,6 +5,7 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
@@ -250,6 +252,10 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 				goldComparisonWithSubsOutputBuffer.append("\n");
 			}
 			goldComparisonWithSubsOutputBuffer.append(Evaluator.renderEval(evals));
+			goldComparisonWithSubsOutputBuffer.append("\n\n\n\n\n\n\n");
+			for (TransitionState ts : CollectionHelper.flatten(Arrays.asList(viterbiTransStates))) {
+				goldComparisonWithSubsOutputBuffer.append(ts);
+			}
 			System.out.println("Writing gold comparison with substitutions to " + goldComparisonWithSubsOutputFilename);
 			System.out.println(goldComparisonWithSubsOutputBuffer.toString() + "\n\n");
 			f.writeString(goldComparisonWithSubsOutputFilename, goldComparisonWithSubsOutputBuffer.toString());

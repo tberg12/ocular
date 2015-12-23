@@ -14,7 +14,8 @@ public class GlyphChar implements Serializable {
 		ELISION_TILDE, //                 this glyph is marked with a tilde indicating that some subsequent letter have been elided   
 		TILDE_ELIDED, //                  this (empty) glyph appears after an "elision tilde"
 		FIRST_ELIDED, //                  this (empty) glyph results from the elision of the first letter of a word  
-		DOUBLED, //                       this glyph marks an empty LM character whose glyph is a duplicate of the next glyph, which is just a rendering of its LM character 
+		DOUBLED, //                       this glyph marks an empty LM character whose glyph is a duplicate of the next glyph, which is just a rendering of its LM character
+		RMRGN_HPHN_DROP, //               this glyph marks a right-margin line-breaking hyphen is not printed 
 		NORMAL_CHAR }; //                 
 	
 	public final int templateCharIndex;
