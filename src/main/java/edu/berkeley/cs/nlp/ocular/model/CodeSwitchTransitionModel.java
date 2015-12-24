@@ -102,7 +102,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			else {
 				GlyphType glyphType = glyphChar.glyphType;
 				
-				if (nextType == TransitionStateType.RMRGN_HPHN_INIT || nextType == TransitionStateType.RMRGN_HPHN) {
+				if (nextType == TransitionStateType.RMRGN_HPHN_INIT || nextType == TransitionStateType.RMRGN_HPHN|| nextType == TransitionStateType.LMRGN_HPHN) {
 					/*
 					 * This always maintains whether it is marked as a tilde-elision character 
 					 * or an elided character.  This is necessary right-margin-hyphen states 
@@ -111,9 +111,20 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					 * (non-hyphen) margins are treated as spaces, and spaces can't be elided
 					 * and can't follow tilde-elision states.
 					 */
-					GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, glyphChar.glyphType);
-					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
-					addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
+					{
+						GlyphChar nextGlyphChar = new GlyphChar(nextLmChar, glyphChar.glyphType);
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
+						addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
+					}
+					
+					if (nextType == TransitionStateType.RMRGN_HPHN_INIT) {
+						/*
+						 * Allow for the elision of Ouptut a space 
+						 */
+						GlyphChar nextGlyphChar = new GlyphChar(spaceCharIndex, glyphChar.glyphType);
+						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
+						addState(result, nextContext, nextType, nextLanguage, nextGlyphChar, transitionScore + glyphLogProb);
+					}
 				}
 				else {
 					/*
@@ -330,8 +341,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		}
 
 		public Collection<Tuple2<TransitionState, Double>> nextLineStartStates() {
-			TransitionStateType type = getType();
-			int[] context = getContext();
 			SingleLanguageModel thisLM = lm.get(this.langIndex);
 			List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 
@@ -409,8 +418,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		 * Calculate forward transitions
 		 */
 		public Collection<Tuple2<TransitionState, Double>> forwardTransitions() {
-			TransitionStateType type = getType();
-			int[] context = getContext();
 			SingleLanguageModel thisLM = lm.get(this.langIndex);
 			List<Tuple2<TransitionState, Double>> result = new ArrayList<Tuple2<TransitionState, Double>>();
 
@@ -499,16 +506,22 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			throw new Error("Method not implemented");
 		}
 
-		public int[] getContext() {
-			return context;
-		}
-
 		public TransitionStateType getType() {
 			return type;
 		}
 
 		public int getLanguageIndex() {
 			return this.langIndex;
+		}
+		
+		public String toString() {
+			StringBuilder contextSB = new StringBuilder("[");
+			for (int c : context)
+				contextSB.append(charIndexer.getObject(c));
+				//.append(", ");
+			//if (context.length > 0) contextSB.delete(contextSB.length()-2, contextSB.length());
+			contextSB.append("]");
+			return "CodeSwitchTransitionState("+(langIndex>=0 ? langIndexer.getObject(langIndex) : "No Language")+", "+charIndexer.getObject(lmCharIndex)+", "+type+", "+contextSB+", "+glyphChar.toString(charIndexer)+")";
 		}
 	}
 
@@ -523,6 +536,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 	private int n;
 	private Indexer<String> charIndexer;
+	private Indexer<String> langIndexer;
 	private int spaceCharIndex;
 	private int hyphenCharIndex;
 	private int sCharIndex;
@@ -576,6 +590,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.noCharSubPrior = noCharSubPrior;
 
 		this.charIndexer = lm.getCharacterIndexer();
+		this.langIndexer = lm.getLanguageIndexer();
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 		this.sCharIndex = charIndexer.getIndex("s");

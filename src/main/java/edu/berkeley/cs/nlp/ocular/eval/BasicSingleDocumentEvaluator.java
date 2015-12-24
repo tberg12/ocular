@@ -253,11 +253,11 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			}
 			goldComparisonWithSubsOutputBuffer.append(Evaluator.renderEval(evals));
 			goldComparisonWithSubsOutputBuffer.append("\n\n\n\n\n\n\n");
-			for (TransitionState ts : CollectionHelper.flatten(Arrays.asList(viterbiTransStates))) {
-				goldComparisonWithSubsOutputBuffer.append(ts);
-			}
+//			for (TransitionState ts : CollectionHelper.flatten(Arrays.asList(viterbiTransStates))) {
+//				goldComparisonWithSubsOutputBuffer.append(ts.toString()).append("\n");
+//			}
 			System.out.println("Writing gold comparison with substitutions to " + goldComparisonWithSubsOutputFilename);
-			System.out.println(goldComparisonWithSubsOutputBuffer.toString() + "\n\n");
+			System.out.println(goldComparisonWithSubsOutputBuffer.append("\n\n").toString());
 			f.writeString(goldComparisonWithSubsOutputFilename, goldComparisonWithSubsOutputBuffer.toString());
 			}
 		}

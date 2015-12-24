@@ -78,6 +78,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private int sCharIndex;
 		private int longsCharIndex;
 		private int hyphenCharIndex;
+		private int spaceCharIndex;
 		
 		private int numLanguages;
 		private int numChars;
@@ -86,7 +87,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		public final int GLYPH_TILDE_ELIDED;
 		public final int GLYPH_FIRST_ELIDED;
 		public final int GLYPH_DOUBLED;
-		public final int GLYPH_RMRGN_HPHN_DROP;
+		//public final int GLYPH_RMRGN_HPHN_DROP;
 		
 		private double gsmPower;
 		private int minCountsForEvalGsm;
@@ -119,6 +120,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.sCharIndex = charIndexer.getIndex("s");
 			this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
 			this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
+			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 			
 			this.numLanguages = langIndexer.size();
 			this.numChars = charIndexer.size();
@@ -127,7 +129,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.GLYPH_TILDE_ELIDED = numChars + GlyphType.TILDE_ELIDED.ordinal();
 			this.GLYPH_FIRST_ELIDED = numChars + GlyphType.FIRST_ELIDED.ordinal();
 			this.GLYPH_DOUBLED = numChars + GlyphType.DOUBLED.ordinal();
-			this.GLYPH_RMRGN_HPHN_DROP = numChars + GlyphType.RMRGN_HPHN_DROP.ordinal();
+			//this.GLYPH_RMRGN_HPHN_DROP = numChars + GlyphType.RMRGN_HPHN_DROP.ordinal();
 			
 			this.outputPath = outputPath;
 		}
@@ -191,17 +193,19 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				if (!canBeDoubled.contains(lmChar)) return 0.0; // a doubled character has to be doubleable
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
-			else if (glyph == GLYPH_RMRGN_HPHN_DROP) {
-				if (lmChar != hyphenCharIndex) return 0.0; // only a hyphen can be hyphen-dropped
-				return gsmSmoothingCount;
-			}
+//			else if (glyph == GLYPH_RMRGN_HPHN_DROP) {
+//				if (lmChar != hyphenCharIndex) return 0.0; // only a hyphen can be hyphen-dropped
+//				return gsmSmoothingCount;
+//			}
 			else { // glyph is a normal character
 				Integer baseChar = diacriticDisregardMap.get(lmChar);
 				if (baseChar != null && baseChar.equals(glyph)) {
-					System.out.println("eoifjsoiejs   lmChar="+charIndexer.getObject(lmChar)+", baseChar="+charIndexer.getObject(baseChar)+", glyph="+charIndexer.getObject(glyph));
+					//System.out.println("eoifjsoiejs   lmChar="+charIndexer.getObject(lmChar)+", baseChar="+charIndexer.getObject(baseChar)+", glyph="+charIndexer.getObject(glyph));
 					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 				}
 				else if (lmChar == sCharIndex && glyph == longsCharIndex)
+					return gsmSmoothingCount;
+				else if (lmChar == hyphenCharIndex && glyph == spaceCharIndex) // so that line-break hyphens can be elided
 					return gsmSmoothingCount;
 				else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph))
 					return gsmSmoothingCount;
@@ -232,7 +236,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					int language = currTs.getLanguageIndex();
 					if (language >= 0) {
 						GlyphChar currGlyphChar = currTs.getGlyphChar();
-						if (currGlyphChar.glyphType == GlyphType.RMRGN_HPHN_DROP) {
+						if (currGlyphChar.templateCharIndex == spaceCharIndex) { // line-break hyphen was elided
 							int glyph = glyphIndex(currGlyphChar);
 							counts[language][hyphenCharIndex][glyph] += 1;
 						}

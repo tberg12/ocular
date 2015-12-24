@@ -24,12 +24,13 @@ public interface SparseTransitionModel {
 		 */
 		public GlyphChar getGlyphChar();
 
+		public TransitionStateType getType();
 		public int getOffset();
 		public int getExposure();
+		
 		public Collection<Tuple2<TransitionState,Double>> forwardTransitions();
 		public Collection<Tuple2<TransitionState,Double>> nextLineStartStates();
 		public double endLogProb();
-		public TransitionStateType getType();
 	}
 	
 	public Collection<Tuple2<TransitionState,Double>> startStates();
