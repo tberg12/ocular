@@ -71,14 +71,20 @@ public class FontTrainEM {
 					lastCompletedIteration = iter;
 				}
 			}
-			if (fontPath != null) {
-				font = InitializeFont.readFont(makeFontPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+			if (lastCompletedIteration > 0) {
+				System.out.println("Last completed iteration: "+lastCompletedIteration);
+				if (fontPath != null) {
+					font = InitializeFont.readFont(makeFontPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+				}
+				if (retrainLM) {
+					lm = TrainLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+				}
+				if (retrainGSM) {
+					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+				}
 			}
-			if (retrainLM) {
-				lm = TrainLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
-			}
-			if (retrainGSM) {
-				if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+			else {
+				System.out.println("No completed iterations found");
 			}
 			
 			if (lastCompletedIteration == numEMIters) {
