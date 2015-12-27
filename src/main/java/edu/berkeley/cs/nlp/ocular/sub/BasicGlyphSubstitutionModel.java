@@ -77,6 +77,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private Map<Integer,Integer> diacriticDisregardMap;
 		private int sCharIndex;
 		private int longsCharIndex;
+		private int fCharIndex;
 		private int hyphenCharIndex;
 		private int spaceCharIndex;
 		
@@ -199,12 +200,12 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 //			}
 			else { // glyph is a normal character
 				Integer baseChar = diacriticDisregardMap.get(lmChar);
-				if (baseChar != null && baseChar.equals(glyph)) {
-					//System.out.println("eoifjsoiejs   lmChar="+charIndexer.getObject(lmChar)+", baseChar="+charIndexer.getObject(baseChar)+", glyph="+charIndexer.getObject(glyph));
+				if (baseChar != null && baseChar.equals(glyph))
 					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
-				}
 				else if (lmChar == sCharIndex && glyph == longsCharIndex)
 					return gsmSmoothingCount;
+				else if (lmChar == sCharIndex && glyph == fCharIndex)
+					return 0.0;
 				else if (lmChar == hyphenCharIndex && glyph == spaceCharIndex) // so that line-break hyphens can be elided
 					return gsmSmoothingCount;
 				else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph))
@@ -273,6 +274,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		}
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
+			return makeForEval(counts, iter, batchId, minCountsForEvalGsm);
+		}
+
+		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId, double minCountsForEvalGsm) {
 			// Normalize counts to get probabilities
 			double[/*language*/][/*lmChar*/][/*glyph*/] evalCounts = new double[numLanguages][numChars][numGlyphs];
 			double[/*language*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numChars][numGlyphs];
@@ -305,43 +310,35 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		}
 
 		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][] counts, double[][][] probs, int iter, int batchId, String outputFilenameBase) {
-			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" ","-","a","b","c","d"));
+			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" ","-","a","b","c","d",Charset.LONG_S));
 //			for (String c : Charset.LOWERCASE_VOWELS) {
 //				CHARS_TO_PRINT.add(Charset.ACUTE_ESCAPE + c);
 //				CHARS_TO_PRINT.add(Charset.GRAVE_ESCAPE + c);
 //			}
 			
 			StringBuffer sb = new StringBuffer();
-			sb.append("language\tprevGlyph\tprevLmChar\tlmChar\tglyph\tcount\tminProb\tprob\n"); 
+			sb.append("language\tlmChar\tglyph\tcount\tminProb\tprob\n"); 
 			for (int language = 0; language < numLanguages; ++language) {
 				String slanguage = langIndexer.getObject(language);
-				for (GlyphType prevGlyph : GlyphType.values()) {
-					String sprevGlyph = prevGlyph.name();
-					for (int prevLmChar = 0; prevLmChar < numChars; ++prevLmChar) {
-						String sprevLmChar = charIndexer.getObject(prevLmChar);
-						for (int lmChar = 0; lmChar < numChars; ++lmChar) {
-							String slmChar = charIndexer.getObject(lmChar);
-							
-							// figure out what the lowest count is, and then exclude things with that count
-							double lowProb = ArrayHelper.min(probs[language][lmChar]);
-							for (int glyph = 0; glyph < numGlyphs; ++glyph) {
-								String sglyph = glyph < numChars ? charIndexer.getObject(glyph) : GlyphType.values()[glyph-numChars].toString();
-								
-								double p = probs[language][lmChar][glyph];
-								double c = counts[language][lmChar][glyph];
-								if (c > gsmSmoothingCount || (CHARS_TO_PRINT.contains(slmChar) && (CHARS_TO_PRINT.contains(sglyph) || glyph >= numChars))) {
-									//System.out.println("c="+c+", lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+(glyph < numChars ? charIndexer.getObject(glyph) : (glyph == numGlyphs ? "EpsilonTilde": "Elided"))+"("+glyph+"), p="+p+", logp="+Math.log(p));
-									sb.append(slanguage).append("\t");
-									sb.append(sprevGlyph).append("\t");
-									sb.append(sprevLmChar).append("\t");
-									sb.append(slmChar).append("\t");
-									sb.append(sglyph).append("\t");
-									sb.append(c).append("\t");
-									sb.append(lowProb).append("\t");
-									sb.append(p).append("\t");
-									sb.append("\n");
-								}
-							}
+				for (int lmChar = 0; lmChar < numChars; ++lmChar) {
+					String slmChar = charIndexer.getObject(lmChar);
+					
+					// figure out what the lowest count is, and then exclude things with that count
+					double lowProb = ArrayHelper.min(probs[language][lmChar]);
+					for (int glyph = 0; glyph < numGlyphs; ++glyph) {
+						String sglyph = glyph < numChars ? charIndexer.getObject(glyph) : GlyphType.values()[glyph-numChars].toString();
+						
+						double p = probs[language][lmChar][glyph];
+						double c = counts[language][lmChar][glyph];
+						if (c > gsmSmoothingCount || (CHARS_TO_PRINT.contains(slmChar) && (CHARS_TO_PRINT.contains(sglyph) || glyph >= numChars))) {
+							//System.out.println("c="+c+", lang="+langIndexer.getObject(language)+"("+language+"), prevGlyphType="+prevGlyph+ ", prevLmChar="+charIndexer.getObject(prevLmChar)+"("+prevLmChar+"), lmChar="+charIndexer.getObject(lmChar)+"("+lmChar+"), glyphChar="+(glyph < numChars ? charIndexer.getObject(glyph) : (glyph == numGlyphs ? "EpsilonTilde": "Elided"))+"("+glyph+"), p="+p+", logp="+Math.log(p));
+							sb.append(slanguage).append("\t");
+							sb.append(slmChar).append("\t");
+							sb.append(sglyph).append("\t");
+							sb.append(c).append("\t");
+							sb.append(lowProb).append("\t");
+							sb.append(p).append("\t");
+							sb.append("\n");
 						}
 					}
 				}

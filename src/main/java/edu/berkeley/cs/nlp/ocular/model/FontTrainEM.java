@@ -80,7 +80,7 @@ public class FontTrainEM {
 					lm = TrainLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
 				}
 				if (retrainGSM) {
-					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration, ""));
 				}
 			}
 			else {
@@ -149,8 +149,13 @@ public class FontTrainEM {
 					}
 					if (retrainGSM) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
+						if (gsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(evalGsm, makeGsmPath(outputPath, iter, completedBatchesInIteration, ""));
 						evalGsm = gsmFactory.makeForEval(gsmCounts, iter, completedBatchesInIteration);
-						if (evalGsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(evalGsm, makeGsmPath(outputPath, iter, completedBatchesInIteration));
+						if (evalGsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(evalGsm, makeGsmPath(outputPath, iter, completedBatchesInIteration, "_eval"));
+						for (int minCountsForEvalGsm = 1; minCountsForEvalGsm <= 5; ++minCountsForEvalGsm) {
+							GlyphSubstitutionModel egsm = gsmFactory.makeForEval(gsmCounts, iter, completedBatchesInIteration, minCountsForEvalGsm);
+							if (egsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(egsm, makeGsmPath(outputPath, iter, completedBatchesInIteration, "_eval_cutoff-"+minCountsForEvalGsm));
+						}
 					}
 
 					if (!accumulateBatchesWithinIter) {
@@ -222,8 +227,8 @@ public class FontTrainEM {
 		return batchComplete;
 	}
 
-	private String makeGsmPath(String outputPath, int iter, int batch) {
-		return outputPath + "/gsm/" + makeOutputFilePrefix(iter, batch) + ".gsmser";
+	private String makeGsmPath(String outputPath, int iter, int batch, String suffix) {
+		return outputPath + "/gsm/" + makeOutputFilePrefix(iter, batch) + suffix + ".gsmser";
 	}
 
 	private String makeLmPath(String outputPath, int iter, int batch) {
