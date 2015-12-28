@@ -120,6 +120,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			
 			this.sCharIndex = charIndexer.getIndex("s");
 			this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
+			this.fCharIndex = charIndexer.getIndex("f");
 			this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 			
