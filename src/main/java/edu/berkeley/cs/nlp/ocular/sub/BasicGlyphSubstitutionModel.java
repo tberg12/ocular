@@ -278,35 +278,39 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		}
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId, double minCountsForEvalGsm) {
-			// Normalize counts to get probabilities
-			double[/*language*/][/*lmChar*/][/*glyph*/] evalCounts = new double[numLanguages][numChars][numGlyphs];
-			double[/*language*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numChars][numGlyphs];
-			for (int language = 0; language < numLanguages; ++language) {
-				for (int lmChar = 0; lmChar < numChars; ++lmChar) {
-					
-					for (int glyph = 0; glyph < numGlyphs; ++glyph) {
-						double trueCount = counts[language][lmChar][glyph] - gsmSmoothingCount;
-						if (trueCount < 1e-9)
-							evalCounts[language][lmChar][glyph] = 0;
-						else if (trueCount < minCountsForEvalGsm-1e-9)
-							evalCounts[language][lmChar][glyph] = 0;
-						else
-							evalCounts[language][lmChar][glyph] = trueCount;
-					}
-					
-					double sum = ArrayHelper.sum(evalCounts[language][lmChar]);
-					for (int glyph = 0; glyph < numGlyphs; ++glyph) {
-						double c = evalCounts[language][lmChar][glyph];
-						double p = (c > 1e-9 ? (c / sum) : 0.0);
-						probs[language][lmChar][glyph] = p;
+			if (minCountsForEvalGsm < 1)
+				return make(counts, iter, batchId);
+			else {
+				// Normalize counts to get probabilities
+				double[/*language*/][/*lmChar*/][/*glyph*/] evalCounts = new double[numLanguages][numChars][numGlyphs];
+				double[/*language*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numChars][numGlyphs];
+				for (int language = 0; language < numLanguages; ++language) {
+					for (int lmChar = 0; lmChar < numChars; ++lmChar) {
+						
+						for (int glyph = 0; glyph < numGlyphs; ++glyph) {
+							double trueCount = counts[language][lmChar][glyph] - gsmSmoothingCount;
+							if (trueCount < 1e-9)
+								evalCounts[language][lmChar][glyph] = 0;
+							else if (trueCount < minCountsForEvalGsm-1e-9)
+								evalCounts[language][lmChar][glyph] = 0;
+							else
+								evalCounts[language][lmChar][glyph] = trueCount;
+						}
+						
+						double sum = ArrayHelper.sum(evalCounts[language][lmChar]);
+						for (int glyph = 0; glyph < numGlyphs; ++glyph) {
+							double c = evalCounts[language][lmChar][glyph];
+							double p = (c > 1e-9 ? (c / sum) : 0.0);
+							probs[language][lmChar][glyph] = p;
+						}
 					}
 				}
+				
+				System.out.println("Writing out GSM information.");
+				synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)+"_eval"); }
+	
+				return new BasicGlyphSubstitutionModel(probs, gsmPower, langIndexer, charIndexer);
 			}
-			
-			System.out.println("Writing out GSM information.");
-			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)+"_eval"); }
-
-			return new BasicGlyphSubstitutionModel(probs, gsmPower, langIndexer, charIndexer);
 		}
 
 		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][] counts, double[][][] probs, int iter, int batchId, String outputFilenameBase) {
