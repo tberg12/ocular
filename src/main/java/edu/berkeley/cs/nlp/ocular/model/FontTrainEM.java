@@ -149,7 +149,7 @@ public class FontTrainEM {
 					}
 					if (retrainGSM) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
-						if (gsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(evalGsm, makeGsmPath(outputPath, iter, completedBatchesInIteration, ""));
+						if (gsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(gsm, makeGsmPath(outputPath, iter, completedBatchesInIteration, ""));
 						evalGsm = gsmFactory.makeForEval(gsmCounts, iter, completedBatchesInIteration);
 						if (evalGsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(evalGsm, makeGsmPath(outputPath, iter, completedBatchesInIteration, "_eval"));
 						for (int minCountsForEvalGsm = 1; minCountsForEvalGsm <= 5; ++minCountsForEvalGsm) {
