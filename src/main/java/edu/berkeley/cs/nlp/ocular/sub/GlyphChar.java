@@ -16,6 +16,7 @@ public class GlyphChar implements Serializable {
 		FIRST_ELIDED, //                  this (empty) glyph results from the elision of the first letter of a word  
 		DOUBLED, //                       this glyph marks an empty LM character whose glyph is a duplicate of the next glyph, which is just a rendering of its LM character
 		//RMRGN_HPHN_DROP, //               this glyph marks a right-margin line-breaking hyphen is not printed 
+		ELIDED, //                        this (empty) glyph results from the elision a character  
 		NORMAL_CHAR }; //                 
 	
 	public final int templateCharIndex;
@@ -30,6 +31,7 @@ public class GlyphChar implements Serializable {
 		switch (glyphType) {
 			case TILDE_ELIDED:
 			case FIRST_ELIDED:
+			case ELIDED:
 				return true;
 			default:
 				return false;

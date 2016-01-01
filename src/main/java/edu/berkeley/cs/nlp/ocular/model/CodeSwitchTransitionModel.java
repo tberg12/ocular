@@ -209,6 +209,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					}
 					
 					// 6. Next state's glyph is an elision after a space
+					if (!elideAnything) {
 					if (glyphType != GlyphType.FIRST_ELIDED) { // TODO: Comment this out if we want to allow multiple characters to be elided from the front of a word
 						if (lmCharIndex == spaceCharIndex) {
 							if (type != TransitionStateType.LMRGN_HPHN && type != TransitionStateType.RMRGN_HPHN_INIT && type != TransitionStateType.RMRGN_HPHN) { // only allowed at the start of a word, not in the middle of a hyphenated word
@@ -220,10 +221,22 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 							}
 						}
 					}
+					}
 					
 					// 7. Next state's glyph is a doubled version of the LM character
 					if (validDoublableSet.contains(nextLmChar)) {
 						potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
+						if (nextLmChar == sCharIndex)
+							potentialNextGlyphChars.add(new GlyphChar(longsCharIndex, GlyphType.DOUBLED));
+					}
+					
+					// 8. Elide the character
+					if (elideAnything) {
+						if (nextType == TransitionStateType.TMPL) {
+							if (canBeElided.contains(nextLmChar)) {
+								potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.ELIDED));
+							}
+						}
 					}
 
 				}
@@ -243,15 +256,26 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		private void addTransitionsToTmpl(List<Tuple2<TransitionState, Double>> result, int[] context, double prevScore, boolean clearContext) {
 			if (glyphChar.glyphType == GlyphType.DOUBLED) {
 				// Duplicate the state: same context, language, lmChar, ...; but Doubled=>Normal
-				GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
 				TransitionStateType nextType = TransitionStateType.TMPL;
 				int nextLanguage = langIndex;
 				int nextLmChar = lmCharIndex;
 				//SingleLanguageModel destLM = lm.get(nextLanguage);
 				//double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
 				double score = prevScore; //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(destLM, context, nextLmChar)) + Math.log(pDestLang); // TODO: Is it necessary to have some sort of LM probability factored in?
-				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
-				addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+				if (nextLmChar == sCharIndex) { // a doubled 's' may have long-s chars
+					GlyphChar nextGlyphCharS = new GlyphChar(sCharIndex, GlyphType.NORMAL_CHAR);
+					double glyphLogProbS = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphCharS);
+					addState(result, context, nextType, nextLanguage, nextGlyphCharS, score + glyphLogProbS);
+
+					GlyphChar nextGlyphCharLongs = new GlyphChar(longsCharIndex, GlyphType.NORMAL_CHAR);
+					double glyphLogProbLongs = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphCharLongs);
+					addState(result, context, nextType, nextLanguage, nextGlyphCharLongs, score + glyphLogProbLongs);
+				}
+				else {
+					GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
+					double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
+					addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+				}
 			}
 			else {
 				if (this.langIndex < 0) { // there is no current language
@@ -374,13 +398,24 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				if (this.langIndex >= 0) { // can't have a hyphen if there is no language, since that means there have been no characters so far
 					if (glyphChar.glyphType == GlyphType.DOUBLED) {
 						// Duplicate the state: same context, language, lmChar, ...; but Doubled=>Normal
-						GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
 						TransitionStateType nextType = TransitionStateType.TMPL;
 						int nextLanguage = langIndex;
 						int nextLmChar = lmCharIndex;
 						double score = Math.log(1.0); //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, nextLmChar)) + Math.log(1.0); // TODO: Is it necessary to have some sort of LM probability factored in?
-						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
-						addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+						if (nextLmChar == sCharIndex) { // a doubled 's' may have long-s chars
+							GlyphChar nextGlyphCharS = new GlyphChar(sCharIndex, GlyphType.NORMAL_CHAR);
+							double glyphLogProbS = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphCharS);
+							addState(result, context, nextType, nextLanguage, nextGlyphCharS, score + glyphLogProbS);
+
+							GlyphChar nextGlyphCharLongs = new GlyphChar(longsCharIndex, GlyphType.NORMAL_CHAR);
+							double glyphLogProbLongs = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphCharLongs);
+							addState(result, context, nextType, nextLanguage, nextGlyphCharLongs, score + glyphLogProbLongs);
+						}
+						else {
+							GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
+							double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
+							addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+						}
 					}
 					else {
 						for (int c : thisLM.getActiveCharacters()) {
@@ -438,14 +473,25 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 				if (this.langIndex >= 0) { // can't have a hyphen if there is no language, since that means there have been no characters so far
 					if (glyphChar.glyphType == GlyphType.DOUBLED) {
 						// Duplicate the state: same context, language, lmChar, ...; but Doubled=>Normal
-						GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
 						TransitionStateType nextType = TransitionStateType.TMPL;
 						int nextLanguage = langIndex;
 						int nextLmChar = lmCharIndex;
 						//double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
 						double score = Math.log(1.0); //+ Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, nextLmChar)) + Math.log(pDestLang); // TODO: Is it necessary to have some sort of LM probability factored in?
-						double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
-						addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+						if (nextLmChar == sCharIndex) { // a doubled 's' may have long-s chars
+							GlyphChar nextGlyphCharS = new GlyphChar(sCharIndex, GlyphType.NORMAL_CHAR);
+							double glyphLogProbS = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphCharS);
+							addState(result, context, nextType, nextLanguage, nextGlyphCharS, score + glyphLogProbS);
+
+							GlyphChar nextGlyphCharLongs = new GlyphChar(longsCharIndex, GlyphType.NORMAL_CHAR);
+							double glyphLogProbLongs = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphCharLongs);
+							addState(result, context, nextType, nextLanguage, nextGlyphCharLongs, score + glyphLogProbLongs);
+						}
+						else {
+							GlyphChar nextGlyphChar = new GlyphChar(lmCharIndex, GlyphType.NORMAL_CHAR);
+							double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);
+							addState(result, context, nextType, nextLanguage, nextGlyphChar, score + glyphLogProb);
+						}
 					}
 					else {
 						for (int c : thisLM.getActiveCharacters()) {
@@ -556,6 +602,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	private boolean allowLanguageSwitchOnPunct;
 	private boolean allowGlyphSubstitution;
 	private double noCharSubPrior;
+	private boolean elideAnything;
 
 	private Set<TransitionStateType> alwaysSpaceTransitionTypes;
 	
@@ -579,15 +626,13 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		}
 	}
 
-	/**
-	 * @param languageModelsAndPriors 	<Language, <LM, PriorOfLanguage>>
-	 */
-	public CodeSwitchTransitionModel(CodeSwitchLanguageModel lm, boolean allowLanguageSwitchOnPunct, GlyphSubstitutionModel gsm, boolean allowGlyphSubstitution, double noCharSubPrior) {
+	public CodeSwitchTransitionModel(CodeSwitchLanguageModel lm, boolean allowLanguageSwitchOnPunct, GlyphSubstitutionModel gsm, boolean allowGlyphSubstitution, double noCharSubPrior, boolean elideAnything) {
 		this.lm = lm;
 		this.gsm = gsm;
 		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.noCharSubPrior = noCharSubPrior;
+		this.elideAnything = elideAnything;
 
 		this.charIndexer = lm.getCharacterIndexer();
 		this.langIndexer = lm.getLanguageIndexer();
@@ -626,7 +671,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	 *   1. Next state's glyph is just the rendering of the LM character
 	 *   2. Next state's glyph is a substitution of the LM character
 	 *   3. Next state's glyph is an elision-decorated version of the LM character
-	 * X 4. Next state's glyph is elided
+	 *   4. Next state's glyph is elided
 	 *   5. Next state's glyph is the LM char, stripped of its accents
 	 *   6. Next state's glyph is an elision after a space
 	 *   7. Next state's glyph is a doubled version of the LM character
@@ -665,17 +710,30 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			}
 
 			// 6. Next state's glyph is an elision after a space --- and the start state is always a "space"
+			if (!elideAnything) {
 			if (nextType == TransitionStateType.TMPL) {
 				if (canBeElided.contains(nextLmChar)) {
 					potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.FIRST_ELIDED));
 				}
 			}
+			}
 
 			// 7. Next state's glyph is a doubled version of the LM character
 			if (validDoublableSet.contains(nextLmChar)) {
 				potentialNextGlyphChars.add(new GlyphChar(nextLmChar, GlyphType.DOUBLED));
+				if (nextLmChar == sCharIndex)
+					potentialNextGlyphChars.add(new GlyphChar(longsCharIndex, GlyphType.DOUBLED));
 			}
 			
+			// 8. Elide the character
+			if (elideAnything) {
+				if (nextType == TransitionStateType.TMPL) {
+					if (canBeElided.contains(nextLmChar)) {
+						potentialNextGlyphChars.add(new GlyphChar(spaceCharIndex, GlyphType.ELIDED));
+					}
+				}
+			}
+
 			// Create states for all the potential next glyphs
 			for (GlyphChar nextGlyphChar : potentialNextGlyphChars) {
 				double glyphLogProb = calculateGlyphLogProb(nextType, nextLanguage, nextLmChar, nextGlyphChar);

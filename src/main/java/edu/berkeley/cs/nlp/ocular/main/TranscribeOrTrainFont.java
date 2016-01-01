@@ -110,6 +110,9 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions. Default: 0.999999")
 	public static double gsmNoCharSubPrior = 0.9999999;
+
+	@Option(gloss = "Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde? Default: false")
+	public static boolean gsmElideAnything = false;
 	
 	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.) Default: false")
 	public static boolean retrainGSM = false;
@@ -330,7 +333,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	
 	private DecoderEM makeDecoder(Indexer<String> charIndexer) {
 		EmissionModelFactory emissionModelFactory = makeEmissionModelFactory(charIndexer);
-		return new DecoderEM(emissionModelFactory, allowGlyphSubstitution, gsmNoCharSubPrior, allowLanguageSwitchOnPunct, markovVerticalOffset, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
+		return new DecoderEM(emissionModelFactory, allowGlyphSubstitution, gsmNoCharSubPrior, gsmElideAnything, allowLanguageSwitchOnPunct, markovVerticalOffset, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
 	}
 
 	private EmissionModelFactory makeEmissionModelFactory(Indexer<String> charIndexer) {

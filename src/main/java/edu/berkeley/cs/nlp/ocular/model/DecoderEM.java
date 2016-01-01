@@ -25,6 +25,7 @@ public class DecoderEM {
 
 	private boolean allowGlyphSubstitution;
 	private double noCharSubPrior;
+	private boolean elideAnything;
 	private boolean allowLanguageSwitchOnPunct;
 	private boolean markovVerticalOffset;
 	
@@ -33,12 +34,13 @@ public class DecoderEM {
 	private int numMstepThreads;
 	private int decodeBatchSize;
 	
-	public DecoderEM(EmissionModelFactory emissionModelFactory, boolean allowGlyphSubstitution, double noCharSubPrior,
+	public DecoderEM(EmissionModelFactory emissionModelFactory, boolean allowGlyphSubstitution, double noCharSubPrior, boolean elideAnything,
 			boolean allowLanguageSwitchOnPunct, boolean markovVerticalOffset,
 			int beamSize, int numDecodeThreads, int numMstepThreads, int decodeBatchSize) {
 		this.emissionModelFactory = emissionModelFactory;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.noCharSubPrior = noCharSubPrior;
+		this.elideAnything = elideAnything;
 		this.allowLanguageSwitchOnPunct = allowLanguageSwitchOnPunct;
 		this.markovVerticalOffset = markovVerticalOffset;
 		this.beamSize = beamSize;
@@ -120,7 +122,7 @@ public class DecoderEM {
 					throw new RuntimeException("Markov vertical offset transition model not currently supported for multiple languages.");
 			}
 			else { 
-				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct, codeSwitchGSM, allowGlyphSubstitution, noCharSubPrior);
+				transitionModel = new CodeSwitchTransitionModel(codeSwitchLM, allowLanguageSwitchOnPunct, codeSwitchGSM, allowGlyphSubstitution, noCharSubPrior, elideAnything);
 				System.out.println("Using CodeSwitchLanguageModel, GlyphSubstitutionModel, and CodeSwitchTransitionModel");
 			}
 		}

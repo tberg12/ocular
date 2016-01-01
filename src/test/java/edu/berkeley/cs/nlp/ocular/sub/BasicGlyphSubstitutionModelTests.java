@@ -44,11 +44,10 @@ public class BasicGlyphSubstitutionModelTests {
 				charIndexer, 
 				activeCharacterSets,
 				gsmPower, 
-				minCountsForEvalGsm, 
+				minCountsForEvalGsm,
 				outputPath);
 
 		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, charIndexer.getIndex("\\'o"), gsmf.GLYPH_ELISION_TILDE), 1e-9);
-		
 		assertEquals(gsmSmoothingCount, gsmf.getSmoothingValue(0, charIndexer.getIndex("k"), charIndexer.getIndex("k")), 1e-9);
 		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);
 		assertEquals(gsmSmoothingCount*gsmElisionSmoothingCountMultiplier, gsmf.getSmoothingValue(0, charIndexer.getIndex("k"), gsmf.GLYPH_FIRST_ELIDED), 1e-9);

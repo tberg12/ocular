@@ -88,6 +88,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		public final int GLYPH_TILDE_ELIDED;
 		public final int GLYPH_FIRST_ELIDED;
 		public final int GLYPH_DOUBLED;
+		public final int GLYPH_ELIDED;
 		//public final int GLYPH_RMRGN_HPHN_DROP;
 		
 		private double gsmPower;
@@ -132,6 +133,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.GLYPH_FIRST_ELIDED = numChars + GlyphType.FIRST_ELIDED.ordinal();
 			this.GLYPH_DOUBLED = numChars + GlyphType.DOUBLED.ordinal();
 			//this.GLYPH_RMRGN_HPHN_DROP = numChars + GlyphType.RMRGN_HPHN_DROP.ordinal();
+			this.GLYPH_ELIDED = numChars + GlyphType.ELIDED.ordinal();
 			
 			this.outputPath = outputPath;
 		}
@@ -181,6 +183,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			
 			if (glyph == GLYPH_ELISION_TILDE) {
 				if (addTilde.get(lmChar) == null) return 0.0; // an elision-tilde-decorated char must be elision-tilde-decoratable
+				//System.err.println("soeksofek    addTilde.get("+charIndexer.getObject(lmChar)+") = "+charIndexer.getObject(addTilde.get(lmChar)));
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
 			else if (glyph == GLYPH_TILDE_ELIDED) {
@@ -193,12 +196,16 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			}
 			else if (glyph == GLYPH_DOUBLED) {
 				if (!canBeDoubled.contains(lmChar)) return 0.0; // a doubled character has to be doubleable
-				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
+				return gsmSmoothingCount;// * elisionSmoothingCountMultiplier;
 			}
 //			else if (glyph == GLYPH_RMRGN_HPHN_DROP) {
 //				if (lmChar != hyphenCharIndex) return 0.0; // only a hyphen can be hyphen-dropped
 //				return gsmSmoothingCount;
 //			}
+			else if (glyph == GLYPH_ELIDED) {
+				if (!canBeElided.contains(lmChar)) return 0.0; // an elided char must be elidable
+				return gsmSmoothingCount;
+			}
 			else { // glyph is a normal character
 				Integer baseChar = diacriticDisregardMap.get(lmChar);
 				if (baseChar != null && baseChar.equals(glyph))
