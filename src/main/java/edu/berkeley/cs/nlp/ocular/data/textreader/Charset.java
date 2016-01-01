@@ -271,9 +271,19 @@ public class Charset {
 	}
 	public static Map<Integer,Integer> makeAddTildeMap(Indexer<String> charIndexer) {
 		Map<Integer,Integer> m = new HashMap<Integer, Integer>();
-		for (String c : charIndexer.getObjects()) {
-			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c)) {
-				m.put(charIndexer.getIndex(c), charIndexer.getIndex(Charset.TILDE_ESCAPE + c));
+		for (String original : charIndexer.getObjects()) {
+			Tuple2<List<String>,String> originalEscapedDiacriticsAndLetter = Charset.escapeCharSeparateDiacritics(original);
+			String baseLetter = originalEscapedDiacriticsAndLetter._2;
+			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(original)) {
+					m.put(charIndexer.getIndex(original), charIndexer.getIndex(Charset.TILDE_ESCAPE + baseLetter));
+			}
+			else if (LETTERS_WITH_DISREGARDEDABLE_DIACRITICS.contains(baseLetter)) {
+				for (String diacritic : originalEscapedDiacriticsAndLetter._1) {
+					if (ESCAPE_DIACRITICS_THAT_CAN_BE_DISREGARDED.contains(diacritic)) {
+						m.put(charIndexer.getIndex(original), charIndexer.getIndex(Charset.TILDE_ESCAPE + baseLetter));
+						break;
+					}
+				}
 			}
 		}
 		return m;

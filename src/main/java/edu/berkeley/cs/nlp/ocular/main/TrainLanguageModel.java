@@ -245,19 +245,13 @@ public class TrainLanguageModel implements Runnable {
 		 */
 		charIndexer.getIndex(Charset.LONG_S);
 		for (String c : charIndexer.getObjects()) {
-			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c))
-				charIndexer.getIndex(Charset.TILDE_ESCAPE + c);
-			
 			Tuple2<List<String>,String> originalEscapedDiacriticsAndLetter = Charset.escapeCharSeparateDiacritics(c);
 			String baseLetter = originalEscapedDiacriticsAndLetter._2;
-			if (Charset.LETTERS_WITH_DISREGARDEDABLE_DIACRITICS.contains(baseLetter)) {
-				for (String diacritic : originalEscapedDiacriticsAndLetter._1) {
-					if (Charset.ESCAPE_DIACRITICS_THAT_CAN_BE_DISREGARDED.contains(diacritic)) {
-						charIndexer.getIndex(baseLetter);
-						break;
-					}
-				}
-			}
+			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c))
+				charIndexer.getIndex(Charset.TILDE_ESCAPE + c);
+			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(baseLetter))
+				charIndexer.getIndex(Charset.TILDE_ESCAPE + baseLetter);
+			charIndexer.getIndex(baseLetter);
 		}
 		TextReader tr = new BasicTextReader();
 		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
