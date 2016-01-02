@@ -5,7 +5,6 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,6 @@ import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
-import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
@@ -84,7 +82,6 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		List<TransitionState>[] viterbiTransStates = new List[numLines];
 		@SuppressWarnings("unchecked")
 		List<Integer>[] viterbiWidths = new List[numLines];
-		//boolean inHyphenation = false;
 		for (int line = 0; line < numLines; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
 			viterbiTransStates[line] = new ArrayList<TransitionState>();
@@ -102,7 +99,6 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 							case RMRGN_HPHN_INIT:
 							case RMRGN_HPHN:
 							case LMRGN_HPHN:
-								//inHyphenation = true;
 								break;
 							case LMRGN:
 							case RMRGN:

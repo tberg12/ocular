@@ -118,7 +118,7 @@ public class FontTrainEM {
 			int batchDocsCounter = 0;
 			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
 				Document doc = trainDocuments.get(docNum);
-				System.out.println("Training iteration "+iter+" of "+numEMIters+", document: "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
+				System.out.println("Training iteration "+iter+" of "+numEMIters+", document "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 				doc.loadLineText();
 
 				// e-step

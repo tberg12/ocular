@@ -78,6 +78,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		private int sCharIndex;
 		private int longsCharIndex;
 		private int fCharIndex;
+		private int lCharIndex;
 		private int hyphenCharIndex;
 		private int spaceCharIndex;
 		
@@ -122,6 +123,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.sCharIndex = charIndexer.getIndex("s");
 			this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
 			this.fCharIndex = charIndexer.getIndex("f");
+			this.lCharIndex = charIndexer.getIndex("l");
 			this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 			
@@ -212,7 +214,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 				else if (lmChar == sCharIndex && glyph == longsCharIndex)
 					return gsmSmoothingCount;
-				else if (lmChar == sCharIndex && glyph == fCharIndex)
+				else if (lmChar == sCharIndex && (glyph == fCharIndex || glyph == lCharIndex))
 					return 0.0;
 				else if (lmChar == hyphenCharIndex && glyph == spaceCharIndex) // so that line-break hyphens can be elided
 					return gsmSmoothingCount;
