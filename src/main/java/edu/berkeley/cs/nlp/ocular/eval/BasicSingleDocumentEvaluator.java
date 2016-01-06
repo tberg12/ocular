@@ -161,7 +161,12 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 				int glyphChar = glyph.templateCharIndex;
 				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
 				if (glyph.glyphType == GlyphType.DOUBLED) {
-					lineBuffer.append("[2x]");
+					lineBuffer.append("[2x");
+					lineBuffer.append(Charset.unescapeChar(charIndexer.getObject(lmChar)));
+					if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
+						lineBuffer.append("/" + (glyph.isElided() ? "" : sglyphChar) + "]");
+					}
+					lineBuffer.append("]");
 				}
 				else if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
 					lineBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided() ? "" : sglyphChar) + "]");

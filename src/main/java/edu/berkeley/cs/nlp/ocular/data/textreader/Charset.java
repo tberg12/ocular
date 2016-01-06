@@ -2,6 +2,7 @@ package edu.berkeley.cs.nlp.ocular.data.textreader;
 
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeMap;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setUnion;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
 
@@ -221,7 +222,7 @@ public class Charset {
 			ESCAPED_TO_PRECOMPOSED_MAP.put(entry.getValue(), entry.getKey());
 	}
 	
-	public static final Set<String> CHARS_THAT_CAN_BE_REPLACED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
+	public static final Set<String> CHARS_THAT_CAN_BE_REPLACED = setUnion(LOWERCASE_LATIN_LETTERS, makeSet("ç")); // TODO: Change this?
 	public static final Set<String> VALID_CHAR_SUBSTITUTIONS = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_DOUBLED = LOWERCASE_LATIN_LETTERS; // TODO: Change this?
 	public static final Set<String> CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE = LOWERCASE_LATIN_LETTERS; // TODO: Change this?

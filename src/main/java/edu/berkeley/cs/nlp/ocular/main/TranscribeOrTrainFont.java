@@ -108,8 +108,8 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Exponent on GSM scores. Default: ")
 	public static double gsmPower = 4.0;
 
-	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions. Default: 0.999999")
-	public static double gsmNoCharSubPrior = 0.9999999;
+	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions. Default: 0.9")
+	public static double gsmNoCharSubPrior = 0.9;
 
 	@Option(gloss = "Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde? Default: false")
 	public static boolean gsmElideAnything = false;
