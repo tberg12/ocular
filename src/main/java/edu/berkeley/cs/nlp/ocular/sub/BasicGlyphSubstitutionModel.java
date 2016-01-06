@@ -22,7 +22,7 @@ import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import indexer.Indexer;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 	private static final long serialVersionUID = -8473038413268727114L;

@@ -5,7 +5,7 @@ import java.io.Serializable;
 import indexer.Indexer;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class GlyphChar implements Serializable {
 	private static final long serialVersionUID = 1L;

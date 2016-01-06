@@ -16,7 +16,7 @@ import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class PdfImageReader {
 

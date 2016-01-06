@@ -7,7 +7,7 @@ import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public interface MultiDocumentEvaluator {
 

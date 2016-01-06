@@ -3,7 +3,7 @@ package edu.berkeley.cs.nlp.ocular.data.textreader;
 import java.util.List;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public interface TextReader {
 

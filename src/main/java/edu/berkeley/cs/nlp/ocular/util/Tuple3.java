@@ -5,7 +5,7 @@ import java.util.Comparator;
 
 /**
  * @author Dan Klein
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class Tuple3<A1, A2, A3> implements Serializable {
 	static final long serialVersionUID = 53;

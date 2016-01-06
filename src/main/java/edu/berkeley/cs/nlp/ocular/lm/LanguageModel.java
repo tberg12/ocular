@@ -3,7 +3,7 @@ package edu.berkeley.cs.nlp.ocular.lm;
 import indexer.Indexer;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public interface LanguageModel {
 

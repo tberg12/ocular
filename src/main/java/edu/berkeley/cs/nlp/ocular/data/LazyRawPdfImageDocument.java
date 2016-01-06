@@ -7,7 +7,7 @@ import java.io.File;
  * A document that reads a page from a pdf file only as it is needed
  * (and then stores the contents in memory for later use).
  * 
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class LazyRawPdfImageDocument extends LazyRawImageDocument {
 	private final File pdfFile;

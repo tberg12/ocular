@@ -7,7 +7,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class UniformLanguageModel implements SingleLanguageModel {
 	private static final long serialVersionUID = 398523984923L;

@@ -22,7 +22,7 @@ import edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont;
 import edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont.EmissionCacheInnerLoopType;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class TranscribeOrTrainFontGUI {
 

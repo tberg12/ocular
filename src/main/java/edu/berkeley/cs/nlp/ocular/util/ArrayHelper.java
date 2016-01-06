@@ -3,7 +3,7 @@ package edu.berkeley.cs.nlp.ocular.util;
 import java.util.Arrays;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class ArrayHelper {
 

@@ -11,7 +11,7 @@ import org.junit.Test;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class ReplaceSomeTextReaderTests {
 

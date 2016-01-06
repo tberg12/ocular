@@ -11,7 +11,7 @@ import org.junit.Test;
 import indexer.Indexer;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class CharIndexerTests {
 

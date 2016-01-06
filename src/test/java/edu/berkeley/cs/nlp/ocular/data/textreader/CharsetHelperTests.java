@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.Test;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class CharsetHelperTests {
 

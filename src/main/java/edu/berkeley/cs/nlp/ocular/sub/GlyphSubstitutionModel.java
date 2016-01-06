@@ -3,7 +3,7 @@ package edu.berkeley.cs.nlp.ocular.sub;
 import java.io.Serializable;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public interface GlyphSubstitutionModel extends Serializable {
 

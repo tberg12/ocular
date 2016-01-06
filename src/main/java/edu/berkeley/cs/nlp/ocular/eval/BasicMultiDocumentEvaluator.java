@@ -19,7 +19,7 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 	private List<Document> documents;

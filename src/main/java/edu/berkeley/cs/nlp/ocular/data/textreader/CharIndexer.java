@@ -6,7 +6,7 @@ import indexer.HashMapIndexer;
 import indexer.Indexer;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class CharIndexer implements Indexer<String> {
 	private static final long serialVersionUID = 3212987272223100239L;

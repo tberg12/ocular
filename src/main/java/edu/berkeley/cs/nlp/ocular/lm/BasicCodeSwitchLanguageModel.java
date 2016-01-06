@@ -10,7 +10,7 @@ import indexer.Indexer;
 /**
  * TODO: Move some of the probability calculations from CodeSwitchTransitionModel to here?
  * 
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	private static final long serialVersionUID = 3298359823L;

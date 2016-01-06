@@ -11,7 +11,7 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 import fileio.f;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class ReplaceSomeTextReader implements TextReader {
 

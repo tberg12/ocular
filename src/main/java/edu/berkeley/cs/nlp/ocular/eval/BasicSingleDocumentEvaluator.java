@@ -23,7 +23,7 @@ import indexer.Indexer;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 	private Indexer<String> charIndexer;

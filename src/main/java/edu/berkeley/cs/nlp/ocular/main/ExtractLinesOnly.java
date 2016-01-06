@@ -8,7 +8,7 @@ import fig.Option;
 import fig.OptionsParser;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class ExtractLinesOnly implements Runnable {
 

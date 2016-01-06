@@ -6,7 +6,7 @@ import java.util.List;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class CharsetHelper {
 

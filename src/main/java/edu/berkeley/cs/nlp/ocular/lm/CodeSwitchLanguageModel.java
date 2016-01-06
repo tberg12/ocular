@@ -5,7 +5,7 @@ import java.io.Serializable;
 import indexer.Indexer;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public interface CodeSwitchLanguageModel extends LanguageModel, Serializable {
 

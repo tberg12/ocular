@@ -6,7 +6,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 
 /**
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public interface SingleLanguageModel extends LanguageModel, Serializable {
 

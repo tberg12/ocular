@@ -12,7 +12,7 @@ import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
  * A dataset loader that reads files only as they are needed (and then stores
  * the contents in memory for later use).
  * 
- * @author Dan Garrette (dhg@cs.utexas.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class LazyRawImageLoader implements ImageLoader {
 

@@ -29,7 +29,7 @@ package edu.berkeley.cs.nlp.ocular.model;
 //import com.halperta.ocr.ocular.model.PostViterbi.CharacterAlternatives;
 //
 ///**
-// * @author Dan Garrette (dhg@cs.utexas.edu)
+// * @author Dan Garrette (dhgarrette@gmail.com)
 // */
 //public class PostViterbiTests {
 //
