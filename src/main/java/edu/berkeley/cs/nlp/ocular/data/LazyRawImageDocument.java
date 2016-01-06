@@ -99,7 +99,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 		observations = new PixelType[lineImageFiles.length][][];
 		for (int i = 0; i < lineImageFiles.length; ++i) {
 			Matcher m = pattern.matcher(lineImageFiles[i].getName());
-			if (m.find() && Integer.valueOf(m.group(1)) != i) throw new RuntimeException("Trying to load lines from "+leLineDir()+" but the file for line "+i+" is missing (first file seems to be "+Integer.valueOf(m.group(1))+").");
+			if (m.find() && Integer.valueOf(m.group(1)) != i) throw new RuntimeException("Trying to load lines from "+leLineDir()+" but the file for line "+i+" is missing (found "+m.group(1)+" instead).");
 			String lineImageFile = fullLeLinePath(i);
 			System.out.println("    Loading pre-extracted line from " + lineImageFile);
 			try {

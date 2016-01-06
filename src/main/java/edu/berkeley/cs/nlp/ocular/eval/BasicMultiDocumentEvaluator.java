@@ -55,7 +55,6 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 		for (int docNum = 0; docNum < numDocs; ++docNum) {
 			Document doc = documents.get(docNum);
 			System.out.println((iter > 0 ? "Training iteration "+iter+", " : "") + (batchId > 0 ? "batch "+batchId+", " : "") + "Transcribing eval document "+(docNum+1)+" of "+numDocs+":  "+doc.baseName());
-			doc.loadLineText();
 			
 			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, false, lm, gsm, templates, backwardTransitionModel);
 			final TransitionState[][] decodeStates = decodeResults._1._1;

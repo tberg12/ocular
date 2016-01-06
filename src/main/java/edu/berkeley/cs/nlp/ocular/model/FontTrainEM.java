@@ -120,6 +120,7 @@ public class FontTrainEM {
 				Document doc = trainDocuments.get(docNum);
 				System.out.println("Training iteration "+iter+" of "+numEMIters+", document "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 				doc.loadLineText();
+				doc.loadLmText();
 
 				// e-step
 				Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, true, lm, gsm, templates, backwardTransitionModel);

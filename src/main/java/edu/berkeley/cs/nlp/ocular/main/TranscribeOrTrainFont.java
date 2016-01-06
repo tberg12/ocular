@@ -218,7 +218,7 @@ public class TranscribeOrTrainFont implements Runnable {
 
 		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution);
 		
-		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, !trainFont, uniformLineHeight, binarizeThreshold, crop);
 		if (trainFont) {
 			MultiDocumentEvaluator evalSetEvaluator = makeEvalSetEvaluator(charIndexer, decoderEM, documentEvaluator);
 			train(documents, lm, font, gsmFactory, gsm, decoderEM, documentEvaluator, evalSetEvaluator);
@@ -355,7 +355,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	private MultiDocumentEvaluator makeEvalSetEvaluator(Indexer<String> charIndexer, DecoderEM decoderEM, SingleDocumentEvaluator documentEvaluator) {
 		MultiDocumentEvaluator evalSetEvaluator;
 		if (evalInputPath != null) {
-			List<Document> evalDocuments = LazyRawImageLoader.loadDocuments(evalInputPath, evalExtractedLinesPath, evalNumDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
+			List<Document> evalDocuments = LazyRawImageLoader.loadDocuments(evalInputPath, evalExtractedLinesPath, evalNumDocs, numDocsToSkip, true, uniformLineHeight, binarizeThreshold, crop);
 			evalSetEvaluator = new BasicMultiDocumentEvaluator(evalDocuments, evalInputPath, outputPath, decoderEM, documentEvaluator, charIndexer);
 		}
 		else {

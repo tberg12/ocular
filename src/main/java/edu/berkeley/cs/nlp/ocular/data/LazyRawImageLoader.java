@@ -53,8 +53,8 @@ public class LazyRawImageLoader implements ImageLoader {
 		return docs;
 	}
 
-	public static List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip) { return loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, true, 0.12, false); }
-	public static List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
+	public static List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired) { return loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, goldTranscriptionRequired, true, 0.12, false); }
+	public static List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
 		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
 		LazyRawImageLoader loader = new LazyRawImageLoader(inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath);
 		List<Document> documents = new ArrayList<Document>();
@@ -76,6 +76,8 @@ public class LazyRawImageLoader implements ImageLoader {
 		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip+actualNumDocsToUse; ++docNum) {
 			Document lazyDoc = lazyDocs.get(docNum);
 			System.out.println("  Using " + lazyDoc.baseName());
+			if (goldTranscriptionRequired && lazyDoc.loadLineText() == null & lazyDoc.loadLmText() == null) 
+				throw new RuntimeException("Evaluation document "+lazyDoc.baseName()+" has no gold transcriptions.");
 			documents.add(lazyDoc);
 		}
 		if (actualNumDocsToUse < 1) throw new RuntimeException("No documents given!");

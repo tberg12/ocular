@@ -49,7 +49,7 @@ public class ExtractLinesOnly implements Runnable {
 	public void run() {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
 		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath not set");
-		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
 		for (Document doc : documents) {
 			doc.loadLineImages();
 		}
