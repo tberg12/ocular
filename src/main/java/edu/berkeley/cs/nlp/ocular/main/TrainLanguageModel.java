@@ -271,16 +271,14 @@ public class TrainLanguageModel implements Runnable {
 		outer: 
 			for (File file : FileUtil.recursiveFiles(filepath)) {
 				for (String line : f.readLines(file.getPath())) {
-					if (allChars.size() >= charsToTake) break outer;
-					List<String> chars = textReader.readCharacters(line + " ");
-					
-					for (String c: chars) {
+					if (line.isEmpty()) continue;
+					for (String c: textReader.readCharacters(line + " ")) {
 						// validate the character...
 						Charset.escapeChar(c);
 						Charset.unescapeChar(c);
+						allChars.add(c);
 					}
-					
-					allChars.addAll(chars);
+					if (allChars.size() >= charsToTake) break outer;
 				}
 			}
 		return allChars;
