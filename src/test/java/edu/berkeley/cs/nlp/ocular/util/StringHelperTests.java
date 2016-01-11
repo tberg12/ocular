@@ -1,5 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.util;
 
+import static edu.berkeley.cs.nlp.ocular.util.StringHelper.drop;
 import static edu.berkeley.cs.nlp.ocular.util.StringHelper.join;
 import static edu.berkeley.cs.nlp.ocular.util.StringHelper.last;
 import static edu.berkeley.cs.nlp.ocular.util.StringHelper.longestCommonPrefix;
@@ -39,6 +40,19 @@ public class StringHelperTests {
 		assertEquals("a", take("a", 1));
 		assertEquals("a", take("a", 2));
 		assertEquals("ab", take("abc", 2));
+	}
+
+	@Test
+	public void testDrop() {
+		assertEquals("", drop("", 0));
+		assertEquals("", drop("", -2));
+		assertEquals("", drop("", 2));
+		assertEquals("abc", drop("abc", 0));
+		assertEquals("abc", drop("abc", -2));
+		assertEquals("", drop("a", 1));
+		assertEquals("", drop("a", 2));
+		assertEquals("c", drop("abc", 2));
+		assertEquals("bc", drop("abc", 1));
 	}
 
 	@Test

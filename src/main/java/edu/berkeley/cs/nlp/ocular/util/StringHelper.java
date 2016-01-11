@@ -28,6 +28,15 @@ public class StringHelper {
 			return s;
 	}
 
+	public static String drop(String s, int n) {
+		if (n <= 0)
+			return s;
+		else if (n < s.length())
+			return s.substring(n);
+		else
+			return "";
+	}
+
 	public static String last(String s) {
 		if (s.isEmpty()) throw new IllegalArgumentException("cannot get `last` of empty string");
 		return s.substring(s.length() - 1);
