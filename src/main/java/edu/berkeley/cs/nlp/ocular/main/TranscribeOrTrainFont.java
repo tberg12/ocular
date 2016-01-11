@@ -216,7 +216,8 @@ public class TranscribeOrTrainFont implements Runnable {
 		
 		DecoderEM decoderEM = makeDecoder(charIndexer);
 
-		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution);
+		boolean evalCharIncludesDiacritic = true;
+		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution, evalCharIncludesDiacritic);
 		
 		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, !trainFont, uniformLineHeight, binarizeThreshold, crop);
 		if (trainFont) {

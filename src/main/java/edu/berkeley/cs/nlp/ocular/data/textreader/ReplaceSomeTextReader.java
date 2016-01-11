@@ -67,13 +67,12 @@ public class ReplaceSomeTextReader implements TextReader {
 	}
 
 	public static List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> loadRulesFromFile(String path) {
-		TextReader tr = new BasicTextReader();
 		List<Tuple2<Tuple2<List<String>, List<String>>, Integer>> result = new ArrayList<Tuple2<Tuple2<List<String>, List<String>>, Integer>>();
 		for (String line : f.readLines(path)) {
 			if (!line.trim().isEmpty()) {
 				String[] parts = line.split("\t");
 				if (parts.length != 3) throw new RuntimeException("line does not contain 3 parts.  found: " + Arrays.asList(parts));
-				result.add(makeTuple2(makeTuple2(tr.readCharacters(parts[0]), tr.readCharacters(parts[1])), Integer.valueOf(parts[2])));
+				result.add(makeTuple2(makeTuple2(Charset.readCharacters(parts[0]), Charset.readCharacters(parts[1])), Integer.valueOf(parts[2])));
 			}
 		}
 		return result;

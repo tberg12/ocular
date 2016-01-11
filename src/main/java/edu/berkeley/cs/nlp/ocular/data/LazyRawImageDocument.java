@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
@@ -42,8 +41,6 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 
 	private String[][] text = null;
 	private List<String> lmText = null;
-
-	private TextReader textReader = new BasicTextReader();
 
 	public LazyRawImageDocument(String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String extractedLinesPath) {
 		this.inputPath = inputPath;
@@ -151,7 +148,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 				try {
 					BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
 					while (in.ready()) {
-						textList.add(textReader.readCharacters(in.readLine()));
+						textList.add(Charset.readCharacters(in.readLine()));
 					}
 					in.close();
 				}
@@ -181,7 +178,7 @@ public abstract class LazyRawImageDocument implements ImageLoader.Document {
 				try {
 					BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
 					while (in.ready()) {
-						lmText.addAll(textReader.readCharacters(in.readLine()));
+						lmText.addAll(Charset.readCharacters(in.readLine()));
 						lmText.add(" ");
 					}
 					in.close();

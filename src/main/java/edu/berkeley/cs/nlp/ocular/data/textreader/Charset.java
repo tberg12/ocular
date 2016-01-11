@@ -291,12 +291,11 @@ public class Charset {
 	}
 	public static Map<Integer,List<Integer>> makeLigatureMap(Indexer<String> charIndexer) {
 		Map<Integer,List<Integer>> m = new HashMap<Integer, List<Integer>>();
-		TextReader tr = new BasicTextReader();
 		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
-			List<String> ligature = tr.readCharacters(entry.getKey());
+			List<String> ligature = readCharacters(entry.getKey());
 			if (ligature.size() > 1) throw new RuntimeException("Ligature ["+entry.getKey()+"] has more than one character: "+ligature);
 			List<Integer> l = new ArrayList<Integer>();
-			for (String c : tr.readCharacters(entry.getValue()))
+			for (String c : readCharacters(entry.getValue()))
 				l.add(charIndexer.getIndex(c));
 			m.put(charIndexer.getIndex(ligature.get(0)), l);
 		}
@@ -451,6 +450,29 @@ public class Charset {
 		}
 	}
 
+	/**
+	 * Convert a string into a sequence of diacritic-escaped characters.
+	 * 
+	 * @see edu.berkeley.cs.nlp.ocular.data.textreader.textreader.Charset.escapeChar
+	 * 
+	 * @param line	A line of text possibly containing characters with diacritics
+	 * composed, precomposed, or escaped.
+	 * @return	A fully-escaped character string, with all diacritics (combining
+	 * and precomposed) converted to their equivalent escape sequences.
+	 */
+	public static List<String> readCharacters(String line) {
+		List<String> escapedChars = new ArrayList<String>();
+		int i = 0;
+		while (i < line.length()) {
+			Tuple2<String, Integer> escapedCharAndLength = Charset.readCharAt(line, i);
+			String c = escapedCharAndLength._1;
+			int length = escapedCharAndLength._2;
+			escapedChars.add(c);
+			i += length; // advance to the next character
+		}
+		return escapedChars;
+	}
+	
 	/**
 	 * Convert diacritic escape sequences on a character into unicode precomposed and combining characters
 	 */

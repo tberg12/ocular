@@ -178,7 +178,7 @@ public class TrainLanguageModel implements Runnable {
 			System.out.println("For language '" + language + "', using text in " + filepath + ", prior=" + prior
 					+ (languageAltSpellPathMap.keySet().contains(language) ? ", alternate spelling replacement rules in " + languageAltSpellPathMap.get(language) : ""));
 			
-			TextReader textReader = new BasicTextReader();
+			TextReader textReader = new BasicTextReader(Charset.BANNED_CHARS);
 			if (explicitCharacterSet != null && !explicitCharacterSet.isEmpty()) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
 			if (removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
@@ -253,12 +253,11 @@ public class TrainLanguageModel implements Runnable {
 				charIndexer.getIndex(Charset.TILDE_ESCAPE + baseLetter);
 			charIndexer.getIndex(baseLetter);
 		}
-		TextReader tr = new BasicTextReader();
 		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
-			List<String> ligature = tr.readCharacters(entry.getKey());
+			List<String> ligature = Charset.readCharacters(entry.getKey());
 			if (ligature.size() > 1) throw new RuntimeException("Ligature ["+entry.getKey()+"] has more than one character: "+ligature);
 			charIndexer.getIndex(ligature.get(0));
-			for (String c : tr.readCharacters(entry.getValue()))
+			for (String c : Charset.readCharacters(entry.getValue()))
 				charIndexer.getIndex(c);
 		}
 		

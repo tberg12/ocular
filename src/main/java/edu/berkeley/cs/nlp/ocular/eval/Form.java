@@ -1,8 +1,12 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -16,9 +20,29 @@ public class Form implements Comparable<Form> {
   }
   
   public static Form charsAsGlyphs(String str) {
+    return charsAsGlyphs(str, true);
+  }
+  
+  /**
+   * 
+   * @param str
+   * @param charIncludesDiacritic If false, the diacritic will be scored separately from the base character.
+   * @return
+   */
+  public static Form charsAsGlyphs(String str, boolean charIncludesDiacritic) {
     List<Glyph> glyphs = new ArrayList<Glyph>();
-    for (int i = 0; i < str.length(); i++) {
-      glyphs.add(new Glyph(str.substring(i, i+1)));
+    for (String c : Charset.readCharacters(str)) {
+      if (charIncludesDiacritic) {
+    	  glyphs.add(new Glyph(c));
+      }
+      else {
+    	  Tuple2<List<String>, String> diacriticsAndLetter = Charset.escapeCharSeparateDiacritics(c);
+    	  Collections.sort(diacriticsAndLetter._1);
+    	  for (String diacriticEscapeCode : diacriticsAndLetter._1) {
+    		  glyphs.add(new Glyph(diacriticEscapeCode));
+    	  }
+    	  glyphs.add(new Glyph(diacriticsAndLetter._2));
+      }
     }
     return new Form(glyphs);
   }

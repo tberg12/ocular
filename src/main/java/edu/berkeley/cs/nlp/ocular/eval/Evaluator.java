@@ -9,12 +9,10 @@ import java.util.Map;
 
 import counter.Counter;
 import counter.CounterMap;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
 import tuple.Pair;
 import util.Iterators;
-import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
-import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -66,12 +64,12 @@ public class Evaluator {
 		return buf.toString();
 	}
 
-	public static Map<String,EvalSuffStats> getUnsegmentedEval(List<String>[] guessChars, List<String>[] goldChars) {
+	public static Map<String,EvalSuffStats> getUnsegmentedEval(List<String>[] guessChars, List<String>[] goldChars, boolean charIncludesDiacritic) {
 		Map<String,EvalSuffStats> evals = new HashMap<String,EvalSuffStats>();
-		evals.put("CER, keep punc, allow f->s", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, true)));
-		evals.put("CER, keep punc", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, false)));
-		evals.put("CER, remove punc, allow f->s", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, true, true)));
-		evals.put("CER, remove punc", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, true, false)));
+		evals.put("CER, keep punc, allow f->s", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, true, charIncludesDiacritic)));
+		evals.put("CER, keep punc", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, false, false, charIncludesDiacritic)));
+		evals.put("CER, remove punc, allow f->s", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, true, true, charIncludesDiacritic)));
+		evals.put("CER, remove punc", new EvalSuffStats(getCERSuffStats(guessChars, goldChars, true, false, charIncludesDiacritic)));
 		evals.put("WER, keep punc, allow f->s", new EvalSuffStats(getWERSuffStats(guessChars, goldChars, false, true)));
 		evals.put("WER, keep punc", new EvalSuffStats(getWERSuffStats(guessChars, goldChars, false, false)));
 		evals.put("WER, remove punc, allow f->s", new EvalSuffStats(getWERSuffStats(guessChars, goldChars, true, true)));
@@ -79,11 +77,11 @@ public class Evaluator {
 		return evals;
 	}
 
-	public static Pair<Integer,Integer> getCERSuffStats(List<String>[] guessChars, List<String>[] goldChars, boolean removePunc, boolean allowFSConfusion) {
+	public static Pair<Integer,Integer> getCERSuffStats(List<String>[] guessChars, List<String>[] goldChars, boolean removePunc, boolean allowFSConfusion, boolean charIncludesDiacritic) {
 		String guessStr = fullyNormalize(guessChars, removePunc);
 		String goldStr = fullyNormalize(goldChars, removePunc);
-		Form guessForm = Form.charsAsGlyphs(guessStr);
-		Form goldForm = Form.charsAsGlyphs(goldStr);
+		Form guessForm = Form.charsAsGlyphs(guessStr, charIncludesDiacritic);
+		Form goldForm = Form.charsAsGlyphs(goldStr, charIncludesDiacritic);
 		EditDistanceParams params = EditDistanceParams.getStandardParams(guessForm, goldForm, allowFSConfusion);
 		MarkovEditDistanceComputer medc = new MarkovEditDistanceComputer(params);
 		AlignedFormPair alignedPair = medc.runEditDistance();
@@ -234,8 +232,7 @@ public class Evaluator {
 
 	private static String splitOutPunc(String str) {
 		StringBuffer buf = new StringBuffer();
-		TextReader textReader = new BasicTextReader();
-		for (String c: textReader.readCharacters(str)) {
+		for (String c: Charset.readCharacters(str)) {
 			if (!Charset.isPunctuationChar(c)) buf.append(c);
 		}
 		return normalizeWhitespace(buf.toString());
@@ -244,19 +241,23 @@ public class Evaluator {
 	public static void main(String[] args) {
 		String guess = "this is a longer, more nuanced test of the system";
 		String gold = "tis is a logner, more nunced test of the sstem";
-		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess), convertToLines(gold))));
+		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess), convertToLines(gold), true)));
 
 		String guess2 = "deletion deletion this is a longer, more nuanced test of the system";
 		String gold2 = "tis is a logner, more nunced test of the sstem insertion insertion";
-		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess2), convertToLines(gold2))));
+		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess2), convertToLines(gold2), true)));
 
 		String guess3 = "this is a longer, more nuanced test of the system deletion deletion";
 		String gold3 = "insertion insertion tis is a logner, more nunced test of the sstem";
-		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess3), convertToLines(gold3))));
+		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess3), convertToLines(gold3), true)));
 
 		String guess4 = "this is \n a longer, more\n nuan-\nced  \n   test of the system deletion deletion";
 		String gold4 = "this is a lon- \n ger, more nuanced test of the system deletion deletion";
-		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess4), convertToLines(gold4))));
+		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess4), convertToLines(gold4), true)));
+
+		String guess5 = "this is a longer, more nuanced t\\'est of the system";
+		String gold5 = "tis is a logner, more nunced t\\'est of the sstem";
+		System.out.println(renderEval(getUnsegmentedEval(convertToLines(guess5), convertToLines(gold5), true)));
 	}
 
 	private static List<String>[] convertToLines(String rawStr) {

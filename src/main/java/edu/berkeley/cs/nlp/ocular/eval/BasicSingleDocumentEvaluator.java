@@ -28,12 +28,14 @@ import indexer.Indexer;
 public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 	private Indexer<String> charIndexer;
 	private Indexer<String> langIndexer;
-	boolean allowGlyphSubstitution;
+	private boolean allowGlyphSubstitution;
+	private boolean charIncludesDiacritic;
 	
-	public BasicSingleDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution) {
+	public BasicSingleDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution, boolean charIncludesDiacritic) {
 		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
+		this.charIncludesDiacritic = charIncludesDiacritic;
 	}
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
@@ -218,7 +220,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			//
 			// Evaluate the comparison
 			//
-			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
+			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences, charIncludesDiacritic);
 			if (allEvals != null) {
 				allEvals.add(makeTuple2(doc.baseName(), evals));
 			}
@@ -268,7 +270,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			// Evaluate the comparison
 			//
 			@SuppressWarnings("unchecked")
-			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(new List[]{viterbiLmChars}, new List[]{goldLmChars});
+			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(new List[]{viterbiLmChars}, new List[]{goldLmChars}, charIncludesDiacritic);
 			if (allLmEvals != null) {
 				allLmEvals.add(makeTuple2(doc.baseName(), lmEvals));
 			}

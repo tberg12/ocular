@@ -328,7 +328,7 @@ public class Main implements Runnable {
 				guessAndGoldOut.append("\n");
 			}
 
-			Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences);
+			Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences, true);
 			if (iter > numEMIters) {
 				allEvals.add(Tuple2.makeTuple2(doc.baseName(), evals));
 			}

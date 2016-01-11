@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
+
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
@@ -41,6 +43,19 @@ public class BasicTextReaderTests {
 		TextReader tr = new BasicTextReader();
 		List<String> r = Arrays.asList("t", "h", "i", "s", "\\\\", "t", "h", "a", "t", "\\\\", "t", "h", "e", "\\\\");
 		assertEquals(r, tr.readCharacters("this\\\\that\\\\the\\\\"));
+	}
+
+	@Test
+	public void test_readCharacters_banned() {
+		String s = "thi&s\\\\tha$t\\\\t$he\\\\";
+		
+		TextReader tr = new BasicTextReader();
+		List<String> r = Arrays.asList("t", "h", "i", "&", "s", "\\\\", "t", "h", "a", "$", "t", "\\\\", "t", "$", "h", "e", "\\\\");
+		assertEquals(r, tr.readCharacters(s));
+
+		TextReader tr2 = new BasicTextReader(CollectionHelper.makeSet("$","&"));
+		List<String> r2 = Arrays.asList("t", "h", "i", "s", "\\\\", "t", "h", "a", "t", "\\\\", "t", "h", "e", "\\\\");
+		assertEquals(r2, tr2.readCharacters(s));
 	}
 
 }
