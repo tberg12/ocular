@@ -5,6 +5,7 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +31,8 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 	private Indexer<String> langIndexer;
 	private boolean allowGlyphSubstitution;
 	private boolean charIncludesDiacritic;
+	
+	private int SPACE_INDEX = charIndexer.getIndex(Charset.SPACE);
 	
 	public BasicSingleDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution, boolean charIncludesDiacritic) {
 		this.charIndexer = charIndexer;
@@ -134,6 +137,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		String goldComparisonWithSubsOutputFilename = outputFilenameBase + "_vsGold_withSubs.txt";
 		String goldLmComparisonOutputFilename = outputFilenameBase + "_lm_vsGold.txt";
 		String htmlOutputFilename = outputFilenameBase + ".html";
+		String altoOutputFilename = outputFilenameBase + ".alto";
 		new File(transcriptionOutputFilename).getParentFile().mkdirs();
 		
 		//
@@ -203,6 +207,16 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		//System.out.println(transcriptionWithWidthsOutputBuffer.toString());
 		FileHelper.writeString(transcriptionWithWidthsOutputFilename, transcriptionWithWidthsOutputBuffer.toString());
 		}
+		
+		//
+		//Transcription in ALTO
+		//
+		{
+			System.out.println("Writing alto output to " + altoOutputFilename);
+			f.writeString(altoOutputFilename, printALTO(numLines, viterbiTransStates, doc.baseName(), altoOutputFilename));
+			}
+
+		
 
 		if (text != null) {
 			//
@@ -341,6 +355,99 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		outputBuffer.append("</body></html>\n");
 		outputBuffer.append("\n\n\n");
 		outputBuffer.append("\n\n\n\n\n");
+		return outputBuffer.toString();
+	}
+
+
+	
+//	          <TextLine ID="line_1" WIDTH="619" HEIGHT="105" HPOS="22" VPOS="1560">
+//	            <String ID="word_1" WIDTH="65" HEIGHT="70" HPOS="24" VPOS="1560" CONTENT="A" WC="79" emop:DNC="0.0096"></String>
+//	          </TextLine>
+//	          <TextLine ID="line_2" WIDTH="736" HEIGHT="83" HPOS="132" VPOS="1211">
+//	            <String ID="word_3" WIDTH="260" HEIGHT="77" HPOS="132" VPOS="1211" CONTENT="Serious" WC="73" emop:DNC="0.0048"></String>
+//	            <SP WIDTH="10"/>
+//	            <String ID="word_4" WIDTH="437" HEIGHT="83" HPOS="132" VPOS="1510" CONTENT="Exhortation" WC="72" emop:DNC="0.0048">
+//	              <ALTERNATIVE>Exho.rtation</ALTERNATIVE>
+//				</String>
+//	          </TextLine>
+//	          <TextLine ID="line_3" WIDTH="671" HEIGHT="57" HPOS="253" VPOS="1438">
+//	            <String ID="word_5" WIDTH="114" HEIGHT="55" HPOS="253" VPOS="1438" CONTENT="To" WC="84" emop:DNC="0.0024">
+//	              <ALTERNATIVE>T()</ALTERNATIVE>
+//				</String>
+//	            <SP WIDTH="10"/>
+//	            <String ID="word_6" WIDTH="46" HEIGHT="49" HPOS="260" VPOS="1599" CONTENT="A" WC="89" emop:DNC="0.0048"></String>
+//	            <SP WIDTH="10"/>
+//	            <String ID="word_7" WIDTH="54" HEIGHT="52" HPOS="258" VPOS="1666" CONTENT="N" WC="92" emop:DNC="0.0083"></String>
+//	          </TextLine>
+	
+	
+	private String printALTO(int numLines, List<TransitionState>[] viterbiTransStates, String imgFilename, String htmlOutputFilename) {
+		StringBuffer outputBuffer = new StringBuffer();
+		outputBuffer.append("<alto xmlns=\"http://schema.ccs-gmbh.com/ALTO\" xmlns:emop=\"http://emop.tamu.edu\">\n");
+		outputBuffer.append("  <Description>\n");
+		outputBuffer.append("    <MeasurementUnit>pixel</MeasurementUnit>\n");
+		outputBuffer.append("    <sourceImageInformation>\n");
+		outputBuffer.append("      <filename>"+imgFilename+"</filename>\n");
+		outputBuffer.append("    </sourceImageInformation>\n");
+		outputBuffer.append("    <OCRProcessing>\n");
+		outputBuffer.append("      <preProcessingStep></preProcessingStep>\n");
+		outputBuffer.append("      <ocrProcessingStep>\n");
+		outputBuffer.append("        <processingSoftware>\n");
+		outputBuffer.append("          <softwareCreator>Taylor Berg-Kirkpatrick, Greg Durrett, Dan Klein, Dan Garrette, Hannah Alpert-Abrams</softwareCreator>\n");
+		outputBuffer.append("          <softwareName>Ocular</softwareName>\n");
+		outputBuffer.append("          <softwareVersion>0.0.3</softwareVersion>\n");
+		outputBuffer.append("        </processingSoftware>\n");
+		outputBuffer.append("      </ocrProcessingStep>\n");
+//		outputBuffer.append("      <postProcessingStep>\n");
+//		outputBuffer.append("        <processingSoftware>\n");
+//		outputBuffer.append("          <softwareCreator>\n");
+//		outputBuffer.append("            Illinois Informatics Institute, University of Illinois at Urbana-Champaign http://www.informatics.illinois.edu\n");
+//		outputBuffer.append("          </softwareCreator>\n");
+//		outputBuffer.append("          <softwareName>PageCorrector</softwareName>\n");
+//		outputBuffer.append("          <softwareVersion>1.10.0-SNAPSHOT</softwareVersion>\n");
+//		outputBuffer.append("        </processingSoftware>\n");
+//		outputBuffer.append("      </postProcessingStep>\n");
+		outputBuffer.append("    </OCRProcessing>\n");
+		outputBuffer.append("  </Description>\n");
+		outputBuffer.append("  <Layout>\n");
+		outputBuffer.append("    <Page ID=\"page_1\">\n");
+		outputBuffer.append("      <PrintSpace>\n");
+		outputBuffer.append("        <TextBlock ID=\"par_1\">\n");
+		
+		for (int line = 0; line < numLines; ++line) {
+			outputBuffer.append("    <TextLine ID=\"line_"+(line+1)+"\">\n"); //Opening <TextLine>, assigning ID.
+			Iterator<TransitionState> tsIterator = viterbiTransStates[line].iterator();
+			int wordIndex = 0;
+			//goal: to take all the characters and put them into the wordBuffer until they get into the wordBuffer and then output them.
+			
+			List<TransitionState> wordBuffer = new ArrayList<TransitionState>(); //here we have created the word buffer.
+			while(tsIterator.hasNext()){							// here we have said that for as long as there are characters in the ts iterator (which is the line)...
+				TransitionState ts = tsIterator.next();				//then we need to take each state and put it into the variable ts
+				wordBuffer.add(ts);			// put it into the wordbuffer.
+				boolean emptyBuffer = wordBuffer.isEmpty();
+				boolean endOfWord = ts.getLmCharIndex() == SPACE_INDEX	&& ts.getGlyphChar().templateCharIndex == SPACE_INDEX;
+				boolean endOfTheLine = !tsIterator.hasNext();
+				if(!emptyBuffer && (endOfWord || endOfTheLine)){		
+					String language = langIndexer.getObject(wordBuffer.get(0).getLanguageIndex());
+					StringBuffer trueTranscription = new StringBuffer();
+					StringBuffer normalizedTranscription = new StringBuffer();
+					for (TransitionState wts : wordBuffer){
+						trueTranscription.append(charIndexer.getObject(wts.getLmCharIndex()));
+						normalizedTranscription.append(charIndexer.getObject(wts.getGlyphChar().templateCharIndex)); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
+					}
+					outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" CONTENT=\""+trueTranscription+"\" Language=\""+language+"\"> </String>\n");	// then we are going to want to output the word. I totally forget how to insert var. into a string.
+					wordIndex = wordIndex+1;
+					wordBuffer.clear();
+				}
+			}			
+			
+			outputBuffer.append("</TextLine>\n"); //closing </TextLine>
+		}
+		outputBuffer.append("</TextBlock>\n");
+		outputBuffer.append("</PrintSpace>\n");
+		outputBuffer.append("</Page>\n");
+		outputBuffer.append("</Layout>\n");
+		outputBuffer.append("</alto>\n");
 		return outputBuffer.toString();
 	}
 
