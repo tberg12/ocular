@@ -452,7 +452,9 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 					String trueTranscription = trueTranscriptionBuffer.toString().trim();
 					String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
 					if (!trueTranscription.isEmpty()) {
-						outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+trueTranscription+"\" Language=\""+language+"\"> </String>\n");
+						outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+trueTranscription+"\" Language=\""+language+"\"> \n");
+						outputBuffer.append("          <ALTERNATIVE>"+normalizedTranscription+"</ALTERNATIVE>\n");
+						outputBuffer.append("      </String>\n");
 						wordIndex = wordIndex+1;
 						wordWidth = 0;
 					}
