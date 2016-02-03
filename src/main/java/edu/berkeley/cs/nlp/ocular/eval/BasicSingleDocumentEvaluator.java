@@ -32,13 +32,15 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 	private boolean allowGlyphSubstitution;
 	private boolean charIncludesDiacritic;
 	
-	private int SPACE_INDEX = charIndexer.getIndex(Charset.SPACE);
+	private int spaceCharIndex;
 	
 	public BasicSingleDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution, boolean charIncludesDiacritic) {
 		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.charIncludesDiacritic = charIncludesDiacritic;
+		
+		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 	}
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
@@ -137,7 +139,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		String goldComparisonWithSubsOutputFilename = outputFilenameBase + "_vsGold_withSubs.txt";
 		String goldLmComparisonOutputFilename = outputFilenameBase + "_lm_vsGold.txt";
 		String htmlOutputFilename = outputFilenameBase + ".html";
-		String altoOutputFilename = outputFilenameBase + ".alto";
+		String altoOutputFilename = outputFilenameBase + ".alto.xml";
 		new File(transcriptionOutputFilename).getParentFile().mkdirs();
 		
 		//
@@ -213,7 +215,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		//
 		{
 			System.out.println("Writing alto output to " + altoOutputFilename);
-			f.writeString(altoOutputFilename, printALTO(numLines, viterbiTransStates, doc.baseName(), altoOutputFilename));
+			f.writeString(altoOutputFilename, printAlto(numLines, viterbiTransStates, doc.baseName(), altoOutputFilename, viterbiWidths));
 			}
 
 		
@@ -381,13 +383,13 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 //	          </TextLine>
 	
 	
-	private String printALTO(int numLines, List<TransitionState>[] viterbiTransStates, String imgFilename, String htmlOutputFilename) {
+	private String printAlto(int numLines, List<TransitionState>[] viterbiTransStates, String imgFilename, String htmlOutputFilename, List<Integer>[] viterbiWidths) {
 		StringBuffer outputBuffer = new StringBuffer();
 		outputBuffer.append("<alto xmlns=\"http://schema.ccs-gmbh.com/ALTO\" xmlns:emop=\"http://emop.tamu.edu\">\n");
 		outputBuffer.append("  <Description>\n");
 		outputBuffer.append("    <MeasurementUnit>pixel</MeasurementUnit>\n");
 		outputBuffer.append("    <sourceImageInformation>\n");
-		outputBuffer.append("      <filename>"+imgFilename+"</filename>\n");
+		outputBuffer.append("      <filename>"+(new File(imgFilename).getName())+"</filename>\n");
 		outputBuffer.append("    </sourceImageInformation>\n");
 		outputBuffer.append("    <OCRProcessing>\n");
 		outputBuffer.append("      <preProcessingStep></preProcessingStep>\n");
@@ -414,34 +416,57 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		outputBuffer.append("      <PrintSpace>\n");
 		outputBuffer.append("        <TextBlock ID=\"par_1\">\n");
 		
+		int wordIndex = 0;
 		for (int line = 0; line < numLines; ++line) {
 			outputBuffer.append("    <TextLine ID=\"line_"+(line+1)+"\">\n"); //Opening <TextLine>, assigning ID.
 			Iterator<TransitionState> tsIterator = viterbiTransStates[line].iterator();
-			int wordIndex = 0;
-			//goal: to take all the characters and put them into the wordBuffer until they get into the wordBuffer and then output them.
+			int tsIteratorCurrentIndex = 0;
+			int spaceWidth = 0;
+			int wordWidth = 0;
 			
-			List<TransitionState> wordBuffer = new ArrayList<TransitionState>(); //here we have created the word buffer.
-			while(tsIterator.hasNext()){							// here we have said that for as long as there are characters in the ts iterator (which is the line)...
-				TransitionState ts = tsIterator.next();				//then we need to take each state and put it into the variable ts
-				wordBuffer.add(ts);			// put it into the wordbuffer.
+			List<TransitionState> wordBuffer = new ArrayList<TransitionState>(); 
+			while(tsIterator.hasNext()) {							
+				TransitionState ts = tsIterator.next();
+				wordBuffer.add(ts);
 				boolean emptyBuffer = wordBuffer.isEmpty();
-				boolean endOfWord = ts.getLmCharIndex() == SPACE_INDEX	&& ts.getGlyphChar().templateCharIndex == SPACE_INDEX;
+				boolean isSpace = ts.getLmCharIndex() == spaceCharIndex && ts.getGlyphChar().templateCharIndex == spaceCharIndex;
 				boolean endOfTheLine = !tsIterator.hasNext();
-				if(!emptyBuffer && (endOfWord || endOfTheLine)){		
-					String language = langIndexer.getObject(wordBuffer.get(0).getLanguageIndex());
-					StringBuffer trueTranscription = new StringBuffer();
-					StringBuffer normalizedTranscription = new StringBuffer();
+				
+				int width = viterbiWidths[line].get(tsIteratorCurrentIndex++);
+				if (isSpace) {
+					spaceWidth += width;
+				}
+				else {
+					wordWidth += width;
+				}
+				
+				if(!emptyBuffer && (isSpace || endOfTheLine)){
+					int languageIndex = wordBuffer.get(0).getLanguageIndex();
+					String language = languageIndex >= 0 ? langIndexer.getObject(languageIndex) : "None";
+					StringBuffer trueTranscriptionBuffer = new StringBuffer();
+					StringBuffer normalizedTranscriptionBuffer = new StringBuffer();
 					for (TransitionState wts : wordBuffer){
-						trueTranscription.append(charIndexer.getObject(wts.getLmCharIndex()));
-						normalizedTranscription.append(charIndexer.getObject(wts.getGlyphChar().templateCharIndex)); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
+						trueTranscriptionBuffer.append(charIndexer.getObject(wts.getGlyphChar().templateCharIndex)); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
+						normalizedTranscriptionBuffer.append(charIndexer.getObject(wts.getLmCharIndex()));
 					}
-					outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" CONTENT=\""+trueTranscription+"\" Language=\""+language+"\"> </String>\n");	// then we are going to want to output the word. I totally forget how to insert var. into a string.
-					wordIndex = wordIndex+1;
+					String trueTranscription = trueTranscriptionBuffer.toString().trim();
+					String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
+					if (!trueTranscription.isEmpty()) {
+						outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+trueTranscription+"\" Language=\""+language+"\"> </String>\n");	// then we are going to want to output the word. I totally forget how to insert var. into a string.
+						wordIndex = wordIndex+1;
+						wordWidth = 0;
+					}
+					
 					wordBuffer.clear();
+				}
+				
+				if (spaceWidth > 0 && (!isSpace || endOfTheLine)) {
+					outputBuffer.append("      <SP WIDTH=\""+spaceWidth+"\"/>\n");
+					spaceWidth = 0;
 				}
 			}			
 			
-			outputBuffer.append("</TextLine>\n"); //closing </TextLine>
+			outputBuffer.append("    </TextLine>\n"); //closing </TextLine>
 		}
 		outputBuffer.append("</TextBlock>\n");
 		outputBuffer.append("</PrintSpace>\n");
