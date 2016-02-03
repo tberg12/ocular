@@ -21,6 +21,7 @@ import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fileio.f;
 import indexer.Indexer;
+import util.Iterators;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -384,7 +385,6 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 //	            <String ID="word_7" WIDTH="54" HEIGHT="52" HPOS="258" VPOS="1666" CONTENT="N" WC="92" emop:DNC="0.0083"></String>
 //	          </TextLine>
 	
-	
 	private String printAlto(int numLines, List<TransitionState>[] viterbiTransStates, String imgFilename, String htmlOutputFilename, List<Integer>[] viterbiWidths) {
 		StringBuffer outputBuffer = new StringBuffer();
 		outputBuffer.append("<alto xmlns=\"http://schema.ccs-gmbh.com/ALTO\" xmlns:emop=\"http://emop.tamu.edu\">\n");
@@ -418,77 +418,80 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		outputBuffer.append("      <PrintSpace>\n");
 		outputBuffer.append("        <TextBlock ID=\"par_1\">\n");
 		
+		boolean inWord = false; // (as opposed to a space)
 		int wordIndex = 0;
 		for (int line = 0; line < numLines; ++line) {
 			outputBuffer.append("    <TextLine ID=\"line_"+(line+1)+"\">\n"); //Opening <TextLine>, assigning ID.
-			Iterator<TransitionState> tsIterator = viterbiTransStates[line].iterator();
-			int tsIteratorCurrentIndex = 0;
-			int spaceWidth = 0;
-			int wordWidth = 0;
+			@SuppressWarnings("unchecked")
+			Iterator<TransitionState> tsIterator = Iterators.concat(viterbiTransStates[line].iterator(), Iterators.<TransitionState>oneItemIterator(null));
+			Iterator<Integer> widthsIterator = viterbiWidths[line].iterator();
 			
 			List<TransitionState> wordBuffer = new ArrayList<TransitionState>(); 
-			while(tsIterator.hasNext()) {							
+			int wordWidth = 0;
+			while (tsIterator.hasNext()) {
 				TransitionState ts = tsIterator.next();
-				wordBuffer.add(ts);
-				boolean isSpace = ts.getLmCharIndex() == spaceCharIndex && ts.getGlyphChar().templateCharIndex == spaceCharIndex;
-				boolean isPunct = ts.getLmCharIndex() != hyphenCharIndex && Charset.isPunctuationChar(charIndexer.getObject(ts.getLmCharIndex()));
-				boolean endOfTheLine = !tsIterator.hasNext();
-				boolean endOfWord = isSpace || isPunct || endOfTheLine;
+				boolean isSpace = ts != null ? ts.getLmCharIndex() == spaceCharIndex && ts.getGlyphChar().templateCharIndex == spaceCharIndex : true;
+				boolean isPunct = ts != null ? ts.getLmCharIndex() != hyphenCharIndex && Charset.isPunctuationChar(charIndexer.getObject(ts.getLmCharIndex())) : false;
+				boolean endOfSpan = (isSpace == inWord) || isPunct || !tsIterator.hasNext(); // end of word, contiguous space sequence, or line
 				
-				int width = viterbiWidths[line].get(tsIteratorCurrentIndex++);
-				if (isSpace)
-					spaceWidth += width;
-				else
-					wordWidth += width;
-				
-				if(endOfWord) {
-					int languageIndex = wordBuffer.get(0).getLanguageIndex();
-					String language = languageIndex >= 0 ? langIndexer.getObject(languageIndex) : "None";
-					StringBuffer diplomaticTranscriptionBuffer = new StringBuffer();
-					StringBuffer normalizedTranscriptionBuffer = new StringBuffer();
-					for (TransitionState wts : wordBuffer){
-						if (!wts.getGlyphChar().isElided()) {
-							diplomaticTranscriptionBuffer.append(Charset.unescapeChar(charIndexer.getObject(wts.getGlyphChar().templateCharIndex))); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
-						}
-						if (wts.getGlyphChar().glyphType != GlyphType.DOUBLED) { // the first in a pair of doubled characters isn't part of the language model transcription
-							switch(wts.getType()) {
-							case RMRGN_HPHN_INIT:
-								normalizedTranscriptionBuffer.append(Charset.HYPHEN);
-								break;
-							case RMRGN_HPHN:
-							case LMRGN_HPHN:
-								break;
-							case LMRGN:
-							case RMRGN:
-								normalizedTranscriptionBuffer.append(Charset.SPACE);
-								break;
-							case TMPL:
-								String s = Charset.unescapeChar(charIndexer.getObject(wts.getLmCharIndex()));
-								if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "normalized" transcriptions
-								normalizedTranscriptionBuffer.append(s);
+				if (endOfSpan) { // if we're at a transition point between spans, we need to write out the complete span's information
+					if (inWord) { // if we're completing a word (as opposed to a sequence of spaces)
+						if (!wordBuffer.isEmpty()) { // if there's wordiness to print out (hopefully this will always be true if we get to this point)
+							int languageIndex = wordBuffer.get(0).getLanguageIndex();
+							String language = languageIndex >= 0 ? langIndexer.getObject(languageIndex) : "None";
+							StringBuffer diplomaticTranscriptionBuffer = new StringBuffer();
+							StringBuffer normalizedTranscriptionBuffer = new StringBuffer();
+							for (TransitionState wts : wordBuffer) {
+								if (!wts.getGlyphChar().isElided()) {
+									diplomaticTranscriptionBuffer.append(Charset.unescapeChar(charIndexer.getObject(wts.getGlyphChar().templateCharIndex))); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
+								}
+								if (wts.getGlyphChar().glyphType != GlyphType.DOUBLED) { // the first in a pair of doubled characters isn't part of the language model transcription
+									switch(wts.getType()) {
+									case RMRGN_HPHN_INIT:
+										normalizedTranscriptionBuffer.append(Charset.HYPHEN);
+										break;
+									case RMRGN_HPHN:
+									case LMRGN_HPHN:
+										break;
+									case LMRGN:
+									case RMRGN:
+										normalizedTranscriptionBuffer.append(Charset.SPACE);
+										break;
+									case TMPL:
+										String s = Charset.unescapeChar(charIndexer.getObject(wts.getLmCharIndex()));
+										if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "normalized" transcriptions
+										normalizedTranscriptionBuffer.append(s);
+									}
+								}
+							}
+							String diplomaticTranscription = diplomaticTranscriptionBuffer.toString().trim();
+							String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
+							if (!diplomaticTranscription.isEmpty()) {
+								outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+diplomaticTranscription+"\" Language=\""+language+"\"> \n");
+								outputBuffer.append("          <ALTERNATIVE>"+normalizedTranscription+"</ALTERNATIVE>\n");
+								outputBuffer.append("      </String>\n");
+								wordIndex = wordIndex+1;
 							}
 						}
 					}
-					String diplomaticTranscription = diplomaticTranscriptionBuffer.toString().trim();
-					String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
-					if (!diplomaticTranscription.isEmpty()) {
-						outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+diplomaticTranscription+"\" Language=\""+language+"\"> \n");
-						outputBuffer.append("          <ALTERNATIVE>"+normalizedTranscription+"</ALTERNATIVE>\n");
-						outputBuffer.append("      </String>\n");
-						wordIndex = wordIndex+1;
-						wordWidth = 0;
+					else { // in space
+						if (wordWidth > 0) {
+							outputBuffer.append("      <SP WIDTH=\""+wordWidth+"\"/>\n");
+						}
 					}
 					
-					wordBuffer.clear();
+					// get read to start a new span
+					wordBuffer.clear(); 
+					wordWidth = 0;
+					inWord = !isSpace;
 				}
 				
-				if (spaceWidth > 0 && (!isSpace || endOfTheLine)) {
-					outputBuffer.append("      <SP WIDTH=\""+spaceWidth+"\"/>\n");
-					spaceWidth = 0;
-				}
+				// add the current state into the (existing or freshly-cleared) span buffer
+				wordBuffer.add(ts);
+				wordWidth += (ts != null ? widthsIterator.next() : 0);
 			}			
 			
-			outputBuffer.append("    </TextLine>\n"); //closing </TextLine>
+			outputBuffer.append("    </TextLine>\n");
 		}
 		outputBuffer.append("</TextBlock>\n");
 		outputBuffer.append("</PrintSpace>\n");
