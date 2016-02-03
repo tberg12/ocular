@@ -121,9 +121,9 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   To train a font, a set of document pages must be given (`-inputPath`), along with the paths to the language model and initial font model.  Use `-outputFontPath` to specify where the trained font model should be written, and `-outputPath` to specify where transcriptions and evaluation metrics should be written.  The path specified by `-inputPath` should point to a pdf or image file or directory or directory hierarchy of such files.  The value given by `-inputPath` will be searched recursively for non-`.txt` files; the transcriptions written to the `-outputPath` will maintain the same directory hierarchy.
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -learnFont true \
-        -initFontPath font/advertencias/init.fontser \
-        -lmPath lm/trilingual.lmser \
+        -trainFont true \
+        -inputFontPath font/advertencias/init.fontser \
+        -inputLmPath lm/trilingual.lmser \
         -inputPath sample_images/advertencias \
         -numDocs 10 \
         -outputFontPath font/advertencias/trained.fontser \
@@ -134,12 +134,12 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 4. Transcribe some pages:
 
-  To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-learnFont` unspecified (or set it to `false`).  Additionally, `-initFontPath` should point to the newly-trained font model (instead of the "initial" font model used during font training).
+  To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-trainFont` unspecified (or set it to `false`).  Additionally, `-inputFontPath` should point to the newly-trained font model (instead of the "initial" font model used during font training).
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -inputPath sample_images/advertencias \
-        -initFontPath font/advertencias/trained.fontser \
-        -lmPath lm/trilingual.lmser \
+        -inputFontPath font/advertencias/trained.fontser \
+        -inputLmPath lm/trilingual.lmser \
         -outputPath transcribe_output 
 
   Many more command-line options, including several that affect speed and accuracy, can be found below.
@@ -257,17 +257,17 @@ Default: Don't read or write line image files.
 Default: false
 
 * `-outputFontPath`: Path to write the learned font file to.
-Required if learnFont is set to true, otherwise ignored.
+Required if trainFont is set to true, otherwise ignored.
 
 * `-numEMIters`: Number of iterations of EM to use for font learning.
-(Only relevant if learnFont is set to true.)
+(Only relevant if trainFont is set to true.)
 Default: 3
 
-* `-updateDocBatchSize`: Number of documents to process for each parameter update.  (Only relevant if learnFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.
+* `-updateDocBatchSize`: Number of documents to process for each parameter update.  (Only relevant if trainFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.
 
-* `-accumulateBatchesWithinIter`: Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.  (Only relevant if learnFont is set to true and updateDocBatchSize is used.)  Default: true
+* `-accumulateBatchesWithinIter`: Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.  (Only relevant if trainFont is set to true and updateDocBatchSize is used.)  Default: true
   
-* `-minDocBatchSize`: The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes.  (Only relevant if learnFont is set to true and updateDocBatchSize is used.)  Default is to always lump remaining documents in with the last complete batch.
+* `-minDocBatchSize`: The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes.  (Only relevant if trainFont is set to true and updateDocBatchSize is used.)  Default is to always lump remaining documents in with the last complete batch.
 
 ##### Language Model Re-training Options
 
