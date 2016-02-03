@@ -219,7 +219,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		boolean evalCharIncludesDiacritic = true;
 		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution, evalCharIncludesDiacritic);
 		
-		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, !trainFont, uniformLineHeight, binarizeThreshold, crop);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
 		if (trainFont) {
 			MultiDocumentEvaluator evalSetEvaluator = makeEvalSetEvaluator(charIndexer, decoderEM, documentEvaluator);
 			train(documents, lm, font, gsmFactory, gsm, decoderEM, documentEvaluator, evalSetEvaluator);
