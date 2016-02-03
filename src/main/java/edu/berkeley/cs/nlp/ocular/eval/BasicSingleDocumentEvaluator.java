@@ -430,9 +430,10 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			while(tsIterator.hasNext()) {							
 				TransitionState ts = tsIterator.next();
 				wordBuffer.add(ts);
-				boolean emptyBuffer = wordBuffer.isEmpty();
 				boolean isSpace = ts.getLmCharIndex() == spaceCharIndex && ts.getGlyphChar().templateCharIndex == spaceCharIndex;
+				boolean isPunct = ts.getLmCharIndex() != hyphenCharIndex && Charset.isPunctuationChar(charIndexer.getObject(ts.getLmCharIndex()));
 				boolean endOfTheLine = !tsIterator.hasNext();
+				boolean endOfWord = isSpace || isPunct || endOfTheLine;
 				
 				int width = viterbiWidths[line].get(tsIteratorCurrentIndex++);
 				if (isSpace)
@@ -440,7 +441,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 				else
 					wordWidth += width;
 				
-				if(!emptyBuffer && (isSpace || endOfTheLine)){
+				if(endOfWord) {
 					int languageIndex = wordBuffer.get(0).getLanguageIndex();
 					String language = languageIndex >= 0 ? langIndexer.getObject(languageIndex) : "None";
 					StringBuffer diplomaticTranscriptionBuffer = new StringBuffer();
@@ -452,14 +453,14 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 						if (wts.getGlyphChar().glyphType != GlyphType.DOUBLED) { // the first in a pair of doubled characters isn't part of the language model transcription
 							switch(wts.getType()) {
 							case RMRGN_HPHN_INIT:
-								normalizedTranscriptionBuffer.append(charIndexer.getObject(hyphenCharIndex));
+								normalizedTranscriptionBuffer.append(Charset.HYPHEN);
 								break;
 							case RMRGN_HPHN:
 							case LMRGN_HPHN:
 								break;
 							case LMRGN:
 							case RMRGN:
-								normalizedTranscriptionBuffer.append(charIndexer.getObject(spaceCharIndex));
+								normalizedTranscriptionBuffer.append(Charset.SPACE);
 								break;
 							case TMPL:
 								String s = Charset.unescapeChar(charIndexer.getObject(wts.getLmCharIndex()));
