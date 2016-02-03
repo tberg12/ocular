@@ -33,6 +33,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 	private boolean charIncludesDiacritic;
 	
 	private int spaceCharIndex;
+	private int hyphenCharIndex;
 	
 	public BasicSingleDocumentEvaluator(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution, boolean charIncludesDiacritic) {
 		this.charIndexer = charIndexer;
@@ -41,6 +42,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		this.charIncludesDiacritic = charIncludesDiacritic;
 		
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
+		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 	}
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
@@ -113,7 +115,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 								break;
 							case TMPL:
 								String s = charIndexer.getObject(ts.getLmCharIndex());
-								if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "canonical" transcriptions
+								if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "normalized" transcriptions
 								viterbiLmChars.add(s);
 						}
 					}
@@ -214,9 +216,9 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		//Transcription in ALTO
 		//
 		{
-			System.out.println("Writing alto output to " + altoOutputFilename);
-			f.writeString(altoOutputFilename, printAlto(numLines, viterbiTransStates, doc.baseName(), altoOutputFilename, viterbiWidths));
-			}
+		System.out.println("Writing alto output to " + altoOutputFilename);
+		f.writeString(altoOutputFilename, printAlto(numLines, viterbiTransStates, doc.baseName(), altoOutputFilename, viterbiWidths));
+		}
 
 		
 
@@ -433,26 +435,43 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 				boolean endOfTheLine = !tsIterator.hasNext();
 				
 				int width = viterbiWidths[line].get(tsIteratorCurrentIndex++);
-				if (isSpace) {
+				if (isSpace)
 					spaceWidth += width;
-				}
-				else {
+				else
 					wordWidth += width;
-				}
 				
 				if(!emptyBuffer && (isSpace || endOfTheLine)){
 					int languageIndex = wordBuffer.get(0).getLanguageIndex();
 					String language = languageIndex >= 0 ? langIndexer.getObject(languageIndex) : "None";
-					StringBuffer trueTranscriptionBuffer = new StringBuffer();
+					StringBuffer diplomaticTranscriptionBuffer = new StringBuffer();
 					StringBuffer normalizedTranscriptionBuffer = new StringBuffer();
 					for (TransitionState wts : wordBuffer){
-						trueTranscriptionBuffer.append(charIndexer.getObject(wts.getGlyphChar().templateCharIndex)); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
-						normalizedTranscriptionBuffer.append(charIndexer.getObject(wts.getLmCharIndex()));
+						if (!wts.getGlyphChar().isElided()) {
+							diplomaticTranscriptionBuffer.append(Charset.unescapeChar(charIndexer.getObject(wts.getGlyphChar().templateCharIndex))); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
+						}
+						if (wts.getGlyphChar().glyphType != GlyphType.DOUBLED) { // the first in a pair of doubled characters isn't part of the language model transcription
+							switch(wts.getType()) {
+							case RMRGN_HPHN_INIT:
+								normalizedTranscriptionBuffer.append(charIndexer.getObject(hyphenCharIndex));
+								break;
+							case RMRGN_HPHN:
+							case LMRGN_HPHN:
+								break;
+							case LMRGN:
+							case RMRGN:
+								normalizedTranscriptionBuffer.append(charIndexer.getObject(spaceCharIndex));
+								break;
+							case TMPL:
+								String s = Charset.unescapeChar(charIndexer.getObject(wts.getLmCharIndex()));
+								if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "normalized" transcriptions
+								normalizedTranscriptionBuffer.append(s);
+							}
+						}
 					}
-					String trueTranscription = trueTranscriptionBuffer.toString().trim();
+					String diplomaticTranscription = diplomaticTranscriptionBuffer.toString().trim();
 					String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
-					if (!trueTranscription.isEmpty()) {
-						outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+trueTranscription+"\" Language=\""+language+"\"> \n");
+					if (!diplomaticTranscription.isEmpty()) {
+						outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+diplomaticTranscription+"\" Language=\""+language+"\"> \n");
 						outputBuffer.append("          <ALTERNATIVE>"+normalizedTranscription+"</ALTERNATIVE>\n");
 						outputBuffer.append("      </String>\n");
 						wordIndex = wordIndex+1;
