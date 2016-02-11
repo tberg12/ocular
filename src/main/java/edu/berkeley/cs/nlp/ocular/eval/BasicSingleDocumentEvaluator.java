@@ -4,7 +4,9 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -393,15 +395,21 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		outputBuffer.append("    <sourceImageInformation>\n");
 		outputBuffer.append("      <filename>"+(new File(imgFilename).getName())+"</filename>\n");
 		outputBuffer.append("    </sourceImageInformation>\n");
-		outputBuffer.append("    <OCRProcessing>\n");
-		outputBuffer.append("      <preProcessingStep></preProcessingStep>\n");
+		outputBuffer.append("    <OCRProcessing>\n"); //IDK how we should "ID" this.
+		outputBuffer.append("      <preProcessingStep></preProcessingStep>\n"); 
 		outputBuffer.append("      <ocrProcessingStep>\n");
+		outputBuffer.append("		 <processingDateTime>"+Calendar.getInstance()+"</processingDateTime>\n"); //not really working...
+//		for (StringBuffer s: args) {
+//			StringBuffer arguments = new StringBuffer();
+//			arguments.append(s);
+//		};
+//		outputBuffer.append("      	 <processingStepSettings>"+arguments+"</processingStepSettings>\n");//want to print "args" here ...
 		outputBuffer.append("        <processingSoftware>\n");
 		outputBuffer.append("          <softwareCreator>Taylor Berg-Kirkpatrick, Greg Durrett, Dan Klein, Dan Garrette, Hannah Alpert-Abrams</softwareCreator>\n");
 		outputBuffer.append("          <softwareName>Ocular</softwareName>\n");
 		outputBuffer.append("          <softwareVersion>0.0.3</softwareVersion>\n");
 		outputBuffer.append("        </processingSoftware>\n");
-		outputBuffer.append("      </ocrProcessingStep>\n");
+		outputBuffer.append("       </ocrProcessingStep>\n");
 //		outputBuffer.append("      <postProcessingStep>\n");
 //		outputBuffer.append("        <processingSoftware>\n");
 //		outputBuffer.append("          <softwareCreator>\n");
