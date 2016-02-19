@@ -368,7 +368,7 @@ public class TranscribeOrTrainFontGUI {
 				TranscribeOrTrainFont exec = new TranscribeOrTrainFont();
 				// names.foreach(n =>
 				// println(f"""exec.$n%-30s = input_$n%-30s.getText();"""))
-				exec.inputPath = input_inputPath.getText();
+				exec.inputDocPath = input_inputPath.getText();
 				exec.numDocs = Integer.valueOf(input_numDocs.getText());
 				exec.inputLmPath = input_lmPath.getText();
 				exec.inputFontPath = input_inputFontPath.getText();

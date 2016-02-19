@@ -210,7 +210,7 @@ public class TrainLanguageModelGUI {
 				exec.removeDiacritics = input_removeDiacritics.isSelected();
 				exec.explicitCharacterSet = null; // input_explicitCharacterSet.getText();
 				exec.charN = Integer.valueOf(input_charN.getText());
-				exec.power = Double.valueOf(input_power.getText());
+				exec.lmPower = Double.valueOf(input_power.getText());
 				exec.lmCharCount = Integer.valueOf(input_lmCharCount.getText());
 				exec.run();
 			}

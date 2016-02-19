@@ -46,19 +46,19 @@ import indexer.Indexer;
 public class TrainLanguageModel implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")
-	public static String lmPath = null;
+	public static String outputLmPath = null; // Required.
 	
 	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  Be sure to wrap the whole string with \"quotes\" if multiple languages are used.)")
-	public static String textPath = null;
+	public static String textPath = null; // Required.
 	
 	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". Be sure to wrap the whole string with \"quotes\".  Defaults to uniform priors. (Only relevant if multiple languages used.)")
-	public static String languagePriors = null;
+	public static String languagePriors = null; // Uniform priors.
 	
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)")
 	public static double pKeepSameLanguage = 0.999999;
 
 	@Option(gloss = "Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". Be sure to wrap the whole string with \"quotes\" if multiple languages are used. Any languages for which no replacements are need can be safely ignored.")
-	public static String alternateSpellingReplacementPaths = null;
+	public static String alternateSpellingReplacementPaths = null; // No alternate spelling replacements.
 	
 	@Option(gloss = "Automatically insert \"long s\" characters into the langauge model training data?")
 	public static boolean insertLongS = false;
@@ -67,13 +67,13 @@ public class TrainLanguageModel implements Runnable {
 	public static boolean removeDiacritics = false;
 
 	@Option(gloss = "A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters.")
-	public static Set<String> explicitCharacterSet = null;
+	public static Set<String> explicitCharacterSet = null; // Allow all characters. 
 
 	@Option(gloss = "LM character n-gram length.")
 	public static int charN = 6;
 	
 	@Option(gloss = "Exponent on LM scores.")
-	public static double power = 4.0;
+	public static double lmPower = 4.0;
 	
 	@Option(gloss = "Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.")
 	public static long lmCharCount = 0;
@@ -88,7 +88,7 @@ public class TrainLanguageModel implements Runnable {
 	}
 
 	public void run() {
-		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
+		if (outputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
 		Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> langIndexerAndLmData = makePathsReadersAndPriors();
@@ -117,8 +117,8 @@ public class TrainLanguageModel implements Runnable {
 		System.out.println("ALL POSSIBLE CHARACTERS: " + chars);
 
 		CodeSwitchLanguageModel codeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, langIndexer, pKeepSameLanguage, charN);
-		System.out.println("writing LM to " + lmPath);
-		writeLM(codeSwitchLM, lmPath);
+		System.out.println("writing LM to " + outputLmPath);
+		writeLM(codeSwitchLM, outputLmPath);
 	}
 
 	public Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> makePathsReadersAndPriors() {
@@ -234,7 +234,7 @@ public class TrainLanguageModel implements Runnable {
 			Collections.sort(langChars);
 			System.out.println(language + ": " + langChars);
 			
-			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, power);
+			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
 			lmsAndPriors.add(makeTuple2(lm, prior));
 		}
 		
