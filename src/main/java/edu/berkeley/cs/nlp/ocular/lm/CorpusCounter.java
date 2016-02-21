@@ -78,7 +78,7 @@ public class CorpusCounter {
 
   public void count(String fileName, int maxNumLines, Indexer<String> charIndexer, TextReader textReader) {
     try {
-    	BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+      BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
       int lineNumber = 0;
       while (in.ready()) {
         if (lineNumber >= maxNumLines) {
