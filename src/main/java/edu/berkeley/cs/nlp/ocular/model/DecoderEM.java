@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -107,7 +107,7 @@ public class DecoderEM {
 		}
 		System.out.println("Decode: " + (totalNanoTime / 1000000) + "ms");
 		double avgLogProb = totalJointLogProb / numBatches;
-		return makeTuple2(makeTuple2(decodeStates, decodeWidths), avgLogProb);
+		return Tuple2(Tuple2(decodeStates, decodeWidths), avgLogProb);
 	}
 
 	private SparseTransitionModel constructTransitionModel(CodeSwitchLanguageModel codeSwitchLM, GlyphSubstitutionModel codeSwitchGSM) {

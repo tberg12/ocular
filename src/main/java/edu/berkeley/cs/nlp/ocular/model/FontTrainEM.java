@@ -1,8 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -200,7 +200,7 @@ public class FontTrainEM {
 		
 
 		//System.out.println("Emission cache time: " + overallEmissionCacheNanoTime / 1e9 + "s");
-		return makeTuple3(font, lm, gsm);
+		return Tuple3(font, lm, gsm);
 	}
 
 	private int getLastBatchNumOfIteration(int numUsableDocs, int updateDocBatchSize, int minDocBatchSize) {
@@ -301,7 +301,7 @@ public class FontTrainEM {
 		double languageCountSum = 0;
 		for (int language = 0; language < languageCounts.length; ++language) {
 			double newPrior = languageCounts[language];
-			newSubModelsAndPriors.add(makeTuple2(lm.get(language), newPrior));
+			newSubModelsAndPriors.add(Tuple2(lm.get(language), newPrior));
 			languageCountSum += newPrior;
 		}
 

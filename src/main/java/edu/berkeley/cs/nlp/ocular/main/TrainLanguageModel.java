@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -185,10 +185,10 @@ public class TrainLanguageModel implements Runnable {
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
 			
 			langIndexer.getIndex(language);
-			pathsReadersAndPriors.add(makeTuple2(makeTuple2(filepath, textReader), prior));
+			pathsReadersAndPriors.add(Tuple2(Tuple2(filepath, textReader), prior));
 		}
 
-		return makeTuple2(langIndexer, pathsReadersAndPriors);
+		return Tuple2(langIndexer, pathsReadersAndPriors);
 	}
 	
 	private TextReader handleReplacementRulesOption(TextReader textReader, String replacementsFilePath) {
@@ -219,7 +219,7 @@ public class TrainLanguageModel implements Runnable {
 
 			List<Tuple2<Integer,Integer>> reverseUnigramCounts = new ArrayList<Tuple2<Integer,Integer>>();
 			for (Map.Entry<Integer,Integer> entry : counter.getUnigramCounts().entrySet())
-				reverseUnigramCounts.add(makeTuple2(entry.getValue(),entry.getKey()));
+				reverseUnigramCounts.add(Tuple2(entry.getValue(),entry.getKey()));
 			Collections.sort(reverseUnigramCounts, new Tuple2.DefaultLexicographicTuple2Comparator<Integer,Integer>());
 			Collections.reverse(reverseUnigramCounts);
 			for (Tuple2<Integer,Integer> entry : reverseUnigramCounts) {
@@ -235,7 +235,7 @@ public class TrainLanguageModel implements Runnable {
 			System.out.println(language + ": " + langChars);
 			
 			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
-			lmsAndPriors.add(makeTuple2(lm, prior));
+			lmsAndPriors.add(Tuple2(lm, prior));
 		}
 		
 		/*
