@@ -31,7 +31,7 @@ public class TrainLanguageModelGUI {
 	private JLabel label_title1;
 	private JLabel label_title2;
 
-	private JLabel label_lmPath;
+	private JLabel label_outputLmPath;
 	private JLabel label_textPath;
 	private JLabel label_languagePriors;
 	private JLabel label_pKeepSameLanguage;
@@ -44,7 +44,7 @@ public class TrainLanguageModelGUI {
 	private JLabel label_lmCharCount;
 	private JLabel label_go;
 
-	private JTextField input_lmPath;
+	private JTextField input_outputLmPath;
 	private JTextField input_textPath;
 	private JTextField input_languagePriors;
 	private JTextField input_pKeepSameLanguage;
@@ -101,11 +101,11 @@ public class TrainLanguageModelGUI {
 		label_title1.setFont(new Font("Lucida Grande", Font.BOLD, 18));
 		panel_labels.add(label_title1);
 
-		label_lmPath = new JLabel("LM path ");
-		label_lmPath.setToolTipText("Output Language Model file path. Required.");
-		label_lmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		label_lmPath.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_lmPath);
+		label_outputLmPath = new JLabel("LM path ");
+		label_outputLmPath.setToolTipText("Output Language Model file path. Required.");
+		label_outputLmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		label_outputLmPath.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_outputLmPath);
 		label_textPath = new JLabel("Text path ");
 		label_textPath.setToolTipText("Path to the text files (or directory hierarchies) for training the LM. For each entry, the entire directory will be recursively searched for any files that do not start with .. For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\". If spaces are used, be sure to wrap the whole string with \"quotes\".). Required.");
 		label_textPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
@@ -158,9 +158,9 @@ public class TrainLanguageModelGUI {
 		label_title2 = new JLabel();
 		panel_inputs.add(label_title2);
 
-		input_lmPath = new JTextField();
-		input_lmPath.setToolTipText("Output Language Model file path. Required.");
-		panel_inputs.add(input_lmPath);
+		input_outputLmPath = new JTextField();
+		input_outputLmPath.setToolTipText("Output Language Model file path. Required.");
+		panel_inputs.add(input_outputLmPath);
 		input_textPath = new JTextField();
 		input_textPath.setToolTipText("Path to the text files (or directory hierarchies) for training the LM. For each entry, the entire directory will be recursively searched for any files that do not start with .. For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\". If spaces are used, be sure to wrap the whole string with \"quotes\".). Required.");
 		panel_inputs.add(input_textPath);
@@ -201,7 +201,7 @@ public class TrainLanguageModelGUI {
 		input_go.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				TrainLanguageModel exec = new TrainLanguageModel();
-				exec.lmPath = input_lmPath.getText();
+				exec.outputLmPath = input_outputLmPath.getText();
 				exec.textPath = input_textPath.getText();
 				exec.languagePriors = input_languagePriors.getText();
 				exec.pKeepSameLanguage = Double.valueOf(input_pKeepSameLanguage.getText());

@@ -30,8 +30,8 @@ public class InitializeFontGUI {
 	private JLabel label_title1;
 	private JLabel label_title2;
 
-	private JLabel label_lmPath;
-	private JLabel label_fontPath;
+	private JLabel label_inputLmPath;
+	private JLabel label_outputFontPath;
 	private JLabel label_numFontInitThreads;
 	private JLabel label_templateMaxWidthFraction;
 	private JLabel label_templateMinWidthFraction;
@@ -39,8 +39,8 @@ public class InitializeFontGUI {
 	private JLabel label_spaceMinWidthFraction;
 	private JLabel label_go;
 
-	private JTextField input_lmPath;
-	private JTextField input_fontPath;
+	private JTextField input_inputLmPath;
+	private JTextField input_outputFontPath;
 	private JTextField input_numFontInitThreads;
 	private JTextField input_templateMaxWidthFraction;
 	private JTextField input_templateMinWidthFraction;
@@ -92,16 +92,16 @@ public class InitializeFontGUI {
 		label_title1.setFont(new Font("Lucida Grande", Font.BOLD, 18));
 		panel_labels.add(label_title1);
 
-		label_lmPath = new JLabel("LM path ");
-		label_lmPath.setToolTipText("Path to the language model file (so that it knows which characters to create images for). Required.");
-		label_lmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		label_lmPath.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_lmPath);
-		label_fontPath = new JLabel("Font path ");
-		label_fontPath.setToolTipText("Output font file path. Required.");
-		label_fontPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		label_fontPath.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_fontPath);
+		label_inputLmPath = new JLabel("LM path ");
+		label_inputLmPath.setToolTipText("Path to the language model file (so that it knows which characters to create images for). Required.");
+		label_inputLmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		label_inputLmPath.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_inputLmPath);
+		label_outputFontPath = new JLabel("Font path ");
+		label_outputFontPath.setToolTipText("Output font file path. Required.");
+		label_outputFontPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		label_outputFontPath.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_outputFontPath);
 		label_numFontInitThreads = new JLabel("Number of threads ");
 		label_numFontInitThreads.setToolTipText("Number of threads to use. Deafult: 8");
 		label_numFontInitThreads.setHorizontalAlignment(SwingConstants.TRAILING);
@@ -133,12 +133,12 @@ public class InitializeFontGUI {
 		label_title2 = new JLabel();
 		panel_inputs.add(label_title2);
 
-		input_lmPath = new JTextField();
-		input_lmPath.setToolTipText("Path to the language model file (so that it knows which characters to create images for). Required.");
-		panel_inputs.add(input_lmPath);
-		input_fontPath = new JTextField();
-		input_fontPath.setToolTipText("Output font file path. Required.");
-		panel_inputs.add(input_fontPath);
+		input_inputLmPath = new JTextField();
+		input_inputLmPath.setToolTipText("Path to the language model file (so that it knows which characters to create images for). Required.");
+		panel_inputs.add(input_inputLmPath);
+		input_outputFontPath = new JTextField();
+		input_outputFontPath.setToolTipText("Output font file path. Required.");
+		panel_inputs.add(input_outputFontPath);
 		input_numFontInitThreads = new JTextField();
 		input_numFontInitThreads.setText("8");
 		input_numFontInitThreads.setToolTipText("Number of threads to use. Deafult: 8");
@@ -164,8 +164,8 @@ public class InitializeFontGUI {
 		input_go.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				InitializeFont exec = new InitializeFont();
-				exec.lmPath = input_lmPath.getText();
-				exec.fontPath = input_fontPath.getText();
+				exec.inputLmPath = input_inputLmPath.getText();
+				exec.outputFontPath = input_outputFontPath.getText();
 				exec.numFontInitThreads = Integer.valueOf(input_numFontInitThreads.getText());
 				exec.templateMaxWidthFraction = Double.valueOf(input_templateMaxWidthFraction.getText());
 				exec.templateMinWidthFraction = Double.valueOf(input_templateMinWidthFraction.getText());
