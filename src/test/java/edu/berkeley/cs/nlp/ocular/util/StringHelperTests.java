@@ -72,13 +72,11 @@ public class StringHelperTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testJoin_list() {
 		assertEquals("abc", join(Arrays.asList(new String[] { "a", "", "b", "c" })));
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testJoin_list_sep() {
 		assertEquals("a;;b;c", join(Arrays.asList(new String[] { "a", "", "b", "c" }), ";"));
 	}
