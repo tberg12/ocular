@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,7 +89,7 @@ public class BeamingSemiMarkovDP {
 			decodeWidths[d] = statesAndWidthsAndNextFinalState._1._2;
 			finalState = statesAndWidthsAndNextFinalState._2;
 		}
-		return makeTuple2(makeTuple2(decodeStates, decodeWidths), logJointProb);
+		return Tuple2(Tuple2(decodeStates, decodeWidths), logJointProb);
 	}
 	
 	private Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decodeMultipleThreads(final int beamSize, int numThreads) {
@@ -127,7 +127,7 @@ public class BeamingSemiMarkovDP {
 		}
 		
 		System.out.println();
-		return makeTuple2(makeTuple2(decodeStates, decodeWidths), logJointProb[0]);
+		return Tuple2(Tuple2(decodeStates, decodeWidths), logJointProb[0]);
 	}
 	
 	private Tuple2<Double,Collection<BeamState>> doForwardPassLogSpace(int d, int beamSize, Collection<BeamState> startStates) {
@@ -172,7 +172,7 @@ public class BeamingSemiMarkovDP {
 								double emissionLogProb = emissionModel.logProb(d, t, nextTs, nextT-t);
 								double score = beamState.score + transLogProb + emissionLogProb;
 								if (score != Double.NEGATIVE_INFINITY) {
-									addToBeam(alphas[d][nextT], nextTs, score, betas[d][nextT][nextTs.getGlyphChar().templateCharIndex], makeTuple2(t, beamState.transState), beamSize);
+									addToBeam(alphas[d][nextT], nextTs, score, betas[d][nextT][nextTs.getGlyphChar().templateCharIndex], Tuple2(t, beamState.transState), beamSize);
 								}
 							}
 						}
@@ -201,7 +201,7 @@ public class BeamingSemiMarkovDP {
 						}
 						if (score > startBeamState.score) {
 							startBeamState.score = score;
-							startBeamState.backPointer = makeTuple2(-1, endBeamState.transState);
+							startBeamState.backPointer = Tuple2(-1, endBeamState.transState);
 						}
 					}
 				}
@@ -212,7 +212,7 @@ public class BeamingSemiMarkovDP {
 			wrappedStartStates.add(entry.getValue());
 		}
 		
-		return makeTuple2(bestFinalScore, wrappedStartStates);
+		return Tuple2(bestFinalScore, wrappedStartStates);
 	}
 	
 	private static void addToBeam(GeneralPriorityQueue<BeamState> queue, TransitionState nextTs, double score, double forwardScore, Tuple2<Integer,TransitionState> backPointer, int beamSize) {
@@ -240,7 +240,7 @@ public class BeamingSemiMarkovDP {
 		for (Tuple2<TransitionState,Double> startPair : without) {
 			BeamState beamState = new BeamState(startPair._1);
 			beamState.score = startPair._2;
-			beamState.backPointer = makeTuple2(-1, null);
+			beamState.backPointer = Tuple2(-1, null);
 			with.add(beamState);
 		}
 		return with;
@@ -290,7 +290,7 @@ public class BeamingSemiMarkovDP {
 		Collections.reverse(transStateDecodeList);
 		Collections.reverse(widthsDecodeList);
 		int[] widthsDecode = a.toIntArray(widthsDecodeList);
-		return makeTuple2(makeTuple2(transStateDecodeList.toArray(new TransitionState[0]), widthsDecode), nextFinalTs);
+		return Tuple2(Tuple2(transStateDecodeList.toArray(new TransitionState[0]), widthsDecode), nextFinalTs);
 	}
 	
 	private void doDenseCoarseBackwardPassLogSpace(int d, double[][] betas) {

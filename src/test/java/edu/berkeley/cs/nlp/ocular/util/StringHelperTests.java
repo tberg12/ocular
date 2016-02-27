@@ -11,9 +11,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.Test;
+import java.util.Arrays;
 
-import scala.actors.threadpool.Arrays;
+import org.junit.Test;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
@@ -72,13 +72,11 @@ public class StringHelperTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testJoin_list() {
 		assertEquals("abc", join(Arrays.asList(new String[] { "a", "", "b", "c" })));
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testJoin_list_sep() {
 		assertEquals("a;;b;c", join(Arrays.asList(new String[] { "a", "", "b", "c" }), ";"));
 	}

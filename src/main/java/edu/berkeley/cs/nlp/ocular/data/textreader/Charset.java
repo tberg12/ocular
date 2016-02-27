@@ -3,8 +3,8 @@ package edu.berkeley.cs.nlp.ocular.data.textreader;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeMap;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setUnion;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple3.makeTuple3;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +27,7 @@ public class Charset {
 	public static final String HYPHEN = "-";
 	public static final Set<String> LOWERCASE_LATIN_LETTERS = makeSet("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
 	public static final Set<String> LOWERCASE_VOWELS = makeSet("a", "e", "i", "o", "u");
-	public static final Map<String,String> LIGATURES = makeMap(makeTuple2("Æ","AE"), makeTuple2("æ","ae"), makeTuple2("Œ","OE"), makeTuple2("œ","oe"));
+	public static final Map<String,String> LIGATURES = makeMap(Tuple2("Æ","AE"), Tuple2("æ","ae"), Tuple2("Œ","OE"), Tuple2("œ","oe"));
 	public static final String LONG_S = "\u017F"; // ſ
 	public static final Set<String> BANNED_CHARS = makeSet("@", "$", "%");
 	/**
@@ -358,7 +358,7 @@ public class Charset {
 		Tuple3<List<String>, String, Integer> letterAndLength = readDiacriticsAndLetterAt(s, 0);
 		int length = letterAndLength._3;
 		if (s.length() != length) throw new RuntimeException("Could not escape ["+s+"] because it contains more than one character ("+StringHelper.toUnicode(s)+")");
-		return makeTuple2(letterAndLength._1, letterAndLength._2);
+		return Tuple2(letterAndLength._1, letterAndLength._2);
 	}
 
 	/**
@@ -379,7 +379,7 @@ public class Charset {
 		Tuple3<List<String>, String, Integer> result = readDiacriticsAndLetterAt(line, offset);
 		String c = StringHelper.join(result._1) + result._2;
 		int length = result._3;
-		return makeTuple2(c, length);
+		return Tuple2(c, length);
 	}
 	
 	/**
@@ -403,7 +403,7 @@ public class Charset {
 		if (offset >= lineLen) throw new RuntimeException("offset must be less than the line length");
 		
 		if (lineLen - offset >= 2 && line.substring(offset, offset + 2).equals("\\\\"))
-			return makeTuple3((List<String>)new ArrayList<String>(), "\\\\", 2); // "\\" is its own character (for "\"), not an escaped diacritic
+			return Tuple3((List<String>)new ArrayList<String>(), "\\\\", 2); // "\\" is its own character (for "\"), not an escaped diacritic
 		
 		List<String> diacritics = new ArrayList<String>();
 
@@ -434,7 +434,7 @@ public class Charset {
 
 		String deprecomposedChar = Charset.PRECOMPOSED_TO_ESCAPED_MAP.get(letter);
 		if (deprecomposedChar == null) {
-			return makeTuple3(diacritics, letter, i - offset);
+			return Tuple3(diacritics, letter, i - offset);
 		}
 		else {
 			int dcLen = deprecomposedChar.length();
@@ -446,7 +446,7 @@ public class Charset {
 				j += 2; // accept the 2-character escape sequence
 			}
 			String letterOnly = deprecomposedChar.substring(j, j + 1);
-			return makeTuple3(diacritics, letterOnly, i - offset);
+			return Tuple3(diacritics, letterOnly, i - offset);
 		}
 	}
 

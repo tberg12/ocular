@@ -1,5 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.util;
 
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
@@ -23,9 +24,9 @@ public class CollectionHelperTests {
 
 	@Test
 	public void test_makeMap() {
-		Tuple2<String, Integer> t1 = Tuple2.makeTuple2("one", 21);
-		Tuple2<String, Integer> t2 = Tuple2.makeTuple2("two", 22);
-		Tuple2<String, Integer> t3 = Tuple2.makeTuple2("three", 23);
+		Tuple2<String, Integer> t1 = Tuple2("one", 21);
+		Tuple2<String, Integer> t2 = Tuple2("two", 22);
+		Tuple2<String, Integer> t3 = Tuple2("three", 23);
 		
 		Map<String, Integer> m0 = CollectionHelper.makeMap();
 		assertEquals(0, m0.size());
@@ -52,8 +53,8 @@ public class CollectionHelperTests {
 
 	@Test
 	public void test_Map_getOrElse() {
-		Tuple2<String, Integer> t1 = Tuple2.makeTuple2("one", 21);
-		Tuple2<String, Integer> t2 = Tuple2.makeTuple2("two", 22);
+		Tuple2<String, Integer> t1 = Tuple2("one", 21);
+		Tuple2<String, Integer> t2 = Tuple2("two", 22);
 		Map<String, Integer> m2 = CollectionHelper.makeMap(t1, t2);
 
 		assertEquals(2, m2.size());

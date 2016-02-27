@@ -27,10 +27,10 @@ import threading.BetterThreader;
 public class InitializeFont implements Runnable {
 
 	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
-	public static String lmPath = null;
+	public static String inputLmPath = null; // Required.
 
 	@Option(gloss = "Output font file path.")
-	public static String fontPath = null;
+	public static String outputFontPath = null; // Required.
 
 	@Option(gloss = "Number of threads to use.")
 	public static int numFontInitThreads = 8;
@@ -57,10 +57,10 @@ public class InitializeFont implements Runnable {
 	}
 
 	public void run() {
-		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
-		if (fontPath == null) throw new IllegalArgumentException("-fontPath not set");
+		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
+		if (outputFontPath == null) throw new IllegalArgumentException("-fontPath not set");
 		
-		final LanguageModel lm = readLM(lmPath);
+		final LanguageModel lm = readLM(inputLmPath);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		final PixelType[][][][] fontPixelData = FontRenderer.getRenderedFont(charIndexer, CharacterTemplate.LINE_HEIGHT);
@@ -85,7 +85,7 @@ public class InitializeFont implements Runnable {
 		for (CharacterTemplate template : templates) {
 			font.put(template.getCharacter(), template);
 		}
-		InitializeFont.writeFont(font, fontPath);
+		InitializeFont.writeFont(font, outputFontPath);
 	}
 	
 	public static LanguageModel readLM(String lmPath) {

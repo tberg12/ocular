@@ -8,7 +8,7 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makePunctSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidDoublableSet;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeValidSubstitutionCharsSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -573,7 +573,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 	private void addState(List<Tuple2<TransitionState, Double>> result, int[] stateContext, TransitionStateType stateType, int stateLanguage, GlyphChar glyphChar, double stateTransitionScore) {
 		if (stateTransitionScore != Double.NEGATIVE_INFINITY) {
-			result.add(makeTuple2((TransitionState) new CodeSwitchTransitionState(stateContext, stateType, stateLanguage, glyphChar), stateTransitionScore));
+			result.add(Tuple2((TransitionState) new CodeSwitchTransitionState(stateContext, stateType, stateLanguage, glyphChar), stateTransitionScore));
 		}
 	}
 

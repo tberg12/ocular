@@ -20,9 +20,9 @@ public class LanguageTransitionPriorsTests {
 	public void test_makeLanguageTransitionProbs_multipleLanguages() {
 
 		List<Double> languagePriors = makeList( //
-				0.5, // makeTuple2("spanish", 0.5), //
-				0.3, // makeTuple2("latin", 0.3), //
-				0.1); //makeTuple2("nahautl", 0.1));
+				0.5, // Tuple2("spanish", 0.5), //
+				0.3, // Tuple2("latin", 0.3), //
+				0.1); //Tuple2("nahautl", 0.1));
 		double pKeepSameLanguage = 0.8;
 		Indexer<String> langIndexer = new HashMapIndexer<String>();
 		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );
@@ -46,7 +46,7 @@ public class LanguageTransitionPriorsTests {
 	@Test
 	public void test_makeLanguageTransitionProbs_oneLanguage() {
 		List<Double> languagePriors = makeList( //
-				0.5); //makeTuple2("spanish", 0.5));
+				0.5); //Tuple2("spanish", 0.5));
 		double pKeepSameLanguage = 0.8;
 		Indexer<String> langIndexer = new HashMapIndexer<String>();
 		langIndexer.index(new String[] { "spanish" } );
@@ -75,9 +75,9 @@ public class LanguageTransitionPriorsTests {
 	@Test
 	public void test_makeLanguageTransitionProbs_pKeepSameLanguageGreaterThan1() {
 		List<Double> languagePriors = makeList( //
-				0.5, // makeTuple2("spanish", 0.5), //
-				0.3, // makeTuple2("latin", 0.3), //
-				0.1); //makeTuple2("nahautl", 0.1));
+				0.5, // Tuple2("spanish", 0.5), //
+				0.3, // Tuple2("latin", 0.3), //
+				0.1); //Tuple2("nahautl", 0.1));
 		double pKeepSameLanguage = 1.1;
 		Indexer<String> langIndexer = new HashMapIndexer<String>();
 		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );
@@ -94,9 +94,9 @@ public class LanguageTransitionPriorsTests {
 	@Test
 	public void test_makeLanguageTransitionProbs_pKeepSameLanguageZero() {
 		List<Double> languagePriors = makeList( //
-				0.5, // makeTuple2("spanish", 0.5), //
-				0.3, // makeTuple2("latin", 0.3), //
-				0.1); //makeTuple2("nahautl", 0.1));
+				0.5, // Tuple2("spanish", 0.5), //
+				0.3, // Tuple2("latin", 0.3), //
+				0.1); //Tuple2("nahautl", 0.1));
 		double pKeepSameLanguage = 0.0;
 		Indexer<String> langIndexer = new HashMapIndexer<String>();
 		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );
@@ -113,9 +113,9 @@ public class LanguageTransitionPriorsTests {
 	@Test
 	public void test_makeLanguageTransitionProbs_languagePriorZero() {
 		List<Double> languagePriors = makeList( //
-				0.5, // makeTuple2("spanish", 0.5), //
-				0.0, // makeTuple2("latin", 0.0), //
-				0.2); //makeTuple2("nahautl", 0.2));
+				0.5, // Tuple2("spanish", 0.5), //
+				0.0, // Tuple2("latin", 0.0), //
+				0.2); //Tuple2("nahautl", 0.2));
 		double pKeepSameLanguage = 0.8;
 		Indexer<String> langIndexer = new HashMapIndexer<String>();
 		langIndexer.index(new String[] { "spanish", "latin", "nahuatl" } );

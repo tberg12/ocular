@@ -43,93 +43,97 @@ import indexer.Indexer;
  */
 public class TranscribeOrTrainFont implements Runnable {
 
-	// Main Options
+	// ##### Main Options
 	
 	@Option(gloss = "Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
-	public static String inputPath = null; //"test_img";
+	public static String inputDocPath = null; // Required.
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")
-	public static String outputPath = null; //"output_dir";
+	public static String outputPath = null; // Required.
 
 	@Option(gloss = "Path to the input language model file.")
-	public static String inputLmPath = null;
+	public static String inputLmPath = null; // Required.
 
 	@Option(gloss = "Path of the input font file.")
-	public static String inputFontPath = null;
+	public static String inputFontPath = null; // Required.
 
-	@Option(gloss = "Number of documents (pages) to use, counting alphabetically. Ignore or use 0 to use all documents. Default: use all documents")
+	@Option(gloss = "Number of documents (pages) to use, counting alphabetically. Ignore or use 0 to use all documents. Default: Use all documents.")
 	public static int numDocs = Integer.MAX_VALUE;
 
-	@Option(gloss = "Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.  Default: 0")
+	@Option(gloss = "Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.")
 	public static int numDocsToSkip = 0;
 
 	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
-	public static String extractedLinesPath = null;
+	public static String extractedLinesPath = null; // Don't read or write line image files.
 	
-	// Font Learning Options
+	// ##### Font Learning Options
 	
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
 	public static boolean trainFont = false;
+	
+	// The following options are only relevant if trainFont is set to "true".
 
-	@Option(gloss = "Path to write the learned font file to. (Required if trainFont is set to true, otherwise ignored.)")
+	@Option(gloss = "Path to write the learned font file to. Required if trainFont is set to true, otherwise ignored.")
 	public static String outputFontPath = null;
 	
-	@Option(gloss = "Number of iterations of EM to use for font learning.  (Only relevant if trainFont is set to true.)  Default: 3")
+	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 3;
 	
-	@Option(gloss = "Number of documents to process for each parameter update.  (Only relevant if trainFont is set to true.)  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.")
-	public static int updateDocBatchSize = Integer.MAX_VALUE;
+	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.")
+	public static int updateDocBatchSize = Integer.MAX_VALUE; // Update only after each full pass over the document set.
 
-	@Option(gloss = "Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.  (Only relevant if trainFont is set to true.)  Default: true")
+	@Option(gloss = "Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.")
 	public static boolean accumulateBatchesWithinIter = true;
 	
-	@Option(gloss = "The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  (Only relevant if trainFont is set to true, and updateDocBatchSize is used.)  Default is to always lump remaining documents in with the last complete batch.")
-	public static int minDocBatchSize = Integer.MAX_VALUE;
+	@Option(gloss = "The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Default is to always lump remaining documents in with the last complete batch.")
+	public static int minDocBatchSize = Integer.MAX_VALUE; // Always lump remaining documents in with the last complete batch.
 	
-	@Option(gloss = "If true, the font trainer will find the latest completed iteration in the outputPath and load it in order to pick up training from that point.  Convenient if a training run crashes when only partially completed.  (Only relevant if trainFont is set to true.)  Default: false")
+	@Option(gloss = "If true, the font trainer will find the latest completed iteration in the outputPath and load it in order to pick up training from that point.  Convenient if a training run crashes when only partially completed.")
 	public static boolean continueFromLastCompleteIteration = false;
 
-	// Language Model Re-training Options
+	// ##### Language Model Re-training Options
 	
-	@Option(gloss = "Should the language model be updated during font training? Default: false")
+	@Option(gloss = "Should the language model be updated during font training?")
 	public static boolean retrainLM = false;
 	
 	@Option(gloss = "Path to write the retrained language model file to. (Only relevant if retrainLM is set to true.)  Default: Don't write out the trained LM.")
-	public static String outputLmPath = null; //"lm/cs_trained.lmser";
+	public static String outputLmPath = null;
 
-	// Glyph Substitution Model Options
+	// ##### Glyph Substitution Model Options
 	
-	@Option(gloss = "Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions. Default: false")
+	@Option(gloss = "Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions.")
 	public static boolean allowGlyphSubstitution = false;
 	
-	@Option(gloss = "Path to the input glyph substitution model file. (Only relevant if allowGlyphSubstitution is set to true.) Default: Don't use a pre-initialized GSM.")
+	// The following options are only relevant if allowGlyphSubstitution is set to "true".
+	
+	@Option(gloss = "Path to the input glyph substitution model file. (Only relevant if allowGlyphSubstitution is set to true.) Default: Don't use a pre-initialized GSM. (Learn one from scratch).")
 	public static String inputGsmPath = null;
 
-	@Option(gloss = "Exponent on GSM scores. Default: ")
+	@Option(gloss = "Exponent on GSM scores.")
 	public static double gsmPower = 4.0;
 
-	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions. Default: 0.9")
+	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions.")
 	public static double gsmNoCharSubPrior = 0.9;
 
-	@Option(gloss = "Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde? Default: false")
+	@Option(gloss = "Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?")
 	public static boolean gsmElideAnything = false;
 	
-	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.) Default: false")
+	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.)")
 	public static boolean retrainGSM = false;
 	
 	@Option(gloss = "Path to write the retrained glyph substitution model file to. (Only relevant if allowGlyphSubstitution and retrainGSM are set to true.)  Default: Don't write out the trained GSM.")
 	public static String outputGsmPath = null;
 	
-	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation. Default: 1.0")
+	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.")
 	public static double gsmSmoothingCount = 1.0;
 	
-	@Option(gloss = "gsmElisionSmoothingCountMultiplier. Default: 1.0")
-	public static double gsmElisionSmoothingCountMultiplier = 1.0;
+	@Option(gloss = "gsmElisionSmoothingCountMultiplier.")
+	public static double gsmElisionSmoothingCountMultiplier = 100.0;
 	
-	@Option(gloss = "A glyph-context combination must be seen at least this many times in the last training iteration if it is to be allowed in the evaluation GSM.  This restricts spurious substitutions during evaluation.  (Only relevant if allowGlyphSubstitution is set to true.)  Default: 2")
+	@Option(gloss = "A glyph-context combination must be seen at least this many times in the last training iteration if it is to be allowed in the evaluation GSM.  This restricts spurious substitutions during evaluation.  (Only relevant if allowGlyphSubstitution is set to true.)")
 	public static int gsmMinCountsForEval = 2;
 	
-	// Line Extraction Options
+	// ##### Line Extraction Options
 	
 	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
 	public static double binarizeThreshold = 0.12;
@@ -140,10 +144,10 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Scale all lines to have the same height?")
 	public static boolean uniformLineHeight = true;
 
-	// Miscellaneous Options
+	// ##### Miscellaneous Options
 	
-	@Option(gloss = "Engine to use for inner loop of emission cache computation. DEFAULT: Uses Java on CPU, which works on any machine but is the slowest method. OPENCL: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
-	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT;
+	@Option(gloss = "Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
+	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT; // Default: DEFAULT
 
 	@Option(gloss = "Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
 	public static int beamSize = 10;
@@ -163,10 +167,10 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)")
 	public static int decodeBatchSize = 32;
 
-	@Option(gloss = "Min horizontal padding between characters in pixels. (Best left at default value: 1.)")
+	@Option(gloss = "Min horizontal padding between characters in pixels. (Best left at default value.)")
 	public static int paddingMinWidth = 1;
 
-	@Option(gloss = "Max horizontal padding between characters in pixels (Best left at default value: 5.)")
+	@Option(gloss = "Max horizontal padding between characters in pixels (Best left at default value.)")
 	public static int paddingMaxWidth = 5;
 
 	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
@@ -175,21 +179,23 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "A language model to be used to assign diacritics to the transcription output.")
 	public static boolean allowLanguageSwitchOnPunct = true;
 	
-	// Options used if evaluation should be performed during training
+	// ##### Options used if evaluation should be performed during training
 	
 	@Option(gloss = "When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
-	public static String evalInputPath = null;
+	public static String evalInputPath = null; // Do not evaluate during font training.
 
+	// The following options are only relevant if a value was given to -evalInputPath.
+	
 	@Option(gloss = "When using -evalInputPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
-	public static String evalExtractedLinesPath = null;
+	public static String evalExtractedLinesPath = null; // Don't read or write line image files. 
 
-	@Option(gloss = "When using -evalInputPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. Default: use all documents")
+	@Option(gloss = "When using -evalInputPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. Default: Use all documents in the specified path.")
 	public static int evalNumDocs = Integer.MAX_VALUE;
 
 	@Option(gloss = "When using -evalInputPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
-	public static int evalFreq = Integer.MAX_VALUE;
+	public static int evalFreq = Integer.MAX_VALUE; 
 	
-	@Option(gloss = "When using -evalInputPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?. Default: false")
+	@Option(gloss = "When using -evalInputPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?")
 	public static boolean evalBatches = false;
 	
 	
@@ -219,21 +225,21 @@ public class TranscribeOrTrainFont implements Runnable {
 		boolean evalCharIncludesDiacritic = true;
 		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution, evalCharIncludesDiacritic);
 		
-		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(inputDocPath, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
 		if (trainFont) {
 			MultiDocumentEvaluator evalSetEvaluator = makeEvalSetEvaluator(charIndexer, decoderEM, documentEvaluator);
 			train(documents, lm, font, gsmFactory, gsm, decoderEM, documentEvaluator, evalSetEvaluator);
 		}
 		else { /* transcribe only */
-			MultiDocumentEvaluator evalSetEvaluator = new BasicMultiDocumentEvaluator(documents, inputPath, outputPath, decoderEM, documentEvaluator, charIndexer);
+			MultiDocumentEvaluator evalSetEvaluator = new BasicMultiDocumentEvaluator(documents, inputDocPath, outputPath, decoderEM, documentEvaluator, charIndexer);
 			System.out.println("Transcribing input data      " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			evalSetEvaluator.printTranscriptionWithEvaluation(0, 0, lm, gsm, font);
 		}
 	}
 
 	private static void validateOptions() {
-		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
-		if (!new File(inputPath).exists()) throw new IllegalArgumentException("-inputPath "+inputPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (inputDocPath == null) throw new IllegalArgumentException("-inputPath not set");
+		if (!new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (trainFont && numEMIters <= 0) new IllegalArgumentException("-numEMIters must be a positive number if -trainFont is true.");
 		if (trainFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath required when -trainFont is true.");
@@ -268,7 +274,7 @@ public class TranscribeOrTrainFont implements Runnable {
 						gsmFactory, documentEvaluator,
 						numEMIters, updateDocBatchSize, minDocBatchSize, accumulateBatchesWithinIter,
 						numMstepThreads,
-						inputPath, outputPath,
+						inputDocPath, outputPath,
 						evalSetIterationEvaluator, evalFreq, evalBatches);
 		
 		Map<String, CharacterTemplate> newFont = trainedModels._1;

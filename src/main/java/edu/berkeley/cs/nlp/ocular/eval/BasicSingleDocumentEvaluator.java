@@ -1,7 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -243,7 +243,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			//
 			Map<String, EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences, charIncludesDiacritic);
 			if (allEvals != null) {
-				allEvals.add(makeTuple2(doc.baseName(), evals));
+				allEvals.add(Tuple2(doc.baseName(), evals));
 			}
 			
 			//
@@ -293,7 +293,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 			@SuppressWarnings("unchecked")
 			Map<String, EvalSuffStats> lmEvals = Evaluator.getUnsegmentedEval(new List[]{viterbiLmChars}, new List[]{goldLmChars}, charIncludesDiacritic);
 			if (allLmEvals != null) {
-				allLmEvals.add(makeTuple2(doc.baseName(), lmEvals));
+				allLmEvals.add(Tuple2(doc.baseName(), lmEvals));
 			}
 			
 			//

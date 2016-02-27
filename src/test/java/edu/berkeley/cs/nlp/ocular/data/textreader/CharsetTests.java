@@ -1,7 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.*;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.makeTuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
@@ -111,7 +111,7 @@ public class CharsetTests {
 	@Test
 	public void test_readCharAt() {
 		//String s1 = "ing th\\~q || | follies of thõsè, who éither ``sæek'' out th\\\"os\\`e wæys \"and\" means, which either are sq̃uccess lessons";
-		assertEquals(makeTuple2("\\\\", 2), readCharAt("this\\\\that", 4));
+		assertEquals(Tuple2("\\\\", 2), readCharAt("this\\\\that", 4));
 	}
 
 }

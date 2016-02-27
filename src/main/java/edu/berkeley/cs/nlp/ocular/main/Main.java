@@ -1,7 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
-import indexer.Indexer;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import threading.BetterThreader;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.RawImageLoader;
@@ -36,6 +35,8 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Option;
 import fig.OptionsParser;
 import fileio.f;
+import indexer.Indexer;
+import threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -330,7 +331,7 @@ public class Main implements Runnable {
 
 			Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences, true);
 			if (iter > numEMIters) {
-				allEvals.add(Tuple2.makeTuple2(doc.baseName(), evals));
+				allEvals.add(Tuple2(doc.baseName(), evals));
 			}
 			System.out.println(guessAndGoldOut.toString()+Evaluator.renderEval(evals));
 

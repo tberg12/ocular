@@ -1,5 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.data;
 
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -80,7 +82,7 @@ public class FileUtil {
 			
 			String aSuffix = StringHelper.join(as.subList(longestCommonPrefix, as.size()), File.separator);
 			String bSuffix = StringHelper.join(bs.subList(longestCommonPrefix, bs.size()), File.separator);
-			return Tuple2.makeTuple2(aSuffix, bSuffix);
+			return Tuple2(aSuffix, bSuffix);
 		}
 		catch (IOException e) { throw new RuntimeException(e); }
 	}
