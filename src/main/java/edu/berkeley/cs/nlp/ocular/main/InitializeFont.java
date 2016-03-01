@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -18,6 +20,7 @@ import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
 import fig.OptionsParser;
+import fileio.f;
 import indexer.Indexer;
 import threading.BetterThreader;
 
@@ -31,7 +34,10 @@ public class InitializeFont implements Runnable {
 
 	@Option(gloss = "Output font file path.")
 	public static String outputFontPath = null; // Required.
-
+	
+	@Option(gloss = "Path to a file that contains a custom list of font names that may be used to initialize the font. The file should contain one font name per line. Default: Use all valid fonts found on the computer.")
+	public static String allowedFontsPath = null;
+	
 	@Option(gloss = "Number of threads to use.")
 	public static int numFontInitThreads = 8;
 	
@@ -59,11 +65,13 @@ public class InitializeFont implements Runnable {
 	public void run() {
 		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (outputFontPath == null) throw new IllegalArgumentException("-fontPath not set");
+
+		Set<String> allowedFonts = getAllowedFontsListFromFile();
 		
 		final LanguageModel lm = readLM(inputLmPath);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
-		final PixelType[][][][] fontPixelData = FontRenderer.getRenderedFont(charIndexer, CharacterTemplate.LINE_HEIGHT);
+		final PixelType[][][][] fontPixelData = FontRenderer.getRenderedFont(charIndexer, CharacterTemplate.LINE_HEIGHT, allowedFonts);
 //		final PixelType[][][] fAndBarFontPixelData = buildFAndBarFontPixelData(charIndexer, fontPixelData);
 		BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer c, Object ignore){
 			String currChar = charIndexer.getObject(c);
@@ -86,6 +94,16 @@ public class InitializeFont implements Runnable {
 			font.put(template.getCharacter(), template);
 		}
 		InitializeFont.writeFont(font, outputFontPath);
+	}
+
+	private Set<String> getAllowedFontsListFromFile() {
+		Set<String> allowedFonts = new HashSet<String>();
+		if (allowedFontsPath != null) {
+			for (String fontName : f.readLines(allowedFontsPath)) {
+				allowedFonts.add(fontName);
+			}
+		}
+		return allowedFonts;
 	}
 	
 	public static LanguageModel readLM(String lmPath) {
