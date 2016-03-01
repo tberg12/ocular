@@ -83,7 +83,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 1. Train a language model:
 
   Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-inputTextPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
-    
+
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -outputLmPath lm/english.lmser \
         -inputTextPath texts/pg2600.txt
@@ -135,8 +135,8 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   **Optional: Glyph substitution modeling for variable orthography**
   
-  Ocular has the optional ability to learn, unsupervised, a mapping from archaic orthography to the orthography reflected in the trained language model. We call this a "glyph substitution model" (GSM).  To train a GSM, add the `-trainGsm` and `-outputGsmPath` options.
-  
+  Ocular has the optional ability to learn, unsupervised, a mapping from archaic orthography to the orthography reflected in the trained language model. We call this a "glyph substitution model" (GSM).  To train a GSM, add the `-allowGlyphSubstitution`, `-trainGsm` and `-outputGsmPath` options.
+
     java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
       -trainFont true \
       -inputFontPath font/advertencias/init.fontser \
@@ -154,18 +154,18 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-trainFont` unspecified (or set it to `false`).  Additionally, `-inputFontPath` should point to the newly-trained font model (the `-outputFontPath` from the training step, instead of the "initial" font model used during font training).
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -inputDocPath sample_images/advertencias \
-        -inputLmPath lm/trilingual.lmser \
-        -inputFontPath font/advertencias/trained.fontser \
-        -outputPath transcribe_output 
+    java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      -inputDocPath sample_images/advertencias \
+      -inputLmPath lm/trilingual.lmser \
+      -inputFontPath font/advertencias/trained.fontser \
+      -outputPath transcribe_output 
 
   Many more command-line options, including several that affect speed and accuracy, can be found below.
   
   **Optional: Continued model improvements during transcription**
   
   Since training is a model is done in an unsupervised fashion (it requires no gold transcriptions), the operation of transcribing is actually a subset of EM font training.  Because of this, it is possible make further improvements to the models during transcription, without having to make multiple iterations over the documents.  This can be done by setting `-numEMIters` to 1, `-trainFont` to `true`, and `-updateDocBatchSize` to a reasonable number of training documents:
-  
+
     java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
       -inputDocPath sample_images/advertencias \
       -inputLmPath lm/trilingual.lmser \
@@ -177,7 +177,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
       -outputFontPath font/advertencias/newTrained.fontser
       
   The same can be done to update the glyph substitution model by passing in the previously-trained model (`-inputGsmPath`) and setting `-trainGsm` to `true`.
-  
+
       -allowGlyphSubstitution true \ 
       -inputGsmPath font/advertencias/trained.gsmser 
       -trainGsm true \
@@ -193,7 +193,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
       path/to/some/image_001.txt      # corresponding transcription
 
   For pdf files, the transcription filename is based on both the pdf filename and the relevant page number (as a 5-digit number):
-  
+
       path/to/some/filename.pdf                 # document image
       path/to/some/filename_pdf_page00001.txt   # transcription of the document's first page
 
