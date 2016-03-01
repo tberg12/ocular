@@ -82,17 +82,17 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 1. Train a language model:
 
-  Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-textPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
+  Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-inputTextPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
     
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/english.lmser \
-        -textPath texts/pg2600.txt
+        -inputTextPath texts/pg2600.txt
 
-  For a multilingual (code-switching) model, specify multiple `-textPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows:
+  For a multilingual (code-switching) model, specify multiple `-inputTextPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
-        -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/"
+        -inputTextPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/"
 
   This program will work with any languages, and any number of languages; simply add an entry for every relevant language.  The set of languages chosen should match the set of languages found in the documents that are to be transcribed.
 
@@ -100,7 +100,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
-        -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
+        -inputTextPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
         -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
         -insertLongS true
 
@@ -170,7 +170,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 Output LM file path.
 Required.
 
-* `-textPath`:
+* `-inputTextPath`:
 Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: "english->texts/english/,spanish->texts/spanish/,french->texts/french/".  Be sure to wrap the whole string with "quotes" if multiple languages are used.)
 Required.
 
