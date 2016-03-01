@@ -137,28 +137,28 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   
   Ocular has the optional ability to learn, unsupervised, a mapping from archaic orthography to the orthography reflected in the trained language model. We call this a "glyph substitution model" (GSM).  To train a GSM, add the `-allowGlyphSubstitution`, `-trainGsm` and `-outputGsmPath` options.
 
-    java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-      -trainFont true \
-      -inputFontPath font/advertencias/init.fontser \
-      -inputLmPath lm/trilingual.lmser \
-      -inputDocPath sample_images/advertencias \
-      -numDocs 10 \
-      -outputFontPath font/advertencias/trained.fontser \
-      -outputPath train_output \
-      -allowGlyphSubstitution true \ 
-      -trainGsm true \
-      -outputGsmPath font/advertencias/trained.gsmser
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -trainFont true \
+        -inputFontPath font/advertencias/init.fontser \
+        -inputLmPath lm/trilingual.lmser \
+        -inputDocPath sample_images/advertencias \
+        -numDocs 10 \
+        -outputFontPath font/advertencias/trained.fontser \
+        -outputPath train_output \
+        -allowGlyphSubstitution true \ 
+        -trainGsm true \
+        -outputGsmPath font/advertencias/trained.gsmser
 
 
 4. Transcribe some pages:
 
   To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-trainFont` unspecified (or set it to `false`).  Additionally, `-inputFontPath` should point to the newly-trained font model (the `-outputFontPath` from the training step, instead of the "initial" font model used during font training).
 
-    java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-      -inputDocPath sample_images/advertencias \
-      -inputLmPath lm/trilingual.lmser \
-      -inputFontPath font/advertencias/trained.fontser \
-      -outputPath transcribe_output 
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -inputDocPath sample_images/advertencias \
+        -inputLmPath lm/trilingual.lmser \
+        -inputFontPath font/advertencias/trained.fontser \
+        -outputPath transcribe_output 
 
   Many more command-line options, including several that affect speed and accuracy, can be found below.
   
@@ -166,24 +166,24 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   
   Since training is a model is done in an unsupervised fashion (it requires no gold transcriptions), the operation of transcribing is actually a subset of EM font training.  Because of this, it is possible make further improvements to the models during transcription, without having to make multiple iterations over the documents.  This can be done by setting `-numEMIters` to 1, `-trainFont` to `true`, and `-updateDocBatchSize` to a reasonable number of training documents:
 
-    java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-      -inputDocPath sample_images/advertencias \
-      -inputLmPath lm/trilingual.lmser \
-      -inputFontPath font/advertencias/trained.fontser \
-      -outputPath transcribe_output \
-      -trainFont true \
-      -numEMIters 1 \
-      -updateDocBatchSize 20 \
-      -outputFontPath font/advertencias/newTrained.fontser
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+        -inputDocPath sample_images/advertencias \
+        -inputLmPath lm/trilingual.lmser \
+        -inputFontPath font/advertencias/trained.fontser \
+        -outputPath transcribe_output \
+        -trainFont true \
+        -numEMIters 1 \
+        -updateDocBatchSize 20 \
+        -outputFontPath font/advertencias/newTrained.fontser
       
   The same can be done to update the glyph substitution model by passing in the previously-trained model (`-inputGsmPath`) and setting `-trainGsm` to `true`.
 
-      -allowGlyphSubstitution true \ 
-      -inputGsmPath font/advertencias/trained.gsmser 
-      -trainGsm true \
-      -numEMIters 1 \
-      -updateDocBatchSize 20 \
-      -outputGsmPath font/advertencias/newTrained.gsmser
+        -allowGlyphSubstitution true \ 
+        -inputGsmPath font/advertencias/trained.gsmser 
+        -trainGsm true \
+        -numEMIters 1 \
+        -updateDocBatchSize 20 \
+        -outputGsmPath font/advertencias/newTrained.gsmser
   
   **Optional: Checking accuracy with a gold transcription**
 
