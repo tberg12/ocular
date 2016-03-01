@@ -85,13 +85,13 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-inputTextPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
     
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -lmPath lm/english.lmser \
+        -outputLmPath lm/english.lmser \
         -inputTextPath texts/pg2600.txt
 
   For a multilingual (code-switching) model, specify multiple `-inputTextPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -lmPath lm/trilingual.lmser \
+        -outputLmPath lm/trilingual.lmser \
         -inputTextPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/"
 
   This program will work with any languages, and any number of languages; simply add an entry for every relevant language.  The set of languages chosen should match the set of languages found in the documents that are to be transcribed.
@@ -99,7 +99,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   For older texts (either monolingual or multilingual), it might also be useful to specify the optional parameters `alternateSpellingReplacementPaths` or `-insertLongS true`, as shown here:
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -lmPath lm/trilingual.lmser \
+        -outputLmPath lm/trilingual.lmser \
         -inputTextPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
         -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
         -insertLongS true
@@ -109,42 +109,83 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 2. Initialize a font:
 
-  Before a font can be trained from texts, a font model consisting of a "guess" for each character must be initialized based on the fonts on your computer.  Use `-fontPath` to specify where the initialized font should be written.  Since different languages use different character sets, a language model must be given in order for the system to know what characters to initialize (`-lmPath`).
+  Before a font can be trained from texts, a font model consisting of a "guess" for each character must be initialized based on the fonts on your computer.  Use `-outputFontPath` to specify where the initialized font should be written.  Since different languages use different character sets, a language model must be given in order for the system to know what characters to initialize (`-lmPath`).
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -lmPath lm/trilingual.lmser \
-        -fontPath font/advertencias/init.fontser
+        -intputLmPath lm/trilingual.lmser \
+        -outputFontPath font/advertencias/init.fontser
 
 
 3. Train a font:
 
-  To train a font, a set of document pages must be given (`-inputPath`), along with the paths to the language model and initial font model.  Use `-outputFontPath` to specify where the trained font model should be written, and `-outputPath` to specify where transcriptions and evaluation metrics should be written.  The path specified by `-inputPath` should point to a pdf or image file or directory or directory hierarchy of such files.  The value given by `-inputPath` will be searched recursively for non-`.txt` files; the transcriptions written to the `-outputPath` will maintain the same directory hierarchy.
+  To train a font, a set of document pages must be given (`-inputDocPath`), along with the paths to the language model and initial font model.  Use `-outputFontPath` to specify where the trained font model should be written, and `-outputPath` to specify where transcriptions and (optional) evaluation metrics should be written.  The path specified by `-inputDocPath` should point to a pdf or image file or directory or directory hierarchy of such files.  The value given by `-inputDocPath` will be searched recursively for non-`.txt` files; the transcriptions written to the `-outputPath` will maintain the same directory hierarchy.
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
         -trainFont true \
         -inputFontPath font/advertencias/init.fontser \
         -inputLmPath lm/trilingual.lmser \
-        -inputPath sample_images/advertencias \
+        -inputDocPath sample_images/advertencias \
         -numDocs 10 \
         -outputFontPath font/advertencias/trained.fontser \
         -outputPath train_output
+
+  Since the operation of the font trainer is to take in a font model (`-inputFontPath`) and output a new and improved font model (`-outputFontPath`), the program can be run multiple times, passing the output back in as the input of the next round, to continue to making improvements.
     
   Many more command-line options, including several that affect speed and accuracy, can be found below.
+
+  **Optional: Glyph substitution modeling for variable orthography**
+  
+  Ocular has the optional ability to learn, unsupervised, a mapping from archaic orthography to the orthography reflected in the trained language model. We call this a "glyph substitution model" (GSM).  To train a GSM, add the `-trainGsm` and `-outputGsmPath` options.
+  
+    java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      -trainFont true \
+      -inputFontPath font/advertencias/init.fontser \
+      -inputLmPath lm/trilingual.lmser \
+      -inputDocPath sample_images/advertencias \
+      -numDocs 10 \
+      -outputFontPath font/advertencias/trained.fontser \
+      -outputPath train_output \
+      -allowGlyphSubstitution true \ 
+      -trainGsm true \
+      -outputGsmPath font/advertencias/trained.gsmser
 
 
 4. Transcribe some pages:
 
-  To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-trainFont` unspecified (or set it to `false`).  Additionally, `-inputFontPath` should point to the newly-trained font model (instead of the "initial" font model used during font training).
+  To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-trainFont` unspecified (or set it to `false`).  Additionally, `-inputFontPath` should point to the newly-trained font model (the `-outputFontPath` from the training step, instead of the "initial" font model used during font training).
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
-        -inputPath sample_images/advertencias \
-        -inputFontPath font/advertencias/trained.fontser \
+        -inputDocPath sample_images/advertencias \
         -inputLmPath lm/trilingual.lmser \
+        -inputFontPath font/advertencias/trained.fontser \
         -outputPath transcribe_output 
 
   Many more command-line options, including several that affect speed and accuracy, can be found below.
-
-  **Checking accuracy with a gold transcription**
+  
+  **Optional: Continued model improvements during transcription**
+  
+  Since training is a model is done in an unsupervised fashion (it requires no gold transcriptions), the operation of transcribing is actually a subset of EM font training.  Because of this, it is possible make further improvements to the models during transcription, without having to make multiple iterations over the documents.  This can be done by setting `-numEMIters` to 1, `-trainFont` to `true`, and `-updateDocBatchSize` to a reasonable number of training documents:
+  
+    java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      -inputDocPath sample_images/advertencias \
+      -inputLmPath lm/trilingual.lmser \
+      -inputFontPath font/advertencias/trained.fontser \
+      -outputPath transcribe_output \
+      -trainFont true \
+      -numEMIters 1 \
+      -updateDocBatchSize 20 \
+      -outputFontPath font/advertencias/newTrained.fontser
+      
+  The same can be done to update the glyph substitution model by passing in the previously-trained model (`-inputGsmPath`) and setting `-trainGsm` to `true`.
+  
+      -allowGlyphSubstitution true \ 
+      -inputGsmPath font/advertencias/trained.gsmser 
+      -trainGsm true \
+      -numEMIters 1 \
+      -updateDocBatchSize 20 \
+      -outputGsmPath font/advertencias/newTrained.gsmser
+  
+  **Optional: Checking accuracy with a gold transcription**
 
   If a gold standard transcription is available for a file, it should be written in a `.txt` file in the same directory as the corresponding image, and given the same filename (but with a different extension).  These files will be used to evaluate the accuracy of the transcription (during either training or testing).  For example:
 
@@ -175,7 +216,7 @@ Path to the text files (or directory hierarchies) for training the LM.  For each
 Required.
 
 * `-languagePriors`:
-Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: "english->0.7,spanish->0.2,french->0.1". Be sure to wrap the whole string with "quotes".  Defaults to uniform priors. (Only relevant if multiple languages used.)
+Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: "english->0.7,spanish->0.2,french->0.1". Be sure to wrap the whole string with "quotes". (Only relevant if multiple languages used.)
 Default: Uniform priors.
 
 * `-pKeepSameLanguage`:
@@ -219,6 +260,10 @@ Required.
 * `-outputFontPath`:
 Output font file path.
 Required.
+
+* `-allowedFontsPath`:
+Path to a file that contains a custom list of font names that may be used to initialize the font. The file should contain one font name per line.
+Default: Use all valid fonts found on the computer.
 
 * `-numFontInitThreads`:
 Number of threads to use.
@@ -289,16 +334,16 @@ Number of iterations of EM to use for font learning.
 Default: 3
 
 * `-updateDocBatchSize`:
-Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.
+Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).
 Default: Update only after each full pass over the document set.
 
 * `-accumulateBatchesWithinIter`:
 Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.
-Default: true
+Default: false
 
 * `-minDocBatchSize`:
-The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Default is to always lump remaining documents in with the last complete batch.
-Default: Always lump remaining documents in with the last complete batch.
+The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.
+Default: Always lump remaining documents of an incomplete batch in with the last complete batch.
 
 * `-continueFromLastCompleteIteration`:
 If true, the font trainer will find the latest completed iteration in the outputPath and load it in order to pick up training from that point.  Convenient if a training run crashes when only partially completed.
@@ -338,12 +383,12 @@ Default: 0.9
 Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?
 Default: false
 
-* `-retrainGSM`:
+* `-trainGsm`:
 Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.)
 Default: false
 
 * `-outputGsmPath`:
-Path to write the retrained glyph substitution model file to. (Only relevant if allowGlyphSubstitution and retrainGSM are set to true.)
+Path to write the retrained glyph substitution model file to. (Only relevant if allowGlyphSubstitution and trainGsm are set to true.)
 Default: Don't write out the trained GSM.
 
 * `-gsmSmoothingCount`:

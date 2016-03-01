@@ -79,14 +79,14 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 3;
 	
-	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default is to update only after each full pass over the document set.")
-	public static int updateDocBatchSize = Integer.MAX_VALUE; // Update only after each full pass over the document set.
+	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default: Update only after each full pass over the document set.")
+	public static int updateDocBatchSize = Integer.MAX_VALUE;
 
 	@Option(gloss = "Should the counts from each batch accumulate with the previous batches, as opposed to each batch starting fresh?  Note that the counts will always be refreshed after a full pass through the documents.")
-	public static boolean accumulateBatchesWithinIter = true;
+	public static boolean accumulateBatchesWithinIter = false;
 	
-	@Option(gloss = "The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Default is to always lump remaining documents in with the last complete batch.")
-	public static int minDocBatchSize = Integer.MAX_VALUE; // Always lump remaining documents in with the last complete batch.
+	@Option(gloss = "The minimum number of documents that may be used to make a batch for updating parameters.  If the last batch of a pass will contain fewer than this many documents, then lump them in with the last complete batch.  Default: Always lump remaining documents of an incomplete batch in with the last complete batch.")
+	public static int minDocBatchSize = Integer.MAX_VALUE;
 	
 	@Option(gloss = "If true, the font trainer will find the latest completed iteration in the outputPath and load it in order to pick up training from that point.  Convenient if a training run crashes when only partially completed.")
 	public static boolean continueFromLastCompleteIteration = false;
@@ -119,9 +119,9 @@ public class TranscribeOrTrainFont implements Runnable {
 	public static boolean gsmElideAnything = false;
 	
 	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.)")
-	public static boolean retrainGSM = false;
+	public static boolean trainGsm = false;
 	
-	@Option(gloss = "Path to write the retrained glyph substitution model file to. (Only relevant if allowGlyphSubstitution and retrainGSM are set to true.)  Default: Don't write out the trained GSM.")
+	@Option(gloss = "Path to write the retrained glyph substitution model file to. (Only relevant if allowGlyphSubstitution and trainGsm are set to true.)  Default: Don't write out the trained GSM.")
 	public static String outputGsmPath = null;
 	
 	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.")
@@ -246,9 +246,9 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (!trainFont && outputFontPath != null) throw new IllegalArgumentException("-outputFontPath not permitted when -trainFont is false.");
 		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (outputLmPath != null && !retrainLM) throw new IllegalArgumentException("-outputLmPath not permitted if -retrainLM is false.");
-		if (retrainGSM && !allowGlyphSubstitution) throw new IllegalArgumentException("-retrainGSM not permitted if -allowGlyphSubstitution is false.");
+		if (trainGsm && !allowGlyphSubstitution) throw new IllegalArgumentException("-trainGsm not permitted if -allowGlyphSubstitution is false.");
 		if (inputGsmPath != null && !allowGlyphSubstitution) throw new IllegalArgumentException("-inputGsmPath not permitted if -allowGlyphSubstitution is false.");
-		if (outputGsmPath != null && !retrainGSM) throw new IllegalArgumentException("-outputGsmPath not permitted if -retrainGsM is false.");
+		if (outputGsmPath != null && !trainGsm) throw new IllegalArgumentException("-outputGsmPath not permitted if -trainGsm is false.");
 		if (inputFontPath == null) throw new IllegalArgumentException("-inputFontPath not set");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
 		if (evalExtractedLinesPath != null && evalInputDocPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputDocPath.");
@@ -266,7 +266,7 @@ public class TranscribeOrTrainFont implements Runnable {
 				new FontTrainEM().train(
 						trainDocuments, 
 						lm, gsm, font, 
-						retrainLM, retrainGSM, 
+						retrainLM, trainGsm, 
 						continueFromLastCompleteIteration,
 						outputFontPath != null, outputLmPath != null, outputGsmPath != null,
 						decoderEM,
