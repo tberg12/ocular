@@ -6,7 +6,7 @@ dir = "src/main/java/edu/berkeley/cs/nlp/ocular/main/"
 option_line_re   = re.compile(r"\s*@Option\(gloss = \"(.*)\"\)\s*")
 opt_decl_line_re = re.compile(r"\s*public static \S+ (\S+) = (.*);\s*(// (.+))?\s*")
 
-def println(s): print(s+"\n")
+def println(s): print(s.strip()+"\n")
 
 
 
@@ -65,5 +65,5 @@ for fn in ["TrainLanguageModel", "InitializeFont", "TranscribeOrTrainFont"]:
 
 
 
-				println("* `-%s`:\n%s\n%s%s" % (name, gloss, default, " (%s)" % (default_explanation) if default_explanation else ""))
+				println("* `-%s`:\n%s\n%s%s" % (name, gloss.strip(), default.strip(), " (%s)" % (default_explanation) if default_explanation else ""))
 

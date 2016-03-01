@@ -210,8 +210,6 @@ Default: 4.0
 Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.
 Default: 0
 
-
-
 ### InitializeFont
 
 * `-inputLmPath`:
@@ -242,10 +240,7 @@ Default: 1.0
 Min space template width as fraction of text line height.
 Default: 0.0
 
-
-
 ### TranscribeOrTrainFont
-
 
 ##### Main Options
 
@@ -277,13 +272,11 @@ Default: 0
 Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
 Default: Don't read or write line image files.
 
-
 ##### Font Learning Options
 
 * `-trainFont`:
 Whether to learn the font from the input documents and write the font to a file.
 Default: false
-
 
 The following options are only relevant if trainFont is set to "true".
 
@@ -311,7 +304,6 @@ Default: Always lump remaining documents in with the last complete batch.
 If true, the font trainer will find the latest completed iteration in the outputPath and load it in order to pick up training from that point.  Convenient if a training run crashes when only partially completed.
 Default: false
 
-
 ##### Language Model Re-training Options
 
 * `-retrainLM`:
@@ -322,13 +314,11 @@ Default: false
 Path to write the retrained language model file to. (Only relevant if retrainLM is set to true.)
 Default: Don't write out the trained LM.
 
-
 ##### Glyph Substitution Model Options
 
 * `-allowGlyphSubstitution`:
 Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions.
 Default: false
-
 
 The following options are only relevant if allowGlyphSubstitution is set to "true".
 
@@ -368,7 +358,6 @@ Default: 100.0
 A glyph-context combination must be seen at least this many times in the last training iteration if it is to be allowed in the evaluation GSM.  This restricts spurious substitutions during evaluation.  (Only relevant if allowGlyphSubstitution is set to true.)
 Default: 2
 
-
 ##### Line Extraction Options
 
 * `-binarizeThreshold`:
@@ -382,7 +371,6 @@ Default: true
 * `-uniformLineHeight`:
 Scale all lines to have the same height?
 Default: true
-
 
 ##### Miscellaneous Options
 
@@ -430,28 +418,27 @@ Default: false
 A language model to be used to assign diacritics to the transcription output.
 Default: true
 
-
 ##### Options used if evaluation should be performed during training
 
-* `-evalInputPath`:
+* `-evalInputDocPath`:
 When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
 Default: Do not evaluate during font training.
 
-
-The following options are only relevant if a value was given to -evalInputPath.
+The following options are only relevant if a value was given to -evalInputDocPath.
 
 * `-evalExtractedLinesPath`:
-When using -evalInputPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
+When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
 Default: Don't read or write line image files.
 
 * `-evalNumDocs`:
-When using -evalInputPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents.
+When using -evalInputDocPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents.
 Default: Use all documents in the specified path.
 
 * `-evalFreq`:
-When using -evalInputPath, the font trainer will perform an evaluation every `evalFreq` iterations.
+When using -evalInputDocPath, the font trainer will perform an evaluation every `evalFreq` iterations.
 Default: Evaluate only after all iterations have completed.
 
 * `-evalBatches`:
-When using -evalInputPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?
+When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?
 Default: false
+

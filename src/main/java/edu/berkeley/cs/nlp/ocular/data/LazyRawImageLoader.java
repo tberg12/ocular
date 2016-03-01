@@ -76,9 +76,12 @@ public class LazyRawImageLoader implements ImageLoader {
 		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip+actualNumDocsToUse; ++docNum) {
 			Document lazyDoc = lazyDocs.get(docNum);
 			System.out.println("  Using " + lazyDoc.baseName());
-			if (goldTranscriptionRequired && lazyDoc.loadLineText() == null & lazyDoc.loadLmText() == null) 
+			if (goldTranscriptionRequired && lazyDoc.loadLineText() == null & lazyDoc.loadLmText() == null) { 
 				throw new RuntimeException("Evaluation document "+lazyDoc.baseName()+" has no gold transcriptions.");
-			documents.add(lazyDoc);
+			}
+			else {
+				documents.add(lazyDoc);
+			}
 		}
 		if (actualNumDocsToUse < 1) throw new RuntimeException("No documents given!");
 		return documents;

@@ -182,20 +182,20 @@ public class TranscribeOrTrainFont implements Runnable {
 	// ##### Options used if evaluation should be performed during training
 	
 	@Option(gloss = "When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
-	public static String evalInputPath = null; // Do not evaluate during font training.
+	public static String evalInputDocPath = null; // Do not evaluate during font training.
 
-	// The following options are only relevant if a value was given to -evalInputPath.
+	// The following options are only relevant if a value was given to -evalInputDocPath.
 	
-	@Option(gloss = "When using -evalInputPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
+	@Option(gloss = "When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
 	public static String evalExtractedLinesPath = null; // Don't read or write line image files. 
 
-	@Option(gloss = "When using -evalInputPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. Default: Use all documents in the specified path.")
+	@Option(gloss = "When using -evalInputDocPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. Default: Use all documents in the specified path.")
 	public static int evalNumDocs = Integer.MAX_VALUE;
 
-	@Option(gloss = "When using -evalInputPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
+	@Option(gloss = "When using -evalInputDocPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
 	public static int evalFreq = Integer.MAX_VALUE; 
 	
-	@Option(gloss = "When using -evalInputPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?")
+	@Option(gloss = "When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?")
 	public static boolean evalBatches = false;
 	
 	
@@ -238,8 +238,8 @@ public class TranscribeOrTrainFont implements Runnable {
 	}
 
 	private static void validateOptions() {
-		if (inputDocPath == null) throw new IllegalArgumentException("-inputPath not set");
-		if (!new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (inputDocPath == null) throw new IllegalArgumentException("-inputDocPath not set");
+		if (!new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputDocPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (trainFont && numEMIters <= 0) new IllegalArgumentException("-numEMIters must be a positive number if -trainFont is true.");
 		if (trainFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath required when -trainFont is true.");
@@ -251,8 +251,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (outputGsmPath != null && !retrainGSM) throw new IllegalArgumentException("-outputGsmPath not permitted if -retrainGsM is false.");
 		if (inputFontPath == null) throw new IllegalArgumentException("-inputFontPath not set");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
-		if (!trainFont && evalInputPath != null) throw new IllegalArgumentException("-evalInputPath not permitted when -trainFont is true (evaluation on the input documents is automatic if gold transcriptions are found).");
-		if (evalExtractedLinesPath != null && evalInputPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputPath.");
+		if (evalExtractedLinesPath != null && evalInputDocPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputDocPath.");
 		if (!new File(inputFontPath).exists()) throw new RuntimeException("inputFontPath " + inputFontPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 
 		// Make the output directory if it doesn't exist yet
@@ -361,9 +360,9 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	private MultiDocumentEvaluator makeEvalSetEvaluator(Indexer<String> charIndexer, DecoderEM decoderEM, SingleDocumentEvaluator documentEvaluator) {
 		MultiDocumentEvaluator evalSetEvaluator;
-		if (evalInputPath != null) {
-			List<Document> evalDocuments = LazyRawImageLoader.loadDocuments(evalInputPath, evalExtractedLinesPath, evalNumDocs, numDocsToSkip, true, uniformLineHeight, binarizeThreshold, crop);
-			evalSetEvaluator = new BasicMultiDocumentEvaluator(evalDocuments, evalInputPath, outputPath, decoderEM, documentEvaluator, charIndexer);
+		if (evalInputDocPath != null) {
+			List<Document> evalDocuments = LazyRawImageLoader.loadDocuments(evalInputDocPath, evalExtractedLinesPath, evalNumDocs, 0, true, uniformLineHeight, binarizeThreshold, crop);
+			evalSetEvaluator = new BasicMultiDocumentEvaluator(evalDocuments, evalInputDocPath, outputPath, decoderEM, documentEvaluator, charIndexer);
 		}
 		else {
 			evalSetEvaluator = new MultiDocumentEvaluator.NoOpMultiDocumentEvaluator();

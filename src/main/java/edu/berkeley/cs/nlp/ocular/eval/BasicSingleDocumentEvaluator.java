@@ -41,7 +41,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
 			Document doc,
 			TransitionState[][] decodeStates, int[][] decodeWidths,
-			String inputPath, String outputPath,
+			String inputDocPath, String outputPath,
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals) {
 		String[][] text = doc.loadLineText();
@@ -121,7 +121,7 @@ public class BasicSingleDocumentEvaluator implements SingleDocumentEvaluator {
 		
 		System.out.println("Viterbi LM Chars: " + StringHelper.join(viterbiLmChars));
 
-		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
+		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputDocPath), new File(doc.baseName()))._2;
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
 		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
 		if (iter > 0) outputFilenameBase += "_iter-" + iter;
