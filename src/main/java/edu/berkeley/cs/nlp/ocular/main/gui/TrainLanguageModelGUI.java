@@ -202,7 +202,7 @@ public class TrainLanguageModelGUI {
 			public void actionPerformed(ActionEvent e) {
 				TrainLanguageModel exec = new TrainLanguageModel();
 				exec.outputLmPath = input_outputLmPath.getText();
-				exec.textPath = input_textPath.getText();
+				exec.inputTextPath = input_textPath.getText();
 				exec.languagePriors = input_languagePriors.getText();
 				exec.pKeepSameLanguage = Double.valueOf(input_pKeepSameLanguage.getText());
 				exec.alternateSpellingReplacementPaths = input_alternateSpellingReplacementPaths.getText();
