@@ -32,7 +32,7 @@ public class TrainLanguageModelGUI {
 	private JLabel label_title2;
 
 	private JLabel label_outputLmPath;
-	private JLabel label_textPath;
+	private JLabel label_inputTextPath;
 	private JLabel label_languagePriors;
 	private JLabel label_pKeepSameLanguage;
 	private JLabel label_alternateSpellingReplacementPaths;
@@ -40,19 +40,19 @@ public class TrainLanguageModelGUI {
 	private JLabel label_removeDiacritics;
 	private JLabel label_explicitCharacterSet;
 	private JLabel label_charN;
-	private JLabel label_power;
+	private JLabel label_lmPower;
 	private JLabel label_lmCharCount;
 	private JLabel label_go;
 
 	private JTextField input_outputLmPath;
-	private JTextField input_textPath;
+	private JTextField input_inputTextPath;
 	private JTextField input_languagePriors;
 	private JTextField input_pKeepSameLanguage;
 	private JTextField input_alternateSpellingReplacementPaths;
 	private JCheckBox input_insertLongS;
 	private JCheckBox input_removeDiacritics;
 	private JTextField input_explicitCharacterSet;
-	private JTextField input_power;
+	private JTextField input_lmPower;
 	private JTextField input_charN;
 	private JTextField input_lmCharCount;
 	private JButton input_go;
@@ -106,11 +106,11 @@ public class TrainLanguageModelGUI {
 		label_outputLmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
 		label_outputLmPath.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_outputLmPath);
-		label_textPath = new JLabel("Text path ");
-		label_textPath.setToolTipText("Path to the text files (or directory hierarchies) for training the LM. For each entry, the entire directory will be recursively searched for any files that do not start with .. For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\". If spaces are used, be sure to wrap the whole string with \"quotes\".). Required.");
-		label_textPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		label_textPath.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_textPath);
+		label_inputTextPath = new JLabel("Input text path ");
+		label_inputTextPath.setToolTipText("Path to the text files (or directory hierarchies) for training the LM. For each entry, the entire directory will be recursively searched for any files that do not start with .. For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\". If spaces are used, be sure to wrap the whole string with \"quotes\".). Required.");
+		label_inputTextPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		label_inputTextPath.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_inputTextPath);
 		label_languagePriors = new JLabel("Language priors ");
 		label_languagePriors.setToolTipText("Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: english->0.7,spanish->0.2,french->0.1. If spaces are used, be sure to wrap the whole string with \"quotes\". (Only relevant if multiple languages used.) Default: uniform priors");
 		label_languagePriors.setHorizontalAlignment(SwingConstants.TRAILING);
@@ -139,10 +139,10 @@ public class TrainLanguageModelGUI {
 		label_charN.setToolTipText("LM character n-gram length. Default: 6");
 		label_charN.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_charN);
-		label_power = new JLabel("Power ");
-		label_power.setToolTipText("Exponent on LM scores.");
-		label_power.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_power);
+		label_lmPower = new JLabel("lmPower ");
+		label_lmPower.setToolTipText("Exponent on LM scores.");
+		label_lmPower.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_lmPower);
 		label_lmCharCount = new JLabel("LM character count ");
 		label_lmCharCount.setToolTipText("Number of characters to use for training the LM. Use -1 to indicate that the full training data should be used. Default: -1");
 		label_lmCharCount.setHorizontalAlignment(SwingConstants.TRAILING);
@@ -161,9 +161,9 @@ public class TrainLanguageModelGUI {
 		input_outputLmPath = new JTextField();
 		input_outputLmPath.setToolTipText("Output Language Model file path. Required.");
 		panel_inputs.add(input_outputLmPath);
-		input_textPath = new JTextField();
-		input_textPath.setToolTipText("Path to the text files (or directory hierarchies) for training the LM. For each entry, the entire directory will be recursively searched for any files that do not start with .. For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\". If spaces are used, be sure to wrap the whole string with \"quotes\".). Required.");
-		panel_inputs.add(input_textPath);
+		input_inputTextPath = new JTextField();
+		input_inputTextPath.setToolTipText("Path to the text files (or directory hierarchies) for training the LM. For each entry, the entire directory will be recursively searched for any files that do not start with .. For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\". If spaces are used, be sure to wrap the whole string with \"quotes\".). Required.");
+		panel_inputs.add(input_inputTextPath);
 		input_languagePriors = new JTextField();
 		input_languagePriors.setToolTipText("Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language, prior pairs: english->0.7,spanish->0.2,french->0.1. If spaces are used, be sure to wrap the whole string with \"quotes\". (Only relevant if multiple languages used.) Default: uniform priors");
 		panel_inputs.add(input_languagePriors);
@@ -188,10 +188,10 @@ public class TrainLanguageModelGUI {
 		input_charN.setToolTipText("LM character n-gram length. Default: 6");
 		input_charN.setText("6");
 		panel_inputs.add(input_charN);
-		input_power = new JTextField();
-		input_power.setToolTipText("Exponent on LM scores.");
-		input_power.setText("4.0");
-		panel_inputs.add(input_power);
+		input_lmPower = new JTextField();
+		input_lmPower.setToolTipText("Exponent on LM scores.");
+		input_lmPower.setText("4.0");
+		panel_inputs.add(input_lmPower);
 		input_lmCharCount = new JTextField();
 		input_lmCharCount.setToolTipText("Number of characters to use for training the LM. Use -1 to indicate that the full training data should be used. Default: -1");
 		input_lmCharCount.setText("-1");
@@ -202,7 +202,7 @@ public class TrainLanguageModelGUI {
 			public void actionPerformed(ActionEvent e) {
 				TrainLanguageModel exec = new TrainLanguageModel();
 				exec.outputLmPath = input_outputLmPath.getText();
-				exec.textPath = input_textPath.getText();
+				exec.inputTextPath = input_inputTextPath.getText();
 				exec.languagePriors = input_languagePriors.getText();
 				exec.pKeepSameLanguage = Double.valueOf(input_pKeepSameLanguage.getText());
 				exec.alternateSpellingReplacementPaths = input_alternateSpellingReplacementPaths.getText();
@@ -210,7 +210,7 @@ public class TrainLanguageModelGUI {
 				exec.removeDiacritics = input_removeDiacritics.isSelected();
 				exec.explicitCharacterSet = null; // input_explicitCharacterSet.getText();
 				exec.charN = Integer.valueOf(input_charN.getText());
-				exec.lmPower = Double.valueOf(input_power.getText());
+				exec.lmPower = Double.valueOf(input_lmPower.getText());
 				exec.lmCharCount = Integer.valueOf(input_lmCharCount.getText());
 				exec.run();
 			}

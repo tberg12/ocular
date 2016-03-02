@@ -43,7 +43,7 @@ public class FontTrainEM {
 	public Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> train(
 				List<Document> trainDocuments,  
 				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font,
-				boolean retrainLM, boolean retrainGSM,
+				boolean retrainLM, boolean trainGsm,
 				boolean continueFromLastCompleteIteration,
 				boolean writeTrainedFont, boolean writeTrainedLm, boolean writeTrainedGsm,
 				DecoderEM decoderEM,
@@ -79,7 +79,7 @@ public class FontTrainEM {
 				if (retrainLM) {
 					lm = TrainLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
 				}
-				if (retrainGSM) {
+				if (trainGsm) {
 					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration, ""));
 				}
 			}
@@ -148,7 +148,7 @@ public class FontTrainEM {
 						lm = reestimateLM(languageCounts, lm);
 						if (writeTrainedLm) TrainLanguageModel.writeLM(lm, makeLmPath(outputPath, iter, completedBatchesInIteration));
 					}
-					if (retrainGSM) {
+					if (trainGsm) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
 						if (gsm != null && writeTrainedGsm) GlyphSubstitutionModelReadWrite.writeGSM(gsm, makeGsmPath(outputPath, iter, completedBatchesInIteration, ""));
 						evalGsm = gsmFactory.makeForEval(gsmCounts, iter, completedBatchesInIteration);

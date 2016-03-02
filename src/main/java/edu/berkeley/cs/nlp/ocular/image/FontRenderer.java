@@ -301,19 +301,25 @@ public class FontRenderer {
 		OUTLAWED_FONTS.add("YuGothicYuMincho");
 	}
 
-	private static List<String> getAllowedFonts() {
-		List<String> allowedFonts = new ArrayList<String>();
+	private static List<String> getFontsToUse(Set<String> allowedFonts) {
+		List<String> fontsToUse = new ArrayList<String>();
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		for (String fontName : ge.getAvailableFontFamilyNames()) {
-			if (!OUTLAWED_FONTS.contains(fontName)) {
-				allowedFonts.add(fontName);
+			if (!allowedFonts.isEmpty()) {
+				if (allowedFonts.contains(fontName)) {
+					fontsToUse.add(fontName); 
+				}
+			}
+			else if (!OUTLAWED_FONTS.contains(fontName)) {
+				fontsToUse.add(fontName);
 			}
 		}
-		return allowedFonts;
+		return fontsToUse;
 	}
 	
 	public static void main(String[] args) {
-		for (String fontName : getAllowedFonts()) {
+		Set<String> allowedFonts = new HashSet<String>();
+		for (String fontName : getFontsToUse(allowedFonts)) {
 			System.out.println(fontName);
 			PixelType[][] data = renderString(fontName, "q̃", 30, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 			StringBuffer buf = new StringBuffer();
@@ -335,7 +341,7 @@ public class FontRenderer {
 		}
 	}
 	
-	public static PixelType[][][][] getRenderedFont(Indexer<String> charIndexer, int height) {
+	public static PixelType[][][][] getRenderedFont(Indexer<String> charIndexer, int height, Set<String> allowedFonts) {
 		StringBuffer alphabetStr = new StringBuffer();
 		for (int c=0; c<charIndexer.size(); ++c) {
 			alphabetStr.append(unescapeChar(charIndexer.getObject(c)));
@@ -344,7 +350,7 @@ public class FontRenderer {
 		PixelType[][][][] result = new PixelType[charIndexer.size()][][][];
 		for (int c=0; c<charIndexer.size(); ++c) {
 			List<PixelType[][]> rendered = new ArrayList<ImageUtils.PixelType[][]>();
-			for (String font : getAllowedFonts()) {
+			for (String font : getFontsToUse(allowedFonts)) {
 				PixelType[][] renderedChar = renderString(font, unescapeChar(charIndexer.getObject(c)), height, alphabetStr.toString());
 				if (renderedChar.length > 0) rendered.add(renderedChar);
 				else {

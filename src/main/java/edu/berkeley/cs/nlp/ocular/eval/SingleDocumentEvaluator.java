@@ -16,7 +16,7 @@ public interface SingleDocumentEvaluator {
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
 			Document doc,
 			TransitionState[][] decodeStates, int[][] decodeWidths,
-			String inputPath, String outputPath,
+			String inputDocPath, String outputPath,
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals);
 
@@ -27,7 +27,7 @@ public interface SingleDocumentEvaluator {
 		public void printTranscriptionWithEvaluation(int iter, int batchId,
 				Document doc,
 				TransitionState[][] decodeStates, int[][] decodeWidths,
-				String inputPath, String outputPath,
+				String inputDocPath, String outputPath,
 				List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals,
 				List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals) {}
 	}

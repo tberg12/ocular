@@ -23,19 +23,19 @@ import indexer.Indexer;
  */
 public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 	private List<Document> documents;
-	private String inputPath; 
+	private String inputDocPath;
 	private String outputPath;
 	private DecoderEM decoderEM;
 	private SingleDocumentEvaluator docEvaluator;
 	private Indexer<String> charIndexer;
 	
 	public BasicMultiDocumentEvaluator(
-			List<Document> documents, String inputPath, String outputPath,
+			List<Document> documents, String inputDocPath, String outputPath,
 			DecoderEM decoderEM,
 			SingleDocumentEvaluator docEvaluator,
 			Indexer<String> charIndexer) {
 		this.documents = documents;
-		this.inputPath = inputPath;
+		this.inputDocPath = inputDocPath;
 		this.outputPath = outputPath;
 		this.decoderEM = decoderEM;
 		this.docEvaluator = docEvaluator;
@@ -61,13 +61,13 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, inputPath, outputPath, allEvals, allLmEvals);
+			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, allEvals, allLmEvals);
 		}
 		double avgLogProb = ((double)totalJointLogProb) / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);
-		if (new File(inputPath).isDirectory()) {
+		if (new File(inputDocPath).isDirectory()) {
 			Document doc = documents.get(0);
-			String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), new File(doc.baseName()))._2;
+			String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputDocPath), new File(doc.baseName()))._2;
 			String preext = "eval";
 			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
 			if (iter > 0) outputFilenameBase += "_iter-" + iter;

@@ -37,9 +37,9 @@ public class TranscribeOrTrainFontGUI {
 	private JLabel label_title1;
 	private JLabel label_title2;
 
-	private JLabel label_inputPath;
+	private JLabel label_inputDocPath;
 	private JLabel label_numDocs;
-	private JLabel label_lmPath;
+	private JLabel label_inputLmPath;
 	private JLabel label_inputFontPath;
 	private JLabel label_trainFont;
 	private JLabel label_numEMIters;
@@ -65,9 +65,9 @@ public class TranscribeOrTrainFontGUI {
 	private JLabel label_paddingMaxWidth;
 	private JLabel label_go;
 
-	private JTextField input_inputPath;
+	private JTextField input_inputDocPath;
 	private JTextField input_numDocs;
-	private JTextField input_lmPath;
+	private JTextField input_inputLmPath;
 	private JTextField input_inputFontPath;
 	private JCheckBox input_trainFont;
 	private JTextField input_numEMIters;
@@ -140,20 +140,20 @@ public class TranscribeOrTrainFontGUI {
 
 		// names.foreach(n =>
 		// println(f"""label_$n%-30s = new JLabel(""); panel_1.add(label_$n);"""))
-		label_inputPath = new JLabel("Input path ");
-		label_inputPath.setToolTipText("Path of the directory that contains the input document images or pdfs. The entire directory will be recursively searched for any files that do not end in .txt (and that do not start with .). Required.");
-		label_inputPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		label_inputPath.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_inputPath);
+		label_inputDocPath = new JLabel("Input path ");
+		label_inputDocPath.setToolTipText("Path of the directory that contains the input document images or pdfs. The entire directory will be recursively searched for any files that do not end in .txt (and that do not start with .). Required.");
+		label_inputDocPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		label_inputDocPath.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_inputDocPath);
 		label_numDocs = new JLabel("Maximum number of documents ");
 		label_numDocs.setToolTipText("Number of documents to use. Ignore or use -1 to use all documents. Default: -1");
 		label_numDocs.setHorizontalAlignment(SwingConstants.TRAILING);
 		panel_labels.add(label_numDocs);
-		label_lmPath = new JLabel("LM path ");
-		label_lmPath.setToolTipText("Path to the language model file. Required.");
-		label_lmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		label_lmPath.setHorizontalAlignment(SwingConstants.TRAILING);
-		panel_labels.add(label_lmPath);
+		label_inputLmPath = new JLabel("LM path ");
+		label_inputLmPath.setToolTipText("Path to the language model file. Required.");
+		label_inputLmPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		label_inputLmPath.setHorizontalAlignment(SwingConstants.TRAILING);
+		panel_labels.add(label_inputLmPath);
 		label_inputFontPath = new JLabel("Initial font path ");
 		label_inputFontPath.setToolTipText("Path of the font initializer file. Required.");
 		label_inputFontPath.setFont(new Font("Lucida Grande", Font.BOLD, 13));
@@ -256,16 +256,16 @@ public class TranscribeOrTrainFontGUI {
 
 		// names.foreach(n =>
 		// println(f"""input_$n%-30s = new JTextField(); panel_2.add(input_$n%-30s); input_$n%-30s.setColumns(10);"""))
-		input_inputPath = new JTextField();
-		input_inputPath.setToolTipText("Path of the directory that contains the input document images or pdfs. The entire directory will be recursively searched for any files that do not end in .txt (and that do not start with .). Required.");
-		panel_inputs.add(input_inputPath);
+		input_inputDocPath = new JTextField();
+		input_inputDocPath.setToolTipText("Path of the directory that contains the input document images or pdfs. The entire directory will be recursively searched for any files that do not end in .txt (and that do not start with .). Required.");
+		panel_inputs.add(input_inputDocPath);
 		input_numDocs = new JTextField();
 		input_numDocs.setToolTipText("Number of documents to use. Ignore or use -1 to use all documents. Default: -1");
 		input_numDocs.setText("-1");
 		panel_inputs.add(input_numDocs);
-		input_lmPath = new JTextField();
-		input_lmPath.setToolTipText("Path to the language model file. Required.");
-		panel_inputs.add(input_lmPath);
+		input_inputLmPath = new JTextField();
+		input_inputLmPath.setToolTipText("Path to the language model file. Required.");
+		panel_inputs.add(input_inputLmPath);
 		input_inputFontPath = new JTextField();
 		input_inputFontPath.setToolTipText("Path of the font initializer file. Required.");
 		panel_inputs.add(input_inputFontPath);
@@ -368,9 +368,9 @@ public class TranscribeOrTrainFontGUI {
 				TranscribeOrTrainFont exec = new TranscribeOrTrainFont();
 				// names.foreach(n =>
 				// println(f"""exec.$n%-30s = input_$n%-30s.getText();"""))
-				exec.inputDocPath = input_inputPath.getText();
+				exec.inputDocPath = input_inputDocPath.getText();
 				exec.numDocs = Integer.valueOf(input_numDocs.getText());
-				exec.inputLmPath = input_lmPath.getText();
+				exec.inputLmPath = input_inputLmPath.getText();
 				exec.inputFontPath = input_inputFontPath.getText();
 				exec.trainFont = input_trainFont.isSelected();
 				exec.numEMIters = Integer.valueOf(input_numEMIters.getText());

@@ -49,10 +49,10 @@ public class TrainLanguageModel implements Runnable {
 	public static String outputLmPath = null; // Required.
 	
 	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  Be sure to wrap the whole string with \"quotes\" if multiple languages are used.)")
-	public static String textPath = null; // Required.
+	public static String inputTextPath = null; // Required.
 	
-	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". Be sure to wrap the whole string with \"quotes\".  Defaults to uniform priors. (Only relevant if multiple languages used.)")
-	public static String languagePriors = null; // Uniform priors.
+	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". Be sure to wrap the whole string with \"quotes\". (Only relevant if multiple languages used.)  Default: Uniform priors.")
+	public static String languagePriors = null;
 	
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)")
 	public static double pKeepSameLanguage = 0.999999;
@@ -89,7 +89,7 @@ public class TrainLanguageModel implements Runnable {
 
 	public void run() {
 		if (outputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
-		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
+		if (inputTextPath == null) throw new IllegalArgumentException("-inputTextPath not set");
 		
 		Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> langIndexerAndLmData = makePathsReadersAndPriors();
 		Indexer<String> langIndexer = langIndexerAndLmData._1;
@@ -122,10 +122,10 @@ public class TrainLanguageModel implements Runnable {
 	}
 
 	public Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> makePathsReadersAndPriors() {
-		String textPathString = textPath;
-		if (!textPath.contains("->")) textPathString = "NoLanguageNameGiven->" + textPath; // repair "invalid" input
+		String inputTextPathString = inputTextPath;
+		if (!inputTextPath.contains("->")) inputTextPathString = "NoLanguageNameGiven->" + inputTextPath; // repair "invalid" input
 		Map<String, String> languagePathMap = new HashMap<String, String>();
-		for (String part : textPathString.split(",")) {
+		for (String part : inputTextPathString.split(",")) {
 			String[] subparts = part.split("->");
 			if (subparts.length != 2) throw new IllegalArgumentException("malformed lmPath argument: comma-separated part must be of the form \"LANGUAGE->PATH\", was: " + part);
 			String language = subparts[0].trim();
@@ -143,7 +143,7 @@ public class TrainLanguageModel implements Runnable {
 				languagePriorMap.put(language, prior);
 			}
 			if (!languagePathMap.keySet().equals(languagePriorMap.keySet()))
-				throw new RuntimeException("-textPath and -languagePriors do not have the same set of languages: " + languagePathMap.keySet() + " vs " + languagePriorMap.keySet());
+				throw new RuntimeException("-inputTextPath and -languagePriors do not have the same set of languages: " + languagePathMap.keySet() + " vs " + languagePriorMap.keySet());
 		}
 		else {
 			for (String language : languagePathMap.keySet())
@@ -164,7 +164,7 @@ public class TrainLanguageModel implements Runnable {
 					if (subparts.length != 2) throw new IllegalArgumentException("malformed alternateSpellingReplacementPaths argument: comma-separated part must be of the form \"LANGUAGE->PATH\", was: " + part);
 					String language = subparts[0].trim();
 					String replacementsPath = subparts[1].trim();
-					if (!languagePathMap.keySet().contains(language)) throw new RuntimeException("Language '"+language+"' appears in the alternateSpellingReplacementPaths argument but not in textPath ("+languagePathMap.keySet()+")");
+					if (!languagePathMap.keySet().contains(language)) throw new RuntimeException("Language '"+language+"' appears in the alternateSpellingReplacementPaths argument but not in inputTextPath ("+languagePathMap.keySet()+")");
 					languageAltSpellPathMap.put(language, replacementsPath);
 				}
 			}
