@@ -27,6 +27,10 @@ It is described in the following publications:
 > [Dan Garrette], [Hannah Alpert-Abrams], [Taylor Berg-Kirkpatrick], and [Dan Klein]  
 > NAACL 2015
 
+> **An Unsupervised Model of Orthographic Variation for Historical Document Transcription**  
+> [Dan Garrette] and [Hannah Alpert-Abrams]  
+> NAACL 2016
+
 
 Continued development of Ocular is supported in part by a [Digital Humanities Implementation Grant](http://www.neh.gov/divisions/odh/grant-news/announcing-6-digital-humanities-implementation-grants-awards-july-2015) from the [National Endowment for the Humanities](http://www.neh.gov) for the project [Reading the First Books: Multilingual, Early-Modern OCR for Primeros Libros](https://sites.utexas.edu/firstbooks/).
 
@@ -36,13 +40,13 @@ Continued development of Ocular is supported in part by a [Digital Humanities Im
 
 ### Obtaining Ocular
 
-The easiest way to get the Ocular software is to download the self-contained jar from http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.2-SNAPSHOT/ocular-0.2-SNAPSHOT-with_dependencies.jar
+The easiest way to get the Ocular software is to download the self-contained jar from http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.3-SNAPSHOT/ocular-0.3-SNAPSHOT-with_dependencies.jar
 
 Once you have this jar, you will be able to run Ocular according to the instructions below in the Using Ocular section.
 
 The jar is executable, so when you use go to use Ocular, you will run it following this template (where [MAIN-CLASS] will specify which program to run, as detailed in the Using Ocular section below):
 
-    java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar [options...]
+    java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar [options...]
 
 This jar includes all the necessary dependencies, so you should be able to move it to, and run it from, wherever you like.
 
@@ -55,7 +59,7 @@ Clone this repository, and compile the project into a jar:
     cd ocular
     ./make_jar.sh
 
-This creates precisely the same `ocular-0.2-SNAPSHOT-with_dependencies.jar` jar file discussed above.  Thus, this is sufficient to be able to run Ocular, as stated above, using the detailed instructions in the Using Ocular section below.
+This creates precisely the same `ocular-0.3-SNAPSHOT-with_dependencies.jar` jar file discussed above.  Thus, this is sufficient to be able to run Ocular, as stated above, using the detailed instructions in the Using Ocular section below.
 
 Also like above, since this jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
 
@@ -73,7 +77,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
     * Repository location: http://www.cs.utexas.edu/~dhg/maven-repository/snapshots
     * Group ID: edu.berkeley.cs.nlp
     * Artifact ID: ocular
-    * Version: 0.2-SNAPSHOT
+    * Version: 0.3-SNAPSHOT
     
 
 
@@ -84,13 +88,13 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-textPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
     
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/english.lmser \
         -textPath texts/pg2600.txt
 
   For a multilingual (code-switching) model, specify multiple `-textPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows:
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
         -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/"
 
@@ -98,7 +102,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   For older texts (either monolingual or multilingual), it might also be useful to specify the optional parameters `alternateSpellingReplacementPaths` or `-insertLongS true`, as shown here:
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
         -textPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
         -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
@@ -111,7 +115,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   Before a font can be trained from texts, a font model consisting of a "guess" for each character must be initialized based on the fonts on your computer.  Use `-fontPath` to specify where the initialized font should be written.  Since different languages use different character sets, a language model must be given in order for the system to know what characters to initialize (`-lmPath`).
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -lmPath lm/trilingual.lmser \
         -fontPath font/advertencias/init.fontser
 
@@ -120,7 +124,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   To train a font, a set of document pages must be given (`-inputPath`), along with the paths to the language model and initial font model.  Use `-outputFontPath` to specify where the trained font model should be written, and `-outputPath` to specify where transcriptions and evaluation metrics should be written.  The path specified by `-inputPath` should point to a pdf or image file or directory or directory hierarchy of such files.  The value given by `-inputPath` will be searched recursively for non-`.txt` files; the transcriptions written to the `-outputPath` will maintain the same directory hierarchy.
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -trainFont true \
         -inputFontPath font/advertencias/init.fontser \
         -inputLmPath lm/trilingual.lmser \
@@ -136,7 +140,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   To transcribe pages, use the same instructions as above in #3 that were used to train a font, but leave `-trainFont` unspecified (or set it to `false`).  Additionally, `-inputFontPath` should point to the newly-trained font model (instead of the "initial" font model used during font training).
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.2-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -inputPath sample_images/advertencias \
         -inputFontPath font/advertencias/trained.fontser \
         -inputLmPath lm/trilingual.lmser \
