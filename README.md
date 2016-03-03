@@ -103,14 +103,6 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   This program will work with any languages, and any number of languages; simply add an entry for every relevant language.  The set of languages chosen should match the set of languages found in the documents that are to be transcribed.
 
-  For older texts (either monolingual or multilingual), it might also be useful to specify the optional parameters `alternateSpellingReplacementPaths` or `-insertLongS true`, as shown here:
-
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
-        -outputLmPath lm/trilingual.lmser \
-        -inputTextPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
-        -alternateSpellingReplacementPaths "spanish->replace/spanish.txt,latin->replace/latin.txt,nahuatl->replace/nahuatl.txt" \
-        -insertLongS true
-
   More details on the various command-line options can be found below.
 
 
