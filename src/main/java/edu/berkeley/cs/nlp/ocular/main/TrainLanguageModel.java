@@ -48,7 +48,7 @@ public class TrainLanguageModel implements Runnable {
 	@Option(gloss = "Output LM file path.")
 	public static String outputLmPath = null; // Required.
 	
-	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  Be sure to wrap the whole string with \"quotes\" if multiple languages are used.)")
+	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  Be sure to wrap the whole string with \"quotes\".)")
 	public static String inputTextPath = null; // Required.
 	
 	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". Be sure to wrap the whole string with \"quotes\". (Only relevant if multiple languages used.)  Default: Uniform priors.")
@@ -57,7 +57,7 @@ public class TrainLanguageModel implements Runnable {
 	@Option(gloss = "Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)")
 	public static double pKeepSameLanguage = 0.999999;
 
-	@Option(gloss = "Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". Be sure to wrap the whole string with \"quotes\" if multiple languages are used. Any languages for which no replacements are need can be safely ignored.")
+	@Option(gloss = "Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". Be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
 	public static String alternateSpellingReplacementPaths = null; // No alternate spelling replacements.
 	
 	@Option(gloss = "Automatically insert \"long s\" characters into the langauge model training data?")

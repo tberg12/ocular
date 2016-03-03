@@ -211,7 +211,7 @@ Output LM file path.
 Required.
 
 * `-inputTextPath`:
-Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: "english->texts/english/,spanish->texts/spanish/,french->texts/french/".  Be sure to wrap the whole string with "quotes" if multiple languages are used.)
+Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: "english->texts/english/,spanish->texts/spanish/,french->texts/french/".  Be sure to wrap the whole string with "quotes".)
 Required.
 
 * `-languagePriors`:
@@ -223,7 +223,7 @@ Prior probability of sticking with the same language when moving between words i
 Default: 0.999999
 
 * `-alternateSpellingReplacementPaths`:
-Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: "english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt". Be sure to wrap the whole string with "quotes" if multiple languages are used. Any languages for which no replacements are need can be safely ignored.
+Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: "english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt". Be sure to wrap the whole string with "quotes". Any languages for which no replacements are need can be safely ignored.
 Default: No alternate spelling replacements.
 
 * `-insertLongS`:
@@ -400,7 +400,7 @@ Default: 100.0
 
 * `-gsmMinCountsForEval`:
 A glyph-context combination must be seen at least this many times in the last training iteration if it is to be allowed in the evaluation GSM.  This restricts spurious substitutions during evaluation.  (Only relevant if allowGlyphSubstitution is set to true.)
-Default: 2
+Default: 0
 
 ##### Line Extraction Options
 
@@ -483,5 +483,5 @@ When using -evalInputDocPath, the font trainer will perform an evaluation every 
 Default: Evaluate only after all iterations have completed.
 
 * `-evalBatches`:
-When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?
+When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch, as determined by -updateDocBatchSize (in addition to after each iteration)?
 Default: false

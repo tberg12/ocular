@@ -131,7 +131,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	public static double gsmElisionSmoothingCountMultiplier = 100.0;
 	
 	@Option(gloss = "A glyph-context combination must be seen at least this many times in the last training iteration if it is to be allowed in the evaluation GSM.  This restricts spurious substitutions during evaluation.  (Only relevant if allowGlyphSubstitution is set to true.)")
-	public static int gsmMinCountsForEval = 2;
+	public static int gsmMinCountsForEval = 0;
 	
 	// ##### Line Extraction Options
 	
@@ -195,7 +195,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	@Option(gloss = "When using -evalInputDocPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
 	public static int evalFreq = Integer.MAX_VALUE; 
 	
-	@Option(gloss = "When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch (in addition to after each iteration)?")
+	@Option(gloss = "When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch, as determined by -updateDocBatchSize (in addition to after each iteration)?")
 	public static boolean evalBatches = false;
 	
 	
