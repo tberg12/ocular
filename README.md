@@ -134,7 +134,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   **Optional: Glyph substitution modeling for variable orthography**
   
-  Ocular has the optional ability to learn, unsupervised, a mapping from archaic orthography to the orthography reflected in the trained language model. We call this a "glyph substitution model" (GSM).  To train a GSM, add the `-allowGlyphSubstitution`, `-trainGsm` and `-outputGsmPath` options.
+  Ocular has the optional ability to learn, unsupervised, a mapping from archaic orthography to the orthography reflected in the trained language model. We call this a "glyph substitution model" (GSM).  To train a GSM, add the `-allowGlyphSubstitution`, `-trainGsm` and `-outputGsmPath` options.  
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TranscribeOrTrainFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -trainFont true \
@@ -148,6 +148,8 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
         -trainGsm true \
         -outputGsmPath font/advertencias/trained.gsmser
 
+  If `-allowGlyphSubstitution` is set to true, Ocular will produce simultaneous dual transcriptions: one *diplomatic* (literal) and one normalized to match the LM training data's orthography.
+
 
 4. Transcribe some pages:
 
@@ -158,6 +160,8 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
         -inputLmPath lm/trilingual.lmser \
         -inputFontPath font/advertencias/trained.fontser \
         -outputPath transcribe_output 
+
+  As above, if `-allowGlyphSubstitution` is set to true, Ocular will produce simultaneous dual transcriptions: one *diplomatic* (literal) and one normalized to match the LM training data's orthography.
 
   Many more command-line options, including several that affect speed and accuracy, can be found below.
   
