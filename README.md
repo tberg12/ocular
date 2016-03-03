@@ -23,12 +23,14 @@ It is described in the following publications:
 > ACL 2014
 
 > **Unsupervised Code-Switching for Multilingual Historical Document Transcription**
-> [[pdf]](http://www.aclweb.org/anthology/N15-1109)    
+> [[pdf]](http://www.aclweb.org/anthology/N15-1109)
+> [[data]](https://github.com/dhgarrette/ocr-evaluation-data)  
 > [Dan Garrette], [Hannah Alpert-Abrams], [Taylor Berg-Kirkpatrick], and [Dan Klein]  
 > NAACL 2015
 
 > **An Unsupervised Model of Orthographic Variation for Historical Document Transcription**
-> [[pdf]](http://www.dhgarrette.com/papers/garrette_ocr_naacl2016.pdf)  
+> [[pdf]](http://www.dhgarrette.com/papers/garrette_ocr_naacl2016.pdf)
+> [[data]](https://github.com/dhgarrette/ocr-evaluation-data)  
 > [Dan Garrette] and [Hannah Alpert-Abrams]  
 > NAACL 2016
 
