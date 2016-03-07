@@ -4,14 +4,12 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.io.File;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
@@ -19,6 +17,7 @@ import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
+import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fileio.f;

@@ -21,6 +21,7 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.Binarizer;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Cropper;
 import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
+import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import fileio.f;
 
 /**

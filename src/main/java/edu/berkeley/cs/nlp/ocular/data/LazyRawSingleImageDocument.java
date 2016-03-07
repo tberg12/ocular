@@ -3,6 +3,7 @@ package edu.berkeley.cs.nlp.ocular.data;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import fileio.f;
 
 /**

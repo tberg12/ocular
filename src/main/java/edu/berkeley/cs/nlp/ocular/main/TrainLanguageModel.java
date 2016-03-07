@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
@@ -32,6 +31,7 @@ import edu.berkeley.cs.nlp.ocular.lm.CorpusCounter;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
+import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Option;
 import fig.OptionsParser;

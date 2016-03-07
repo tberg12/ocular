@@ -1,16 +1,13 @@
-package edu.berkeley.cs.nlp.ocular.data;
+package edu.berkeley.cs.nlp.ocular.util;
 
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
+import static java.util.Arrays.asList;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
-import edu.berkeley.cs.nlp.ocular.util.StringHelper;
-import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
@@ -69,6 +66,22 @@ public class FileUtil {
 
 
 	/**
+	 * 
+	 */
+	public static String lowestCommonParentDirectory(List<String> paths) {
+		try {
+			List<List<String>> pathLists = new ArrayList<List<String>>();
+			for (String path : paths) {
+				pathLists.add(pathToNameList(new File(path).getCanonicalFile()));
+			}
+			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(pathLists);
+			List<String> prefixPathParts = pathLists.get(0).subList(0, longestCommonPrefix);
+			return StringHelper.join(prefixPathParts, File.separator);
+		}
+		catch (IOException e) { throw new RuntimeException(e); }
+	}
+
+	/**
 	 * @param fn1
 	 * @param fn2
 	 * @return
@@ -78,7 +91,7 @@ public class FileUtil {
 			List<String> as = pathToNameList(fn1.getCanonicalFile());
 			List<String> bs = pathToNameList(fn2.getCanonicalFile());
 			
-			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(as, bs);
+			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(asList(as, bs));
 			
 			String aSuffix = StringHelper.join(as.subList(longestCommonPrefix, as.size()), File.separator);
 			String bSuffix = StringHelper.join(bs.subList(longestCommonPrefix, bs.size()), File.separator);
@@ -111,7 +124,7 @@ public class FileUtil {
 			List<String> as = pathToNameList(new File(new File(fn1).getCanonicalPath()));
 			List<String> bs = pathToNameList(new File(new File(dir).getCanonicalPath()));
 
-			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(as, bs);
+			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(asList(as, bs));
 
 			List<String> prefix = CollectionHelper.fillList(bs.size()-longestCommonPrefix, "..");
 			List<String> suffix = as.subList(longestCommonPrefix, as.size());

@@ -3,6 +3,8 @@ package edu.berkeley.cs.nlp.ocular.data;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import edu.berkeley.cs.nlp.ocular.util.FileUtil;
+
 /**
  * A document that reads a page from a pdf file only as it is needed
  * (and then stores the contents in memory for later use).

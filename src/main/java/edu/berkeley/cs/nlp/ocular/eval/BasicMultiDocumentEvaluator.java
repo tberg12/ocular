@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.berkeley.cs.nlp.ocular.data.FileUtil;
 import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
@@ -15,6 +14,7 @@ import edu.berkeley.cs.nlp.ocular.model.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
 
