@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.util;
 
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
@@ -284,12 +285,13 @@ public class CollectionHelperTests {
 	
 	@Test
 	public void test_longestCommonPrefix() {
-		assertEquals(0, CollectionHelper.longestCommonPrefix(Arrays.asList(), Arrays.asList()));
-		assertEquals(0, CollectionHelper.longestCommonPrefix(Arrays.asList(1), Arrays.asList()));
-		assertEquals(0, CollectionHelper.longestCommonPrefix(Arrays.asList(), Arrays.asList(2)));
-		assertEquals(0, CollectionHelper.longestCommonPrefix(Arrays.asList(1), Arrays.asList(2)));
-		assertEquals(2, CollectionHelper.longestCommonPrefix(Arrays.asList(1, 2), Arrays.asList(1, 2, 3, 4)));
-		assertEquals(2, CollectionHelper.longestCommonPrefix(Arrays.asList(1, 2, 3, 4), Arrays.asList(1, 2)));
-		assertEquals(3, CollectionHelper.longestCommonPrefix(Arrays.asList(1, 2, 3), Arrays.asList(1, 2, 3)));
+		assertEquals(0, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(), Arrays.<Integer>asList())));
+		assertEquals(0, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(1), Arrays.<Integer>asList())));
+		assertEquals(0, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(), Arrays.<Integer>asList(2))));
+		assertEquals(0, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(1), Arrays.<Integer>asList(2))));
+		assertEquals(2, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(1, 2), Arrays.<Integer>asList(1, 2, 3, 4))));
+		assertEquals(2, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(1, 2, 3, 4), Arrays.<Integer>asList(1, 2))));
+		assertEquals(3, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(1, 2, 3), Arrays.<Integer>asList(1, 2, 3))));
+		assertEquals(2, CollectionHelper.longestCommonPrefix(asList(Arrays.<Integer>asList(1, 2, 3), Arrays.<Integer>asList(1, 2), Arrays.<Integer>asList(1, 2, 3, 4))));
 	}
 }
