@@ -18,6 +18,7 @@ for fn in ["TrainLanguageModel", "InitializeFont", "TranscribeOrTrainFont"]:
 
 		lines = f.readlines()
 		for (line_num, line) in enumerate(lines):
+			line = line.replace("Relevant to line extraction.","")
 			line = line.strip()
 			if "public static void main(String[] args)" in line:
 				break
