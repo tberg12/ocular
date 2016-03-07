@@ -54,14 +54,18 @@ public class ExtractLinesOnly implements Runnable {
 	}
 
 	private static void validateOptions() {
-		if ((inputDocPath == null) != (inputDocListPath == null)) throw new IllegalArgumentException("Either -inputDocPath or -inputDocListPath is required.");
-		if (inputDocPath == null || !new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputDocPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
-		if (inputDocListPath == null || !new File(inputDocListPath).exists()) throw new IllegalArgumentException("-inputDocListPath "+inputDocListPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if ((inputDocPath == null) == (inputDocListPath == null)) throw new IllegalArgumentException("Either -inputDocPath or -inputDocListPath is required.");
+		if (inputDocPath != null)
+			for (String path : inputDocPath.split("[\\s,;:]+"))
+				if (!new File(path).exists()) throw new IllegalArgumentException("inputDocPath "+path+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (inputDocListPath != null && !new File(inputDocListPath).exists()) throw new IllegalArgumentException("-inputDocListPath "+inputDocListPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
+		
+		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath is required.");
 	}
 
 	public void run() {
-		List<String> docPathList = inputDocPath != null ? Arrays.asList(inputDocPath.split("[\\s+,;:]")) : f.readLines(inputDocListPath);
+		List<String> docPathList = inputDocPath != null ? Arrays.asList(inputDocPath.split("[\\s,;:]+")) : f.readLines(inputDocListPath);
 		List<Document> documents = LazyRawImageLoader.loadDocuments(docPathList, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
 		for (Document doc : documents) {
 			doc.loadLineImages();

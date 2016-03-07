@@ -111,7 +111,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   Before a font can be trained from texts, a font model consisting of a "guess" for each character must be initialized based on the fonts on your computer.  Use `-outputFontPath` to specify where the initialized font should be written.  Since different languages use different character sets, a language model must be given in order for the system to know what characters to initialize (`-lmPath`).
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
-        -intputLmPath lm/trilingual.lmser \
+        -inputLmPath lm/trilingual.lmser \
         -outputFontPath font/advertencias/init.fontser
 
 

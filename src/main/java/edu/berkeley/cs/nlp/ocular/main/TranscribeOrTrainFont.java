@@ -218,9 +218,11 @@ public class TranscribeOrTrainFont implements Runnable {
 	}
 
 	private static void validateOptions() {
-		if ((inputDocPath == null) != (inputDocListPath == null)) throw new IllegalArgumentException("Either -inputDocPath or -inputDocListPath is required.");
-		if (inputDocPath == null || !new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputDocPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
-		if (inputDocListPath == null || !new File(inputDocListPath).exists()) throw new IllegalArgumentException("-inputDocListPath "+inputDocListPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if ((inputDocPath == null) == (inputDocListPath == null)) throw new IllegalArgumentException("Either -inputDocPath or -inputDocListPath is required.");
+		if (inputDocPath != null)
+			for (String path : inputDocPath.split("[\\s,;:]+"))
+				if (!new File(path).exists()) throw new IllegalArgumentException("inputDocPath "+path+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (inputDocListPath != null && !new File(inputDocListPath).exists()) throw new IllegalArgumentException("-inputDocListPath "+inputDocListPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (trainFont && numEMIters <= 0) new IllegalArgumentException("-numEMIters must be a positive number if -trainFont is true.");
 		if (trainFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath required when -trainFont is true.");
