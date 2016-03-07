@@ -2,6 +2,7 @@ package edu.berkeley.cs.nlp.ocular.data;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -10,17 +11,54 @@ import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 
 /**
- * A dataset loader that reads files only as they are needed (and then stores
- * the contents in memory for later use).
- * 
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class LazyRawImageLoader {
 
-	public static List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired) { return loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, goldTranscriptionRequired, true, 0.12, false); }
+	/**
+	 * A dataset loader that reads files the files recursively, in lexicographical 
+	 * order.  Images are loaded only as they are needed (lazily), and then stored
+	 * in memory for later use.
+	 * 
+	 * @author Dan Garrette (dhgarrette@gmail.com)
+	 */
 	public static List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
-		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
+		return loadDocuments(Arrays.asList(inputPath), extractedLinesPath, numDocs, numDocsToSkip, goldTranscriptionRequired, uniformLineHeight, binarizeThreshold, crop);
+	}
+	public static List<Document> loadDocuments(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired) { return loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, goldTranscriptionRequired, true, 0.12, false); }
+
+	public static List<Document> loadDocuments(List<String> inputPaths, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired) { return loadDocuments(inputPaths, extractedLinesPath, numDocs, numDocsToSkip, goldTranscriptionRequired, true, 0.12, false); }
+	public static List<Document> loadDocuments(List<String> inputPaths, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
+		List<Document> lazyDocs = new ArrayList<Document>();
+		for (String inputPath : inputPaths) {
+			lazyDocs.addAll(loadDocumentsFromDir(inputPath, extractedLinesPath, numDocs, numDocsToSkip, goldTranscriptionRequired, uniformLineHeight, binarizeThreshold, crop));
+		}
+
+		int actualNumDocsToSkip = Math.min(lazyDocs.size(), numDocsToSkip);
+		int actualNumDocsToUse = Math.min(lazyDocs.size() - actualNumDocsToSkip, numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
+		System.out.println("Using "+actualNumDocsToUse+" documents (skipping "+actualNumDocsToSkip+")");
+		for (int docNum = 0; docNum < actualNumDocsToSkip; ++docNum) {
+			Document lazyDoc = lazyDocs.get(docNum);
+			System.out.println("  Skipping " + lazyDoc.baseName());
+		}
+		
 		List<Document> documents = new ArrayList<Document>();
+		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip + actualNumDocsToUse; ++docNum) {
+			Document lazyDoc = lazyDocs.get(docNum);
+			System.out.println("  Using " + lazyDoc.baseName());
+			if (goldTranscriptionRequired && lazyDoc.loadLineText() == null & lazyDoc.loadLmText() == null) { 
+				throw new RuntimeException("Evaluation document "+lazyDoc.baseName()+" has no gold transcriptions.");
+			}
+			else {
+				documents.add(lazyDoc);
+			}
+		}
+		if (actualNumDocsToUse < 1) throw new RuntimeException("No documents given!");
+		return documents;
+	}
+	
+	private static List<Document> loadDocumentsFromDir(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean goldTranscriptionRequired, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
+		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
 
 		File dir = new File(inputPath);
 		System.out.println("Reading data from [" + dir + "], which " + (dir.exists() ? "exists" : "does not exist"));
@@ -30,7 +68,7 @@ public class LazyRawImageLoader {
 		for (File f : dirList) {
 			if (f.getName().endsWith(".txt"))
 				continue;
-			if (f.getName().endsWith(".pdf")) {
+			else if (f.getName().endsWith(".pdf")) {
 				int numPages = PdfImageReader.numPagesInPdf(f);
 				for (int pageNumber = 1; pageNumber <= numPages; ++pageNumber) {
 					lazyDocs.add(new LazyRawPdfImageDocument(f, pageNumber, inputPath, lineHeight, binarizeThreshold, crop, extractedLinesPath));
@@ -47,25 +85,6 @@ public class LazyRawImageLoader {
 			}
 		});
 		
-		int actualNumDocsToSkip = Math.min(lazyDocs.size(), numDocsToSkip);
-		int actualNumDocsToUse = Math.min(lazyDocs.size() - actualNumDocsToSkip, numDocs <= 0 ? Integer.MAX_VALUE : numDocs);
-		System.out.println("Using "+actualNumDocsToUse+" documents (skipping "+actualNumDocsToSkip+")");
-		for (int docNum = 0; docNum < actualNumDocsToSkip; ++docNum) {
-			Document lazyDoc = lazyDocs.get(docNum);
-			System.out.println("  Skipping " + lazyDoc.baseName());
-		}
-		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip+actualNumDocsToUse; ++docNum) {
-			Document lazyDoc = lazyDocs.get(docNum);
-			System.out.println("  Using " + lazyDoc.baseName());
-			if (goldTranscriptionRequired && lazyDoc.loadLineText() == null & lazyDoc.loadLmText() == null) { 
-				throw new RuntimeException("Evaluation document "+lazyDoc.baseName()+" has no gold transcriptions.");
-			}
-			else {
-				documents.add(lazyDoc);
-			}
-		}
-		if (actualNumDocsToUse < 1) throw new RuntimeException("No documents given!");
-		return documents;
+		return lazyDocs;
 	}
-	
 }

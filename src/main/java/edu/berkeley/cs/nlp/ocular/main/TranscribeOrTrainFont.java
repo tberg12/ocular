@@ -5,6 +5,7 @@ import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -32,9 +33,11 @@ import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubs
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
 import fig.OptionsParser;
+import fileio.f;
 import indexer.Indexer;
 
 /**
@@ -45,8 +48,11 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	// ##### Main Options
 	
-	@Option(gloss = "Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
-	public static String inputDocPath = null; // Required.
+	@Option(gloss = "Path to the directory that contains the input document images. The entire directory will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Files will be processed in lexicographical order.")
+	public static String inputDocPath = null; // Either inputDocPath or inputDocListPath is required.
+	
+	@Option(gloss = "Path to a file that contains a list of paths to images files that should be used.  The file should contain one path per line. These paths will be searched in order.  Each path may point to either a file or a directory, which will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Paths will be processed in the order given in the file, and each path will be searched in lexicographical order.")
+	public static String inputDocListPath = null; // Either inputDocPath or inputDocListPath is required.
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 	public static String outputPath = null; // Required.
@@ -211,35 +217,10 @@ public class TranscribeOrTrainFont implements Runnable {
 		main.run();
 	}
 
-	public void run() {
-		CodeSwitchLanguageModel lm = loadLM();
-		Map<String, CharacterTemplate> font = loadFont();
-		BasicGlyphSubstitutionModelFactory gsmFactory = makeGsmFactory(lm);
-		GlyphSubstitutionModel gsm = getGlyphSubstituionModel(gsmFactory);
-		
-		Indexer<String> charIndexer = lm.getCharacterIndexer();
-		Indexer<String> langIndexer = lm.getLanguageIndexer();
-		
-		DecoderEM decoderEM = makeDecoder(charIndexer);
-
-		boolean evalCharIncludesDiacritic = true;
-		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution, evalCharIncludesDiacritic);
-		
-		List<Document> documents = LazyRawImageLoader.loadDocuments(inputDocPath, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
-		if (trainFont) {
-			MultiDocumentEvaluator evalSetEvaluator = makeEvalSetEvaluator(charIndexer, decoderEM, documentEvaluator);
-			train(documents, lm, font, gsmFactory, gsm, decoderEM, documentEvaluator, evalSetEvaluator);
-		}
-		else { /* transcribe only */
-			MultiDocumentEvaluator evalSetEvaluator = new BasicMultiDocumentEvaluator(documents, inputDocPath, outputPath, decoderEM, documentEvaluator, charIndexer);
-			System.out.println("Transcribing input data      " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-			evalSetEvaluator.printTranscriptionWithEvaluation(0, 0, lm, gsm, font);
-		}
-	}
-
 	private static void validateOptions() {
-		if (inputDocPath == null) throw new IllegalArgumentException("-inputDocPath not set");
-		if (!new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputDocPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if ((inputDocPath == null) != (inputDocListPath == null)) throw new IllegalArgumentException("Either -inputDocPath or -inputDocListPath is required.");
+		if (inputDocPath == null || !new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputDocPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (inputDocListPath == null || !new File(inputDocListPath).exists()) throw new IllegalArgumentException("-inputDocListPath "+inputDocListPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (trainFont && numEMIters <= 0) new IllegalArgumentException("-numEMIters must be a positive number if -trainFont is true.");
 		if (trainFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath required when -trainFont is true.");
@@ -259,9 +240,39 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (!outputPathFile.exists()) outputPathFile.mkdirs();
 	}
 
+	public void run() {
+		CodeSwitchLanguageModel lm = loadLM();
+		Map<String, CharacterTemplate> font = loadFont();
+		BasicGlyphSubstitutionModelFactory gsmFactory = makeGsmFactory(lm);
+		GlyphSubstitutionModel gsm = getGlyphSubstituionModel(gsmFactory);
+		
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		Indexer<String> langIndexer = lm.getLanguageIndexer();
+		
+		DecoderEM decoderEM = makeDecoder(charIndexer);
+
+		boolean evalCharIncludesDiacritic = true;
+		SingleDocumentEvaluator documentEvaluator = new BasicSingleDocumentEvaluator(charIndexer, langIndexer, allowGlyphSubstitution, evalCharIncludesDiacritic);
+		
+		List<String> docPathList = inputDocPath != null ? Arrays.asList(inputDocPath.split("[\\s+,;:]")) : f.readLines(inputDocListPath);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(docPathList, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
+		String newInputDocPath = FileUtil.lowestCommonPath(docPathList);
+
+		if (trainFont) {
+			MultiDocumentEvaluator evalSetEvaluator = makeEvalSetEvaluator(charIndexer, decoderEM, documentEvaluator);
+			train(documents, lm, font, gsmFactory, gsm, decoderEM, documentEvaluator, evalSetEvaluator, newInputDocPath);
+		}
+		else { /* transcribe only */
+			MultiDocumentEvaluator evalSetEvaluator = new BasicMultiDocumentEvaluator(documents, newInputDocPath, outputPath, decoderEM, documentEvaluator, charIndexer);
+			System.out.println("Transcribing input data      " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
+			evalSetEvaluator.printTranscriptionWithEvaluation(0, 0, lm, gsm, font);
+		}
+	}
+
 	private void train(List<Document> trainDocuments, CodeSwitchLanguageModel lm, Map<String, CharacterTemplate> font,
 			BasicGlyphSubstitutionModelFactory gsmFactory, GlyphSubstitutionModel gsm, DecoderEM decoderEM,
-			SingleDocumentEvaluator documentEvaluator, MultiDocumentEvaluator evalSetIterationEvaluator) {
+			SingleDocumentEvaluator documentEvaluator, MultiDocumentEvaluator evalSetIterationEvaluator,
+			String newInputDocPath) {
 		Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> trainedModels = 
 				new FontTrainEM().train(
 						trainDocuments, 
@@ -273,7 +284,7 @@ public class TranscribeOrTrainFont implements Runnable {
 						gsmFactory, documentEvaluator,
 						numEMIters, updateDocBatchSize, minDocBatchSize, accumulateBatchesWithinIter,
 						numMstepThreads,
-						inputDocPath, outputPath,
+						newInputDocPath, outputPath,
 						evalSetIterationEvaluator, evalFreq, evalBatches);
 		
 		Map<String, CharacterTemplate> newFont = trainedModels._1;

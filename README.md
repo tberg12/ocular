@@ -293,8 +293,12 @@ Default: 0.0
 ##### Main Options
 
 * `-inputDocPath`:
-Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
-Required.
+Path to the directory that contains the input document images. The entire directory will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Files will be processed in lexicographical order.
+Default: Either inputDocPath or inputDocListPath is required.
+
+* `-inputDocListPath`:
+Path to a file that contains a list of paths to images files that should be used.  The file should contain one path per line. These paths will be searched in order.  Each path may point to either a file or a directory, which will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Paths will be processed in the order given in the file, and each path will be searched in lexicographical order.
+Default: Either inputDocPath or inputDocListPath is required.
 
 * `-outputPath`:
 Path of the directory that will contain output transcriptions.

@@ -13,26 +13,32 @@ import org.junit.Test;
 public class FileUtilTests {
 
 	@Test
-	public void test_lowestCommonParentDirectory() {
+	public void test_lowestCommonPath() {
 		{
 		List<String> paths = new ArrayList<String>();
 		paths.add("/well/this/and/that/");
 		paths.add("/well/this/and/the/other.txt");
 		paths.add("/well/this/and/thus.txt");
-		String lcpd = FileUtil.lowestCommonParentDirectory(paths);
+		String lcpd = FileUtil.lowestCommonPath(paths);
 		assertEquals("/well/this/and", lcpd);
+		}
+		{
+		List<String> paths = new ArrayList<String>();
+		paths.add("/well/this/and/thus.txt");
+		String lcpd = FileUtil.lowestCommonPath(paths);
+		assertEquals("/well/this/and/thus.txt", lcpd);
 		}
 		{
 		List<String> paths = new ArrayList<String>();
 		paths.add("/well/this/and/");
 		paths.add("/well/this/and/");
-		String lcpd = FileUtil.lowestCommonParentDirectory(paths);
+		String lcpd = FileUtil.lowestCommonPath(paths);
 		assertEquals("/well/this/and", lcpd);
 		}
 		{
 		List<String> paths = new ArrayList<String>();
 		paths.add("/well/this/and/");
-		String lcpd = FileUtil.lowestCommonParentDirectory(paths);
+		String lcpd = FileUtil.lowestCommonPath(paths);
 		assertEquals("/well/this/and", lcpd);
 		}
 	}

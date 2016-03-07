@@ -65,14 +65,18 @@ public class FileUtil {
 	}
 
 
-	/**
-	 * 
-	 */
-	public static String lowestCommonParentDirectory(List<String> paths) {
+	public static String lowestCommonPath(List<String> paths) {
+		List<File> fileList = new ArrayList<File>();
+		for (String path : paths)
+			fileList.add(new File(path));
+		return lowestCommonParentDirectory(fileList);
+	}
+	
+	public static String lowestCommonParentDirectory(List<File> files) {
 		try {
 			List<List<String>> pathLists = new ArrayList<List<String>>();
-			for (String path : paths) {
-				pathLists.add(pathToNameList(new File(path).getCanonicalFile()));
+			for (File file : files) {
+				pathLists.add(pathToNameList(file.getCanonicalFile()));
 			}
 			int longestCommonPrefix = CollectionHelper.longestCommonPrefix(pathLists);
 			List<String> prefixPathParts = pathLists.get(0).subList(0, longestCommonPrefix);
