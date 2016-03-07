@@ -1,11 +1,14 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
 import fig.Option;
 import fig.OptionsParser;
+import fileio.f;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
@@ -14,28 +17,31 @@ public class ExtractLinesOnly implements Runnable {
 
 	// Main Options
 	
-	@Option(gloss = "Path of the directory that contains the input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
-	public static String inputPath = null; //"test_img";
+	@Option(gloss = "Path to the directory that contains the input document images. The entire directory will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Files will be processed in lexicographical order.")
+	public static String inputDocPath = null; // Either inputDocPath or inputDocListPath is required.  Relevant to line extraction.
+	
+	@Option(gloss = "Path to a file that contains a list of paths to images files that should be used.  The file should contain one path per line. These paths will be searched in order.  Each path may point to either a file or a directory, which will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Paths will be processed in the order given in the file, and each path will be searched in lexicographical order.")
+	public static String inputDocListPath = null; // Either inputDocPath or inputDocListPath is required.  Relevant to line extraction.
 
-	@Option(gloss = "Number of documents (pages) to use, counting alphabetically. Ignore or use 0 to use all documents. Default: use all documents")
-	public static int numDocs = Integer.MAX_VALUE;
+	@Option(gloss = "Number of documents (pages) to use, counting alphabetically. Ignore or use 0 to use all documents. Default: Use all documents.")
+	public static int numDocs = Integer.MAX_VALUE; // Relevant to line extraction.
 
-	@Option(gloss = "Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.  Default: 0")
-	public static int numDocsToSkip = 0;
+	@Option(gloss = "Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.")
+	public static int numDocsToSkip = 0; // Relevant to line extraction.
 
 	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
-	public static String extractedLinesPath = null;
+	public static String extractedLinesPath = null; // Don't read or write line image files.  Relevant to line extraction.
 	
 	// Line Extraction Options
 	
 	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
-	public static double binarizeThreshold = 0.12;
+	public static double binarizeThreshold = 0.12; // Relevant to line extraction.
 
 	@Option(gloss = "Crop pages?")
-	public static boolean crop = true;
+	public static boolean crop = true; // Relevant to line extraction.
 
 	@Option(gloss = "Scale all lines to have the same height?")
-	public static boolean uniformLineHeight = true;
+	public static boolean uniformLineHeight = true; // Relevant to line extraction.
 	
 	
 	public static void main(String[] args) {
@@ -43,13 +49,20 @@ public class ExtractLinesOnly implements Runnable {
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });
 		if (!parser.doParse(args)) System.exit(1);
+		validateOptions();
 		main.run();
 	}
 
+	private static void validateOptions() {
+		if ((inputDocPath == null) != (inputDocListPath == null)) throw new IllegalArgumentException("Either -inputDocPath or -inputDocListPath is required.");
+		if (inputDocPath == null || !new File(inputDocPath).exists()) throw new IllegalArgumentException("-inputDocPath "+inputDocPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (inputDocListPath == null || !new File(inputDocListPath).exists()) throw new IllegalArgumentException("-inputDocListPath "+inputDocListPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
+	}
+
 	public void run() {
-		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
-		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath not set");
-		List<Document> documents = LazyRawImageLoader.loadDocuments(inputPath, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
+		List<String> docPathList = inputDocPath != null ? Arrays.asList(inputDocPath.split("[\\s+,;:]")) : f.readLines(inputDocListPath);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(docPathList, extractedLinesPath, numDocs, numDocsToSkip, false, uniformLineHeight, binarizeThreshold, crop);
 		for (Document doc : documents) {
 			doc.loadLineImages();
 		}

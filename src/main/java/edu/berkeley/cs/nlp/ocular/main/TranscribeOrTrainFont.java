@@ -49,10 +49,10 @@ public class TranscribeOrTrainFont implements Runnable {
 	// ##### Main Options
 	
 	@Option(gloss = "Path to the directory that contains the input document images. The entire directory will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Files will be processed in lexicographical order.")
-	public static String inputDocPath = null; // Either inputDocPath or inputDocListPath is required.
+	public static String inputDocPath = null; // Either inputDocPath or inputDocListPath is required.  Relevant to line extraction.
 	
 	@Option(gloss = "Path to a file that contains a list of paths to images files that should be used.  The file should contain one path per line. These paths will be searched in order.  Each path may point to either a file or a directory, which will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Paths will be processed in the order given in the file, and each path will be searched in lexicographical order.")
-	public static String inputDocListPath = null; // Either inputDocPath or inputDocListPath is required.
+	public static String inputDocListPath = null; // Either inputDocPath or inputDocListPath is required.  Relevant to line extraction.
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 	public static String outputPath = null; // Required.
@@ -64,13 +64,13 @@ public class TranscribeOrTrainFont implements Runnable {
 	public static String inputFontPath = null; // Required.
 
 	@Option(gloss = "Number of documents (pages) to use, counting alphabetically. Ignore or use 0 to use all documents. Default: Use all documents.")
-	public static int numDocs = Integer.MAX_VALUE;
+	public static int numDocs = Integer.MAX_VALUE; // Relevant to line extraction.
 
 	@Option(gloss = "Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.")
-	public static int numDocsToSkip = 0;
+	public static int numDocsToSkip = 0; // Relevant to line extraction.
 
 	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
-	public static String extractedLinesPath = null; // Don't read or write line image files.
+	public static String extractedLinesPath = null; // Don't read or write line image files.  Relevant to line extraction.
 	
 	// ##### Font Learning Options
 	
@@ -142,13 +142,13 @@ public class TranscribeOrTrainFont implements Runnable {
 	// ##### Line Extraction Options
 	
 	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
-	public static double binarizeThreshold = 0.12;
+	public static double binarizeThreshold = 0.12; // Relevant to line extraction.
 
 	@Option(gloss = "Crop pages?")
-	public static boolean crop = true;
+	public static boolean crop = true; // Relevant to line extraction.
 
 	@Option(gloss = "Scale all lines to have the same height?")
-	public static boolean uniformLineHeight = true;
+	public static boolean uniformLineHeight = true; // Relevant to line extraction.
 
 	// ##### Miscellaneous Options
 	
