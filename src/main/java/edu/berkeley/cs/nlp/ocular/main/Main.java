@@ -9,8 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader;
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
+import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.RawImageLoader;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
@@ -129,8 +128,7 @@ public class Main implements Runnable {
 		
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 
-		ImageLoader loader =  new RawImageLoader(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, numMstepThreads);
-		List<Document> documents = loader.readDataset();
+		List<Document> documents = RawImageLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, numMstepThreads);
 		for (Document doc : documents) {
 			final PixelType[][][] pixels = doc.loadLineImages();
 			System.out.println("Printing line extraction for document: "+doc.baseName());

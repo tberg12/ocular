@@ -2,7 +2,7 @@ package edu.berkeley.cs.nlp.ocular.main;
 
 import java.util.List;
 
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
+import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
 import fig.Option;
 import fig.OptionsParser;

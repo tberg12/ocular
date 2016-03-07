@@ -30,7 +30,7 @@ import fileio.f;
  * 
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public abstract class LazyRawImageDocument implements ImageLoader.Document {
+public abstract class LazyRawImageDocument implements Document {
 	private final String inputPath;
 	private final int lineHeight;
 	private final double binarizeThreshold;

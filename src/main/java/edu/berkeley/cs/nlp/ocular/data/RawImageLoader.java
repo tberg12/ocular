@@ -18,9 +18,9 @@ import threading.BetterThreader;
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  */
-public class RawImageLoader implements ImageLoader {
+public class RawImageLoader {
 
-	public static class RawImageDocument implements ImageLoader.Document {
+	public static class RawImageDocument implements Document {
 		private final String baseName;
 		final PixelType[][][] observations;
 		
@@ -59,19 +59,7 @@ public class RawImageLoader implements ImageLoader {
 
 	}
 	
-	private final String inputPath;
-	private final int lineHeight;
-	private final int numThreads;
-	private final double binarizeThreshold;
-
-	public RawImageLoader(String inputPath, int lineHeight, double binarizeThreshold, int numThreads) {
-		this.inputPath = inputPath;
-		this.lineHeight = lineHeight;
-		this.binarizeThreshold = binarizeThreshold;
-		this.numThreads = numThreads;
-	}
-	
-	public List<Document> readDataset() {
+	public static List<Document> loadDocuments(final String inputPath, final int lineHeight, final double binarizeThreshold, final int numThreads) {
 		System.out.println("Extracting text line images from dataset "+inputPath);
 		File dir = new File(inputPath);
 		final String[] dirList = dir.list(new FilenameFilter() {

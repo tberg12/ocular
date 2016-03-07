@@ -11,9 +11,9 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  */
-public class TextAndLineImagesLoader implements ImageLoader {
+public class TextAndLineImagesLoader {
 	
-	public static class TextAndLineImagesDocument implements ImageLoader.Document {
+	public static class TextAndLineImagesDocument implements Document {
 		private final String imgPathPrefix;
 		private final String imgNameSuffix;
 		private final String textPath;
@@ -67,15 +67,7 @@ public class TextAndLineImagesLoader implements ImageLoader {
 		}
 	}
 	
-	private final String inputPath;
-	private final int lineHeight;
-
-	public TextAndLineImagesLoader(String inputPath, int lineHeight) {
-		this.inputPath = inputPath;
-		this.lineHeight = lineHeight;
-	}
-
-	public List<Document> readDataset() {
+	public static List<Document> loadDocuments(String inputPath, int lineHeight) {
 		List<String> lines = f.readLines(inputPath);
 		List<Document> docs = new ArrayList<Document>();
 		File inputFile = new File(inputPath);

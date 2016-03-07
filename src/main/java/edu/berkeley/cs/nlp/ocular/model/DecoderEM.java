@@ -5,7 +5,7 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
+import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;

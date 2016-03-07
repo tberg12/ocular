@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
+import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
-import edu.berkeley.cs.nlp.ocular.eval.BasicSingleDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.BasicMultiDocumentEvaluator;
-import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.BasicSingleDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel.CachingEmissionModelFactory;

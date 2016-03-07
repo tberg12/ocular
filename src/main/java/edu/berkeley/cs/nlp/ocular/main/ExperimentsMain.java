@@ -11,8 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import arrays.a;
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader;
-import edu.berkeley.cs.nlp.ocular.data.ImageLoader.Document;
+import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.TextAndLineImagesLoader;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
@@ -128,8 +127,7 @@ public class ExperimentsMain implements Runnable {
 		
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 		
-		ImageLoader loader =  new TextAndLineImagesLoader(inputPath, CharacterTemplate.LINE_HEIGHT);
-		List<Document> documents = loader.readDataset();
+		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 
 		for (Document doc : documents) {
 			System.out.println("Loading LM..");
