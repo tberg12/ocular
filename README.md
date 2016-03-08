@@ -54,7 +54,7 @@ Continued development of Ocular is supported in part by a [Digital Humanities Im
   * [Obtaining Ocular](https://github.com/tberg12/ocular#obtaining-ocular)
   * [Using Ocular](https://github.com/tberg12/ocular#using-ocular)
 2. [Listing of Command-Line Options](https://github.com/tberg12/ocular#2-all-command-line-options)
-  * [Language Model Initialization](https://github.com/tberg12/ocular#trainlanguagemodel)
+  * [Language Model Initialization](https://github.com/tberg12/ocular#initializelanguagemodel)
   * [Font Initialization](https://github.com/tberg12/ocular#initializefont)
   * [Font Training and Transcription](https://github.com/tberg12/ocular#transcribeortrainfont)
 
