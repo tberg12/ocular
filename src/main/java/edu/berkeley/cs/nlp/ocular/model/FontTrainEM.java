@@ -22,7 +22,7 @@ import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
-import edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel;
+import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
@@ -77,7 +77,7 @@ public class FontTrainEM {
 					font = InitializeFont.readFont(makeFontPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
 				}
 				if (retrainLM) {
-					lm = TrainLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+					lm = InitializeLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
 				}
 				if (trainGsm) {
 					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration, ""));
@@ -146,7 +146,7 @@ public class FontTrainEM {
 					}
 					if (retrainLM) {
 						lm = reestimateLM(languageCounts, lm);
-						if (writeTrainedLm) TrainLanguageModel.writeLM(lm, makeLmPath(outputPath, iter, completedBatchesInIteration));
+						if (writeTrainedLm) InitializeLanguageModel.writeLM(lm, makeLmPath(outputPath, iter, completedBatchesInIteration));
 					}
 					if (trainGsm) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);

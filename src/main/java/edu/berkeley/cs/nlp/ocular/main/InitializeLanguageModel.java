@@ -43,7 +43,7 @@ import indexer.Indexer;
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class TrainLanguageModel implements Runnable {
+public class InitializeLanguageModel implements Runnable {
 	
 	@Option(gloss = "Output LM file path.")
 	public static String outputLmPath = null; // Required.
@@ -80,7 +80,7 @@ public class TrainLanguageModel implements Runnable {
 
 	
 	public static void main(String[] args) {
-		TrainLanguageModel main = new TrainLanguageModel();
+		InitializeLanguageModel main = new InitializeLanguageModel();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });
 		if (!parser.doParse(args)) System.exit(1);

@@ -293,7 +293,7 @@ public class TranscribeOrTrainFont implements Runnable {
 		CodeSwitchLanguageModel newLm = trainedModels._2;
 		GlyphSubstitutionModel newGsm = trainedModels._3;
 		if (outputFontPath != null) InitializeFont.writeFont(newFont, outputFontPath);
-		if (outputLmPath != null) TrainLanguageModel.writeLM(newLm, outputLmPath);
+		if (outputLmPath != null) InitializeLanguageModel.writeLM(newLm, outputLmPath);
 		if (outputGsmPath != null) GlyphSubstitutionModelReadWrite.writeGSM(newGsm, outputGsmPath);
 	}
 
@@ -305,7 +305,7 @@ public class TranscribeOrTrainFont implements Runnable {
 	
 	private CodeSwitchLanguageModel loadLM() {
 		System.out.println("Loading initial LM from " + inputLmPath);
-		CodeSwitchLanguageModel codeSwitchLM = TrainLanguageModel.readLM(inputLmPath);
+		CodeSwitchLanguageModel codeSwitchLM = InitializeLanguageModel.readLM(inputLmPath);
 
 		//print some useful info
 		System.out.println("Loaded CodeSwitchLanguageModel from " + inputLmPath);

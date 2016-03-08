@@ -87,17 +87,17 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 ### Using Ocular
 
-1. Train a language model:
+1. Initialize a language model:
 
   Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-inputTextPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -inputTextPath texts/pg2600.txt \
         -outputLmPath lm/english.lmser
 
   For a multilingual (code-switching) model, specify multiple `-inputTextPath` entries composed of a language name and a path to files containing text in that language.  For example, a combined [Spanish](https://www.gutenberg.org/cache/epub/2000/pg2000.txt)/[Latin](https://www.gutenberg.org/cache/epub/23306/pg23306.txt)/[Nahuatl](https://www.gutenberg.org/cache/epub/12219/pg12219.txt) might be trained as follows:
 
-      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
+      java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -inputTextPath "spanish->texts/sp/,latin->texts/la/,nahuatl->texts/na/" \
         -outputLmPath lm/trilingual.lmser
 
@@ -208,7 +208,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 ## All Command-Line Options
 
 
-### TrainLanguageModel
+### InitializeLanguageModel
 
 * `-outputLmPath`:
 Output LM file path.

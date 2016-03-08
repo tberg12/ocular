@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import edu.berkeley.cs.nlp.ocular.main.TrainLanguageModel;
+import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
@@ -200,7 +200,7 @@ public class TrainLanguageModelGUI {
 		input_go.setMaximumSize(new Dimension(20, 100));
 		input_go.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				TrainLanguageModel exec = new TrainLanguageModel();
+				InitializeLanguageModel exec = new InitializeLanguageModel();
 				exec.outputLmPath = input_outputLmPath.getText();
 				exec.inputTextPath = input_inputTextPath.getText();
 				exec.languagePriors = input_languagePriors.getText();
