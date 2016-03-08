@@ -10,6 +10,14 @@
 
 Ocular is a state-of-the-art historical OCR system.
 
+Its primary features are:
+
+* Unsupervised learning of unknown fonts: requires only document images and a corpus of text.
+* Ability to handle noisy documents: inconsistent inking, spacing, vertical alignment, etc.
+* Support for multilingual documents, including those that have considerable word-level code-switching.
+* Unsupervised learning of orthographic variation patterns including archaic spellings and printer shorthand.
+* Simultaneous, joint transcription into both diplomatic (literal) and normalized forms, the first OCR system of its kind.
+
 It is described in the following publications:
 
 > **Unsupervised Transcription of Historical Documents**
@@ -39,15 +47,27 @@ Continued development of Ocular is supported in part by a [Digital Humanities Im
 
 
 
-## Quick-Start Guide
+
+## Contents of this README
+
+1. [Quick-Start Guide](https://github.com/tberg12/ocular#quick-start-guide)
+  * [Obtaining Ocular](https://github.com/tberg12/ocular#obtaining-ocular)
+  * [Using Ocular](https://github.com/tberg12/ocular#using-ocular)
+2. [Listing of Command-Line Options](https://github.com/tberg12/ocular#all-command-line-options)
+  * [Language Model Initialization](https://github.com/tberg12/ocular#trainlanguagemodel)
+  * [Font Initialization](https://github.com/tberg12/ocular#initializefont)
+  * [Font Training and Transcription](https://github.com/tberg12/ocular#transcribeortrainfont)
+
+
+## 1. Quick-Start Guide
 
 ### Obtaining Ocular
 
 The easiest way to get the Ocular software is to download the self-contained jar from http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.3-SNAPSHOT/ocular-0.3-SNAPSHOT-with_dependencies.jar
 
-Once you have this jar, you will be able to run Ocular according to the instructions below in the Using Ocular section; the code in this repository is not a requirement if all you'd like to do is run the software.
+Once you have this jar, you will be able to run Ocular according to the instructions below in the [Using Ocular](https://github.com/tberg12/ocular#using-ocular) section; the code in this repository is not a requirement if all you'd like to do is run the software.
 
-The jar is executable, so when you use go to use Ocular, you will run it following this template (where [MAIN-CLASS] will specify which program to run, as detailed in the Using Ocular section below):
+The jar is executable, so when you use go to use Ocular, you will run it following this template (where [MAIN-CLASS] will specify which program to run, as detailed in the [Using Ocular](https://github.com/tberg12/ocular#using-ocular) section below):
 
     java -Done-jar.main.class=[MAIN-CLASS] -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar [options...]
 
@@ -62,7 +82,7 @@ Clone this repository, and compile the project into a jar:
     cd ocular
     ./make_jar.sh
 
-This creates precisely the same `ocular-0.3-SNAPSHOT-with_dependencies.jar` jar file discussed above.  Thus, this is sufficient to be able to run Ocular, as stated above, using the detailed instructions in the Using Ocular section below.
+This creates precisely the same `ocular-0.3-SNAPSHOT-with_dependencies.jar` jar file discussed above.  Thus, this is sufficient to be able to run Ocular, as stated above, using the detailed instructions in the [Using Ocular](https://github.com/tberg12/ocular#using-ocular) section below.
 
 Also like above, since this jar includes all the necessary dependencies, so you should be able to move it wherever you like, without the rest of the contents of this repository.
 
@@ -205,7 +225,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 
 
-## All Command-Line Options
+## 2. All Command-Line Options
 
 
 ### TrainLanguageModel
