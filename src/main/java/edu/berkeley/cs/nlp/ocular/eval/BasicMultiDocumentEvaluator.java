@@ -72,8 +72,10 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
 			if (iter > 0) outputFilenameBase += "_iter-" + iter;
 			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
-			FontTrainEM.printEvaluation(allEvals, outputFilenameBase + ".txt");
-			FontTrainEM.printEvaluation(allLmEvals, outputFilenameBase + "_lmeval.txt");
+			if (!allEvals.isEmpty())
+				FontTrainEM.printEvaluation(allEvals, outputFilenameBase + ".txt");
+			if (!allLmEvals.isEmpty())
+				FontTrainEM.printEvaluation(allLmEvals, outputFilenameBase + "_lmeval.txt");
 		}
 	}
 
