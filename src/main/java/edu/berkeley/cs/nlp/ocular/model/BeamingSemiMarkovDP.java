@@ -142,7 +142,7 @@ public class BeamingSemiMarkovDP {
 			if (t == 0) {
 				if (startStates == null || startStates.isEmpty()) {
 					startStates = addNullBackpointers(forwardTransitionModel.startStates());
-					//if (startStates.isEmpty()) new RuntimeException("The forwardTransitionModel has no possible start states.");
+					//if (startStates.isEmpty()) new EmptyBeamException("The forwardTransitionModel has no possible start states.");
 				}
 				for (BeamState startBeamState : startStates) {
 					TransitionState nextTs = startBeamState.transState;
@@ -249,11 +249,14 @@ public class BeamingSemiMarkovDP {
 	private Tuple2<Tuple2<TransitionState[],int[]>,TransitionState> followBackpointers(int d, TransitionState finalTs) {
 		List<TransitionState> transStateDecodeList = new ArrayList<TransitionState>();
 		List<Integer> widthsDecodeList = new ArrayList<Integer>();
+		TransitionState nextFinalTs = null;
+		
+		try {
 		TransitionState bestFinalTs = null;
 		if (finalTs == null) {
 			double bestFinalScore = Double.NEGATIVE_INFINITY;
 			Collection<BeamState> possibleBeamStates = alphas[d][emissionModel.sequenceLength(d)].getObjects();
-			if (possibleBeamStates.isEmpty()) throw new RuntimeException("No possible final states found for this line. Consider increasing -beamSize.");
+			if (possibleBeamStates.isEmpty()) throw new EmptyBeamException("No possible final states found for this line. Consider increasing -beamSize.");
 			for (BeamState beamState : possibleBeamStates) {
 				double score = beamState.score + beamState.transState.endLogProb();
 				if (score > bestFinalScore) {
@@ -261,17 +264,16 @@ public class BeamingSemiMarkovDP {
 					bestFinalTs = beamState.transState;
 				}
 			}
-			if (bestFinalTs == null) throw new RuntimeException("No final-state possibilities with non-zero probabilities for this line. Consider increasing -beamSize.");
+			if (bestFinalTs == null) throw new EmptyBeamException("No final-state possibilities with non-zero probabilities for this line. Consider increasing -beamSize.");
 		} else {
 			bestFinalTs = finalTs;
 		}
 
 		int currentT = emissionModel.sequenceLength(d);
-		TransitionState nextFinalTs = null;
 		TransitionState currentTs = bestFinalTs;
 		//System.out.print("Line "+d+"   Backward decode: ");
 		while (true) {
-			if (currentTs == null) throw new RuntimeException("No current-state possiblities with non-zero probabilities when following backpointers. Consider increasing -beamSize.");
+			if (currentTs == null) throw new EmptyBeamException("No current-state possiblities with non-zero probabilities when following backpointers. Consider increasing -beamSize.");
 			Tuple2<Integer,TransitionState> backpointer = alphas[d][currentT].getObject(new BeamState(currentTs)).backPointer;
 			int width =  currentT - backpointer._1;
 			transStateDecodeList.add(currentTs);
@@ -286,6 +288,11 @@ public class BeamingSemiMarkovDP {
 			}
 		}
 		//System.out.println();
+		}
+		catch (EmptyBeamException e) {
+			System.out.println("ERRROR: Line "+d+": "+e.getMessage());
+			nextFinalTs = null;
+		}
 
 		Collections.reverse(transStateDecodeList);
 		Collections.reverse(widthsDecodeList);
