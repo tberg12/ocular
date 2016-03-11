@@ -1,7 +1,9 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +56,7 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 		for (int docNum = 0; docNum < numDocs; ++docNum) {
 			Document doc = documents.get(docNum);
-			System.out.println((iter > 0 ? "Training iteration "+iter+", " : "") + (batchId > 0 ? "batch "+batchId+", " : "") + "Transcribing eval document "+(docNum+1)+" of "+numDocs+":  "+doc.baseName());
+			System.out.println((iter > 0 ? "Training iteration "+iter+", " : "") + (batchId > 0 ? "batch "+batchId+", " : "") + "Transcribing eval document "+(docNum+1)+" of "+numDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			
 			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, false, lm, gsm, templates, backwardTransitionModel);
 			final TransitionState[][] decodeStates = decodeResults._1._1;

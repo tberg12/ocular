@@ -74,13 +74,19 @@ public class FontTrainEM {
 			if (lastCompletedIteration > 0) {
 				System.out.println("Last completed iteration: "+lastCompletedIteration);
 				if (fontPath != null) {
-					font = InitializeFont.readFont(makeFontPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+					String lastFontPath = makeFontPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
+					System.out.println("    Loading font of last completed iteration: "+lastFontPath);
+					font = InitializeFont.readFont(lastFontPath);
 				}
 				if (retrainLM) {
-					lm = InitializeLanguageModel.readLM(makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration));
+					String lastLmPath = makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
+					System.out.println("    Loading gsm of last completed iteration:  "+lastLmPath);
+					lm = InitializeLanguageModel.readLM(lastLmPath);
 				}
 				if (trainGsm) {
-					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration, ""));
+					String lastGsmPath = makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration, "");
+					System.out.println("    Loading lm of last completed iteration:   "+lastGsmPath);
+					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(lastGsmPath);
 				}
 			}
 			else {
