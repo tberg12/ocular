@@ -14,6 +14,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
@@ -89,11 +90,11 @@ public class InitializeFont implements Runnable {
 		BetterThreader<Integer,Object> threader = new BetterThreader<Integer,Object>(func, numFontInitThreads);
 		for (int c=0; c<templates.length; ++c) threader.addFunctionArgument(c);
 		threader.run();
-		Map<String,CharacterTemplate> font = new HashMap<String, CharacterTemplate>();
+		Map<String,CharacterTemplate> charTemplates = new HashMap<String, CharacterTemplate>();
 		for (CharacterTemplate template : templates) {
-			font.put(template.getCharacter(), template);
+			charTemplates.put(template.getCharacter(), template);
 		}
-		InitializeFont.writeFont(font, outputFontPath);
+		InitializeFont.writeFont(new Font(charTemplates), outputFontPath);
 	}
 
 	private Set<String> getAllowedFontsListFromFile() {
@@ -142,9 +143,8 @@ public class InitializeFont implements Runnable {
 //		return fAndBarFontPixelData.toArray(new PixelType[0][][]);
 //	}
 	
-	@SuppressWarnings("unchecked")
-	public static Map<String,CharacterTemplate> readFont(String fontPath) {
-		Map<String,CharacterTemplate> font = null;
+	public static Font readFont(String fontPath) {
+		Font font = null;
 		try {
 			File file = new File(fontPath);
 			if (!file.exists()) {
@@ -153,7 +153,7 @@ public class InitializeFont implements Runnable {
 			}
 			FileInputStream fileIn = new FileInputStream(file);
 			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
-			font = (Map<String,CharacterTemplate>) in.readObject();
+			font = (Font) in.readObject();
 			in.close();
 			fileIn.close();
 		} catch(Exception e) {
@@ -162,7 +162,7 @@ public class InitializeFont implements Runnable {
 		return font;
 	}
 
-	public static void writeFont(Map<String,CharacterTemplate> font, String fontPath) {
+	public static void writeFont(Font font, String fontPath) {
 		try {
 			new File(fontPath).getParentFile().mkdirs();
 			FileOutputStream fileOut = new FileOutputStream(fontPath);

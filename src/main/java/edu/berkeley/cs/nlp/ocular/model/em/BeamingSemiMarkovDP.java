@@ -1,4 +1,4 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.model.em;
 
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
@@ -13,7 +13,9 @@ import java.util.Map;
 import threading.BetterThreader;
 import util.GeneralPriorityQueue;
 import arrays.a;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**

@@ -1,4 +1,4 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.model.transition;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeAddTildeMap;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElidedSet;
@@ -22,6 +22,7 @@ import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
+import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;

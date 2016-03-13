@@ -26,7 +26,7 @@ public class Glyph implements Comparable<Glyph> {
 
   @Override
   public String toString() {
-    return "" + glyph;
+    return glyph;
   }
 
   @Override

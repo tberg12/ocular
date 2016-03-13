@@ -13,23 +13,24 @@ import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.RawImageLoader;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
-import edu.berkeley.cs.nlp.ocular.model.BeamingSemiMarkovDP;
-import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel;
-import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModelExplicitOffset;
-import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModel;
-import edu.berkeley.cs.nlp.ocular.model.CharacterNgramTransitionModelMarkovOffset;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
-import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.DenseBigramTransitionModel;
-import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.EmissionModel;
-import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.em.BeamingSemiMarkovDP;
+import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.DefaultInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.em.EmissionCacheInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.OpenCLInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel;
+import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset;
+import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModelMarkovOffset;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import fig.Option;
 import fig.OptionsParser;
@@ -149,7 +150,7 @@ public class Main implements Runnable {
 		System.out.println("Num characters: " + charIndexer.size());
 
 		System.out.println("Loading font initializer..");
-		Map<String,CharacterTemplate> font = InitializeFont.readFont(initFontPath);
+		Font font = InitializeFont.readFont(initFontPath);
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		for (int c=0; c<templates.length; ++c) {
 			templates[c] = font.get(charIndexer.getObject(c));
@@ -177,7 +178,7 @@ public class Main implements Runnable {
 				System.out.println("Document: "+doc.baseName());
 
 				final PixelType[][][] pixels = doc.loadLineImages();
-				final String[][] text = doc.loadLineText();
+				final String[][] text = doc.loadDiplomaticTextLines();
 
 				// e-step
 

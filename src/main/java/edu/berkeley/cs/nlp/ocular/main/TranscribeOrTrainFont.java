@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
@@ -18,18 +17,19 @@ import edu.berkeley.cs.nlp.ocular.eval.BasicMultiDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.BasicSingleDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
-import edu.berkeley.cs.nlp.ocular.model.CUDAInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModel.CachingEmissionModelFactory;
-import edu.berkeley.cs.nlp.ocular.model.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
-import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
-import edu.berkeley.cs.nlp.ocular.model.DefaultInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.EmissionCacheInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.EmissionModel.EmissionModelFactory;
-import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
-import edu.berkeley.cs.nlp.ocular.model.OpenCLInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.DefaultInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.EmissionCacheInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.OpenCLInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel.CachingEmissionModelFactory;
+import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
+import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel.EmissionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
+import edu.berkeley.cs.nlp.ocular.train.TrainingRestarter;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
@@ -244,7 +244,7 @@ public class TranscribeOrTrainFont implements Runnable {
 
 	public void run() {
 		CodeSwitchLanguageModel lm = loadLM();
-		Map<String, CharacterTemplate> font = loadFont();
+		Font font = loadFont();
 		BasicGlyphSubstitutionModelFactory gsmFactory = makeGsmFactory(lm);
 		GlyphSubstitutionModel gsm = getGlyphSubstituionModel(gsmFactory);
 		
@@ -271,16 +271,16 @@ public class TranscribeOrTrainFont implements Runnable {
 		}
 	}
 
-	private void train(List<Document> trainDocuments, CodeSwitchLanguageModel lm, Map<String, CharacterTemplate> font,
+	private void train(List<Document> trainDocuments, CodeSwitchLanguageModel lm, Font font,
 			BasicGlyphSubstitutionModelFactory gsmFactory, GlyphSubstitutionModel gsm, DecoderEM decoderEM,
 			SingleDocumentEvaluator documentEvaluator, MultiDocumentEvaluator evalSetIterationEvaluator,
 			String newInputDocPath) {
-		Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> trainedModels = 
-				new FontTrainEM().train(
+		Tuple3<Font, CodeSwitchLanguageModel, GlyphSubstitutionModel> trainedModels = 
+				new FontTrainer().train(
 						trainDocuments, 
 						lm, gsm, font, 
 						retrainLM, trainGsm, 
-						continueFromLastCompleteIteration,
+						continueFromLastCompleteIteration ? new TrainingRestarter() : null,
 						outputFontPath != null, outputLmPath != null, outputGsmPath != null,
 						decoderEM,
 						gsmFactory, documentEvaluator,
@@ -289,7 +289,7 @@ public class TranscribeOrTrainFont implements Runnable {
 						newInputDocPath, outputPath,
 						evalSetIterationEvaluator, evalFreq, evalBatches);
 		
-		Map<String, CharacterTemplate> newFont = trainedModels._1;
+		Font newFont = trainedModels._1;
 		CodeSwitchLanguageModel newLm = trainedModels._2;
 		GlyphSubstitutionModel newGsm = trainedModels._3;
 		if (outputFontPath != null) InitializeFont.writeFont(newFont, outputFontPath);
@@ -297,10 +297,9 @@ public class TranscribeOrTrainFont implements Runnable {
 		if (outputGsmPath != null) GlyphSubstitutionModelReadWrite.writeGSM(newGsm, outputGsmPath);
 	}
 
-	private Map<String, CharacterTemplate> loadFont() {
+	private Font loadFont() {
 		System.out.println("Loading font from " + inputFontPath);
-		Map<String, CharacterTemplate> font = InitializeFont.readFont(inputFontPath);
-		return font;
+		return InitializeFont.readFont(inputFontPath);
 	}
 	
 	private CodeSwitchLanguageModel loadLM() {

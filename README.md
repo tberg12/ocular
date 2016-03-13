@@ -210,15 +210,17 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   
   **Optional: Checking accuracy with a gold transcription**
 
-  If a gold standard transcription is available for a file, it should be written in a `.txt` file in the same directory as the corresponding image, and given the same filename (but with a different extension).  These files will be used to evaluate the accuracy of the transcription (during either training or testing).  For example:
+  If a gold standard transcription is available for a file, it should be written in a `.txt` file in the same directory as the corresponding image, and given the same filename (but with a different extension).  These files will be used to evaluate the accuracy of the transcription (during either training or testing).  Likewise, if a gold normalized transcription is available, it should be given the same filename, but with `_normalized` appended.  For example:
 
-      path/to/some/image_001.jpg      # document image
-      path/to/some/image_001.txt      # corresponding transcription
+      path/to/some/image_001.jpg              # document image
+      path/to/some/image_001.txt              # corresponding transcription
+      path/to/some/image_001_normalized.txt   # corresponding normalized transcription
 
   For pdf files, the transcription filename is based on both the pdf filename and the relevant page number (as a 5-digit number):
 
-      path/to/some/filename.pdf                 # document image
-      path/to/some/filename_pdf_page00001.txt   # transcription of the document's first page
+      path/to/some/filename.pdf                            # document image
+      path/to/some/filename_pdf_page00001.txt              # transcription of the document's first page
+      path/to/some/filename_pdf_page00001_normalized.txt   # corresponding normalized transcription
 
 
 

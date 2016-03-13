@@ -1,7 +1,9 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.model.emission;
 
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

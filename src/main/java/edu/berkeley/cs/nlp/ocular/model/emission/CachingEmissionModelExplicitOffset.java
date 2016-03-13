@@ -1,21 +1,22 @@
-package edu.berkeley.cs.nlp.ocular.model;
-
-import gpu.CudaUtil;
-import indexer.Indexer;
+package edu.berkeley.cs.nlp.ocular.model.emission;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import threading.BetterThreader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.em.EmissionCacheInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
+import gpu.CudaUtil;
+import indexer.Indexer;
+import threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  */
-public class CachingEmissionModel implements EmissionModel {
+public class CachingEmissionModelExplicitOffset implements EmissionModel {
 	
 	private EmissionCacheInnerLoop innerLoop;
 	private int numChars;
@@ -29,12 +30,12 @@ public class CachingEmissionModel implements EmissionModel {
 	private int[] padAndTemplateMinWidths;
 	private int[] padAndTemplateMaxWidths;
 	private int[][] padAndTemplateAllowedWidths;
-	private float[][][][] cachedLogProbs;
+	private float[][][][][] cachedLogProbs;
 	private int spaceIndex;
 	private int padMinWidth;
 	private int padMaxWidth;
 	
-	public CachingEmissionModel(CharacterTemplate[] templates, Indexer<String> charIndexer, PixelType[][][] observations, int padMinWidth, int padMaxWidth, EmissionCacheInnerLoop innerLoop) {
+	public CachingEmissionModelExplicitOffset(CharacterTemplate[] templates, Indexer<String> charIndexer, PixelType[][][] observations, int padMinWidth, int padMaxWidth, EmissionCacheInnerLoop innerLoop) {
 		this.innerLoop = innerLoop;
 		
 		this.numChars = charIndexer.size();
@@ -44,9 +45,6 @@ public class CachingEmissionModel implements EmissionModel {
 		this.padMinWidth = padMinWidth;
 		this.padMaxWidth = padMaxWidth;
 		
-		for (int c=0; c<numChars; ++c) 
-			if (templates[c] == null) throw new RuntimeException("template for template["+c+"] ("+charIndexer.getObject(c)+") is null!"); 
-
 		this.whiteObservations = new float[observations.length][];
 		this.blackObservations = new float[observations.length][];
 		for (int d=0; d<observations.length; ++d) {
@@ -90,28 +88,34 @@ public class CachingEmissionModel implements EmissionModel {
 		return allowedWidths(ts.getGlyphChar().templateCharIndex);
 	}
 	
+	
 	public float logProb(int d, int t, int c, int w) {
-		return cachedLogProbs[d][t][c][w-padAndTemplateMinWidths[c]];
+		float result = Float.NEGATIVE_INFINITY;
+		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
+			result = Math.max(result, cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET][w-padAndTemplateMinWidths[c]]);
+		}
+		return result;
 	}
 	
 	public float logProb(int d, int t, TransitionState ts, int w) {
-		return logProb(d, t, ts.getGlyphChar().templateCharIndex, w);
+		int c = ts.getGlyphChar().templateCharIndex;
+		int offset = ts.getOffset();
+		return cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET][w-padAndTemplateMinWidths[c]];
 	}
 	
 	public int getExposure(int d, int t, TransitionState ts, int w) {
 		int c = ts.getGlyphChar().templateCharIndex;
+		int offset = ts.getOffset();
 		double bestScore = Double.NEGATIVE_INFINITY;
 		int bestExposure = -1;
-		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
-			for (int e=0; e<CharacterTemplate.EXP_GAINS.length; ++e) {
-				for (int pw=padMinWidth; pw<=padMaxWidth; ++pw) {
-					int tw = w-pw;
-					if (tw >= templateMinWidths[c] &&  tw <= templateMaxWidths[c]) {
-						double score = templates[c].widthLogProb(tw) + templates[c].emissionLogProb(observations[d], t, t+tw, e, offset) + padWidthLogProb(pw) + templates[spaceIndex].emissionLogProb(observations[d], t+tw, t+tw+pw, e, offset);
-						if (score > bestScore) {
-							bestScore = score;
-							bestExposure = e;
-						}
+		for (int e=0; e<CharacterTemplate.EXP_GAINS.length; ++e) {
+			for (int pw=padMinWidth; pw<=padMaxWidth; ++pw) {
+				int tw = w-pw;
+				if (tw >= templateMinWidths[c] &&  tw <= templateMaxWidths[c]) {
+					double score = templates[c].widthLogProb(tw) + templates[c].emissionLogProb(observations[d], t, t+tw, e, offset) + padWidthLogProb(pw) + templates[spaceIndex].emissionLogProb(observations[d], t+tw, t+tw+pw, e, offset);
+					if (score > bestScore) {
+						bestScore = score;
+						bestExposure = e;
 					}
 				}
 			}
@@ -120,45 +124,27 @@ public class CachingEmissionModel implements EmissionModel {
 	}
 	
 	public int getOffset(int d, int t, TransitionState ts, int w) {
-		int c = ts.getGlyphChar().templateCharIndex;
-		double bestScore = Double.NEGATIVE_INFINITY;
-		int bestOffset = Integer.MIN_VALUE;
-		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
-			for (int e=0; e<CharacterTemplate.EXP_GAINS.length; ++e) {
-				for (int pw=padMinWidth; pw<=padMaxWidth; ++pw) {
-					int tw = w-pw;
-					if (tw >= templateMinWidths[c] &&  tw <= templateMaxWidths[c]) {
-						double score = templates[c].widthLogProb(tw) + templates[c].emissionLogProb(observations[d], t, t+tw, e, offset) + padWidthLogProb(pw) + templates[spaceIndex].emissionLogProb(observations[d], t+tw, t+tw+pw, e, offset);
-						if (score > bestScore) {
-							bestScore = score;
-							bestOffset = offset;
-						}
-					}
-				}
-			}
-		}
-		return bestOffset;
+		return ts.getOffset();
 	}
 	
 	public int getPadWidth(int d, int t, TransitionState ts, int w) {
 		int c = ts.getGlyphChar().templateCharIndex;
+		int offset = ts.getOffset();
 		double bestScore = Double.NEGATIVE_INFINITY;
-		int bestPadWidth = -1;
-		for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
-			for (int e=0; e<CharacterTemplate.EXP_GAINS.length; ++e) {
-				for (int pw=padMinWidth; pw<=padMaxWidth; ++pw) {
-					int tw = w-pw;
-					if (tw >= templateMinWidths[c] &&  tw <= templateMaxWidths[c]) {
-						double score = templates[c].widthLogProb(tw) + templates[c].emissionLogProb(observations[d], t, t+tw, e, offset) + padWidthLogProb(pw) + templates[spaceIndex].emissionLogProb(observations[d], t+tw, t+tw+pw, e, offset);
-						if (score > bestScore) {
-							bestScore = score;
-							bestPadWidth = pw;
-						}
+		int bestPadWith = -1;
+		for (int e=0; e<CharacterTemplate.EXP_GAINS.length; ++e) {
+			for (int pw=padMinWidth; pw<=padMaxWidth; ++pw) {
+				int tw = w-pw;
+				if (tw >= templateMinWidths[c] &&  tw <= templateMaxWidths[c]) {
+					double score = templates[c].widthLogProb(tw) + templates[c].emissionLogProb(observations[d], t, t+tw, e, offset) + padWidthLogProb(pw) + templates[spaceIndex].emissionLogProb(observations[d], t+tw, t+tw+pw, e, offset);
+					if (score > bestScore) {
+						bestScore = score;
+						bestPadWith = pw;
 					}
 				}
 			}
 		}
-		return bestPadWidth;
+		return bestPadWith;
 	}
 	
 	public float padWidthLogProb(int pw) {
@@ -216,14 +202,17 @@ public class CachingEmissionModel implements EmissionModel {
 			}
 		}
 		
-		cachedLogProbs = new float[numSequences()][][][];
+		cachedLogProbs = new float[numSequences()][][][][];
 		for (int d=0; d<numSequences(); ++d) {
-			cachedLogProbs[d] = new float[sequenceLength(d)][][];
+			cachedLogProbs[d] = new float[sequenceLength(d)][][][];
 			for (int t=0; t<sequenceLength(d); ++t) {
-				cachedLogProbs[d][t] = new float[numChars][];
+				cachedLogProbs[d][t] = new float[numChars][][];
 				for (int c=0; c<numChars; ++c) {
-					cachedLogProbs[d][t][c] = new float[padAndTemplateMaxWidths[c]-padAndTemplateMinWidths[c]+1];
-					Arrays.fill(cachedLogProbs[d][t][c], Float.NEGATIVE_INFINITY);
+					cachedLogProbs[d][t][c] = new float[2*CharacterTemplate.MAX_OFFSET+1][];
+					for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
+						cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET] = new float[padAndTemplateMaxWidths[c]-padAndTemplateMinWidths[c]+1];
+						Arrays.fill(cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET], Float.NEGATIVE_INFINITY);
+					}
 				}
 			}
 		}
@@ -301,12 +290,9 @@ public class CachingEmissionModel implements EmissionModel {
 					double templateWidthLogProb = templates[c].widthLogProb(tw);
 					if (t+tw+padMinWidth <= sequenceLength(d)) {
 						for (int e=0; e<CharacterTemplate.EXP_GAINS.length; ++e) {
-							float templateLogProb = Float.NEGATIVE_INFINITY;
+							float[] templateLogProbs = new float[CharacterTemplate.MAX_OFFSET*2+1];
 							for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
-								float logProb = (float) templateWidthLogProb + scores[templateIndicesOffsets[tw-minTemplateWidth]*sequenceLength(d) + CudaUtil.flatten(sequenceLength(d), templateNumIndices[tw-minTemplateWidth], t, templateIndices[tw-minTemplateWidth][c][e][offset+CharacterTemplate.MAX_OFFSET])];
-								if (logProb > templateLogProb) {
-									templateLogProb = logProb;
-								}
+								templateLogProbs[offset+CharacterTemplate.MAX_OFFSET] = (float) templateWidthLogProb + scores[templateIndicesOffsets[tw-minTemplateWidth]*sequenceLength(d) + CudaUtil.flatten(sequenceLength(d), templateNumIndices[tw-minTemplateWidth], t, templateIndices[tw-minTemplateWidth][c][e][offset+CharacterTemplate.MAX_OFFSET])];
 							}
 							for (int pw=padMinWidth; pw<=padMaxWidth; ++pw) {
 								int w = tw + pw;
@@ -317,8 +303,11 @@ public class CachingEmissionModel implements EmissionModel {
 											padLogProb += logColumnProbsWhitespace[d][t+tw+tt][e];
 										}
 									}
-									if (templateLogProb + padLogProb > cachedLogProbs[d][t][c][w-padAndTemplateMinWidths[c]]) {
-										cachedLogProbs[d][t][c][w-padAndTemplateMinWidths[c]] = templateLogProb + padLogProb;
+									for (int offset=-CharacterTemplate.MAX_OFFSET; offset<=CharacterTemplate.MAX_OFFSET; ++offset) {
+										float logProb = templateLogProbs[offset+CharacterTemplate.MAX_OFFSET] + padLogProb;
+										if (logProb > cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET][w-padAndTemplateMinWidths[c]]) {
+											cachedLogProbs[d][t][c][offset+CharacterTemplate.MAX_OFFSET][w-padAndTemplateMinWidths[c]] = logProb;
+										}
 									}
 								}
 							}
@@ -357,7 +346,11 @@ public class CachingEmissionModel implements EmissionModel {
 				for (int j=0; j<cachedLogProbs[i].length; ++j) {
 					if (cachedLogProbs[i][j] != null) {
 						for (int k=0; k<cachedLogProbs[i][j].length; ++k) {
-							if (cachedLogProbs[i][j][k] != null) elementsOfCache += cachedLogProbs[i][j][k].length;
+							if (cachedLogProbs[i][j][k] != null) {
+								for (int l=0; l<cachedLogProbs[i][j][k].length; ++l) {
+									if (cachedLogProbs[i][j][k][l] != null) elementsOfCache += cachedLogProbs[i][j][k][l].length;
+								}
+							}
 						}
 					}
 				}
@@ -366,19 +359,19 @@ public class CachingEmissionModel implements EmissionModel {
 		return 4 * elementsOfCache / 1e9;
 	}
 	
-	public static class CachingEmissionModelFactory implements EmissionModel.EmissionModelFactory {
+	public static class CachingEmissionModelExplicitOffsetFactory implements EmissionModel.EmissionModelFactory {
 		Indexer<String> charIndexer;
 		int padMinWidth;
 		int padMaxWidth;
 		EmissionCacheInnerLoop innerLoop;
-		public CachingEmissionModelFactory(Indexer<String> charIndexer, int padMinWidth, int padMaxWidth, EmissionCacheInnerLoop innerLoop) {
+		public CachingEmissionModelExplicitOffsetFactory(Indexer<String> charIndexer, int padMinWidth, int padMaxWidth, EmissionCacheInnerLoop innerLoop) {
 			this.charIndexer = charIndexer;
 			this.padMinWidth = padMinWidth;
 			this.padMaxWidth = padMaxWidth;
 			this.innerLoop = innerLoop;
 		}
 		public EmissionModel make(CharacterTemplate[] templates, PixelType[][][] observations) {
-			return new CachingEmissionModel(templates, charIndexer, observations, padMinWidth, padMaxWidth, innerLoop);
+			return new CachingEmissionModelExplicitOffset(templates, charIndexer, observations, padMinWidth, padMaxWidth, innerLoop);
 		}
 	}
 }

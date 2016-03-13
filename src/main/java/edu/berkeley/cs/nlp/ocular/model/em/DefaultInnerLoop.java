@@ -1,5 +1,6 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.model.em;
 
+import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import gpu.CudaUtil;
 
 /**

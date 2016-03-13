@@ -5,7 +5,7 @@ import java.util.Map;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
@@ -21,7 +21,7 @@ public interface SingleDocumentEvaluator {
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals);
 
 	/**
-	 * No-op version of an evaluator 
+	 * No-op evaluator implementation 
 	 */
 	public static class NoOpDocumentEvaluator implements SingleDocumentEvaluator {
 		public void printTranscriptionWithEvaluation(int iter, int batchId,

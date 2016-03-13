@@ -10,6 +10,7 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 public interface Document {
 	public String baseName();
 	public PixelType[][][] loadLineImages();
-	public String[][] loadLineText();
-	public List<String> loadLmText();
+	public String[][] loadDiplomaticTextLines();
+	public String[][] loadNormalizedTextLines();
+	public List<String> loadNormalizedText();
 }

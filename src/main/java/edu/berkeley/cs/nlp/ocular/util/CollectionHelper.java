@@ -189,6 +189,10 @@ public class CollectionHelper {
 		return result;
 	}
 
+	public static <A> A last(List<A> list) {
+		return list.isEmpty() ? null : list.get(list.size()-1);
+	}
+
 	public static List<Integer> intArrayToList(int[] a) {
 		List<Integer> l = new ArrayList<Integer>(a.length);
 		for (int x: a) l.add(x);

@@ -46,13 +46,17 @@ public class TextAndLineImagesLoader {
 			return observations;
 		}
 
-		public String[][] loadLineText() {
+		public String[][] loadDiplomaticTextLines() {
 			File textFile = new File(textPath);
 			String[][] text = (!textFile.exists() ? null : f.readDocumentByCharacter(textPath, numLines));
 			return text;
 		}
 		
-		public List<String> loadLmText() {
+		public String[][] loadNormalizedTextLines() {
+			return null;
+		}
+		
+		public List<String> loadNormalizedText() {
 			return null;
 		}
 		

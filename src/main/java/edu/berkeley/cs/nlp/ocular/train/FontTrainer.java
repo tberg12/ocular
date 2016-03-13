@@ -1,6 +1,10 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.train;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
+import static edu.berkeley.cs.nlp.ocular.eval.EvalPrinter.printEvaluation;
+import static edu.berkeley.cs.nlp.ocular.train.ModelPathMaker.makeFontPath;
+import static edu.berkeley.cs.nlp.ocular.train.ModelPathMaker.makeGsmPath;
+import static edu.berkeley.cs.nlp.ocular.train.ModelPathMaker.makeLmPath;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 
@@ -9,25 +13,27 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
-import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentEvaluator;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluator;
+import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
 import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
+import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
+import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
-import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
@@ -38,13 +44,13 @@ import threading.BetterThreader;
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class FontTrainEM {
+public class FontTrainer {
 	
-	public Tuple3<Map<String, CharacterTemplate>, CodeSwitchLanguageModel, GlyphSubstitutionModel> train(
+	public Tuple3<Font, CodeSwitchLanguageModel, GlyphSubstitutionModel> train(
 				List<Document> trainDocuments,  
-				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font,
+				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font,
 				boolean retrainLM, boolean trainGsm,
-				boolean continueFromLastCompleteIteration,
+				TrainingRestarter trainingRestarter,
 				boolean writeTrainedFont, boolean writeTrainedLm, boolean writeTrainedGsm,
 				DecoderEM decoderEM,
 				BasicGlyphSubstitutionModelFactory gsmFactory,
@@ -59,43 +65,17 @@ public class FontTrainEM {
 		int numUsableDocs = trainDocuments.size();
 		int numLanguages = langIndexer.size();
 		GlyphSubstitutionModel evalGsm = gsmFactory.makeForEval(gsmFactory.initializeNewCountsMatrix(), 0, 0);
-		
-		// If requested, try and pick up where we left off
+
 		int lastCompletedIteration = 0;
-		if (continueFromLastCompleteIteration) {
-			String fontPath = null;
-			int lastBatchNumOfIteration = getLastBatchNumOfIteration(numUsableDocs, updateDocBatchSize, minDocBatchSize);
-			for (int iter = 1; iter <= numEMIters; ++iter) {
-				fontPath = makeFontPath(outputPath, iter, lastBatchNumOfIteration);
-				if (new File(fontPath).exists()) {
-					lastCompletedIteration = iter;
-				}
-			}
-			if (lastCompletedIteration > 0) {
-				System.out.println("Last completed iteration: "+lastCompletedIteration);
-				if (fontPath != null) {
-					String lastFontPath = makeFontPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
-					System.out.println("    Loading font of last completed iteration: "+lastFontPath);
-					font = InitializeFont.readFont(lastFontPath);
-				}
-				if (retrainLM) {
-					String lastLmPath = makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
-					System.out.println("    Loading gsm of last completed iteration:  "+lastLmPath);
-					lm = InitializeLanguageModel.readLM(lastLmPath);
-				}
-				if (trainGsm) {
-					String lastGsmPath = makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration, "");
-					System.out.println("    Loading lm of last completed iteration:   "+lastGsmPath);
-					if (evalGsm != null) gsm = GlyphSubstitutionModelReadWrite.readGSM(lastGsmPath);
-				}
-			}
-			else {
-				System.out.println("No completed iterations found");
-			}
-			
-			if (lastCompletedIteration == numEMIters) {
-				System.out.println("All iterations are already complete!");
-			}
+		int lastCompletedBatchOfIteration = 0;
+		Tuple2<Tuple2<Integer,Integer>, Tuple3<Font,CodeSwitchLanguageModel,GlyphSubstitutionModel>> restartObjects;
+		if (trainingRestarter != null) {
+			restartObjects = trainingRestarter.getRestartModels(outputPath, numUsableDocs, minDocBatchSize, updateDocBatchSize, lm, gsm, font, retrainLM, trainGsm, evalGsm != null, numEMIters);
+			lastCompletedIteration = restartObjects._1._1;
+			lastCompletedBatchOfIteration = restartObjects._1._2;
+			font = restartObjects._2._1;
+			lm = restartObjects._2._2;
+			gsm = restartObjects._2._3;
 		}
 		
 		// Containers for counts that will be accumulated
@@ -125,8 +105,8 @@ public class FontTrainEM {
 			for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
 				Document doc = trainDocuments.get(docNum);
 				System.out.println("Training iteration "+iter+" of "+numEMIters+", document "+(docNum+1)+" of "+numUsableDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-				doc.loadLineText();
-				doc.loadLmText();
+				doc.loadDiplomaticTextLines();
+				doc.loadNormalizedText();
 
 				// e-step
 				Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, true, lm, gsm, templates, backwardTransitionModel);
@@ -209,17 +189,7 @@ public class FontTrainEM {
 		return Tuple3(font, lm, gsm);
 	}
 
-	private int getLastBatchNumOfIteration(int numUsableDocs, int updateDocBatchSize, int minDocBatchSize) {
-		int completedBatchesInIteration = 0;
-		for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
-			if (isBatchComplete(numUsableDocs, docNum, updateDocBatchSize, minDocBatchSize)) {
-				++completedBatchesInIteration;
-			}
-		}
-		return completedBatchesInIteration;
-	}
-
-	private boolean isBatchComplete(int numUsableDocs, int docNum, int updateDocBatchSize, int minDocBatchSize) {
+	public static boolean isBatchComplete(int numUsableDocs, int docNum, int updateDocBatchSize, int minDocBatchSize) {
 		boolean batchComplete = false;
 		int trueMinBatchSize = Math.min(updateDocBatchSize, minDocBatchSize); // min batch size may not exceed standard batch size
 		if (docNum+1 == numUsableDocs) { // last document of the set
@@ -234,23 +204,7 @@ public class FontTrainEM {
 		return batchComplete;
 	}
 
-	private String makeGsmPath(String outputPath, int iter, int batch, String suffix) {
-		return outputPath + "/gsm/" + makeOutputFilePrefix(iter, batch) + suffix + ".gsmser";
-	}
-
-	private String makeLmPath(String outputPath, int iter, int batch) {
-		return outputPath + "/lm/" + makeOutputFilePrefix(iter, batch) + ".lmser";
-	}
-
-	private String makeFontPath(String outputPath, int iter, int batch) {
-		return outputPath + "/font/" + makeOutputFilePrefix(iter, batch) + ".fontser";
-	}
-
-	private String makeOutputFilePrefix(int iter, int batch) {
-		return "retrained_iter-"+iter+"_batch-"+batch;
-	}
-
-	public static CharacterTemplate[] loadTemplates(Map<String, CharacterTemplate> font, Indexer<String> charIndexer) {
+	public static CharacterTemplate[] loadTemplates(Font font, Indexer<String> charIndexer) {
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		for (int c = 0; c < charIndexer.size(); ++c) {
 			CharacterTemplate template = font.get(charIndexer.getObject(c));
@@ -349,34 +303,6 @@ public class FontTrainEM {
 			}
 		}
 		return fullViterbiStateSeq;
-	}
-
-	public static void printEvaluation(List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals, String outputPath) {
-		Map<String, EvalSuffStats> totalSuffStats = new HashMap<String, EvalSuffStats>();
-		StringBuffer buf = new StringBuffer();
-		buf.append("All evals:\n");
-		for (Tuple2<String, Map<String, EvalSuffStats>> docNameAndEvals : allEvals) {
-			String docName = docNameAndEvals._1;
-			Map<String, EvalSuffStats> evals = docNameAndEvals._2;
-			buf.append("Document: " + docName + "\n");
-			buf.append(Evaluator.renderEval(evals) + "\n");
-			for (String evalType : evals.keySet()) {
-				EvalSuffStats eval = evals.get(evalType);
-				EvalSuffStats totalEval = totalSuffStats.get(evalType);
-				if (totalEval == null) {
-					totalEval = new EvalSuffStats();
-					totalSuffStats.put(evalType, totalEval);
-				}
-				totalEval.increment(eval);
-			}
-		}
-
-		buf.append("\nMacro-avg total eval:\n");
-		buf.append(Evaluator.renderEval(totalSuffStats) + "\n");
-
-		FileHelper.writeString(outputPath, buf.toString());
-		System.out.println("\n" + outputPath);
-		System.out.println(buf.toString());
 	}
 
 }

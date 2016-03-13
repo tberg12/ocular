@@ -1,5 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.data;
 
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.SPACE;
+
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +24,7 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.Cropper;
 import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.last;
 import fileio.f;
 
 /**
@@ -40,8 +43,12 @@ public abstract class LazyRawImageDocument implements Document {
 
 	private String extractedLinesPath = null;
 
-	private String[][] text = null;
-	private List<String> lmText = null;
+	private String[][] diplomaticTextLines = null;
+	private boolean diplomaticTextLinesLoaded = false;
+	private String[][] normalizedTextLines = null;
+	private boolean normalizedTextLinesLoaded = false;
+	private List<String> normalizedText = null;
+	private boolean normalizedTextLoaded = false;
 
 	public LazyRawImageDocument(String inputPath, int lineHeight, double binarizeThreshold, boolean crop, String extractedLinesPath) {
 		this.inputPath = inputPath;
@@ -140,59 +147,72 @@ public abstract class LazyRawImageDocument implements Document {
 		return f.exists();
 	}
 	
-	public String[][] loadLineText() {
-		if (text == null) {
-			File textFile = new File(baseName().replaceAll("\\.[^.]*$", "") + ".txt");
-			if (textFile.exists()) {
-				System.out.println("Evaluation text found at " + textFile);
-				List<List<String>> textList = new ArrayList<List<String>>();
-				try {
-					BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
-					while (in.ready()) {
-						textList.add(Charset.readCharacters(in.readLine()));
-					}
-					in.close();
+	private String[][] loadTextFile(File textFile, String name) {
+		if (textFile.exists()) {
+			System.out.println("Evaluation "+name+" text found at " + textFile);
+			List<List<String>> textList = new ArrayList<List<String>>();
+			try {
+				BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
+				while (in.ready()) {
+					textList.add(Charset.readCharacters(in.readLine()));
 				}
-				catch (IOException e) {
-					throw new RuntimeException(e);
-				}
+				in.close();
+			}
+			catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 
-				text = new String[textList.size()][];
-				for (int i = 0; i < text.length; ++i) {
-					List<String> line = textList.get(i);
-					text[i] = line.toArray(new String[line.size()]);
-				}
+			String[][] textLines = new String[textList.size()][];
+			for (int i = 0; i < textLines.length; ++i) {
+				List<String> line = textList.get(i);
+				textLines[i] = line.toArray(new String[line.size()]);
 			}
-			else {
-				System.out.println("No evaluation text found at " + textFile + "  (This is only a problem if you were trying to provide a gold transcription to check accuracy.)");
-			}
+			return textLines;
 		}
-		return text;
+		else {
+			System.out.println("No evaluation "+name+" text found at " + textFile + "  (This is only a problem if you were trying to provide a gold "+name+" transcription to check accuracy.)");
+			return null;
+		}
+	}
+	
+	public String[][] loadDiplomaticTextLines() {
+		if (!diplomaticTextLinesLoaded) {
+			diplomaticTextLines = loadTextFile(new File(baseName().replaceAll("\\.[^.]*$", "") + ".txt"), "diplomatic");
+		}
+		diplomaticTextLinesLoaded = true;
+		return diplomaticTextLines;
 	}
 
-	public List<String> loadLmText() {
-		if (lmText == null) {
-			File textFile = new File(baseName().replaceAll("\\.[^.]*$", "") + "_lm.txt");
-			if (textFile.exists()) {
-				System.out.println("LM evaluation text found at " + textFile);
-				lmText = new ArrayList<String>();
-				try {
-					BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
-					while (in.ready()) {
-						lmText.addAll(Charset.readCharacters(in.readLine()));
-						lmText.add(" ");
+	public String[][] loadNormalizedTextLines() {
+		if (!normalizedTextLinesLoaded) {
+			normalizedTextLines = loadTextFile(new File(baseName().replaceAll("\\.[^.]*$", "") + "_normalized.txt"), "normalized");
+		}
+		normalizedTextLinesLoaded = true;
+		return normalizedTextLines;
+	}
+
+	public List<String> loadNormalizedText() {
+		if (!normalizedTextLoaded) {
+			normalizedText = new ArrayList<String>();
+			for (String[] lineChars : loadNormalizedTextLines()) {
+				for (String c : lineChars) {
+					if (SPACE.equals(c) && (normalizedText.isEmpty() || SPACE.equals(last(normalizedText)))) {
+						// do nothing -- collapse spaces
 					}
-					in.close();
+					else {
+						normalizedText.add(c);
+					}
 				}
-				catch (IOException e) {
-					throw new RuntimeException(e);
+				if (!normalizedText.isEmpty() && !SPACE.equals(last(normalizedText))) {
+					normalizedText.add(SPACE);
 				}
 			}
-			else {
-				System.out.println("No LM evaluation text found at " + textFile + "  (This is only a problem if you were trying to provide a gold transcription to check accuracy.)");
+			if (SPACE.equals(last(normalizedText))) {
+				normalizedText.remove(normalizedText.size()-1);
 			}
 		}
-		return lmText;
+		normalizedTextLoaded = true;
+		return normalizedText;
 	}
 
 	private String multilineExtractionImagePath() { return fullLePreExt() + "." + ext(); }

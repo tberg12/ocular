@@ -46,7 +46,7 @@ public class LazyRawImageLoader {
 		for (int docNum = actualNumDocsToSkip; docNum < actualNumDocsToSkip + actualNumDocsToUse; ++docNum) {
 			Document lazyDoc = lazyDocs.get(docNum);
 			System.out.println("  Using " + lazyDoc.baseName());
-			if (goldTranscriptionRequired && lazyDoc.loadLineText() == null & lazyDoc.loadLmText() == null) { 
+			if (goldTranscriptionRequired && lazyDoc.loadDiplomaticTextLines() == null & lazyDoc.loadNormalizedText() == null) { 
 				throw new RuntimeException("Evaluation document "+lazyDoc.baseName()+" has no gold transcriptions.");
 			}
 			else {

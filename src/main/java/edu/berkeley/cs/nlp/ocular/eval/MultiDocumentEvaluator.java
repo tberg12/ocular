@@ -1,9 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
-import java.util.Map;
-
+import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
-import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 
 /**
@@ -12,13 +10,13 @@ import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 public interface MultiDocumentEvaluator {
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
-			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font);
+			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font);
 	
 	/**
-	 * No-op version of an evaluator 
+	 * No-op evaluator implementation
 	 */
 	public static class NoOpMultiDocumentEvaluator implements MultiDocumentEvaluator {
 		public void printTranscriptionWithEvaluation(int iter, int batchId,
-				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font) {}
+				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font) {}
 	}
 }

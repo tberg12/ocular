@@ -9,13 +9,14 @@ import java.util.Map;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
-import edu.berkeley.cs.nlp.ocular.model.DenseBigramTransitionModel;
-import edu.berkeley.cs.nlp.ocular.model.FontTrainEM;
-import edu.berkeley.cs.nlp.ocular.model.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
+import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
@@ -44,16 +45,16 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 		this.charIndexer = charIndexer;
 	}
 
-	public void printTranscriptionWithEvaluation(int iter, int batchId,
-			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Map<String, CharacterTemplate> font) {
+	public void printTranscriptionWithEvaluation(int iter, int batchId, 
+			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font) {
 		
 		int numDocs = documents.size();
-		CharacterTemplate[] templates = FontTrainEM.loadTemplates(font, charIndexer);
+		CharacterTemplate[] templates = FontTrainer.loadTemplates(font, charIndexer);
 		DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 		
 		double totalJointLogProb = 0.0;
-		List<Tuple2<String, Map<String, EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
-		List<Tuple2<String, Map<String, EvalSuffStats>>> allLmEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
+		List<Tuple2<String, Map<String, EvalSuffStats>>> allDiplomaticEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
+		List<Tuple2<String, Map<String, EvalSuffStats>>> allNormalizedEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 		for (int docNum = 0; docNum < numDocs; ++docNum) {
 			Document doc = documents.get(docNum);
 			System.out.println((iter > 0 ? "Training iteration "+iter+", " : "") + (batchId > 0 ? "batch "+batchId+", " : "") + "Transcribing eval document "+(docNum+1)+" of "+numDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
@@ -63,7 +64,7 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, allEvals, allLmEvals);
+			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, allDiplomaticEvals, allNormalizedEvals);
 		}
 		double avgLogProb = ((double)totalJointLogProb) / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);
@@ -74,10 +75,10 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
 			if (iter > 0) outputFilenameBase += "_iter-" + iter;
 			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
-			if (!allEvals.isEmpty())
-				FontTrainEM.printEvaluation(allEvals, outputFilenameBase + ".txt");
-			if (!allLmEvals.isEmpty())
-				FontTrainEM.printEvaluation(allLmEvals, outputFilenameBase + "_lmeval.txt");
+			if (!allDiplomaticEvals.isEmpty())
+				EvalPrinter.printEvaluation(allDiplomaticEvals, outputFilenameBase + ".txt");
+			if (!allNormalizedEvals.isEmpty())
+				EvalPrinter.printEvaluation(allNormalizedEvals, outputFilenameBase + "_lmeval.txt");
 		}
 	}
 

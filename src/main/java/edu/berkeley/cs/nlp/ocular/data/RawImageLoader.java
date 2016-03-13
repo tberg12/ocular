@@ -45,11 +45,15 @@ public class RawImageLoader {
 			return observations;
 		}
 
-		public String[][] loadLineText() {
+		public String[][] loadDiplomaticTextLines() {
 			return null;
 		}
 		
-		public List<String> loadLmText() {
+		public String[][] loadNormalizedTextLines() {
+			return null;
+		}
+		
+		public List<String> loadNormalizedText() {
 			return null;
 		}
 		

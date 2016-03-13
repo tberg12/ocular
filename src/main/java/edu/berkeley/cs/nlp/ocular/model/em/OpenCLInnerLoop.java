@@ -1,4 +1,4 @@
-package edu.berkeley.cs.nlp.ocular.model;
+package edu.berkeley.cs.nlp.ocular.model.em;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -17,6 +17,7 @@ import com.nativelibs4java.opencl.JavaCL;
 import com.nativelibs4java.opencl.CLMem.Usage;
 import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 
+import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import gpu.CudaUtil;
 
 /**
