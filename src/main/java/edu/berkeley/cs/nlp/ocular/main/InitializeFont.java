@@ -144,33 +144,37 @@ public class InitializeFont implements Runnable {
 //	}
 	
 	public static Font readFont(String fontPath) {
-		Font font = null;
+		ObjectInputStream in = null;
 		try {
 			File file = new File(fontPath);
 			if (!file.exists()) {
 				System.out.println("Serialized font file " + fontPath + " not found");
 				return null;
 			}
-			FileInputStream fileIn = new FileInputStream(file);
-			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
-			font = (Font) in.readObject();
-			in.close();
-			fileIn.close();
-		} catch(Exception e) {
+			in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
+
+			{ // TODO: For legacy font models...
+				Object obj = in.readObject();
+				if (obj instanceof Map<?, ?>) 
+					return new Font((Map<String, CharacterTemplate>)obj);
+			}
+			
+			return (Font) in.readObject();
+		} catch (Exception e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (in != null)
+				try { in.close(); } catch (IOException e) { throw new RuntimeException(e); }
 		}
-		return font;
 	}
 
 	public static void writeFont(Font font, String fontPath) {
 		try {
 			new File(fontPath).getParentFile().mkdirs();
-			FileOutputStream fileOut = new FileOutputStream(fontPath);
-			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(fileOut));
+			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(fontPath)));
 			out.writeObject(font);
 			out.close();
-			fileOut.close();
-		} catch(IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

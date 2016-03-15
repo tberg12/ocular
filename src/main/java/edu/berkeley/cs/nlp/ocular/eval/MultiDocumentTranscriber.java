@@ -7,16 +7,16 @@ import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public interface MultiDocumentEvaluator {
+public interface MultiDocumentTranscriber {
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId,
-			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font);
+			Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm);
 	
 	/**
 	 * No-op evaluator implementation
 	 */
-	public static class NoOpMultiDocumentEvaluator implements MultiDocumentEvaluator {
+	public static class NoOpMultiDocumentTranscriber implements MultiDocumentTranscriber {
 		public void printTranscriptionWithEvaluation(int iter, int batchId,
-				CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font) {}
+				Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {}
 	}
 }

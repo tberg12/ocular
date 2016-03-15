@@ -1,5 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
+import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -24,29 +26,29 @@ import indexer.Indexer;
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
+public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
 	private List<Document> documents;
 	private String inputDocPath;
 	private String outputPath;
 	private DecoderEM decoderEM;
-	private SingleDocumentEvaluator docEvaluator;
+	private SingleDocumentEvaluatorAndOutputPrinter docOutputPrinterAndEvaluator;
 	private Indexer<String> charIndexer;
 	
-	public BasicMultiDocumentEvaluator(
+	public BasicMultiDocumentTranscriber(
 			List<Document> documents, String inputDocPath, String outputPath,
 			DecoderEM decoderEM,
-			SingleDocumentEvaluator docEvaluator,
+			SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator,
 			Indexer<String> charIndexer) {
 		this.documents = documents;
 		this.inputDocPath = inputDocPath;
 		this.outputPath = outputPath;
 		this.decoderEM = decoderEM;
-		this.docEvaluator = docEvaluator;
+		this.docOutputPrinterAndEvaluator = documentOutputPrinterAndEvaluator;
 		this.charIndexer = charIndexer;
 	}
 
 	public void printTranscriptionWithEvaluation(int iter, int batchId, 
-			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font) {
+			Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {
 		
 		int numDocs = documents.size();
 		CharacterTemplate[] templates = FontTrainer.loadTemplates(font, charIndexer);
@@ -64,9 +66,11 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			docEvaluator.printTranscriptionWithEvaluation(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, allDiplomaticEvals, allNormalizedEvals);
+			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = docOutputPrinterAndEvaluator.evaluateAndPrintTranscription(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath);
+			if (evals._1 != null) allDiplomaticEvals.add(Tuple2(doc.baseName(), evals._1));
+			if (evals._2 != null) allNormalizedEvals.add(Tuple2(doc.baseName(), evals._2));
 		}
-		double avgLogProb = ((double)totalJointLogProb) / numDocs;
+		double avgLogProb = totalJointLogProb / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);
 		if (new File(inputDocPath).isDirectory()) {
 			Document doc = documents.get(0);
@@ -76,9 +80,9 @@ public class BasicMultiDocumentEvaluator implements MultiDocumentEvaluator {
 			if (iter > 0) outputFilenameBase += "_iter-" + iter;
 			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
 			if (!allDiplomaticEvals.isEmpty())
-				EvalPrinter.printEvaluation(allDiplomaticEvals, outputFilenameBase + ".txt");
+				EvalPrinter.printEvaluation(allDiplomaticEvals, outputFilenameBase + "_diplomatic.txt");
 			if (!allNormalizedEvals.isEmpty())
-				EvalPrinter.printEvaluation(allNormalizedEvals, outputFilenameBase + "_lmeval.txt");
+				EvalPrinter.printEvaluation(allNormalizedEvals, outputFilenameBase + "_normalized.txt");
 		}
 	}
 

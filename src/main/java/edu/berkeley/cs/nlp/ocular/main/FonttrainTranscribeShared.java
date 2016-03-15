@@ -1,0 +1,298 @@
+package edu.berkeley.cs.nlp.ocular.main;
+
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeList;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import edu.berkeley.cs.nlp.ocular.data.Document;
+import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
+import edu.berkeley.cs.nlp.ocular.eval.BasicMultiDocumentTranscriber;
+import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
+import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
+import edu.berkeley.cs.nlp.ocular.font.Font;
+import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
+import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
+import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.DefaultInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.EmissionCacheInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.OpenCLInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel.CachingEmissionModelFactory;
+import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
+import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel.EmissionModelFactory;
+import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
+import edu.berkeley.cs.nlp.ocular.train.TrainingRestarter;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
+import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
+import fig.Option;
+import indexer.Indexer;
+
+public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
+
+	@Option(gloss = "Path of the directory that will contain output transcriptions.")
+	public static String outputPath = null; // Required.
+
+	@Option(gloss = "Path to the input language model file.")
+	public static String inputLmPath = null; // Required.
+
+	@Option(gloss = "Path of the input font file.")
+	public static String inputFontPath = null; // Required.
+	
+	// ##### Font Learning Options
+
+	@Option(gloss = "Path to write the learned font file to. Required if trainFont is set to true, otherwise ignored.")
+	public static String outputFontPath = null;
+
+	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default: Update only after each full pass over the document set.")
+	public static int updateDocBatchSize = Integer.MAX_VALUE;
+
+	// ##### Language Model Re-training Options
+	
+	@Option(gloss = "Should the language model be updated during font training?")
+	public static boolean retrainLM = false;
+	
+	@Option(gloss = "Path to write the retrained language model file to. Required if retrainLM is set to true, otherwise ignored.")
+	public static String outputLmPath = null;
+
+	// ##### Glyph Substitution Model Options
+	
+	@Option(gloss = "Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions.")
+	public static boolean allowGlyphSubstitution = false;
+	
+	// The following options are only relevant if allowGlyphSubstitution is set to "true".
+	
+	@Option(gloss = "Path to the input glyph substitution model file. (Only relevant if allowGlyphSubstitution is set to true.) Default: Don't use a pre-initialized GSM. (Learn one from scratch).")
+	public static String inputGsmPath = null;
+
+	@Option(gloss = "Exponent on GSM scores.")
+	public static double gsmPower = 4.0;
+
+	@Option(gloss = "The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions.")
+	public static double gsmNoCharSubPrior = 0.9;
+
+	@Option(gloss = "Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?")
+	public static boolean gsmElideAnything = false;
+	
+	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.)")
+	public static boolean trainGsm = false;
+	
+	@Option(gloss = "Path to write the retrained glyph substitution model file to. Required if trainGsm is set to true, otherwise ignored.")
+	public static String outputGsmPath = null;
+	
+	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.")
+	public static double gsmSmoothingCount = 1.0;
+	
+	@Option(gloss = "gsmElisionSmoothingCountMultiplier.")
+	public static double gsmElisionSmoothingCountMultiplier = 100.0;
+
+	// ##### Miscellaneous Options
+	
+	@Option(gloss = "Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
+	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT; // Default: DEFAULT
+
+	@Option(gloss = "Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)")
+	public static int beamSize = 10;
+
+	@Option(gloss = "GPU ID when using CUDA emission engine.")
+	public static int cudaDeviceID = 0;
+
+	@Option(gloss = "Number of threads to use for LFBGS during m-step.")
+	public static int numMstepThreads = 8;
+
+	@Option(gloss = "Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.)")
+	public static int numEmissionCacheThreads = 8;
+
+	@Option(gloss = "Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)")
+	public static int numDecodeThreads = 8;
+
+	@Option(gloss = "Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)")
+	public static int decodeBatchSize = 32;
+
+	@Option(gloss = "Min horizontal padding between characters in pixels. (Best left at default value.)")
+	public static int paddingMinWidth = 1;
+
+	@Option(gloss = "Max horizontal padding between characters in pixels (Best left at default value.)")
+	public static int paddingMaxWidth = 5;
+
+	@Option(gloss = "Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)")
+	public static boolean markovVerticalOffset = false;
+
+	@Option(gloss = "A language model to be used to assign diacritics to the transcription output.")
+	public static boolean allowLanguageSwitchOnPunct = true;
+	
+	// ##### Options used if evaluation should be performed during training
+	
+	@Option(gloss = "When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`). (Only relevant if trainFont is set to true.)")
+	public static String evalInputDocPath = null; // Do not evaluate during font training.
+
+	// The following options are only relevant if a value was given to -evalInputDocPath.
+	
+	@Option(gloss = "When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
+	public static String evalExtractedLinesPath = null; // Don't read or write line image files. 
+
+	@Option(gloss = "When using -evalInputDocPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. Default: Use all documents in the specified path.")
+	public static int evalNumDocs = Integer.MAX_VALUE;
+
+	@Option(gloss = "When using -evalInputDocPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
+	public static int evalFreq = Integer.MAX_VALUE; 
+	
+	@Option(gloss = "When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch, as determined by -updateDocBatchSize (in addition to after each iteration)?")
+	public static boolean evalBatches = false;
+	
+	
+	public static enum EmissionCacheInnerLoopType { DEFAULT, OPENCL, CUDA };
+
+	//
+	
+	protected static void validateOptions() {
+		LineExtractionOptions.validateOptions();
+
+		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
+		
+		if (inputFontPath == null) throw new IllegalArgumentException("-inputFontPath is required");
+		if (!new File(inputFontPath).exists()) throw new RuntimeException("inputFontPath " + inputFontPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+
+		if (inputLmPath == null) throw new IllegalArgumentException("-inputLmPath is required");
+		if (inputLmPath != null && !new File(inputLmPath).exists()) throw new RuntimeException("inputLmPath " + inputLmPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (retrainLM && outputLmPath == null) throw new IllegalArgumentException("-outputLmPath required when -retrainLM is true.");
+		if (!retrainLM && outputLmPath != null) throw new IllegalArgumentException("-outputLmPath not permitted when -retrainLM is false.");
+		if (outputLmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the LM (-retrainLM=true) when not retraining the font (-trainFont=false).");
+
+		if (trainGsm && !allowGlyphSubstitution) throw new IllegalArgumentException("-trainGsm not permitted if -allowGlyphSubstitution is false.");
+		if (inputGsmPath != null && !new File(inputGsmPath).exists()) throw new RuntimeException("inputGsmPath " + inputGsmPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
+		if (inputGsmPath != null && !allowGlyphSubstitution) throw new IllegalArgumentException("-inputGsmPath not permitted if -allowGlyphSubstitution is false.");
+		if (outputGsmPath != null && !allowGlyphSubstitution) throw new IllegalArgumentException("-outputGsmPath not permitted if -allowGlyphSubstitution is false.");
+		if (trainGsm && outputGsmPath == null) throw new IllegalArgumentException("-outputGsmPath required when -trainGsm is true.");
+		if (!trainGsm && outputGsmPath != null) throw new IllegalArgumentException("-outputGsmPath not permitted when -trainGsm is false.");
+		if (allowGlyphSubstitution && inputGsmPath == null && outputGsmPath == null) throw new IllegalArgumentException("If -allowGlyphSubstitution=true, either an -inputGsmPath must be given, or a GSM must be trained by giving an -outputGsmPath.");
+		if (outputGsmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the GSM (-trainGsm=true) when not retraining the font (-trainFont=false).");
+
+		if (evalExtractedLinesPath != null && evalInputDocPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputDocPath.");
+
+		// Make the output directory if it doesn't exist yet
+		File outputPathFile = new File(outputPath);
+		if (!outputPathFile.exists()) outputPathFile.mkdirs();
+		
+		//
+		
+		if (!(retrainLM == (outputLmPath != null))) throw new IllegalArgumentException("-retrainLM is not as expected");
+		if (!(trainGsm == (outputGsmPath != null))) throw new IllegalArgumentException("-trainGsm is not as expected");
+		if (!(allowGlyphSubstitution == (inputGsmPath != null || outputGsmPath != null))) throw new IllegalArgumentException("-allowGlyphSubstitution is not as expected");
+	}
+	
+
+	protected static CodeSwitchLanguageModel loadInputLM() {
+		System.out.println("Loading initial LM from " + inputLmPath);
+		CodeSwitchLanguageModel codeSwitchLM = InitializeLanguageModel.readLM(inputLmPath);
+
+		//print some useful info
+		{
+			System.out.println("Loaded CodeSwitchLanguageModel from " + inputLmPath);
+			Indexer<String> charIndexer = codeSwitchLM.getCharacterIndexer();
+			for (int i = 0; i < codeSwitchLM.getLanguageIndexer().size(); ++i) {
+				List<String> chars = new ArrayList<String>();
+				for (int j : codeSwitchLM.get(i).getActiveCharacters())
+					chars.add(charIndexer.getObject(j));
+				Collections.sort(chars);
+				System.out.println("    " + codeSwitchLM.getLanguageIndexer().getObject(i) + ": " + chars);
+			}
+			List<String> allCharacters = makeList(charIndexer.getObjects());
+			Collections.sort(allCharacters);
+			System.out.println("Characters: " + allCharacters);
+			System.out.println("Num characters: " + charIndexer.size());
+		}
+
+		return codeSwitchLM;
+	}
+
+	protected static Font loadInputFont() {
+		System.out.println("Loading font from " + inputFontPath);
+		return InitializeFont.readFont(inputFontPath);
+	}
+	
+	protected static BasicGlyphSubstitutionModelFactory makeGsmFactory(CodeSwitchLanguageModel lm) {
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		Indexer<String> langIndexer = lm.getLanguageIndexer();
+		int numLanguages = langIndexer.size();
+		@SuppressWarnings("unchecked")
+		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
+		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = lm.get(l).getActiveCharacters();
+		return new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, gsmPower, 0, outputPath);
+	}
+
+	protected static GlyphSubstitutionModel loadInitialGSM(BasicGlyphSubstitutionModelFactory gsmFactory) {
+		if (!allowGlyphSubstitution) {
+			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");
+			return new NoSubGlyphSubstitutionModel();
+		}
+		else if (inputGsmPath != null) { // file path given
+			System.out.println("Loading initial GSM from " + inputGsmPath);
+			return GlyphSubstitutionModelReadWrite.readGSM(inputGsmPath);
+		}
+		else {
+			System.out.println("No initial GSM provided; initializing to uniform model.");
+			return gsmFactory.uniform();
+		}
+	}
+	
+	protected static DecoderEM makeDecoder(Indexer<String> charIndexer) {
+		EmissionModelFactory emissionModelFactory = makeEmissionModelFactory(charIndexer);
+		return new DecoderEM(emissionModelFactory, allowGlyphSubstitution, gsmNoCharSubPrior, gsmElideAnything, allowLanguageSwitchOnPunct, markovVerticalOffset, beamSize, numDecodeThreads, numMstepThreads, decodeBatchSize);
+	}
+
+	protected static EmissionModelFactory makeEmissionModelFactory(Indexer<String> charIndexer) {
+		EmissionCacheInnerLoop emissionInnerLoop = getEmissionInnerLoop();
+		return (markovVerticalOffset ? 
+			new CachingEmissionModelExplicitOffsetFactory(charIndexer, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : 
+			new CachingEmissionModelFactory(charIndexer, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+	}
+
+	protected static EmissionCacheInnerLoop getEmissionInnerLoop() {
+		switch (emissionEngine) {
+			case DEFAULT: return new DefaultInnerLoop(numEmissionCacheThreads);
+			case OPENCL: return new OpenCLInnerLoop(numEmissionCacheThreads);
+			case CUDA: return new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
+		}
+		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
+	}
+
+	protected static MultiDocumentTranscriber makeEvalSetEvaluator(Indexer<String> charIndexer, DecoderEM decoderEM, SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator) {
+		if (evalInputDocPath != null) {
+			List<Document> evalDocuments = LazyRawImageLoader.loadDocuments(evalInputDocPath, evalExtractedLinesPath, evalNumDocs, 0, uniformLineHeight, binarizeThreshold, crop);
+			if (evalDocuments.isEmpty()) throw new RuntimeException("No eval documents given!");
+			for (Document doc : evalDocuments) {
+				if (doc.loadDiplomaticTextLines() == null & doc.loadNormalizedText() == null) 
+					throw new RuntimeException("Evaluation document "+doc.baseName()+" has no gold transcriptions.");
+			}
+			return new BasicMultiDocumentTranscriber(evalDocuments, evalInputDocPath, outputPath, decoderEM, documentOutputPrinterAndEvaluator, charIndexer);
+		}
+		else {
+			return new MultiDocumentTranscriber.NoOpMultiDocumentTranscriber();
+		}
+	}
+
+	protected void train(List<Document> inputDocuments, 
+			Font initialFont, CodeSwitchLanguageModel initialLM, GlyphSubstitutionModel initialGSM, BasicGlyphSubstitutionModelFactory gsmFactory, 
+			DecoderEM decoderEM,
+			SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator, MultiDocumentTranscriber evalSetIterationEvaluator,
+			String newInputDocPath, TrainingRestarter trainingRestarter, int numEMIters,
+			boolean noUpdateIfBatchTooSmall, boolean writeIntermediateModelsToTemp) {
+				new FontTrainer().trainFont(
+					inputDocuments,  
+					initialFont, initialLM, initialGSM,
+					trainingRestarter,
+					outputFontPath, outputLmPath, outputGsmPath,
+					decoderEM,
+					gsmFactory, documentOutputPrinterAndEvaluator,
+					numEMIters, updateDocBatchSize, noUpdateIfBatchTooSmall, writeIntermediateModelsToTemp,
+					numMstepThreads,
+					newInputDocPath, outputPath,
+					evalSetIterationEvaluator, evalFreq, evalBatches);
+	}
+
+}

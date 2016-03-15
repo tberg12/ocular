@@ -29,7 +29,25 @@ public class ArrayHelper {
 		else return sum(xs) / xs.length;
 	}
 
-	public static int min(int[] xs) {
+	public static int max(int... xs) {
+		if (xs.length == 0) throw new RuntimeException("ArrayHelper.max cannot be used on an empty array.");
+		int v = Integer.MIN_VALUE;
+		for (int x : xs) {
+			if (x > v) v = x;
+		}
+		return v;
+	}
+	
+	public static double max(double... xs) {
+		if (xs.length == 0) throw new RuntimeException("ArrayHelper.max cannot be used on an empty array.");
+		double v = Double.MIN_VALUE;
+		for (double x : xs) {
+			if (x > v) v = x;
+		}
+		return v;
+	}
+	
+	public static int min(int... xs) {
 		if (xs.length == 0) throw new RuntimeException("ArrayHelper.min cannot be used on an empty array.");
 		int v = Integer.MAX_VALUE;
 		for (int x : xs)
@@ -37,7 +55,7 @@ public class ArrayHelper {
 		return v;
 	}
 
-	public static double min(double[] xs) {
+	public static double min(double... xs) {
 		if (xs.length == 0) throw new RuntimeException("ArrayHelper.min cannot be used on an empty array.");
 		double v = Double.MAX_VALUE;
 		for (double x : xs)

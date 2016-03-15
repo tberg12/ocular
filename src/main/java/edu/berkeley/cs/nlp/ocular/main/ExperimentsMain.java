@@ -129,6 +129,7 @@ public class ExperimentsMain implements Runnable {
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 		
 		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
+		if (documents.isEmpty()) throw new RuntimeException("No documents given!");
 
 		for (Document doc : documents) {
 			System.out.println("Loading LM..");

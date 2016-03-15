@@ -15,21 +15,20 @@ import java.util.zip.GZIPOutputStream;
 public class GlyphSubstitutionModelReadWrite {
 
 	public static GlyphSubstitutionModel readGSM(String gsmPath) {
-		GlyphSubstitutionModel gsm = null;
+		ObjectInputStream in = null;
 		try {
 			File file = new File(gsmPath);
 			if (!file.exists()) {
 				throw new RuntimeException("Serialized GlyphSubstitutionModel file " + gsmPath + " not found");
 			}
-			FileInputStream fileIn = new FileInputStream(file);
-			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
-			gsm = (GlyphSubstitutionModel) in.readObject();
-			in.close();
-			fileIn.close();
+			in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
+			return (GlyphSubstitutionModel) in.readObject();
 		} catch(Exception e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (in != null)
+				try { in.close(); } catch (IOException e) { throw new RuntimeException(e); }
 		}
-		return gsm;
 	}
 
 	public static void writeGSM(GlyphSubstitutionModel gsm, String gsmPath) {

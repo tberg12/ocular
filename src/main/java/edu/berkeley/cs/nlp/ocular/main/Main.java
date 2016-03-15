@@ -130,6 +130,7 @@ public class Main implements Runnable {
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 
 		List<Document> documents = RawImageLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT, binarizeThreshold, numMstepThreads);
+		if (documents.isEmpty()) throw new RuntimeException("No documents given!");
 		for (Document doc : documents) {
 			final PixelType[][][] pixels = doc.loadLineImages();
 			System.out.println("Printing line extraction for document: "+doc.baseName());

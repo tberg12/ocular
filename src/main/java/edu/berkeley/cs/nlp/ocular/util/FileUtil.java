@@ -4,10 +4,12 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static java.util.Arrays.asList;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
@@ -54,6 +56,18 @@ public class FileUtil {
 		return files;
 	}
 	
+	public static class PatternFilenameFilter implements FilenameFilter {
+		private Pattern pattern;
+
+		public PatternFilenameFilter(Pattern p) {
+			this.pattern = p;
+		}
+
+		public boolean accept(File file, String string) {
+			return this.pattern.matcher(string).matches();
+		}
+	}
+
 	public static String extension(String name) {
 		int dotIdx = name.lastIndexOf(".");
 		return dotIdx >= 0 ? name.substring(dotIdx + 1) : null;

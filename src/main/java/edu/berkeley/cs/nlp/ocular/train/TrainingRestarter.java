@@ -25,58 +25,59 @@ public class TrainingRestarter {
 	/**
 	 * If requested, try and pick up where we left off
 	 */
-	public Tuple2<Tuple2<Integer,Integer>, Tuple3<Font, CodeSwitchLanguageModel, GlyphSubstitutionModel>> getRestartModels(
-			String outputPath, int numUsableDocs, int minDocBatchSize, int updateDocBatchSize,
-			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, Font font, boolean retrainLM, boolean trainGsm, boolean evalGsmExists,
-			int numEMIters) {
+	public Tuple2<Integer, Tuple3<Font, CodeSwitchLanguageModel, GlyphSubstitutionModel>> getRestartModels(
+			Font inputFont, CodeSwitchLanguageModel inputLm, GlyphSubstitutionModel inputGsm, 
+			boolean updateFont, boolean updateLM, boolean updateGsm, String outputPath,
+			int numEMIters, int numUsableDocs, int minDocBatchSize, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall) {
 
-		Font newFont = font;
-		CodeSwitchLanguageModel newLm = lm;
-		GlyphSubstitutionModel newGsm = gsm;
-		
 		int lastCompletedIteration = 0;
-		int lastCompletedBatchOfIteration = 0;
 		String fontPath = null;
-		int lastBatchNumOfIteration = getLastBatchNumOfIteration(numUsableDocs, updateDocBatchSize, minDocBatchSize);
+		int lastBatchNumOfIteration = getLastBatchNumOfIteration(numUsableDocs, updateDocBatchSize, minDocBatchSize, noUpdateIfBatchTooSmall);
 		for (int iter = 1; iter <= numEMIters; ++iter) {
 			fontPath = makeFontPath(outputPath, iter, lastBatchNumOfIteration);
 			if (new File(fontPath).exists()) {
 				lastCompletedIteration = iter;
 			}
 		}
-		if (lastCompletedIteration > 0) {
+		
+		Font newFont = inputFont;
+		CodeSwitchLanguageModel newLm = inputLm;
+		GlyphSubstitutionModel newGsm = inputGsm;
+		
+		if (lastCompletedIteration == numEMIters) {
+			System.out.println("All iterations are already complete!");
+		}
+		else if (lastCompletedIteration > 0) {
 			System.out.println("Last completed iteration: "+lastCompletedIteration);
 			if (fontPath != null) {
 				String lastFontPath = makeFontPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
 				System.out.println("    Loading font of last completed iteration: "+lastFontPath);
 				newFont = InitializeFont.readFont(lastFontPath);
 			}
-			if (retrainLM) {
+			if (updateLM) {
 				String lastLmPath = makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
-				System.out.println("    Loading gsm of last completed iteration:  "+lastLmPath);
+				System.out.println("    Loading lm of last completed iteration:  "+lastLmPath);
 				newLm = InitializeLanguageModel.readLM(lastLmPath);
 			}
-			if (trainGsm) {
-				String lastGsmPath = makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration, "");
-				System.out.println("    Loading lm of last completed iteration:   "+lastGsmPath);
-				if (evalGsmExists) newGsm = GlyphSubstitutionModelReadWrite.readGSM(lastGsmPath);
+			if (updateGsm) {
+				String lastGsmPath = makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
+				System.out.println("    Loading gsm of last completed iteration:   "+lastGsmPath);
+				newGsm = GlyphSubstitutionModelReadWrite.readGSM(lastGsmPath);
 			}
 		}
 		else {
 			System.out.println("No completed iterations found");
 		}
 		
-		if (lastCompletedIteration == numEMIters) {
-			System.out.println("All iterations are already complete!");
-		}
-		
-		return Tuple2(Tuple2(lastCompletedIteration, lastCompletedBatchOfIteration), Tuple3(newFont,newLm,newGsm));
+		return Tuple2(lastCompletedIteration, Tuple3(newFont,newLm,newGsm));
 	}
 
-	private int getLastBatchNumOfIteration(int numUsableDocs, int updateDocBatchSize, int minDocBatchSize) {
+	private int getLastBatchNumOfIteration(int numUsableDocs, int updateDocBatchSize, int minDocBatchSize, boolean noUpdateIfBatchTooSmall) {
 		int completedBatchesInIteration = 0;
+		int currentBatchSize = 0;
 		for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
-			if (FontTrainer.isBatchComplete(numUsableDocs, docNum, updateDocBatchSize, minDocBatchSize)) {
+			++currentBatchSize;
+			if (FontTrainer.isBatchComplete(numUsableDocs, docNum, currentBatchSize, updateDocBatchSize, noUpdateIfBatchTooSmall)) {
 				++completedBatchesInIteration;
 			}
 		}
