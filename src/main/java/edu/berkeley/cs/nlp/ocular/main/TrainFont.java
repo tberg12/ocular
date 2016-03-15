@@ -12,6 +12,7 @@ import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.train.TrainingRestarter;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import fig.Option;
@@ -208,12 +209,17 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 		String newInputDocPath = FileUtil.lowestCommonPath(inputDocPathList);
 
 		MultiDocumentTranscriber evalSetEvaluator = makeEvalSetEvaluator(charIndexer, decoderEM, documentOutputPrinterAndEvaluator);
-		train(inputDocuments,
-				initialFont, initialLM, initialGSM, gsmFactory,
+		new FontTrainer().trainFont(
+				inputDocuments,  
+				initialFont, initialLM, initialGSM,
+				continueFromLastCompleteIteration ? new TrainingRestarter() : null,
+				outputFontPath, outputLmPath, outputGsmPath,
 				decoderEM,
-				documentOutputPrinterAndEvaluator, evalSetEvaluator,
-				newInputDocPath, continueFromLastCompleteIteration ? new TrainingRestarter() : null, numEMIters,
-				false, true);
+				gsmFactory, documentOutputPrinterAndEvaluator,
+				numEMIters, updateDocBatchSize > 0 ? updateDocBatchSize : inputDocuments.size(), false, true,
+				numMstepThreads,
+				newInputDocPath, outputPath,
+				evalSetEvaluator, evalFreq, evalBatches);
 
 		System.out.println("Completed.");
 	}

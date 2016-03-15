@@ -24,8 +24,6 @@ import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel.CachingEmi
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel.EmissionModelFactory;
 import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
-import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
-import edu.berkeley.cs.nlp.ocular.train.TrainingRestarter;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
@@ -274,25 +272,6 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 		else {
 			return new MultiDocumentTranscriber.NoOpMultiDocumentTranscriber();
 		}
-	}
-
-	protected void train(List<Document> inputDocuments, 
-			Font initialFont, CodeSwitchLanguageModel initialLM, GlyphSubstitutionModel initialGSM, BasicGlyphSubstitutionModelFactory gsmFactory, 
-			DecoderEM decoderEM,
-			SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator, MultiDocumentTranscriber evalSetIterationEvaluator,
-			String newInputDocPath, TrainingRestarter trainingRestarter, int numEMIters,
-			boolean noUpdateIfBatchTooSmall, boolean writeIntermediateModelsToTemp) {
-				new FontTrainer().trainFont(
-					inputDocuments,  
-					initialFont, initialLM, initialGSM,
-					trainingRestarter,
-					outputFontPath, outputLmPath, outputGsmPath,
-					decoderEM,
-					gsmFactory, documentOutputPrinterAndEvaluator,
-					numEMIters, updateDocBatchSize > 0 ? updateDocBatchSize : inputDocuments.size(), noUpdateIfBatchTooSmall, writeIntermediateModelsToTemp,
-					numMstepThreads,
-					newInputDocPath, outputPath,
-					evalSetIterationEvaluator, evalFreq, evalBatches);
 	}
 
 }

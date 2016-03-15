@@ -182,7 +182,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   As above, if `-allowGlyphSubstitution` is set to true and the `-inputGsmPath` is given, Ocular will produce simultaneous dual transcriptions: one *diplomatic* (literal) and one normalized to match the LM training data's orthography.
 
-  Many more command-line options, including several that affect speed and accuracy, can be found below.
+  Many more command-line options, including several that affect speed and accuracy, can be found below.  Among these, `-skipAlreadyTranscribedDocs` might be particularly useful.
   
   **Optional: Continued model improvements during transcription**
   
@@ -194,15 +194,15 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
         -inputFontPath font/advertencias/trained.fontser \
         -outputPath transcribe_output \
         -updateFont true \
-        -updateDocBatchSize 20 \
-        -outputFontPath font/advertencias/newTrained.fontser
+        -updateDocBatchSize 50 \
+        -outputFontPath font/advertencias/trained.fontser
       
   The same can be done to update the glyph substitution model by passing in the previously-trained model (`-inputGsmPath`) and setting `-updateGsm` to `true`.
 
         -allowGlyphSubstitution true \
         -inputGsmPath gsm/advertencias/trained.gsmser \
         -updateGsm true \
-        -outputGsmPath gsm/advertencias/newTrained.gsmser
+        -outputGsmPath gsm/advertencias/trained.gsmser
   
   **Optional: Checking accuracy with a gold transcription**
 
