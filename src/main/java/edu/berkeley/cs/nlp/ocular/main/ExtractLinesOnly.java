@@ -31,6 +31,8 @@ public class ExtractLinesOnly extends FonttrainTranscribeShared implements Runna
 	
 	protected static void validateOptions() {
 		FonttrainTranscribeShared.validateOptions();
+		
+		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath is required.");
 	}
 
 }

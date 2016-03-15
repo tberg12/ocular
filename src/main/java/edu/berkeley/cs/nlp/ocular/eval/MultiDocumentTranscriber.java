@@ -9,14 +9,14 @@ import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
  */
 public interface MultiDocumentTranscriber {
 
-	public void printTranscriptionWithEvaluation(int iter, int batchId,
-			Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm);
+	public void transcribe(Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm);
+	public void transcribe(int iter, int batchId, Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm);
 	
 	/**
 	 * No-op evaluator implementation
 	 */
 	public static class NoOpMultiDocumentTranscriber implements MultiDocumentTranscriber {
-		public void printTranscriptionWithEvaluation(int iter, int batchId,
-				Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {}
+		public void transcribe(Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {}
+		public void transcribe(int iter, int batchId, Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {}
 	}
 }

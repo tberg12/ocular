@@ -94,6 +94,7 @@ public class InitializeFont implements Runnable {
 		for (CharacterTemplate template : templates) {
 			charTemplates.put(template.getCharacter(), template);
 		}
+		System.out.println("Writing intialized font to" + outputFontPath);
 		InitializeFont.writeFont(new Font(charTemplates), outputFontPath);
 	}
 
@@ -152,14 +153,14 @@ public class InitializeFont implements Runnable {
 				return null;
 			}
 			in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
+			Object obj = in.readObject();
 
 			{ // TODO: For legacy font models...
-				Object obj = in.readObject();
 				if (obj instanceof Map<?, ?>) 
 					return new Font((Map<String, CharacterTemplate>)obj);
 			}
 			
-			return (Font) in.readObject();
+			return (Font) obj;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {

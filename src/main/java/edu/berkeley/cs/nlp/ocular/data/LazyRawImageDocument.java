@@ -193,22 +193,25 @@ public abstract class LazyRawImageDocument implements Document {
 
 	public List<String> loadNormalizedText() {
 		if (!normalizedTextLoaded) {
-			normalizedText = new ArrayList<String>();
-			for (String[] lineChars : loadNormalizedTextLines()) {
-				for (String c : lineChars) {
-					if (SPACE.equals(c) && (normalizedText.isEmpty() || SPACE.equals(last(normalizedText)))) {
-						// do nothing -- collapse spaces
+			String[][] normalizedTextLines = loadNormalizedTextLines();
+			if (normalizedTextLines != null) {
+				normalizedText = new ArrayList<String>();
+				for (String[] lineChars : loadNormalizedTextLines()) {
+					for (String c : lineChars) {
+						if (SPACE.equals(c) && (normalizedText.isEmpty() || SPACE.equals(last(normalizedText)))) {
+							// do nothing -- collapse spaces
+						}
+						else {
+							normalizedText.add(c);
+						}
 					}
-					else {
-						normalizedText.add(c);
+					if (!normalizedText.isEmpty() && !SPACE.equals(last(normalizedText))) {
+						normalizedText.add(SPACE);
 					}
 				}
-				if (!normalizedText.isEmpty() && !SPACE.equals(last(normalizedText))) {
-					normalizedText.add(SPACE);
+				if (SPACE.equals(last(normalizedText))) {
+					normalizedText.remove(normalizedText.size()-1);
 				}
-			}
-			if (SPACE.equals(last(normalizedText))) {
-				normalizedText.remove(normalizedText.size()-1);
 			}
 		}
 		normalizedTextLoaded = true;

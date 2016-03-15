@@ -59,6 +59,8 @@ public class FontTrainer {
 				String inputDocPath, String outputPath,
 				MultiDocumentTranscriber evalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
 		
+		System.out.println("trainFont(numEMIters="+numEMIters+", updateDocBatchSize="+updateDocBatchSize+", noUpdateIfBatchTooSmall="+noUpdateIfBatchTooSmall+", writeIntermediateModelsToTemp="+writeIntermediateModelsToTemp+")");
+		
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
 		Indexer<String> langIndexer = lm.getLanguageIndexer();
 		int numUsableDocs = inputDocuments.size();
@@ -77,16 +79,16 @@ public class FontTrainer {
 			gsm = restartObjects._2._3;
 		}
 		
-		// Containers for counts that will be accumulated
-		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
-		int[] languageCounts = new int[numLanguages]; // The number of characters assigned to a particular language (to re-estimate language probabilities).
-		double[][][] gsmCounts;
-		
 		//long overallEmissionCacheNanoTime = 0;
 		
 		for (int iter = lastCompletedIteration+1; (/* trainFont && */ iter <= numEMIters) || (/* !trainFont && */ iter == 1); ++iter) {
 			System.out.println("Training iteration: " + iter + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			
+			// Containers for counts that will be accumulated
+			final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
+			int[] languageCounts = new int[numLanguages]; // The number of characters assigned to a particular language (to re-estimate language probabilities).
+			double[][][] gsmCounts;
+
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allDiplomaticTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 			List<Tuple2<String, Map<String, EvalSuffStats>>> allNormalizedTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
 
@@ -130,15 +132,21 @@ public class FontTrainer {
 					
 					if (outputFontPath != null) {
 						updateFontParameters(templates, numMstepThreads);
-						InitializeFont.writeFont(font, writeIntermediateModelsToTemp ? makeFontPath(outputPath, iter, completedBatchesInIteration) : outputFontPath);
+						String writePath = writeIntermediateModelsToTemp ? makeFontPath(outputPath, iter, completedBatchesInIteration) : outputFontPath;
+						System.out.println("Writing updated font to " + writePath);
+						InitializeFont.writeFont(font, writePath);
 					}
 					if (outputLmPath != null) {
 						lm = reestimateLM(languageCounts, lm);
-						InitializeLanguageModel.writeLM(lm, writeIntermediateModelsToTemp ? makeLmPath(outputPath, iter, completedBatchesInIteration) : outputLmPath);
+						String writePath = writeIntermediateModelsToTemp ? makeLmPath(outputPath, iter, completedBatchesInIteration) : outputLmPath;
+						System.out.println("Writing updated lm to " + writePath);
+						InitializeLanguageModel.writeLM(lm, writePath);
 					}
 					if (outputGsmPath != null) {
 						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
-						GlyphSubstitutionModelReadWrite.writeGSM(gsm, writeIntermediateModelsToTemp ? makeGsmPath(outputPath, iter, completedBatchesInIteration) : outputGsmPath);
+						String writePath = writeIntermediateModelsToTemp ? makeGsmPath(outputPath, iter, completedBatchesInIteration) : outputGsmPath;
+						System.out.println("Writing updated gsm to " + writePath);
+						GlyphSubstitutionModelReadWrite.writeGSM(gsm, writePath);
 					}
 
 					// Clear counts at the end of a batch
@@ -152,7 +160,7 @@ public class FontTrainer {
 					if (evalBatches) {
 						if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 							if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
-								evalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, completedBatchesInIteration, font, lm, gsm);
+								evalSetIterationEvaluator.transcribe(iter, completedBatchesInIteration, font, lm, gsm);
 							}
 						}
 					}
@@ -174,7 +182,7 @@ public class FontTrainer {
 			// evaluate on dev data, if requested
 			if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
 				System.out.println("Evaluating dev data at the end of iteration "+iter+"    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-				evalSetIterationEvaluator.printTranscriptionWithEvaluation(iter, 0, font, lm, gsm);
+				evalSetIterationEvaluator.transcribe(iter, 0, font, lm, gsm);
 			}
 		} // end: for iteration
 		
@@ -184,9 +192,19 @@ public class FontTrainer {
 		//
 		// Write final models
 		//
-		if (outputFontPath != null) InitializeFont.writeFont(font, outputFontPath);
-		if (outputLmPath != null) InitializeLanguageModel.writeLM(lm, outputLmPath);
-		if (outputGsmPath != null) GlyphSubstitutionModelReadWrite.writeGSM(gsm, outputGsmPath);
+		System.out.println("Training completed; saving models.");
+		if (outputFontPath != null) {
+			System.out.println("Writing trained font to " + outputFontPath);
+			InitializeFont.writeFont(font, outputFontPath);
+		}
+		if (outputLmPath != null) {
+			System.out.println("Writing trained lm to " + outputLmPath);
+			InitializeLanguageModel.writeLM(lm, outputLmPath);
+		}
+		if (outputGsmPath != null) {
+			System.out.println("Writing trained gsm to " + outputGsmPath);
+			GlyphSubstitutionModelReadWrite.writeGSM(gsm, outputGsmPath);
+		}
 
 		return Tuple3(font, lm, gsm);
 	}

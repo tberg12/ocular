@@ -24,6 +24,8 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
 
 /**
+ * Transcribe all document, write their results to files, and evaluate the results.
+ * 
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
@@ -47,9 +49,11 @@ public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
 		this.charIndexer = charIndexer;
 	}
 
-	public void printTranscriptionWithEvaluation(int iter, int batchId, 
-			Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {
-		
+	public void transcribe(Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {
+		transcribe(0, 0, font, lm, gsm);
+	}
+	
+	public void transcribe(int iter, int batchId, Font font, CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm) {
 		int numDocs = documents.size();
 		CharacterTemplate[] templates = FontTrainer.loadTemplates(font, charIndexer);
 		DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);

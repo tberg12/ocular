@@ -163,9 +163,9 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
         -numDocs 10 \
         -outputFontPath font/advertencias/trained.fontser \
         -outputPath train_output \
-        -allowGlyphSubstitution true \ 
+        -allowGlyphSubstitution true \
         -updateGsm true \
-        -outputGsmPath font/advertencias/trained.gsmser
+        -outputGsmPath gsm/advertencias/trained.gsmser
 
   If `-allowGlyphSubstitution` is set to true, Ocular will produce simultaneous dual transcriptions: one *diplomatic* (literal) and one normalized to match the LM training data's orthography.
 
@@ -199,10 +199,10 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
       
   The same can be done to update the glyph substitution model by passing in the previously-trained model (`-inputGsmPath`) and setting `-updateGsm` to `true`.
 
-        -allowGlyphSubstitution true \ 
-        -inputGsmPath font/advertencias/trained.gsmser 
+        -allowGlyphSubstitution true \
+        -inputGsmPath gsm/advertencias/trained.gsmser \
         -updateGsm true \
-        -outputGsmPath font/advertencias/newTrained.gsmser
+        -outputGsmPath gsm/advertencias/newTrained.gsmser
   
   **Optional: Checking accuracy with a gold transcription**
 
@@ -224,7 +224,6 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 
 ## 2. All Command-Line Options
-
 
 ### InitializeLanguageModel
 
@@ -530,6 +529,10 @@ Default: 0
 Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
 Default: Don't read or write line image files.
 
+* `-skipAlreadyTranscribedDocs`:
+If true, for each doc the outputPath will be checked for an existing transcription and if one is found then the document will be skipped.
+Default: false
+
 ##### Font Learning Options
 
 * `-updateFont`:
@@ -545,10 +548,6 @@ Required if updateFont is set to true, otherwise ignored.
 * `-updateDocBatchSize`:
 Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with updateFont=true.
 Default: Update only after each full pass over the document set.
-
-* `-skipAlreadyTranscribedDocs`:
-If true, for each doc the outputPath will be checked for an existing transcription and if one is found then the document will be skipped.
-Default: false
 
 ##### Language Model Re-training Options
 

@@ -46,8 +46,6 @@ public abstract class LineExtractionOptions {
 				if (!new File(path).exists()) throw new IllegalArgumentException("inputDocPath "+path+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (inputDocListPath != null && !new File(inputDocListPath).exists()) throw new IllegalArgumentException("-inputDocListPath "+inputDocListPath+" does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (numDocsToSkip < 0) throw new IllegalArgumentException("-numDocsToSkip must be >= 0.  Was "+numDocsToSkip+".");
-		
-		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath is required.");
 	}
 	
 	protected static List<String> getInputDocPathList() {

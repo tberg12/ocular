@@ -45,16 +45,16 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	
 	// ##### Font Learning Options
 
-	@Option(gloss = "Path to write the learned font file to. Required if trainFont is set to true, otherwise ignored.")
+	@Option(gloss = "Path to write the learned font file to. Required if updateFont is set to true, otherwise ignored.")
 	public static String outputFontPath = null;
 
-	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default: Update only after each full pass over the document set.")
-	public static int updateDocBatchSize = Integer.MAX_VALUE;
+	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with updateFont=true.  Default: Update only after each full pass over the document set.")
+	public static int updateDocBatchSize = -1;
 
 	// ##### Language Model Re-training Options
 	
-	@Option(gloss = "Should the language model be updated during font training?")
-	public static boolean retrainLM = false;
+	@Option(gloss = "Should the language model be updated along with the font?")
+	public static boolean updateLM = false;
 	
 	@Option(gloss = "Path to write the retrained language model file to. Required if retrainLM is set to true, otherwise ignored.")
 	public static String outputLmPath = null;
@@ -78,10 +78,10 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	@Option(gloss = "Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?")
 	public static boolean gsmElideAnything = false;
 	
-	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.)")
-	public static boolean trainGsm = false;
+	@Option(gloss = "Should the glyph substitution model be trained (or updated) along with the font? (Only relevant if allowGlyphSubstitution is set to true.)")
+	public static boolean updateGsm = false;
 	
-	@Option(gloss = "Path to write the retrained glyph substitution model file to. Required if trainGsm is set to true, otherwise ignored.")
+	@Option(gloss = "Path to write the retrained glyph substitution model file to. Required if updateGsm is set to true, otherwise ignored.")
 	public static String outputGsmPath = null;
 	
 	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.")
@@ -127,7 +127,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	
 	// ##### Options used if evaluation should be performed during training
 	
-	@Option(gloss = "When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`). (Only relevant if trainFont is set to true.)")
+	@Option(gloss = "When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`). (Only relevant if updateFont is set to true.)")
 	public static String evalInputDocPath = null; // Do not evaluate during font training.
 
 	// The following options are only relevant if a value was given to -evalInputDocPath.
@@ -159,18 +159,18 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 
 		if (inputLmPath == null) throw new IllegalArgumentException("-inputLmPath is required");
 		if (inputLmPath != null && !new File(inputLmPath).exists()) throw new RuntimeException("inputLmPath " + inputLmPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
-		if (retrainLM && outputLmPath == null) throw new IllegalArgumentException("-outputLmPath required when -retrainLM is true.");
-		if (!retrainLM && outputLmPath != null) throw new IllegalArgumentException("-outputLmPath not permitted when -retrainLM is false.");
-		if (outputLmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the LM (-retrainLM=true) when not retraining the font (-trainFont=false).");
+		if (updateLM && outputLmPath == null) throw new IllegalArgumentException("-outputLmPath required when -retrainLM is true.");
+		if (!updateLM && outputLmPath != null) throw new IllegalArgumentException("-outputLmPath not permitted when -retrainLM is false.");
+		if (outputLmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the LM (-retrainLM=true) when not retraining the font (-updateFont=false).");
 
-		if (trainGsm && !allowGlyphSubstitution) throw new IllegalArgumentException("-trainGsm not permitted if -allowGlyphSubstitution is false.");
+		if (updateGsm && !allowGlyphSubstitution) throw new IllegalArgumentException("-updateGsm not permitted if -allowGlyphSubstitution is false.");
 		if (inputGsmPath != null && !new File(inputGsmPath).exists()) throw new RuntimeException("inputGsmPath " + inputGsmPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
 		if (inputGsmPath != null && !allowGlyphSubstitution) throw new IllegalArgumentException("-inputGsmPath not permitted if -allowGlyphSubstitution is false.");
 		if (outputGsmPath != null && !allowGlyphSubstitution) throw new IllegalArgumentException("-outputGsmPath not permitted if -allowGlyphSubstitution is false.");
-		if (trainGsm && outputGsmPath == null) throw new IllegalArgumentException("-outputGsmPath required when -trainGsm is true.");
-		if (!trainGsm && outputGsmPath != null) throw new IllegalArgumentException("-outputGsmPath not permitted when -trainGsm is false.");
+		if (updateGsm && outputGsmPath == null) throw new IllegalArgumentException("-outputGsmPath required when -updateGsm is true.");
+		if (!updateGsm && outputGsmPath != null) throw new IllegalArgumentException("-outputGsmPath not permitted when -updateGsm is false.");
 		if (allowGlyphSubstitution && inputGsmPath == null && outputGsmPath == null) throw new IllegalArgumentException("If -allowGlyphSubstitution=true, either an -inputGsmPath must be given, or a GSM must be trained by giving an -outputGsmPath.");
-		if (outputGsmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the GSM (-trainGsm=true) when not retraining the font (-trainFont=false).");
+		if (outputGsmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the GSM (-updateGsm=true) when not retraining the font (-updateFont=false).");
 
 		if (evalExtractedLinesPath != null && evalInputDocPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputDocPath.");
 
@@ -180,8 +180,8 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 		
 		//
 		
-		if (!(retrainLM == (outputLmPath != null))) throw new IllegalArgumentException("-retrainLM is not as expected");
-		if (!(trainGsm == (outputGsmPath != null))) throw new IllegalArgumentException("-trainGsm is not as expected");
+		if (!(updateLM == (outputLmPath != null))) throw new IllegalArgumentException("-retrainLM is not as expected");
+		if (!(updateGsm == (outputGsmPath != null))) throw new IllegalArgumentException("-updateGsm is not as expected");
 		if (!(allowGlyphSubstitution == (inputGsmPath != null || outputGsmPath != null))) throw new IllegalArgumentException("-allowGlyphSubstitution is not as expected");
 	}
 	
@@ -289,7 +289,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 					outputFontPath, outputLmPath, outputGsmPath,
 					decoderEM,
 					gsmFactory, documentOutputPrinterAndEvaluator,
-					numEMIters, updateDocBatchSize, noUpdateIfBatchTooSmall, writeIntermediateModelsToTemp,
+					numEMIters, updateDocBatchSize > 0 ? updateDocBatchSize : inputDocuments.size(), noUpdateIfBatchTooSmall, writeIntermediateModelsToTemp,
 					numMstepThreads,
 					newInputDocPath, outputPath,
 					evalSetIterationEvaluator, evalFreq, evalBatches);

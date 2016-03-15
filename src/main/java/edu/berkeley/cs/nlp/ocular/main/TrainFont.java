@@ -27,10 +27,10 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 	// ##### Main Options
 	
 //	@Option(gloss = "Path to the directory that contains the input document images. The entire directory will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Files will be processed in lexicographical order.")
-//	public static String inputDocPath = null; // Either inputDocPath or inputDocListPath is required.  Relevant to line extraction.
+//	public static String inputDocPath = null; // Either inputDocPath or inputDocListPath is required.
 	
 //	@Option(gloss = "Path to a file that contains a list of paths to images files that should be used.  The file should contain one path per line. These paths will be searched in order.  Each path may point to either a file or a directory, which will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Paths will be processed in the order given in the file, and each path will be searched in lexicographical order.")
-//	public static String inputDocListPath = null; // Either inputDocPath or inputDocListPath is required.  Relevant to line extraction.
+//	public static String inputDocListPath = null; // Either inputDocPath or inputDocListPath is required.
 
 //	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 //	public static String outputPath = null; // Required.
@@ -42,43 +42,43 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 //	public static String inputFontPath = null; // Required.
 
 //	@Option(gloss = "Number of documents (pages) to use, counting alphabetically. Ignore or use 0 to use all documents. Default: Use all documents.")
-//	public static int numDocs = Integer.MAX_VALUE; // Relevant to line extraction.
+//	public static int numDocs = Integer.MAX_VALUE;
 
 //	@Option(gloss = "Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.")
-//	public static int numDocsToSkip = 0; // Relevant to line extraction.
+//	public static int numDocsToSkip = 0;
 
 //	@Option(gloss = "Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
-//	public static String extractedLinesPath = null; // Don't read or write line image files.  Relevant to line extraction.
+//	public static String extractedLinesPath = null; // Don't read or write line image files.
 	
 	// ##### Font Learning Options
 	
-//	@Option(gloss = "Path to write the learned font file to. Required if trainFont is set to true, otherwise ignored.")
-//	public static String outputFontPath = null;
+//	@Option(gloss = "Path to write the learned font file to.")
+//	public static String outputFontPath = null; // Required
 	
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 3;
 	
-//	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with trainFont=true and numEMIter=1 (though this could also be achieved by simply running a series of smaller font training jobs each with numEMIter=1, which each subsequent job uses the model output by the previous).  Default: Update only after each full pass over the document set.")
-//	public static int updateDocBatchSize = Integer.MAX_VALUE;
+//	@Option(gloss = "Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes.  Default: Update only after each full pass over the document set.")
+//	public static int updateDocBatchSize = -1;
 
 	@Option(gloss = "If true, the font trainer will find the latest completed iteration in the outputPath and load it in order to pick up training from that point.  Convenient if a training run crashes when only partially completed.")
 	public static boolean continueFromLastCompleteIteration = false;
 
-//	// ##### Language Model Re-training Options
-//	
+	// ##### Language Model Re-training Options
+	
 //	@Option(gloss = "Should the language model be updated during font training?")
-//	public static boolean retrainLM = false;
+//	public static boolean updateLM = false;
 //	
-//	@Option(gloss = "Path to write the retrained language model file to. Required if retrainLM is set to true, otherwise ignored.")
+//	@Option(gloss = "Path to write the retrained language model file to. Required if updateLM is set to true, otherwise ignored.")
 //	public static String outputLmPath = null;
 
-//	// ##### Glyph Substitution Model Options
-//	
+	// ##### Glyph Substitution Model Options
+	
 //	@Option(gloss = "Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions.")
 //	public static boolean allowGlyphSubstitution = false;
-//	
-//	// The following options are only relevant if allowGlyphSubstitution is set to "true".
-//	
+	
+	// The following options are only relevant if allowGlyphSubstitution is set to "true".
+	
 //	@Option(gloss = "Path to the input glyph substitution model file. (Only relevant if allowGlyphSubstitution is set to true.) Default: Don't use a pre-initialized GSM. (Learn one from scratch).")
 //	public static String inputGsmPath = null;
 //
@@ -91,10 +91,10 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 //	@Option(gloss = "Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?")
 //	public static boolean gsmElideAnything = false;
 //	
-//	@Option(gloss = "Should the glyph substitution model be updated during font training? (Only relevant if allowGlyphSubstitution is set to true.)")
-//	public static boolean trainGsm = false;
+//	@Option(gloss = "Should the glyph substitution model be trained (or updated) along with the font? (Only relevant if allowGlyphSubstitution is set to true.)")
+//	public static boolean updateGsm = false;
 //	
-//	@Option(gloss = "Path to write the retrained glyph substitution model file to. Required if trainGsm is set to true, otherwise ignored.")
+//	@Option(gloss = "Path to write the retrained glyph substitution model file to. Required if updateGsm is set to true, otherwise ignored.")
 //	public static String outputGsmPath = null;
 //	
 //	@Option(gloss = "The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.")
@@ -106,16 +106,16 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 	// ##### Line Extraction Options
 	
 //	@Option(gloss = "Quantile to use for pixel value thresholding. (High values mean more black pixels.)")
-//	public static double binarizeThreshold = 0.12; // Relevant to line extraction.
+//	public static double binarizeThreshold = 0.12;
 
 //	@Option(gloss = "Crop pages?")
-//	public static boolean crop = true; // Relevant to line extraction.
+//	public static boolean crop = true;
 
 //	@Option(gloss = "Scale all lines to have the same height?")
-//	public static boolean uniformLineHeight = true; // Relevant to line extraction.
+//	public static boolean uniformLineHeight = true;
 
-//	// ##### Miscellaneous Options
-//	
+	// ##### Miscellaneous Options
+	
 //	@Option(gloss = "Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
 //	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT; // Default: DEFAULT
 //
@@ -148,14 +148,14 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 //
 //	@Option(gloss = "A language model to be used to assign diacritics to the transcription output.")
 //	public static boolean allowLanguageSwitchOnPunct = true;
-//	
-//	// ##### Options used if evaluation should be performed during training
-//	
+	
+	// ##### Options used if evaluation should be performed during training
+	
 //	@Option(gloss = "When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).")
 //	public static String evalInputDocPath = null; // Do not evaluate during font training.
-//
-//	// The following options are only relevant if a value was given to -evalInputDocPath.
-//	
+
+	// The following options are only relevant if a value was given to -evalInputDocPath.
+	
 //	@Option(gloss = "When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.")
 //	public static String evalExtractedLinesPath = null; // Don't read or write line image files. 
 //
@@ -183,7 +183,7 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 		
 		if (numEMIters <= 0) new IllegalArgumentException("-numEMIters must be a positive number.");
 
-		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath required when -trainFont is true.");
+		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath is required for font training.");
 	}
 
 	public void run() {
@@ -203,7 +203,7 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
 		if (inputDocuments.isEmpty()) throw new RuntimeException("No documents given!");
-		if (inputDocuments.size() < updateDocBatchSize) throw new RuntimeException("The number of available documents is less than -updateDocBatchSize!");
+		if (updateDocBatchSize > 0 && inputDocuments.size() < updateDocBatchSize) throw new RuntimeException("The number of available documents is less than -updateDocBatchSize!");
 		
 		String newInputDocPath = FileUtil.lowestCommonPath(inputDocPathList);
 
@@ -214,6 +214,8 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 				documentOutputPrinterAndEvaluator, evalSetEvaluator,
 				newInputDocPath, continueFromLastCompleteIteration ? new TrainingRestarter() : null, numEMIters,
 				false, true);
+
+		System.out.println("Completed.");
 	}
 
 }

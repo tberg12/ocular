@@ -50,14 +50,15 @@ public class HtmlOutputWriter {
 					outputBuffer.append("<font color=\"" + colors[currLanguage+1] + "\">");
 				}
 				
-				if (glyph.glyphType == GlyphType.DOUBLED) {
-					outputBuffer.append("[2x]");
+				if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
+					String norm = Charset.unescapeChar(charIndexer.getObject(lmChar));
+					String dipl = (glyph.glyphType == GlyphType.DOUBLED ? "2x"+sglyphChar : glyph.isElided() ? "" : sglyphChar);
+					outputBuffer.append("[" + norm + "/" + dipl + "]");
 				}
-				else if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR)
-					outputBuffer.append("[" + Charset.unescapeChar(charIndexer.getObject(lmChar)) + "/" + (glyph.isElided() ? "" : sglyphChar) + "]");
-				else
+				else {
 					outputBuffer.append(sglyphChar);
-				
+				}
+
 				prevLanguage = currLanguage;
 			}
 			outputBuffer.append("</br>\n");
