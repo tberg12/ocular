@@ -133,7 +133,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -inputLmPath lm/trilingual.lmser \
-        -outputFontPath font/advertencias/init.fontser
+        -outputFontPath font/trilingual-init.fontser
 
 
 3. Train a font:
@@ -141,7 +141,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   To train a font, a set of document pages must be given (`-inputDocPath`), along with the paths to the language model and initial font model.  Use `-outputFontPath` to specify where the trained font model should be written, and `-outputPath` to specify where transcriptions and (optional) evaluation metrics should be written.  The path specified by `-inputDocPath` should point to a pdf or image file or directory or directory hierarchy of such files.  The value given by `-inputDocPath` will be searched recursively for non-`.txt` files; the transcriptions written to the `-outputPath` will maintain the same directory hierarchy.
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
-        -inputFontPath font/advertencias/init.fontser \
+        -inputFontPath font/trilingual-init.fontser \
         -inputLmPath lm/trilingual.lmser \
         -inputDocPath sample_images/advertencias \
         -numDocs 10 \
@@ -157,7 +157,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
   Ocular has the optional ability to learn, unsupervised, a mapping from archaic orthography to the orthography reflected in the trained language model. We call this a "glyph substitution model" (GSM).  To train a GSM, add the `-allowGlyphSubstitution`, `-updateGsm` and `-outputGsmPath` options.  If no `-inputGsmPath` is given, a new GSM will be created and then trained along with the font.
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.TrainFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
-        -inputFontPath font/advertencias/init.fontser \
+        -inputFontPath font/trilingual-init.fontser \
         -inputLmPath lm/trilingual.lmser \
         -inputDocPath sample_images/advertencias \
         -numDocs 10 \
