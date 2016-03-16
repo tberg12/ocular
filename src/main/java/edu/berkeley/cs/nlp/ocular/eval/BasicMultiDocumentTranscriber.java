@@ -19,7 +19,6 @@ import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
-import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
 
@@ -77,10 +76,10 @@ public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
 		double avgLogProb = totalJointLogProb / numDocs;
 		System.out.println("Iteration "+iter+", batch "+batchId+": eval avg joint log prob: " + avgLogProb);
 		if (new File(inputDocPath).isDirectory()) {
-			Document doc = documents.get(0);
-			String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputDocPath), new File(doc.baseName()))._2;
+			//Document doc = documents.get(0);
+			//String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputDocPath), new File(doc.baseName()))._2;
 			String preext = "eval";
-			String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
+			String outputFilenameBase = outputPath + "/all_transcriptions/" + new File(inputDocPath).getName() + "/" + preext;
 			if (iter > 0) outputFilenameBase += "_iter-" + iter;
 			if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
 			if (!allDiplomaticEvals.isEmpty())

@@ -43,6 +43,21 @@ public class CharsetTests {
 	}
 
 	@Test
+	public void test_unescapeCharPrecomposedOnly() {
+		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + "ñ", unescapeCharPrecomposedOnly("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
+		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + "ñ", unescapeCharPrecomposedOnly("\\`\\'n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
+		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + TILDE_ESCAPE + "q", unescapeCharPrecomposedOnly("\\`\\'q" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
+
+		assertEquals("ñ", unescapeCharPrecomposedOnly("ñ"));
+		assertEquals("ñ", unescapeCharPrecomposedOnly("\\~n"));
+		assertEquals("\\~q", unescapeCharPrecomposedOnly("q" + TILDE_COMBINING));
+		assertEquals("\\~q", unescapeCharPrecomposedOnly("\\~q"));
+		//assertEquals("ı", unescapeCharPrecomposedOnly("\\ii"));
+		
+		assertEquals("\\\\", unescapeCharPrecomposedOnly("\\\\"));
+	}
+
+	@Test
 	public void test_escapeCharSeparateDiacritics() {
 		assertEquals(asList(GRAVE_ESCAPE, ACUTE_ESCAPE, DIAERESIS_ESCAPE, MACRON_ESCAPE, TILDE_ESCAPE), escapeCharSeparateDiacritics("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING)._1);
 		assertEquals(asList(GRAVE_ESCAPE, ACUTE_ESCAPE, DIAERESIS_ESCAPE, MACRON_ESCAPE, TILDE_ESCAPE), escapeCharSeparateDiacritics("\\`\\'n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING)._1);

@@ -3,6 +3,8 @@ package edu.berkeley.cs.nlp.ocular.data.textreader;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeMap;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.setUnion;
+import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.*;
+import static edu.berkeley.cs.nlp.ocular.util.StringHelper.*;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 
@@ -499,6 +501,30 @@ public class Charset {
 			b.append(escapeToCombining(diacritics.get(i)));
 		}
 		
+		return b.toString();
+	}
+
+	/**
+	 * Convert diacritic escape sequences on a character into unicode precomposed and combining characters
+	 */
+	public static String unescapeCharPrecomposedOnly(String c) {
+		if (c.length() == 1) return c; // no escapes
+		if (c.equals("\\\\")) return c;
+		
+		Tuple2<List<String>,String> escapedDiacriticsAndLetter = escapeCharSeparateDiacritics(c); // use escapes only (and make sure it's a valid character)
+		List<String> diacritics = escapedDiacriticsAndLetter._1;
+		String baseLetter = escapedDiacriticsAndLetter._2;
+		
+		StringBuilder b = new StringBuilder(join(take(diacritics, diacritics.size()-1)));
+		
+		// Attempt to make a precomposed letter, falling back to composed otherwise
+		String lastDiacritic = last(diacritics);
+		String precomposed = ESCAPED_TO_PRECOMPOSED_MAP.get(lastDiacritic + baseLetter); // last escape + letter
+		if (precomposed != null)
+			b.append(precomposed);
+		else 
+			b.append(lastDiacritic).append(baseLetter);
+
 		return b.toString();
 	}
 

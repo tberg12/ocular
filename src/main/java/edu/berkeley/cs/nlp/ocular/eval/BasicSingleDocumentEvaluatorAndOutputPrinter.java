@@ -310,7 +310,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 						// Add diplomatic characters to diplomatic transcription
 						//
 						if (!ts.getGlyphChar().isElided()) {
-							viterbiDiplomaticCharLines[line].add(currDiplomaticChar);
+							viterbiDiplomaticCharLines[line].add(Charset.unescapeCharPrecomposedOnly(currDiplomaticChar));
 						}
 						
 						//
@@ -322,7 +322,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 							
 							//
 							// Add to normalized line transcription
-							viterbiNormalizedCharLines[line].add(currNormalizedChar);
+							viterbiNormalizedCharLines[line].add(Charset.unescapeCharPrecomposedOnly(currNormalizedChar));
 							
 							//
 							// Add to normalized running transcription
@@ -343,7 +343,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 										// do nothing -- collapse spaces
 									}
 									else {
-										viterbiNormalizedTranscription.add(currNormalizedChar);
+										viterbiNormalizedTranscription.add(Charset.unescapeCharPrecomposedOnly(currNormalizedChar));
 									}
 							}
 						}
@@ -368,9 +368,9 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 				int lmChar = ts.getLmCharIndex();
 				GlyphChar glyph = ts.getGlyphChar();
 				int glyphChar = glyph.templateCharIndex;
-				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
+				String sglyphChar = Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(glyphChar));
 				if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
-					String norm = Charset.unescapeChar(charIndexer.getObject(lmChar));
+					String norm = Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(lmChar));
 					String dipl = (glyph.glyphType == GlyphType.DOUBLED ? "2x"+sglyphChar : glyph.isElided() ? "" : sglyphChar);
 					lineBuffer.append("[" + norm + "/" + dipl + "]");
 				}

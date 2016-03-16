@@ -43,7 +43,7 @@ public class HtmlOutputWriter {
 				int lmChar = ts.getLmCharIndex();
 				GlyphChar glyph = ts.getGlyphChar();
 				int glyphChar = glyph.templateCharIndex;
-				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
+				String sglyphChar = Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(glyphChar));
 
 				int currLanguage = ts.getLanguageIndex();
 				if (currLanguage != prevLanguage) {
@@ -51,7 +51,7 @@ public class HtmlOutputWriter {
 				}
 				
 				if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
-					String norm = Charset.unescapeChar(charIndexer.getObject(lmChar));
+					String norm = Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(lmChar));
 					String dipl = (glyph.glyphType == GlyphType.DOUBLED ? "2x"+sglyphChar : glyph.isElided() ? "" : sglyphChar);
 					outputBuffer.append("[" + norm + "/" + dipl + "]");
 				}
