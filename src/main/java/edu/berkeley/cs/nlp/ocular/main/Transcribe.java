@@ -213,9 +213,8 @@ public class Transcribe extends FonttrainTranscribeShared implements Runnable {
 		
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
-		if (inputDocuments.isEmpty()) throw new RuntimeException("No documents given!");
-		String newInputDocPath = FileUtil.lowestCommonPath(inputDocPathList);
 
+		String newInputDocPath = FileUtil.lowestCommonPath(inputDocPathList);
 		if (skipAlreadyTranscribedDocs) {
 			for (Iterator<Document> itr = inputDocuments.iterator(); itr.hasNext(); ) {
 				Document doc = itr.next();
@@ -226,6 +225,7 @@ public class Transcribe extends FonttrainTranscribeShared implements Runnable {
 				}
 			}
 		}
+		if (inputDocuments.isEmpty()) throw new RuntimeException("No documents to transcribe!");
 
 		if (outputFontPath != null) {
 			//
