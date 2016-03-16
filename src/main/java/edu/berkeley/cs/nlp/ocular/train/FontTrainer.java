@@ -232,9 +232,9 @@ public class FontTrainer {
 		System.out.println("Iteration "+iter+" avg joint log prob: " + avgLogProb);
 		if (new File(inputDocPath).isDirectory()) {
 			if (!allDiplomaticTrainEvals.isEmpty())
-				printEvaluation(allDiplomaticTrainEvals, outputPath + "/" + new File(inputDocPath).getName() + "/eval_iter-"+iter+"_diplomatic.txt");
+				printEvaluation(allDiplomaticTrainEvals, outputPath + "/all_transcriptions/" + new File(inputDocPath).getName() + "/eval_iter-"+iter+"_diplomatic.txt");
 			if (!allNormalizedTrainEvals.isEmpty())
-				printEvaluation(allNormalizedTrainEvals, outputPath + "/" + new File(inputDocPath).getName() + "/eval_iter-"+iter+"_normalized.txt");
+				printEvaluation(allNormalizedTrainEvals, outputPath + "/all_transcriptions/" + new File(inputDocPath).getName() + "/eval_iter-"+iter+"_normalized.txt");
 		}
 		
 		// evaluate on dev data, if requested

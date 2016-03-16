@@ -135,19 +135,19 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			List<String> transcriptionWithSubsOutputLines = getTranscriptionLinesWithSubs(mt.viterbiTransStates);
 			
 			StringBuffer goldComparisonOutputBuffer = new StringBuffer();
-			if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MS: " + "Model transcription with substitutions\n");
 			if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MN: " + "Model normalized transcription\n");
 			if (goldNormalizedLineChars != null) goldComparisonOutputBuffer.append("GN: " + "Gold normalized transcription\n");
 			/*                       */          goldComparisonOutputBuffer.append("MD: " + "Model diplomatic transcription\n");
 			if (goldDiplomaticLineChars != null) goldComparisonOutputBuffer.append("GD: " + "Gold diplomatic transcription\n");
+			if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MS: " + "Model transcription with substitutions\n");
 			goldComparisonOutputBuffer.append("\n\n");
 			
 			for (int line = 0; line < numLines; ++line) {
-				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MS: " + transcriptionWithSubsOutputLines.get(line).trim()+"\n");
 				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MN: " + StringHelper.join(mt.viterbiNormalizedCharLines[line]).trim() + "\n");
 				if (goldNormalizedLineChars != null) goldComparisonOutputBuffer.append("GN: " + StringHelper.join(goldNormalizedLineChars[line]).trim() + "\n");
 				/*                       */          goldComparisonOutputBuffer.append("MD: " + StringHelper.join(mt.viterbiDiplomaticCharLines[line]).trim() + "\n");
 				if (goldDiplomaticLineChars != null) goldComparisonOutputBuffer.append("GD: " + StringHelper.join(goldDiplomaticLineChars[line]).trim() + "\n");
+				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MS: " + transcriptionWithSubsOutputLines.get(line).trim()+"\n");
 				goldComparisonOutputBuffer.append("\n");
 			}
 			goldComparisonOutputBuffer.append("\n");
@@ -157,10 +157,10 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 					goldComparisonOutputBuffer.append("Model (top) vs. Gold (bottom) normalized transcriptions\n");
 				}
 				else if (mt.viterbiNormalizedTranscription != null) {
-					goldComparisonOutputBuffer.append("Model normalized transcriptions\n");
+					goldComparisonOutputBuffer.append("Model normalized transcription\n");
 				}
 				else if (goldNormalizedChars != null) {
-					goldComparisonOutputBuffer.append("Gold normalized transcriptions\n");
+					goldComparisonOutputBuffer.append("Gold normalized transcription\n");
 				}
 				
 				if (mt.viterbiNormalizedTranscription != null) {

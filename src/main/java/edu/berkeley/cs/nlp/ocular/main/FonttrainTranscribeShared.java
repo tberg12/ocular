@@ -54,7 +54,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	@Option(gloss = "Should the language model be updated along with the font?")
 	public static boolean updateLM = false;
 	
-	@Option(gloss = "Path to write the retrained language model file to. Required if retrainLM is set to true, otherwise ignored.")
+	@Option(gloss = "Path to write the retrained language model file to. Required if updateLM is set to true, otherwise ignored.")
 	public static String outputLmPath = null;
 
 	// ##### Glyph Substitution Model Options
@@ -157,9 +157,9 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 
 		if (inputLmPath == null) throw new IllegalArgumentException("-inputLmPath is required");
 		if (inputLmPath != null && !new File(inputLmPath).exists()) throw new RuntimeException("inputLmPath " + inputLmPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
-		if (updateLM && outputLmPath == null) throw new IllegalArgumentException("-outputLmPath required when -retrainLM is true.");
-		if (!updateLM && outputLmPath != null) throw new IllegalArgumentException("-outputLmPath not permitted when -retrainLM is false.");
-		if (outputLmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the LM (-retrainLM=true) when not retraining the font (-updateFont=false).");
+		if (updateLM && outputLmPath == null) throw new IllegalArgumentException("-outputLmPath required when -updateLM is true.");
+		if (!updateLM && outputLmPath != null) throw new IllegalArgumentException("-outputLmPath not permitted when -updateLM is false.");
+		if (outputLmPath != null && outputFontPath == null) throw new IllegalArgumentException("It is not possible to retrain the LM (-updateLM=true) when not retraining the font (-updateFont=false).");
 
 		if (updateGsm && !allowGlyphSubstitution) throw new IllegalArgumentException("-updateGsm not permitted if -allowGlyphSubstitution is false.");
 		if (inputGsmPath != null && !new File(inputGsmPath).exists()) throw new RuntimeException("inputGsmPath " + inputGsmPath + " does not exist [looking in "+(new File(".").getAbsolutePath())+"]");
