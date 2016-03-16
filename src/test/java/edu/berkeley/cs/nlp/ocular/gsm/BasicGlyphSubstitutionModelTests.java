@@ -1,4 +1,4 @@
-package edu.berkeley.cs.nlp.ocular.sub;
+package edu.berkeley.cs.nlp.ocular.gsm;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.TILDE_ESCAPE;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
@@ -11,7 +11,7 @@ import java.util.Set;
 import org.junit.Test;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
-import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import indexer.HashMapIndexer;
 import indexer.Indexer;
 

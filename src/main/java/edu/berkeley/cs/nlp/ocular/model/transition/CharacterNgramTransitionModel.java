@@ -9,10 +9,10 @@ import java.util.List;
 
 import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**

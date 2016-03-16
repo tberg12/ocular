@@ -1,8 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
 import edu.berkeley.cs.nlp.ocular.font.Font;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

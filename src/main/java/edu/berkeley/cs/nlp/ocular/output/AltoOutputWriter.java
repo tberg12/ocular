@@ -7,8 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import fileio.f;
 import indexer.Indexer;
 import util.Iterators;

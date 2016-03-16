@@ -1,4 +1,4 @@
-package edu.berkeley.cs.nlp.ocular.sub;
+package edu.berkeley.cs.nlp.ocular.gsm;
 
 import java.io.Serializable;
 

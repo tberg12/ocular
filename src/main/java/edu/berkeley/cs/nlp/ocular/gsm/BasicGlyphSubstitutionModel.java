@@ -1,4 +1,4 @@
-package edu.berkeley.cs.nlp.ocular.sub;
+package edu.berkeley.cs.nlp.ocular.gsm;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeAddTildeMap;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.makeCanBeElidedSet;
@@ -14,9 +14,9 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import indexer.Indexer;
@@ -140,7 +140,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.outputPath = outputPath;
 		}
 		
-		public BasicGlyphSubstitutionModel uniform() {
+		public GlyphSubstitutionModel uniform() {
 			return make(initializeNewCountsMatrix(), 0, 0);
 		}
 		
@@ -277,8 +277,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 				}
 			}
 			
-			System.out.println("Writing out GSM information.");
-			synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)); }
+			//System.out.println("Writing out GSM information.");
+			//synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)); }
 			
 			return new BasicGlyphSubstitutionModel(probs, gsmPower, langIndexer, charIndexer);
 		}
@@ -316,8 +316,8 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					}
 				}
 				
-				System.out.println("Writing out GSM information.");
-				synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)+"_eval"); }
+				//System.out.println("Writing out GSM information.");
+				//synchronized (this) { printGsmProbs3(numLanguages, numChars, numGlyphs, counts, probs, iter, batchId, gsmPrintoutFilepath(iter, batchId)+"_eval"); }
 	
 				return new BasicGlyphSubstitutionModel(probs, gsmPower, langIndexer, charIndexer);
 			}

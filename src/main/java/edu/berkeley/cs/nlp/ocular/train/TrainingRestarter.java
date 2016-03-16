@@ -9,11 +9,11 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 import java.io.File;
 
 import edu.berkeley.cs.nlp.ocular.font.Font;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
 import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 
@@ -57,7 +57,7 @@ public class TrainingRestarter {
 			if (updateLM) {
 				String lastLmPath = makeLmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
 				System.out.println("    Loading lm of last completed iteration:  "+lastLmPath);
-				newLm = InitializeLanguageModel.readLM(lastLmPath);
+				newLm = InitializeLanguageModel.readCodeSwitchLM(lastLmPath);
 			}
 			if (updateGsm) {
 				String lastGsmPath = makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);

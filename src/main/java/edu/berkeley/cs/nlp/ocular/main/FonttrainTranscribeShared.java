@@ -14,6 +14,10 @@ import edu.berkeley.cs.nlp.ocular.eval.BasicMultiDocumentTranscriber;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
 import edu.berkeley.cs.nlp.ocular.font.Font;
+import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModelReadWrite;
+import edu.berkeley.cs.nlp.ocular.gsm.NoSubGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
@@ -23,10 +27,6 @@ import edu.berkeley.cs.nlp.ocular.model.em.OpenCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel.CachingEmissionModelFactory;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel.EmissionModelFactory;
-import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModelReadWrite;
-import edu.berkeley.cs.nlp.ocular.sub.NoSubGlyphSubstitutionModel;
 import fig.Option;
 import indexer.Indexer;
 
@@ -186,7 +186,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 
 	protected static CodeSwitchLanguageModel loadInputLM() {
 		System.out.println("Loading initial LM from " + inputLmPath);
-		CodeSwitchLanguageModel codeSwitchLM = InitializeLanguageModel.readLM(inputLmPath);
+		CodeSwitchLanguageModel codeSwitchLM = InitializeLanguageModel.readCodeSwitchLM(inputLmPath);
 
 		//print some useful info
 		{
@@ -216,13 +216,18 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	protected static BasicGlyphSubstitutionModelFactory makeGsmFactory(CodeSwitchLanguageModel lm) {
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
 		Indexer<String> langIndexer = lm.getLanguageIndexer();
-		int numLanguages = langIndexer.size();
-		@SuppressWarnings("unchecked")
-		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
-		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = lm.get(l).getActiveCharacters();
+		Set<Integer>[] activeCharacterSets = makeActiveCharacterSets(lm);
 		return new BasicGlyphSubstitutionModelFactory(gsmSmoothingCount, gsmElisionSmoothingCountMultiplier, langIndexer, charIndexer, activeCharacterSets, gsmPower, 0, outputPath);
 	}
 
+	public static Set<Integer>[] makeActiveCharacterSets(CodeSwitchLanguageModel lm) {
+		int numLanguages = lm.getLanguageIndexer().size();
+		@SuppressWarnings("unchecked")
+		Set<Integer>[] activeCharacterSets = new Set[numLanguages];
+		for (int l = 0; l < numLanguages; ++l) activeCharacterSets[l] = lm.get(l).getActiveCharacters();
+		return activeCharacterSets;
+	}
+	
 	protected static GlyphSubstitutionModel loadInitialGSM(BasicGlyphSubstitutionModelFactory gsmFactory) {
 		if (!allowGlyphSubstitution) {
 			System.out.println("Glyph substitution not allowed; constructing no-sub GSM.");

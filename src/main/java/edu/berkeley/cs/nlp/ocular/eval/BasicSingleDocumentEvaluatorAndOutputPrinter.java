@@ -16,11 +16,11 @@ import java.util.Map;
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.output.AltoOutputWriter;
 import edu.berkeley.cs.nlp.ocular.output.HtmlOutputWriter;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
@@ -263,7 +263,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 	private static String makeOutputFilenameBase(int iter, int batchId, Document doc, String inputDocPath, String outputPath) {
 		String fileParent = FileUtil.removeCommonPathPrefixOfParents(new File(inputDocPath), new File(doc.baseName()))._2;
 		String preext = FileUtil.withoutExtension(new File(doc.baseName()).getName());
-		String outputFilenameBase = outputPath + "/" + fileParent + "/" + preext;
+		String outputFilenameBase = outputPath + "/all_transcriptions/" + fileParent + "/" + preext;
 		if (iter > 0) outputFilenameBase += "_iter-" + iter;
 		if (batchId > 0) outputFilenameBase += "_batch-" + batchId;
 		return outputFilenameBase;

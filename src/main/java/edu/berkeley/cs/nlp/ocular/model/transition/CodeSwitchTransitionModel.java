@@ -20,12 +20,12 @@ import java.util.Set;
 
 import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
 

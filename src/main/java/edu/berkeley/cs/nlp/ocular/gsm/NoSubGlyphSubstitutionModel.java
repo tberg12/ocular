@@ -1,6 +1,6 @@
-package edu.berkeley.cs.nlp.ocular.sub;
+package edu.berkeley.cs.nlp.ocular.gsm;
 
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

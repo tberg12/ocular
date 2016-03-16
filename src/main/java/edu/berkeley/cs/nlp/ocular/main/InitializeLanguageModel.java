@@ -28,6 +28,7 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CorpusCounter;
+import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
@@ -283,21 +284,25 @@ public class InitializeLanguageModel implements Runnable {
 		return allChars;
 	}
 	
-	public static CodeSwitchLanguageModel readLM(String lmPath) {
+	public static LanguageModel readLM(String lmPath) {
 		ObjectInputStream in = null;
 		try {
 			File file = new File(lmPath);
 			if (!file.exists()) {
-				throw new RuntimeException("Serialized CodeSwitchLanguageModel file " + lmPath + " not found");
+				throw new RuntimeException("Serialized lm file " + lmPath + " not found");
 			}
 			in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
-			return (CodeSwitchLanguageModel) in.readObject();
-		} catch (Exception e) {
+			return (LanguageModel) in.readObject();
+		} catch(Exception e) {
 			throw new RuntimeException(e);
 		} finally {
 			if (in != null)
 				try { in.close(); } catch (IOException e) { throw new RuntimeException(e); }
 		}
+	}
+
+	public static CodeSwitchLanguageModel readCodeSwitchLM(String lmPath) {
+		return (CodeSwitchLanguageModel) readLM(lmPath);
 	}
 
 	public static void writeLM(CodeSwitchLanguageModel lm, String lmPath) {

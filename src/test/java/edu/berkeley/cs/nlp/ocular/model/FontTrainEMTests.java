@@ -7,9 +7,9 @@ import java.util.List;
 
 import org.junit.Test;
 
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.*;

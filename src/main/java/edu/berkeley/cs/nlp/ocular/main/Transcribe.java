@@ -16,10 +16,10 @@ import edu.berkeley.cs.nlp.ocular.eval.BasicSingleDocumentEvaluatorAndOutputPrin
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
 import edu.berkeley.cs.nlp.ocular.font.Font;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
-import edu.berkeley.cs.nlp.ocular.sub.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import fig.Option;

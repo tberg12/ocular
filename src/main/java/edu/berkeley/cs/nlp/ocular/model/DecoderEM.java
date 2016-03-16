@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
@@ -18,7 +19,6 @@ import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModel
 import edu.berkeley.cs.nlp.ocular.model.transition.CodeSwitchTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
-import edu.berkeley.cs.nlp.ocular.sub.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import threading.BetterThreader;
 

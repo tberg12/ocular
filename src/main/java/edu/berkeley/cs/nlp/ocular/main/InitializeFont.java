@@ -69,7 +69,7 @@ public class InitializeFont implements Runnable {
 
 		Set<String> allowedFonts = getAllowedFontsListFromFile();
 		
-		final LanguageModel lm = readLM(inputLmPath);
+		final LanguageModel lm = InitializeLanguageModel.readLM(inputLmPath);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
 		final PixelType[][][][] fontPixelData = FontRenderer.getRenderedFont(charIndexer, CharacterTemplate.LINE_HEIGHT, allowedFonts);
@@ -108,25 +108,6 @@ public class InitializeFont implements Runnable {
 		return allowedFonts;
 	}
 	
-	public static LanguageModel readLM(String lmPath) {
-		LanguageModel lm = null;
-		try {
-			File file = new File(lmPath);
-			if (!file.exists()) {
-				System.out.println("Serialized lm file " + lmPath + " not found");
-				return null;
-			}
-			FileInputStream fileIn = new FileInputStream(file);
-			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
-			lm = (LanguageModel) in.readObject();
-			in.close();
-			fileIn.close();
-		} catch(Exception e) {
-			throw new RuntimeException(e);
-		}
-		return lm;
-	}
-
 //	private static PixelType[][][] buildFAndBarFontPixelData(Indexer<String> charIndexer, PixelType[][][][] fontPixelData) {
 //		List<PixelType[][]> fAndBarFontPixelData = new ArrayList<PixelType[][]>();
 //		if (charIndexer.contains("f")) {
