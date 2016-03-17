@@ -61,6 +61,9 @@ public class Transcribe extends FonttrainTranscribeShared implements Runnable {
 	@Option(gloss = "If true, for each doc the outputPath will be checked for an existing transcription and if one is found then the document will be skipped.")
 	public static boolean skipAlreadyTranscribedDocs = false;
 	
+	@Option(gloss = "If true, an exception will be thrown if all of the input documents have already been transcribed (and thus the job has nothing to do).  Ignored unless -skipAlreadyTranscribedDocs=true.")
+	public static boolean failIfAllDocsAlreadyTranscribed = false;
+	
 	// ##### Font Learning Options
 	
 	@Option(gloss = "Update the font during transcription based on the new input documents?")
@@ -213,9 +216,11 @@ public class Transcribe extends FonttrainTranscribeShared implements Runnable {
 		
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
+		if (inputDocuments.isEmpty()) throw new NoDocumentsFoundException();
 
 		String newInputDocPath = FileUtil.lowestCommonPath(inputDocPathList);
 		if (skipAlreadyTranscribedDocs) {
+			int numInputDocsBeforeSkipping = inputDocuments.size();
 			for (Iterator<Document> itr = inputDocuments.iterator(); itr.hasNext(); ) {
 				Document doc = itr.next();
 				String docTranscriptionPath = diplomaticTranscriptionOutputFile(makeOutputFilenameBase(doc, newInputDocPath, outputPath));
@@ -224,8 +229,14 @@ public class Transcribe extends FonttrainTranscribeShared implements Runnable {
 					itr.remove();
 				}
 			}
+			if (inputDocuments.isEmpty()) {
+				String msg = "The input path contains "+numInputDocsBeforeSkipping+" documents, but all have already been transcribed, so there is nothing remaining for this job to do.  (This is due to setting -skipAlreadyTranscribedDocs=true.)";
+				if (failIfAllDocsAlreadyTranscribed)
+					throw new NoDocumentsToProcessException(msg);
+				else
+					System.out.println("WARNING: "+msg);
+			}
 		}
-		if (inputDocuments.isEmpty()) throw new RuntimeException("No documents to transcribe!");
 
 		if (outputFontPath != null) {
 			//

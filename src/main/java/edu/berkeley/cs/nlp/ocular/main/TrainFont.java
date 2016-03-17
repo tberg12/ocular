@@ -203,7 +203,7 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 		
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
-		if (inputDocuments.isEmpty()) throw new RuntimeException("No documents given!");
+		if (inputDocuments.isEmpty()) throw new NoDocumentsFoundException();
 		if (updateDocBatchSize > 0 && inputDocuments.size() < updateDocBatchSize) throw new RuntimeException("The number of available documents is less than -updateDocBatchSize!");
 		
 		String newInputDocPath = FileUtil.lowestCommonPath(inputDocPathList);

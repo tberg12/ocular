@@ -267,7 +267,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	protected static MultiDocumentTranscriber makeEvalSetEvaluator(Indexer<String> charIndexer, DecoderEM decoderEM, SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator) {
 		if (evalInputDocPath != null) {
 			List<Document> evalDocuments = LazyRawImageLoader.loadDocuments(evalInputDocPath, evalExtractedLinesPath, evalNumDocs, 0, uniformLineHeight, binarizeThreshold, crop);
-			if (evalDocuments.isEmpty()) throw new RuntimeException("No eval documents given!");
+			if (evalDocuments.isEmpty()) throw new NoDocumentsFoundException("No evaluation documents found! Checked -evalInputDocPath = "+evalInputDocPath);
 			for (Document doc : evalDocuments) {
 				if (doc.loadDiplomaticTextLines() == null & doc.loadNormalizedText() == null) 
 					throw new RuntimeException("Evaluation document "+doc.baseName()+" has no gold transcriptions.");

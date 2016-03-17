@@ -23,7 +23,7 @@ public class ExtractLinesOnly extends FonttrainTranscribeShared implements Runna
 	public void run() {
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
-		if (inputDocuments.isEmpty()) throw new RuntimeException("No documents given!");
+		if (inputDocuments.isEmpty()) throw new NoDocumentsFoundException();
 		for (Document doc : inputDocuments) {
 			doc.loadLineImages();
 		}
