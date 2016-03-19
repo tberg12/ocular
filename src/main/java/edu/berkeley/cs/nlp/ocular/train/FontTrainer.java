@@ -21,13 +21,13 @@ import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
 import edu.berkeley.cs.nlp.ocular.font.Font;
-import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
+import edu.berkeley.cs.nlp.ocular.main.InitializeGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
@@ -68,8 +68,8 @@ public class FontTrainer {
 		if (trainingRestarter != null) {
 			restartObjects = trainingRestarter.getRestartModels(
 					font, lm, gsm,
-					outputFontPath != null, outputLmPath != null, outputGsmPath != null, outputPath, 
-					numEMIters, numUsableDocs, updateDocBatchSize, updateDocBatchSize, noUpdateIfBatchTooSmall);
+					outputLmPath != null, outputGsmPath != null, outputPath, 
+					numEMIters, numUsableDocs, updateDocBatchSize, noUpdateIfBatchTooSmall);
 			lastCompletedIteration = restartObjects._1;
 			font = restartObjects._2._1;
 			lm = restartObjects._2._2;
@@ -116,7 +116,7 @@ public class FontTrainer {
 		}
 		if (outputGsmPath != null) {
 			System.out.println("Writing trained gsm to " + outputGsmPath);
-			GlyphSubstitutionModelReadWrite.writeGSM(gsm, outputGsmPath);
+			InitializeGlyphSubstitutionModel.writeGSM(gsm, outputGsmPath);
 		}
 
 		return Tuple3(font, lm, gsm);
@@ -204,7 +204,7 @@ public class FontTrainer {
 					gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
 					String writePath = writeIntermediateModelsToTemp ? makeGsmPath(outputPath, iter, completedBatchesInIteration) : outputGsmPath;
 					System.out.println("Writing updated gsm to " + writePath);
-					GlyphSubstitutionModelReadWrite.writeGSM(gsm, writePath);
+					InitializeGlyphSubstitutionModel.writeGSM(gsm, writePath);
 				}
 
 				// Clear counts at the end of a batch

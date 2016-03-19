@@ -16,7 +16,6 @@ import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
 import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.gsm.NoSubGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
@@ -232,7 +231,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 		}
 		else if (inputGsmPath != null) { // file path given
 			System.out.println("Loading initial GSM from " + inputGsmPath);
-			return GlyphSubstitutionModelReadWrite.readGSM(inputGsmPath);
+			return InitializeGlyphSubstitutionModel.readGSM(inputGsmPath);
 		}
 		else {
 			System.out.println("No initial GSM provided; initializing to uniform model.");

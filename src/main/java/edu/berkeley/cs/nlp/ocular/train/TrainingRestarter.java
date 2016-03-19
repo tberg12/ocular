@@ -10,9 +10,9 @@ import java.io.File;
 
 import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
+import edu.berkeley.cs.nlp.ocular.main.InitializeGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
@@ -27,12 +27,12 @@ public class TrainingRestarter {
 	 */
 	public Tuple2<Integer, Tuple3<Font, CodeSwitchLanguageModel, GlyphSubstitutionModel>> getRestartModels(
 			Font inputFont, CodeSwitchLanguageModel inputLm, GlyphSubstitutionModel inputGsm, 
-			boolean updateFont, boolean updateLM, boolean updateGsm, String outputPath,
-			int numEMIters, int numUsableDocs, int minDocBatchSize, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall) {
+			boolean updateLM, boolean updateGsm, String outputPath,
+			int numEMIters, int numUsableDocs, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall) {
 
 		int lastCompletedIteration = 0;
 		String fontPath = null;
-		int lastBatchNumOfIteration = getLastBatchNumOfIteration(numUsableDocs, updateDocBatchSize, minDocBatchSize, noUpdateIfBatchTooSmall);
+		int lastBatchNumOfIteration = getLastBatchNumOfIteration(numUsableDocs, updateDocBatchSize, noUpdateIfBatchTooSmall);
 		for (int iter = 1; iter <= numEMIters; ++iter) {
 			fontPath = makeFontPath(outputPath, iter, lastBatchNumOfIteration);
 			if (new File(fontPath).exists()) {
@@ -62,7 +62,7 @@ public class TrainingRestarter {
 			if (updateGsm) {
 				String lastGsmPath = makeGsmPath(outputPath, lastCompletedIteration, lastBatchNumOfIteration);
 				System.out.println("    Loading gsm of last completed iteration:   "+lastGsmPath);
-				newGsm = GlyphSubstitutionModelReadWrite.readGSM(lastGsmPath);
+				newGsm = InitializeGlyphSubstitutionModel.readGSM(lastGsmPath);
 			}
 		}
 		else {
@@ -72,7 +72,7 @@ public class TrainingRestarter {
 		return Tuple2(lastCompletedIteration, Tuple3(newFont,newLm,newGsm));
 	}
 
-	private int getLastBatchNumOfIteration(int numUsableDocs, int updateDocBatchSize, int minDocBatchSize, boolean noUpdateIfBatchTooSmall) {
+	private int getLastBatchNumOfIteration(int numUsableDocs, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall) {
 		int completedBatchesInIteration = 0;
 		int currentBatchSize = 0;
 		for (int docNum = 0; docNum < numUsableDocs; ++docNum) {
