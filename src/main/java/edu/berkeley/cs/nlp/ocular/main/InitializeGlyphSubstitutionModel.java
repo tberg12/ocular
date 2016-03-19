@@ -1,10 +1,17 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
-import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModelReadWrite;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import fig.Option;
 import fig.OptionsParser;
@@ -58,7 +65,38 @@ public class InitializeGlyphSubstitutionModel implements Runnable {
 		
 		GlyphSubstitutionModel gsm = factory.uniform();
 		
-		GlyphSubstitutionModelReadWrite.writeGSM(gsm, outputGsmPath);
+		writeGSM(gsm, outputGsmPath);
 	}
 	
+	public static GlyphSubstitutionModel readGSM(String gsmPath) {
+		ObjectInputStream in = null;
+		try {
+			File file = new File(gsmPath);
+			if (!file.exists()) {
+				throw new RuntimeException("Serialized GlyphSubstitutionModel file " + gsmPath + " not found");
+			}
+			in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
+			return (GlyphSubstitutionModel) in.readObject();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			if (in != null)
+				try { in.close(); } catch (IOException e) { throw new RuntimeException(e); }
+		}
+	}
+
+	public static void writeGSM(GlyphSubstitutionModel gsm, String gsmPath) {
+		ObjectOutputStream out = null;
+		try {
+			new File(gsmPath).getParentFile().mkdirs();
+			out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(gsmPath)));
+			out.writeObject(gsm);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			if (out != null)
+				try { out.close(); } catch (IOException e) { throw new RuntimeException(e); }
+		}
+	}
+
 }

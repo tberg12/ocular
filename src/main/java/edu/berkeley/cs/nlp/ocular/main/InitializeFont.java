@@ -130,8 +130,7 @@ public class InitializeFont implements Runnable {
 		try {
 			File file = new File(fontPath);
 			if (!file.exists()) {
-				System.out.println("Serialized font file " + fontPath + " not found");
-				return null;
+				throw new RuntimeException("Serialized font file " + fontPath + " not found");
 			}
 			in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
 			Object obj = in.readObject();
@@ -151,13 +150,16 @@ public class InitializeFont implements Runnable {
 	}
 
 	public static void writeFont(Font font, String fontPath) {
+		ObjectOutputStream out = null;
 		try {
 			new File(fontPath).getParentFile().mkdirs();
-			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(fontPath)));
+			out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(fontPath)));
 			out.writeObject(font);
-			out.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (out != null)
+				try { out.close(); } catch (IOException e) { throw new RuntimeException(e); }
 		}
 	}
 

@@ -289,11 +289,11 @@ public class InitializeLanguageModel implements Runnable {
 		try {
 			File file = new File(lmPath);
 			if (!file.exists()) {
-				throw new RuntimeException("Serialized lm file " + lmPath + " not found");
+				throw new RuntimeException("Serialized LanguageModel file " + lmPath + " not found");
 			}
 			in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
 			return (LanguageModel) in.readObject();
-		} catch(Exception e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
 			if (in != null)
@@ -306,13 +306,16 @@ public class InitializeLanguageModel implements Runnable {
 	}
 
 	public static void writeLM(CodeSwitchLanguageModel lm, String lmPath) {
+		ObjectOutputStream out = null;
 		try {
 			new File(lmPath).getParentFile().mkdirs();
-			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(lmPath)));
+			out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(lmPath)));
 			out.writeObject(lm);
-			out.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (out != null)
+				try { out.close(); } catch (IOException e) { throw new RuntimeException(e); }
 		}
 	}
 	
