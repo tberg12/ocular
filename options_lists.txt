@@ -88,7 +88,7 @@ Glyph substitution is the feature that allows Ocular to use a probabilistic mapp
 
 
 
-Transcribe
+### Transcribe
 ##### Main Options
 	inputDocPath
 	inputDocListPath

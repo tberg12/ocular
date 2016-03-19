@@ -505,7 +505,7 @@ Default: 8
 Number of threads to use for LFBGS during m-step.
 Default: 8
 
-Transcribe
+### Transcribe
 
 ##### Main Options
 
