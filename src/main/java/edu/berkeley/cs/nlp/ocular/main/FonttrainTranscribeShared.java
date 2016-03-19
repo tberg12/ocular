@@ -102,11 +102,11 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	@Option(gloss = "Number of threads to use for LFBGS during m-step.")
 	public static int numMstepThreads = 8;
 
-	@Option(gloss = "Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.)")
+	@Option(gloss = "Number of threads to use during emission cache computation. (Only has effect when emissionEngine is set to DEFAULT.)")
 	public static int numEmissionCacheThreads = 8;
 
-	@Option(gloss = "Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)")
-	public static int numDecodeThreads = 8;
+	@Option(gloss = "Number of threads to use for decoding. (More thread may increase speed, but may cause a loss of continuity across lines.)")
+	public static int numDecodeThreads = 1;
 
 	@Option(gloss = "Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)")
 	public static int decodeBatchSize = 32;
@@ -136,9 +136,6 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	@Option(gloss = "When using -evalInputDocPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents. Default: Use all documents in the specified path.")
 	public static int evalNumDocs = Integer.MAX_VALUE;
 
-	@Option(gloss = "When using -evalInputDocPath, the font trainer will perform an evaluation every `evalFreq` iterations. Default: Evaluate only after all iterations have completed.")
-	public static int evalFreq = Integer.MAX_VALUE; 
-	
 	@Option(gloss = "When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch, as determined by -updateDocBatchSize (in addition to after each iteration)?")
 	public static boolean evalBatches = false;
 	

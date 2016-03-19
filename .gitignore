@@ -39,5 +39,6 @@ project/plugins/project/
 .cache-tests
 .settings/
 .worksheet
+.pydevproject
 
 /bin/

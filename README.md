@@ -227,51 +227,59 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 ### InitializeLanguageModel
 
-* `-outputLmPath`:
-Output LM file path.
-Required.
+##### Required
 
 * `-inputTextPath`:
 Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: "english->texts/english/,spanish->texts/spanish/,french->texts/french/".  Be sure to wrap the whole string with "quotes".)
 Required.
 
-* `-languagePriors`:
-Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: "english->0.7,spanish->0.2,french->0.1". Be sure to wrap the whole string with "quotes". (Only relevant if multiple languages used.)
-Default: Uniform priors.
+* `-outputLmPath`:
+Output LM file path.
+Required.
 
-* `-pKeepSameLanguage`:
-Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)
-Default: 0.999999
+##### Additional Options
+
+* `-insertLongS`:
+Automatically insert "long s" characters into the language model training data?
+Default: false
 
 * `-alternateSpellingReplacementPaths`:
 Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: "english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt". Be sure to wrap the whole string with "quotes". Any languages for which no replacements are need can be safely ignored.
 Default: No alternate spelling replacements.
 
-* `-insertLongS`:
-Automatically insert "long s" characters into the langauge model training data?
-Default: false
+* `-charN`:
+LM character n-gram length.
+Default: 6
+
+##### Rarely Used Options
 
 * `-removeDiacritics`:
 Remove diacritics?
 Default: false
 
-* `-explicitCharacterSet`:
-A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters.
-Default: Allow all characters.
+* `-pKeepSameLanguage`:
+Prior probability of sticking with the same language when moving between words in a code-switch model transition model. (Only relevant if multiple languages used.)
+Default: 0.999999
 
-* `-charN`:
-LM character n-gram length.
-Default: 6
+* `-languagePriors`:
+Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: "english->0.7,spanish->0.2,french->0.1". Be sure to wrap the whole string with "quotes". (Only relevant if multiple languages used.)
+Default: Uniform priors.
 
 * `-lmPower`:
 Exponent on LM scores.
 Default: 4.0
 
+* `-explicitCharacterSet`:
+A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters.
+Default: Allow all characters.
+
 * `-lmCharCount`:
 Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.
-Default: 0
+Default: Use all documents in full.
 
 ### InitializeFont
+
+##### Required
 
 * `-inputLmPath`:
 Path to the language model file (so that it knows which characters to create images for).
@@ -281,21 +289,17 @@ Required.
 Output font file path.
 Required.
 
+##### Additional Options
+
 * `-allowedFontsPath`:
 Path to a file that contains a custom list of font names that may be used to initialize the font. The file should contain one font name per line.
 Default: Use all valid fonts found on the computer.
 
+##### Rarely Used Options
+
 * `-numFontInitThreads`:
 Number of threads to use.
 Default: 8
-
-* `-templateMaxWidthFraction`:
-Max template width as fraction of text line height.
-Default: 1.0
-
-* `-templateMinWidthFraction`:
-Min template width as fraction of text line height.
-Default: 0.0
 
 * `-spaceMaxWidthFraction`:
 Max space template width as fraction of text line height.
@@ -303,6 +307,14 @@ Default: 1.0
 
 * `-spaceMinWidthFraction`:
 Min space template width as fraction of text line height.
+Default: 0.0
+
+* `-templateMaxWidthFraction`:
+Max template width as fraction of text line height.
+Default: 1.0
+
+* `-templateMinWidthFraction`:
+Min template width as fraction of text line height.
 Default: 0.0
 
 ### TrainFont
@@ -317,16 +329,12 @@ Default: Either inputDocPath or inputDocListPath is required.
 Path to a file that contains a list of paths to images files that should be used.  The file should contain one path per line. These paths will be searched in order.  Each path may point to either a file or a directory, which will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Paths will be processed in the order given in the file, and each path will be searched in lexicographical order.
 Default: Either inputDocPath or inputDocListPath is required.
 
-* `-outputPath`:
-Path of the directory that will contain output transcriptions.
+* `-inputFontPath`:
+Path of the input font file.
 Required.
 
 * `-inputLmPath`:
 Path to the input language model file.
-Required.
-
-* `-inputFontPath`:
-Path of the input font file.
 Required.
 
 * `-numDocs`:
@@ -337,61 +345,57 @@ Default: Use all documents.
 Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.
 Default: 0
 
-* `-extractedLinesPath`:
-Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
-Default: Don't read or write line image files.
-
-##### Font Learning Options
-
-* `-outputFontPath`:
-Path to write the learned font file to.
-Required
-
 * `-numEMIters`:
 Number of iterations of EM to use for font learning.
 Default: 3
-
-* `-updateDocBatchSize`:
-Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes.
-Default: Update only after each full pass over the document set.
 
 * `-continueFromLastCompleteIteration`:
 If true, the font trainer will find the latest completed iteration in the outputPath and load it in order to pick up training from that point.  Convenient if a training run crashes when only partially completed.
 Default: false
 
-##### Language Model Re-training Options
+* `-outputPath`:
+Path of the directory that will contain output transcriptions.
+Required.
 
-* `-updateLM`:
-Should the language model be updated during font training?
+* `-outputFontPath`:
+Path to write the learned font file to.
+Required if updateFont is set to true, otherwise ignored.
+
+##### Additional Options
+
+* `-extractedLinesPath`:
+Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
+Default: Don't read or write line image files.
+
+* `-updateDocBatchSize`:
+Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with updateFont=true.
+Default: Update only after each full pass over the document set.
+
+These options affect the speed of font training
+
+* `-emissionEngine`:
+Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
+Default: DEFAULT
+
+* `-beamSize`:
+Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
+Default: 10
+
+* `-markovVerticalOffset`:
+Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
 Default: false
 
-* `-outputLmPath`:
-Path to write the retrained language model file to.
-Required if updateLM is set to true, otherwise ignored.
-
 ##### Glyph Substitution Model Options
+
+Glyph substitution is the feature that allows Ocular to use a probabilistic mapping from modern orthography (as used in the language model training text) to the orthography seen in the documents. If the glyph substitution feature is used, Ocular will jointly produce dual transcriptions: one that is an exact transcription of the document, and one that is a normalized version of the text.
 
 * `-allowGlyphSubstitution`:
 Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions.
 Default: false
 
-The following options are only relevant if allowGlyphSubstitution is set to "true".
-
 * `-inputGsmPath`:
 Path to the input glyph substitution model file. (Only relevant if allowGlyphSubstitution is set to true.)
 Default: Don't use a pre-initialized GSM. (Learn one from scratch).
-
-* `-gsmPower`:
-Exponent on GSM scores.
-Default: 4.0
-
-* `-gsmNoCharSubPrior`:
-The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions.
-Default: 0.9
-
-* `-gsmElideAnything`:
-Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?
-Default: false
 
 * `-updateGsm`:
 Should the glyph substitution model be trained (or updated) along with the font? (Only relevant if allowGlyphSubstitution is set to true.)
@@ -401,13 +405,15 @@ Default: false
 Path to write the retrained glyph substitution model file to.
 Required if updateGsm is set to true, otherwise ignored.
 
-* `-gsmSmoothingCount`:
-The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.
-Default: 1.0
+##### Language Model Training Options
 
-* `-gsmElisionSmoothingCountMultiplier`:
-gsmElisionSmoothingCountMultiplier.
-Default: 100.0
+* `-updateLM`:
+Should the language model be updated along with the font?
+Default: false
+
+* `-outputLmPath`:
+Path to write the retrained language model file to.
+Required if updateLM is set to true, otherwise ignored.
 
 ##### Line Extraction Options
 
@@ -419,71 +425,19 @@ Default: 0.12
 Crop pages?
 Default: true
 
-* `-uniformLineHeight`:
-Scale all lines to have the same height?
-Default: true
-
-##### Miscellaneous Options
-
-* `-emissionEngine`:
-Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
-Default: DEFAULT
-
-* `-beamSize`:
-Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
-Default: 10
-
-* `-cudaDeviceID`:
-GPU ID when using CUDA emission engine.
-Default: 0
-
-* `-numMstepThreads`:
-Number of threads to use for LFBGS during m-step.
-Default: 8
-
-* `-numEmissionCacheThreads`:
-Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.)
-Default: 8
-
-* `-numDecodeThreads`:
-Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)
-Default: 8
-
-* `-decodeBatchSize`:
-Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)
-Default: 32
-
-* `-paddingMinWidth`:
-Min horizontal padding between characters in pixels. (Best left at default value.)
-Default: 1
-
-* `-paddingMaxWidth`:
-Max horizontal padding between characters in pixels (Best left at default value.)
-Default: 5
-
-* `-markovVerticalOffset`:
-Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
-Default: false
-
-* `-allowLanguageSwitchOnPunct`:
-A language model to be used to assign diacritics to the transcription output.
-Default: true
-
-##### Options used if evaluation should be performed during training
+##### Evaluate During Training
 
 * `-evalInputDocPath`:
-When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
+When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`). (Only relevant if updateFont is set to true.)
 Default: Do not evaluate during font training.
-
-The following options are only relevant if a value was given to -evalInputDocPath.
-
-* `-evalExtractedLinesPath`:
-When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
-Default: Don't read or write line image files.
 
 * `-evalNumDocs`:
 When using -evalInputDocPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents.
 Default: Use all documents in the specified path.
+
+* `-evalExtractedLinesPath`:
+When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
+Default: Don't read or write line image files.
 
 * `-evalFreq`:
 When using -evalInputDocPath, the font trainer will perform an evaluation every `evalFreq` iterations.
@@ -493,7 +447,65 @@ Default: Evaluate only after all iterations have completed.
 When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch, as determined by -updateDocBatchSize (in addition to after each iteration)?
 Default: false
 
-### Transcribe
+##### Rarely Used Options
+
+* `-allowLanguageSwitchOnPunct`:
+A language model to be used to assign diacritics to the transcription output.
+Default: true
+
+* `-cudaDeviceID`:
+GPU ID when using CUDA emission engine.
+Default: 0
+
+* `-decodeBatchSize`:
+Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)
+Default: 32
+
+* `-gsmElideAnything`:
+Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?
+Default: false
+
+* `-gsmElisionSmoothingCountMultiplier`:
+gsmElisionSmoothingCountMultiplier.
+Default: 100.0
+
+* `-gsmNoCharSubPrior`:
+The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions.
+Default: 0.9
+
+* `-gsmPower`:
+Exponent on GSM scores.
+Default: 4.0
+
+* `-gsmSmoothingCount`:
+The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.
+Default: 1.0
+
+* `-paddingMaxWidth`:
+Max horizontal padding between characters in pixels (Best left at default value.)
+Default: 5
+
+* `-paddingMinWidth`:
+Min horizontal padding between characters in pixels. (Best left at default value.)
+Default: 1
+
+* `-uniformLineHeight`:
+Scale all lines to have the same height?
+Default: true
+
+* `-numDecodeThreads`:
+Number of threads to use for decoding. (More thread may increase speed, but may cause a loss of continuity across lines.)
+Default: 1
+
+* `-numEmissionCacheThreads`:
+Number of threads to use during emission cache computation. (Only has effect when emissionEngine is set to DEFAULT.)
+Default: 8
+
+* `-numMstepThreads`:
+Number of threads to use for LFBGS during m-step.
+Default: 8
+
+Transcribe
 
 ##### Main Options
 
@@ -505,16 +517,12 @@ Default: Either inputDocPath or inputDocListPath is required.
 Path to a file that contains a list of paths to images files that should be used.  The file should contain one path per line. These paths will be searched in order.  Each path may point to either a file or a directory, which will be searched recursively for any files that do not end in `.txt` (and that do not start with `.`).  Paths will be processed in the order given in the file, and each path will be searched in lexicographical order.
 Default: Either inputDocPath or inputDocListPath is required.
 
-* `-outputPath`:
-Path of the directory that will contain output transcriptions.
+* `-inputFontPath`:
+Path of the input font file.
 Required.
 
 * `-inputLmPath`:
 Path to the input language model file.
-Required.
-
-* `-inputFontPath`:
-Path of the input font file.
 Required.
 
 * `-numDocs`:
@@ -525,63 +533,67 @@ Default: Use all documents.
 Number of training documents (pages) to skip over, counting alphabetically.  Useful, in combination with -numDocs, if you want to break a directory of documents into several chunks.
 Default: 0
 
-* `-extractedLinesPath`:
-Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
-Default: Don't read or write line image files.
-
 * `-skipAlreadyTranscribedDocs`:
 If true, for each doc the outputPath will be checked for an existing transcription and if one is found then the document will be skipped.
 Default: false
 
-##### Font Learning Options
+* `-outputPath`:
+Path of the directory that will contain output transcriptions.
+Required.
 
-* `-updateFont`:
-Update the font during transcription based on the new input documents?
+##### Additional Options
+
+* `-extractedLinesPath`:
+Path of the directory where the line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
+Default: Don't read or write line image files.
+
+* `-failIfAllDocsAlreadyTranscribed`:
+If true, an exception will be thrown if all of the input documents have already been transcribed (and thus the job has nothing to do).  Ignored unless -skipAlreadyTranscribedDocs=true.
 Default: false
 
-The following options are only relevant if updateFont is set to "true".
+These options affect the speed of font training
 
-* `-outputFontPath`:
-Path to write the learned font file to.
-Required if updateFont is set to true, otherwise ignored.
+* `-emissionEngine`:
+Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
+Default: DEFAULT
 
-* `-updateDocBatchSize`:
-Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with updateFont=true.
-Default: Update only after each full pass over the document set.
+* `-beamSize`:
+Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
+Default: 10
 
-##### Language Model Re-training Options
-
-* `-updateLM`:
-Should the language model be updated during font training?
+* `-markovVerticalOffset`:
+Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
 Default: false
-
-* `-outputLmPath`:
-Path to write the retrained language model file to.
-Required if updateLM is set to true, otherwise ignored.
 
 ##### Glyph Substitution Model Options
+
+Glyph substitution is the feature that allows Ocular to use a probabilistic mapping from modern orthography (as used in the language model training text) to the orthography seen in the documents. If the glyph substitution feature is used, Ocular will jointly produce dual transcriptions: one that is an exact transcription of the document, and one that is a normalized version of the text.
 
 * `-allowGlyphSubstitution`:
 Should the model allow glyph substitutions? This includes substituted letters as well as letter elisions.
 Default: false
 
-The following options are only relevant if allowGlyphSubstitution is set to "true".
-
 * `-inputGsmPath`:
 Path to the input glyph substitution model file. (Only relevant if allowGlyphSubstitution is set to true.)
 Default: Don't use a pre-initialized GSM. (Learn one from scratch).
 
-* `-gsmPower`:
-Exponent on GSM scores.
-Default: 4.0
+##### Model Updating Options
 
-* `-gsmNoCharSubPrior`:
-The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions.
-Default: 0.9
+* `-updateDocBatchSize`:
+Number of documents to process for each parameter update.  This is useful if you are transcribing a large number of documents, and want to have Ocular slowly improve the model as it goes, which you would achieve with updateFont=true.
+Default: Update only after each full pass over the document set.
 
-* `-gsmElideAnything`:
-Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?
+For updating the font model
+
+* `-updateFont`:
+Update the font during transcription based on the new input documents?
 Default: false
+
+* `-outputFontPath`:
+Path to write the learned font file to.
+Required if updateFont is set to true, otherwise ignored.
+
+For updating the glyph substitution model
 
 * `-updateGsm`:
 Should the glyph substitution model be trained (or updated) along with the font? (Only relevant if allowGlyphSubstitution is set to true.)
@@ -591,13 +603,15 @@ Default: false
 Path to write the retrained glyph substitution model file to.
 Required if updateGsm is set to true, otherwise ignored.
 
-* `-gsmSmoothingCount`:
-The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.
-Default: 1.0
+For updating the language model
 
-* `-gsmElisionSmoothingCountMultiplier`:
-gsmElisionSmoothingCountMultiplier.
-Default: 100.0
+* `-updateLM`:
+Should the language model be updated along with the font?
+Default: false
+
+* `-outputLmPath`:
+Path to write the retrained language model file to.
+Required if updateLM is set to true, otherwise ignored.
 
 ##### Line Extraction Options
 
@@ -609,77 +623,78 @@ Default: 0.12
 Crop pages?
 Default: true
 
-* `-uniformLineHeight`:
-Scale all lines to have the same height?
-Default: true
-
-##### Miscellaneous Options
-
-* `-emissionEngine`:
-Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.
-Default: DEFAULT
-
-* `-beamSize`:
-Size of beam for Viterbi inference. (Usually in range 10-50. Increasing beam size can improve accuracy, but will reduce speed.)
-Default: 10
-
-* `-cudaDeviceID`:
-GPU ID when using CUDA emission engine.
-Default: 0
-
-* `-numMstepThreads`:
-Number of threads to use for LFBGS during m-step.
-Default: 8
-
-* `-numEmissionCacheThreads`:
-Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.)
-Default: 8
-
-* `-numDecodeThreads`:
-Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)
-Default: 8
-
-* `-decodeBatchSize`:
-Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)
-Default: 32
-
-* `-paddingMinWidth`:
-Min horizontal padding between characters in pixels. (Best left at default value.)
-Default: 1
-
-* `-paddingMaxWidth`:
-Max horizontal padding between characters in pixels (Best left at default value.)
-Default: 5
-
-* `-markovVerticalOffset`:
-Use Markov chain to generate vertical offsets. (Slower, but more accurate. Turning on Markov offsets my require larger beam size for good results.)
-Default: false
-
-* `-allowLanguageSwitchOnPunct`:
-A language model to be used to assign diacritics to the transcription output.
-Default: true
-
-##### Options used if evaluation should be performed during training
+##### Evaluate During Training
 
 * `-evalInputDocPath`:
-When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`).
+When evaluation should be done during training (after each parameter update in EM), this is the path of the directory that contains the evaluation input document images. The entire directory will be recursively searched for any files that do not end in `.txt` (and that do not start with `.`). (Only relevant if updateFont is set to true.)
 Default: Do not evaluate during font training.
-
-The following options are only relevant if a value was given to -evalInputDocPath.
-
-* `-evalExtractedLinesPath`:
-When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
-Default: Don't read or write line image files.
 
 * `-evalNumDocs`:
 When using -evalInputDocPath, this is the number of documents that will be evaluated on. Ignore or use 0 to use all documents.
 Default: Use all documents in the specified path.
 
-* `-evalFreq`:
-When using -evalInputDocPath, the font trainer will perform an evaluation every `evalFreq` iterations.
-Default: Evaluate only after all iterations have completed.
-
 * `-evalBatches`:
 When using -evalInputDocPath, on iterations in which we run the evaluation, should the evaluation be run after each batch, as determined by -updateDocBatchSize (in addition to after each iteration)?
 Default: false
 
+* `-evalExtractedLinesPath`:
+When using -evalInputDocPath, this is the path of the directory where the evaluation line-extraction images should be read/written.  If the line files exist here, they will be used; if not, they will be extracted and then written here.  Useful if: 1) you plan to run Ocular on the same documents multiple times and you want to save some time by not re-extracting the lines, or 2) you use an alternate line extractor (such as Tesseract) to pre-process the document.  If ignored, the document will simply be read from the original document image file, and no line images will be written.
+Default: Don't read or write line image files.
+
+##### Rarely Used Options
+
+* `-allowLanguageSwitchOnPunct`:
+A language model to be used to assign diacritics to the transcription output.
+Default: true
+
+* `-cudaDeviceID`:
+GPU ID when using CUDA emission engine.
+Default: 0
+
+* `-decodeBatchSize`:
+Number of lines that compose a single decode batch. (Smaller batch size can reduce memory consumption.)
+Default: 32
+
+* `-gsmElideAnything`:
+Should the GSM be allowed to elide letters even without the presence of an elision-marking tilde?
+Default: false
+
+* `-gsmElisionSmoothingCountMultiplier`:
+gsmElisionSmoothingCountMultiplier.
+Default: 100.0
+
+* `-gsmNoCharSubPrior`:
+The prior probability of not-substituting the LM char. This includes substituted letters as well as letter elisions.
+Default: 0.9
+
+* `-gsmPower`:
+Exponent on GSM scores.
+Default: 4.0
+
+* `-gsmSmoothingCount`:
+The default number of counts that every glyph gets in order to smooth the glyph substitution model estimation.
+Default: 1.0
+
+* `-paddingMaxWidth`:
+Max horizontal padding between characters in pixels (Best left at default value.)
+Default: 5
+
+* `-paddingMinWidth`:
+Min horizontal padding between characters in pixels. (Best left at default value.)
+Default: 1
+
+* `-uniformLineHeight`:
+Scale all lines to have the same height?
+Default: true
+
+* `-numDecodeThreads`:
+Number of threads to use for decoding. (More thread may increase speed, but may cause a loss of continuity across lines.)
+Default: 1
+
+* `-numEmissionCacheThreads`:
+Number of threads to use during emission cache computation. (Only has effect when emissionEngine is set to DEFAULT.)
+Default: 8
+
+* `-numMstepThreads`:
+Number of threads to use for LFBGS during m-step.
+Default: 8

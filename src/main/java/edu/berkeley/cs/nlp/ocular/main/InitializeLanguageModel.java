@@ -61,7 +61,7 @@ public class InitializeLanguageModel implements Runnable {
 	@Option(gloss = "Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: \"english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt\". Be sure to wrap the whole string with \"quotes\". Any languages for which no replacements are need can be safely ignored.")
 	public static String alternateSpellingReplacementPaths = null; // No alternate spelling replacements.
 	
-	@Option(gloss = "Automatically insert \"long s\" characters into the langauge model training data?")
+	@Option(gloss = "Automatically insert \"long s\" characters into the language model training data?")
 	public static boolean insertLongS = false;
 	
 	@Option(gloss = "Remove diacritics?")
@@ -76,7 +76,7 @@ public class InitializeLanguageModel implements Runnable {
 	@Option(gloss = "Exponent on LM scores.")
 	public static double lmPower = 4.0;
 	
-	@Option(gloss = "Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.")
+	@Option(gloss = "Number of characters to use for training the LM.  Use 0 to indicate that the full training data should be used.  Default: Use all documents in full.")
 	public static long lmCharCount = 0;
 
 	

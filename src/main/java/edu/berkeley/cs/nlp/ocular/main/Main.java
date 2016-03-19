@@ -84,7 +84,7 @@ public class Main implements Runnable {
 	@Option(gloss = "Number of threads to use for LFBGS during m-step.")
 	public static int numMstepThreads = 8;
 
-	@Option(gloss = "Number of threads to use during emission cache compuation. (Only has affect when emissionEngine is set to DEFAULT.)")
+	@Option(gloss = "Number of threads to use during emission cache computation. (Only has affect when emissionEngine is set to DEFAULT.)")
 	public static int numEmissionCacheThreads = 8;
 
 	@Option(gloss = "Number of threads to use for decoding. (Should be no smaller than decodeBatchSize.)")

@@ -223,7 +223,7 @@ public class TranscribeOrTrainFontGUI {
 //		label_numMstepThreads.setHorizontalAlignment(SwingConstants.TRAILING);
 //		panel_labels.add(label_numMstepThreads);
 //		label_numEmissionCacheThreads = new JLabel("Number of emission cache threads ");
-//		label_numEmissionCacheThreads.setToolTipText("Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.) Default: 8");
+//		label_numEmissionCacheThreads.setToolTipText("Number of threads to use during emission cache computation. (Only has effect when emissionEngine is set to DEFAULT.) Default: 8");
 //		label_numEmissionCacheThreads.setHorizontalAlignment(SwingConstants.TRAILING);
 //		panel_labels.add(label_numEmissionCacheThreads);
 //		label_numDecodeThreads = new JLabel("Number of decode threads ");
@@ -340,7 +340,7 @@ public class TranscribeOrTrainFontGUI {
 //		input_numMstepThreads.setText("8");
 //		panel_inputs.add(input_numMstepThreads);
 //		input_numEmissionCacheThreads = new JTextField();
-//		input_numEmissionCacheThreads.setToolTipText("Number of threads to use during emission cache compuation. (Only has effect when emissionEngine is set to DEFAULT.) Default: 8");
+//		input_numEmissionCacheThreads.setToolTipText("Number of threads to use during emission cache computation. (Only has effect when emissionEngine is set to DEFAULT.) Default: 8");
 //		input_numEmissionCacheThreads.setText("8");
 //		panel_inputs.add(input_numEmissionCacheThreads);
 //		input_numDecodeThreads = new JTextField();

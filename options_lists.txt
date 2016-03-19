@@ -1,0 +1,152 @@
+### InitializeLanguageModel
+##### Required
+	inputTextPath
+	outputLmPath
+##### Additional Options
+	insertLongS
+	alternateSpellingReplacementPaths
+	charN
+##### Rarely Used Options
+	removeDiacritics
+	pKeepSameLanguage
+	languagePriors
+	lmPower
+	explicitCharacterSet
+	lmCharCount
+
+
+
+### InitializeFont
+##### Required
+	inputLmPath
+	outputFontPath
+##### Additional Options
+	allowedFontsPath
+##### Rarely Used Options
+	numFontInitThreads
+	spaceMaxWidthFraction
+	spaceMinWidthFraction
+	templateMaxWidthFraction
+	templateMinWidthFraction
+
+
+
+### TrainFont
+##### Main Options
+	inputDocPath
+	inputDocListPath
+	inputFontPath
+	inputLmPath
+	numDocs
+	numDocsToSkip
+	numEMIters
+	continueFromLastCompleteIteration
+	outputPath
+	outputFontPath
+##### Additional Options
+	extractedLinesPath
+	updateDocBatchSize
+These options affect the speed of font training
+	emissionEngine
+	beamSize
+	markovVerticalOffset
+##### Glyph Substitution Model Options
+Glyph substitution is the feature that allows Ocular to use a probabilistic mapping from modern orthography (as used in the language model training text) to the orthography seen in the documents. If the glyph substitution feature is used, Ocular will jointly produce dual transcriptions: one that is an exact transcription of the document, and one that is a normalized version of the text.
+	allowGlyphSubstitution
+	inputGsmPath
+	updateGsm
+	outputGsmPath
+##### Language Model Training Options
+	updateLM
+	outputLmPath
+##### Line Extraction Options
+	binarizeThreshold
+	crop
+##### Evaluate During Training
+	evalInputDocPath
+	evalNumDocs
+	evalExtractedLinesPath
+	evalFreq
+	evalBatches
+##### Rarely Used Options
+	allowLanguageSwitchOnPunct
+	cudaDeviceID
+	decodeBatchSize
+	gsmElideAnything
+	gsmElisionSmoothingCountMultiplier
+	gsmNoCharSubPrior
+	gsmPower
+	gsmSmoothingCount
+	paddingMaxWidth
+	paddingMinWidth
+	uniformLineHeight
+	numDecodeThreads
+	numEmissionCacheThreads
+	numMstepThreads
+
+
+
+
+
+Transcribe
+##### Main Options
+	inputDocPath
+	inputDocListPath
+	inputFontPath
+	inputLmPath
+	numDocs
+	numDocsToSkip
+	skipAlreadyTranscribedDocs
+	outputPath
+##### Additional Options
+	extractedLinesPath
+	failIfAllDocsAlreadyTranscribed
+These options affect the speed of font training
+	emissionEngine
+	beamSize
+	markovVerticalOffset
+##### Glyph Substitution Model Options
+Glyph substitution is the feature that allows Ocular to use a probabilistic mapping from modern orthography (as used in the language model training text) to the orthography seen in the documents. If the glyph substitution feature is used, Ocular will jointly produce dual transcriptions: one that is an exact transcription of the document, and one that is a normalized version of the text.
+	allowGlyphSubstitution
+	inputGsmPath
+##### Model Updating Options
+	updateDocBatchSize
+For updating the font model
+	updateFont
+	outputFontPath
+For updating the glyph substitution model
+	updateGsm
+	outputGsmPath
+For updating the language model
+	updateLM
+	outputLmPath
+##### Line Extraction Options
+	binarizeThreshold
+	crop
+##### Evaluate During Training
+	evalInputDocPath
+	evalNumDocs
+	evalBatches
+	evalExtractedLinesPath
+##### Rarely Used Options
+	allowLanguageSwitchOnPunct
+	cudaDeviceID
+	decodeBatchSize
+	gsmElideAnything
+	gsmElisionSmoothingCountMultiplier
+	gsmNoCharSubPrior
+	gsmPower
+	gsmSmoothingCount
+	paddingMaxWidth
+	paddingMinWidth
+	uniformLineHeight
+	numDecodeThreads
+	numEmissionCacheThreads
+	numMstepThreads
+
+
+
+
+
+
+
