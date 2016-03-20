@@ -1,5 +1,7 @@
 from __future__ import print_function
+from collections import defaultdict
 import re
+
 
 main_dir = "src/main/java/edu/berkeley/cs/nlp/ocular/main/"
 
@@ -135,9 +137,7 @@ for (name, list_opts) in program_options.iteritems():
     assert set(list_opts) == set(source_options), "%s" % ((set(list_opts) | set(source_options)) - (set(list_opts) & set(source_options)))
 
 
-
-
-
+# Print out the README content
 program_options = dict()
 with open('options_lists.txt') as olf:
     for program_options_lines in split_on_blanks(no_newlines(olf)):
@@ -153,6 +153,15 @@ with open('options_lists.txt') as olf:
                 print(line)
             print()
 
+
+# Check that option descriptions are consistent
+option_all_descriptions = defaultdict(list)
+for (c,os) in class_to_options.iteritems():
+	for (o,d) in os.iteritems():
+		option_all_descriptions[o].append((d,c))
+for (o,ds) in option_all_descriptions.iteritems():
+	if len(set(d for (d,c) in ds)) > 1:
+		print("MULTIPLE DESCRIPTIONS FOUND: %s: %s" % (o, '\n   '.join(['']+sorted(map(str,ds)))))
 
 
 

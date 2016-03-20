@@ -101,7 +101,7 @@ Glyph substitution is the feature that allows Ocular to use a probabilistic mapp
 ##### Additional Options
 	extractedLinesPath
 	failIfAllDocsAlreadyTranscribed
-These options affect the speed of font training
+These options affect the speed of transcription
 	emissionEngine
 	beamSize
 	markovVerticalOffset
