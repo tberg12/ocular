@@ -261,7 +261,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		}
 
 		public BasicGlyphSubstitutionModel make(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId) {
-			System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+batchId);
 			// Normalize counts to get probabilities
 			double[/*language*/][/*lmChar*/][/*glyph*/] probs = new double[numLanguages][numChars][numGlyphs];
 			for (int language = 0; language < numLanguages; ++language) {
@@ -288,8 +287,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		}
 
 		public BasicGlyphSubstitutionModel makeForEval(double[/*language*/][/*lmChar*/][/*glyph*/] counts, int iter, int batchId, double minCountsForEvalGsm) {
-			if (minCountsForEvalGsm < 1)
+			if (minCountsForEvalGsm < 1) {
+				System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+batchId);
 				return make(counts, iter, batchId);
+			}
 			else {
 				// Normalize counts to get probabilities
 				double[/*language*/][/*lmChar*/][/*glyph*/] evalCounts = new double[numLanguages][numChars][numGlyphs];

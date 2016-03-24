@@ -23,14 +23,13 @@ import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import fig.Option;
-import fig.OptionsParser;
 import indexer.Indexer;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class Transcribe extends FonttrainTranscribeShared implements Runnable {
+public class Transcribe extends FonttrainTranscribeShared {
 
 	@Option(gloss = "If true, for each doc the outputPath will be checked for an existing transcription and if one is found then the document will be skipped.")
 	public static boolean skipAlreadyTranscribedDocs = false;
@@ -43,17 +42,13 @@ public class Transcribe extends FonttrainTranscribeShared implements Runnable {
 	
 
 	public static void main(String[] args) {
-		System.out.println("Transcribe \n" + toArgListString(args) + "\n");
+		System.out.println("Transcribe");
 		Transcribe main = new Transcribe();
-		OptionsParser parser = new OptionsParser();
-		parser.doRegisterAll(new Object[] { main });
-		if (!parser.doParse(args)) System.exit(1);
-		validateOptions();
-		main.run();
+		main.doMain(main, args);
 	}
 
-	protected static void validateOptions() {
-		FonttrainTranscribeShared.validateOptions();
+	protected void validateOptions() {
+		super.validateOptions();
 		
 		if (updateFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath is required when -updateFont is true.");
 		if (!updateFont && outputFontPath != null) throw new IllegalArgumentException("-outputFontPath not permitted when -updateFont is false.");
@@ -125,8 +120,6 @@ public class Transcribe extends FonttrainTranscribeShared implements Runnable {
 			MultiDocumentTranscriber transcriber = new BasicMultiDocumentTranscriber(inputDocuments, newInputDocPath, outputPath, decoderEM, documentOutputPrinterAndEvaluator, charIndexer);
 			transcriber.transcribe(initialFont, initialLM, initialGSM);
 		}
-		
-		System.out.println("Completed.");
 	}
 
 }

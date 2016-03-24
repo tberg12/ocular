@@ -1,7 +1,5 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.toArgListString;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -22,7 +20,6 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import fig.Option;
-import fig.OptionsParser;
 import fileio.f;
 import indexer.Indexer;
 import threading.BetterThreader;
@@ -30,7 +27,7 @@ import threading.BetterThreader;
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  */
-public class InitializeFont implements Runnable {
+public class InitializeFont extends OcularRunnable {
 
 	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
 	public static String inputLmPath = null; // Required.
@@ -57,14 +54,13 @@ public class InitializeFont implements Runnable {
 	public static double spaceMinWidthFraction = 0.0;
 	
 	
-	public static void main(String[] args) {
-		System.out.println("InitializeFont \n" + toArgListString(args) + "\n");
+	public void main(String[] args) {
+		System.out.println("InitializeFont");
 		InitializeFont main = new InitializeFont();
-		OptionsParser parser = new OptionsParser();
-		parser.doRegisterAll(new Object[] {main});
-		if (!parser.doParse(args)) System.exit(1);
-		main.run();
+		main.doMain(main, args);
 	}
+	
+	protected void validateOptions() {}
 
 	public void run() {
 		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");

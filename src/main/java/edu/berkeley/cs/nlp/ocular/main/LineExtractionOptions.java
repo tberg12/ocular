@@ -7,7 +7,7 @@ import java.util.List;
 import fig.Option;
 import fileio.f;
 
-public abstract class LineExtractionOptions {
+public abstract class LineExtractionOptions extends OcularRunnable {
 
 	// Main Options
 	
@@ -37,9 +37,9 @@ public abstract class LineExtractionOptions {
 	@Option(gloss = "Scale all lines to have the same height?")
 	public static boolean uniformLineHeight = true;
 	
-	//
+
 	
-	protected static void validateOptions() {
+	protected void validateOptions() {
 		if ((inputDocPath == null) == (inputDocListPath == null)) throw new IllegalArgumentException("Either -inputDocPath or -inputDocListPath is required.");
 		if (inputDocPath != null)
 			for (String path : inputDocPath.split("[\\s,;:]+"))

@@ -1,7 +1,5 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
-import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.toArgListString;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -16,13 +14,12 @@ import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubs
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import fig.Option;
-import fig.OptionsParser;
 import indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class InitializeGlyphSubstitutionModel implements Runnable {
+public class InitializeGlyphSubstitutionModel extends OcularRunnable {
 	
 	@Option(gloss = "Path to the language model file (so that it knows which characters to create images for).")
 	public static String inputLmPath = null; // Required.
@@ -40,13 +37,12 @@ public class InitializeGlyphSubstitutionModel implements Runnable {
 	public static double gsmPower = 4.0;
 
 	public static void main(String[] args) {
-		System.out.println("InitializeGlyphSubstitutionModel \n" + toArgListString(args) + "\n");
+		System.out.println("InitializeGlyphSubstitutionModel");
 		InitializeGlyphSubstitutionModel main = new InitializeGlyphSubstitutionModel();
-		OptionsParser parser = new OptionsParser();
-		parser.doRegisterAll(new Object[] {main});
-		if (!parser.doParse(args)) System.exit(1);
-		main.run();
+		main.doMain(main, args);
 	}
+
+	protected void validateOptions() {}
 
 	public void run() {
 		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
@@ -66,8 +62,10 @@ public class InitializeGlyphSubstitutionModel implements Runnable {
 				langIndexer, charIndexer, 
 				activeCharacterSets, gsmPower, minCountsForEvalGsm, outputPath);
 		
+		System.out.println("Initializing a uniform GSM.");
 		GlyphSubstitutionModel gsm = factory.uniform();
 		
+		System.out.println("Writing intialized gsm to " + outputGsmPath);
 		writeGSM(gsm, outputGsmPath);
 	}
 	

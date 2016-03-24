@@ -201,6 +201,7 @@ public class FontTrainer {
 					backwardTransitionModel = new DenseBigramTransitionModel(lm);
 				}
 				if (outputGsmPath != null) {
+					System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+completedBatchesInIteration);
 					gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
 					String writePath = writeIntermediateModelsToTemp ? makeGsmPath(outputPath, iter, completedBatchesInIteration) : outputGsmPath;
 					System.out.println("Writing updated gsm to " + writePath);

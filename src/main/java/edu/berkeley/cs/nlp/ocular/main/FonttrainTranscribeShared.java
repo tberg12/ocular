@@ -143,8 +143,8 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 
 	//
 	
-	protected static void validateOptions() {
-		LineExtractionOptions.validateOptions();
+	protected void validateOptions() {
+		super.validateOptions();
 
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		
@@ -275,17 +275,4 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 		}
 	}
 	
-	public static String toArgListString(String[] args) {
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < args.length; ++i) {
-		  if (i % 2 == 0) 
-			  sb.append("  " + args[i]);
-		  else 
-			  sb.append(" " + args[i] + "\n");
-		}
-		if (sb.codePointAt(sb.length()-1) != '\n')
-			sb.append("\n");
-		return sb.toString();
-	}
-
 }
