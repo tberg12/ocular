@@ -60,12 +60,12 @@ public class InitializeFont extends OcularRunnable {
 		main.doMain(main, args);
 	}
 	
-	protected void validateOptions() {}
-
-	public void run() {
+	protected void validateOptions() {
 		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (outputFontPath == null) throw new IllegalArgumentException("-fontPath not set");
+	}
 
+	public void run() {
 		Set<String> allowedFonts = getAllowedFontsListFromFile();
 		
 		final LanguageModel lm = InitializeLanguageModel.readLM(inputLmPath);

@@ -42,12 +42,12 @@ public class InitializeGlyphSubstitutionModel extends OcularRunnable {
 		main.doMain(main, args);
 	}
 
-	protected void validateOptions() {}
-
-	public void run() {
+	protected void validateOptions() {
 		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (outputGsmPath == null) throw new IllegalArgumentException("-fontPath not set");
+	}
 
+	public void run() {
 		final CodeSwitchLanguageModel lm = InitializeLanguageModel.readCodeSwitchLM(inputLmPath);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final Indexer<String> langIndexer = lm.getLanguageIndexer();

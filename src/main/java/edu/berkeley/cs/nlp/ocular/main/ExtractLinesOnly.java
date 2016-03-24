@@ -16,6 +16,11 @@ public class ExtractLinesOnly extends LineExtractionOptions {
 		main.doMain(main, args);
 	}
 		
+	protected void validateOptions() {
+		super.validateOptions();
+		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath is required.");
+	}
+
 	public void run() {
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
@@ -25,10 +30,4 @@ public class ExtractLinesOnly extends LineExtractionOptions {
 		}
 	}
 	
-	protected void validateOptions() {
-		super.validateOptions();
-		
-		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath is required.");
-	}
-
 }

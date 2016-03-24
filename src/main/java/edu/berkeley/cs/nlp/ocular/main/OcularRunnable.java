@@ -5,6 +5,9 @@ import java.util.Date;
 
 import fig.OptionsParser;
 
+/**
+ * @author Dan Garrette (dhgarrette@gmail.com)
+ */
 abstract class OcularRunnable implements Runnable {
 
 	private SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
