@@ -1,5 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.toArgListString;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 
 import java.io.File;
@@ -81,6 +82,7 @@ public class InitializeLanguageModel implements Runnable {
 
 	
 	public static void main(String[] args) {
+		System.out.println("InitializeLanguageModel \n" + toArgListString(args) + "\n");
 		InitializeLanguageModel main = new InitializeLanguageModel();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });

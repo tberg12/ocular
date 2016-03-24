@@ -1,5 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.toArgListString;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -56,6 +58,7 @@ public class InitializeFont implements Runnable {
 	
 	
 	public static void main(String[] args) {
+		System.out.println("InitializeFont \n" + toArgListString(args) + "\n");
 		InitializeFont main = new InitializeFont();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] {main});

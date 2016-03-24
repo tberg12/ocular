@@ -1,5 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.toArgListString;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -38,6 +40,7 @@ public class InitializeGlyphSubstitutionModel implements Runnable {
 	public static double gsmPower = 4.0;
 
 	public static void main(String[] args) {
+		System.out.println("InitializeGlyphSubstitutionModel \n" + toArgListString(args) + "\n");
 		InitializeGlyphSubstitutionModel main = new InitializeGlyphSubstitutionModel();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] {main});

@@ -1,5 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
+import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.toArgListString;
+
 import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
@@ -9,9 +11,10 @@ import fig.OptionsParser;
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class ExtractLinesOnly extends FonttrainTranscribeShared implements Runnable {
+public class ExtractLinesOnly extends LineExtractionOptions implements Runnable {
 
 	public static void main(String[] args) {
+		System.out.println("ExtractLinesOnly \n" + toArgListString(args) + "\n");
 		ExtractLinesOnly main = new ExtractLinesOnly();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });

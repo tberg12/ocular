@@ -274,5 +274,18 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 			return new MultiDocumentTranscriber.NoOpMultiDocumentTranscriber();
 		}
 	}
+	
+	public static String toArgListString(String[] args) {
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < args.length; ++i) {
+		  if (i % 2 == 0) 
+			  sb.append("  " + args[i]);
+		  else 
+			  sb.append(" " + args[i] + "\n");
+		}
+		if (sb.codePointAt(sb.length()-1) != '\n')
+			sb.append("\n");
+		return sb.toString();
+	}
 
 }

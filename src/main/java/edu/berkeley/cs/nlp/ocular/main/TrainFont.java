@@ -8,8 +8,8 @@ import edu.berkeley.cs.nlp.ocular.eval.BasicSingleDocumentEvaluatorAndOutputPrin
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
 import edu.berkeley.cs.nlp.ocular.font.Font;
-import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
+import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
@@ -36,6 +36,7 @@ public class TrainFont extends FonttrainTranscribeShared implements Runnable {
 	
 
 	public static void main(String[] args) {
+		System.out.println("TrainFont \n" + toArgListString(args) + "\n");
 		TrainFont main = new TrainFont();
 		OptionsParser parser = new OptionsParser();
 		parser.doRegisterAll(new Object[] { main });
