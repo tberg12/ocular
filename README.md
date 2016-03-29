@@ -110,7 +110,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 1. Initialize a language model:
 
-  Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-inputTextPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-lmPath` to specify where the trained LM should be written.
+  Acquire some files with text written in the language(s) of your documents. For example, download a book in [English](http://www.gutenberg.org/cache/epub/2600/pg2600.txt). The path specified by `-inputTextPath` should point to a text file or directory or directory hierarchy of text files; the path will be searched recursively for files.  Use `-outputLmPath` to specify where the trained LM should be written.
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -inputTextPath texts/pg2600.txt \
@@ -129,7 +129,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
 2. Initialize a font:
 
-  Before a font can be trained from texts, a font model consisting of a "guess" for each character must be initialized based on the fonts on your computer.  Use `-outputFontPath` to specify where the initialized font should be written.  Since different languages use different character sets, a language model must be given in order for the system to know what characters to initialize (`-lmPath`).
+  Before a font can be trained from texts, a font model consisting of a "guess" for each character must be initialized based on the fonts on your computer.  Use `-outputFontPath` to specify where the initialized font should be written.  Since different languages use different character sets, a language model must be given in order for the system to know what characters to initialize (`-inputLmPath`).
 
       java -Done-jar.main.class=edu.berkeley.cs.nlp.ocular.main.InitializeFont -mx7g -jar ocular-0.3-SNAPSHOT-with_dependencies.jar \
         -inputLmPath lm/trilingual.lmser \
