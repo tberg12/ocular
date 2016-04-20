@@ -98,10 +98,10 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   To incorporate Ocular into a larger project, you may use a dependency management system like Maven or SBT with the following information:
 
-    * Repository location: http://www.cs.utexas.edu/~dhg/maven-repository/snapshots
-    * Group ID: edu.berkeley.cs.nlp
-    * Artifact ID: ocular
-    * Version: 0.3-SNAPSHOT
+    Repository location: http://www.cs.utexas.edu/~dhg/maven-repository/snapshots
+    Group ID: edu.berkeley.cs.nlp
+    Artifact ID: ocular
+    Version: 0.3-SNAPSHOT
     
 
 
