@@ -42,7 +42,7 @@ public class DenseBigramTransitionModel {
 		}
 	}
 	
-	public double endLogProb(int c) {
+	public double endLogProb(@SuppressWarnings("unused") int c) {
 		return 0.0;
 	}
 	

@@ -32,7 +32,7 @@ public class LazyRawImageLoader {
 	public static List<Document> loadDocuments(List<String> inputPaths, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
 		List<Document> lazyDocs = new ArrayList<Document>();
 		for (String inputPath : inputPaths) {
-			lazyDocs.addAll(loadDocumentsFromDir(inputPath, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop));
+			lazyDocs.addAll(loadDocumentsFromDir(inputPath, extractedLinesPath, uniformLineHeight, binarizeThreshold, crop));
 		}
 
 		int actualNumDocsToSkip = Math.min(lazyDocs.size(), numDocsToSkip);
@@ -52,7 +52,7 @@ public class LazyRawImageLoader {
 		return documents;
 	}
 	
-	private static List<Document> loadDocumentsFromDir(String inputPath, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
+	private static List<Document> loadDocumentsFromDir(String inputPath, String extractedLinesPath, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
 		int lineHeight = uniformLineHeight ? CharacterTemplate.LINE_HEIGHT : -1;
 
 		File dir = new File(inputPath);

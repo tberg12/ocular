@@ -54,7 +54,7 @@ public class InitializeFont extends OcularRunnable {
 	public static double spaceMinWidthFraction = 0.0;
 	
 	
-	public void main(String[] args) {
+	public static void main(String[] args) {
 		System.out.println("InitializeFont");
 		InitializeFont main = new InitializeFont();
 		main.doMain(main, args);
@@ -124,6 +124,7 @@ public class InitializeFont extends OcularRunnable {
 //		return fAndBarFontPixelData.toArray(new PixelType[0][][]);
 //	}
 	
+	@SuppressWarnings("unchecked")
 	public static Font readFont(String fontPath) {
 		ObjectInputStream in = null;
 		try {

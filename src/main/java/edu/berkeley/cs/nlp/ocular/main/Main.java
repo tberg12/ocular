@@ -232,7 +232,7 @@ public class Main implements Runnable {
 
 				// evaluate
 
-				printTranscription(iter, numEMIters, doc, allEvals, text, decodeStates, charIndexer);
+				printTranscription(iter, doc, allEvals, text, decodeStates, charIndexer);
 
 			}
 
@@ -293,7 +293,7 @@ public class Main implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, int numIters, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer) {
+	private static void printTranscription(int iter, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer) {
 		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[decodeStates.length];
 		for (int line=0; line<decodeStates.length; ++line) {

@@ -182,7 +182,7 @@ public class ExperimentsMain implements Runnable {
 				System.out.println("Iteration "+iter+": "+logJointProb);
 
 				// visualize
-				printTranscription(iter, numEMIters, doc, allEvals, pixels, text, decodeStates, decodeWidths, charIndexer, templates, emissionModel);
+				printTranscription(iter, doc, allEvals, pixels, text, decodeStates, decodeWidths, charIndexer, templates, emissionModel);
 
 				if (iter < numEMIters-1) {
 					// m-step
@@ -246,7 +246,7 @@ public class ExperimentsMain implements Runnable {
 		System.out.println(buf.toString());
 	}
 	
-	private static void printTranscription(int iter, int numIters, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, PixelType[][][] pixels, String[][] text, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, CharacterTemplate[] templates, EmissionModel emissionModel) {
+	private static void printTranscription(int iter, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, PixelType[][][] pixels, String[][] text, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, CharacterTemplate[] templates, EmissionModel emissionModel) {
 		if (evaluate || writeVisuals || popupVisuals) {
 			@SuppressWarnings("unchecked")
 			List<Integer>[] segmentBoundaries = new List[pixels.length];
