@@ -1,5 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.model.em;
 
+/**
+ * @author Dan Garrette (dhgarrette@gmail.com)
+ */
 public class EmptyBeamException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 

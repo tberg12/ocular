@@ -15,6 +15,9 @@ import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubs
 import indexer.HashMapIndexer;
 import indexer.Indexer;
 
+/**
+ * @author Dan Garrette (dhgarrette@gmail.com)
+ */
 public class BasicGlyphSubstitutionModelTests {
 
 	@Test

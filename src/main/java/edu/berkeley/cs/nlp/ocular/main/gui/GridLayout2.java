@@ -8,7 +8,11 @@ package edu.berkeley.cs.nlp.ocular.main.gui;
 
 import java.awt.*;
 
-// Grid Layout which allows components of differrent sizes
+/**
+ * Grid Layout which allows components of different sizes
+ * 
+ * @author 
+ */
 public class GridLayout2 extends GridLayout {
   private static final long serialVersionUID = 1L;
 

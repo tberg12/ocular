@@ -13,6 +13,9 @@ import java.util.Set;
 
 import org.junit.Test;
 
+/**
+ * @author Dan Garrette (dhgarrette@gmail.com)
+ */
 public class CollectionHelperTests {
 
 	@Test

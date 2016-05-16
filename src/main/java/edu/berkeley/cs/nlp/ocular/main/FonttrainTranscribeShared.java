@@ -29,6 +29,10 @@ import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel.EmissionModelFact
 import fig.Option;
 import indexer.Indexer;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ * @author Dan Garrette (dhgarrette@gmail.com)
+ */
 public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")

@@ -7,6 +7,9 @@ import java.util.List;
 import fig.Option;
 import fileio.f;
 
+/**
+ * @author Dan Garrette (dhgarrette@gmail.com)
+ */
 public abstract class LineExtractionOptions extends OcularRunnable {
 
 	// Main Options
