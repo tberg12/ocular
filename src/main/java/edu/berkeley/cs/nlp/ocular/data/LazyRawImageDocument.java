@@ -69,7 +69,8 @@ public abstract class LazyRawImageDocument implements Document {
 		      }
 		      else { // pre-extraction has not been done yet; do it now.
 		      	doLoadObservationsFromFile(); // load data from original file
-        		doWriteExtractedLines(); // write extracted lines to files so they don't have to be re-extracted next time
+		      	writeExtractedLineImagesAggregateFile();
+        		writeIndividualExtractedLineImageFiles(); // write extracted lines to files so they don't have to be re-extracted next time
 		      }
 	      }
     }
@@ -125,13 +126,25 @@ public abstract class LazyRawImageDocument implements Document {
 		}
 	}
 
-	private void doWriteExtractedLines() {
-		String multilineExtractionImagePath = multilineExtractionImagePath();
+	/**
+	 * Write all extracted lines to a single file for easy viewing
+	 * 
+	 * @multilineExtractionImagePath The path of the file to write to.
+	 */
+	public void writeExtractedLineImagesAggregateFile(String multilineExtractionImagePath) {
 		System.out.println("Writing file line-extraction image to: " + multilineExtractionImagePath);
 		new File(multilineExtractionImagePath).getParentFile().mkdirs();
 		f.writeImage(multilineExtractionImagePath, Visualizer.renderLineExtraction(observations));
-		
-		// Write individual line files
+	}
+	
+	/**
+	 * Write all extracted lines to a single file for easy viewing
+	 */
+	public void writeExtractedLineImagesAggregateFile() {
+		writeExtractedLineImagesAggregateFile(multilineExtractionImagePath());
+	}
+	
+	public void writeIndividualExtractedLineImageFiles() {
 		new File(leLineDir()).mkdirs();
 		for (int l = 0; l < observations.length; ++l) {
 			PixelType[][] observationLine = observations[l];
