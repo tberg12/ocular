@@ -46,7 +46,7 @@ with open('options_lists.txt') as olf:
 
 
 main_class_names = ["InitializeLanguageModel", "InitializeFont", "TrainFont", "Transcribe"]
-class_file_names = main_class_names+["FonttrainTranscribeShared", "LineExtractionOptions"]
+class_file_names = main_class_names+["FonttrainTranscribeShared", "LineExtractionOptions", "OcularRunnable"]
 assert not ((set(program_options) | set(main_class_names)) - (set(program_options) & set(main_class_names))), '%s' % ((set(program_options) | set(main_class_names)) - (set(program_options) & set(main_class_names)))
 
 

@@ -239,17 +239,21 @@ Required.
 
 ##### Additional Options
 
+* `-minCharCount`:
+Number of times the character must be seen in order to be included.
+Default: 10
+
 * `-insertLongS`:
 Automatically insert "long s" characters into the language model training data?
 Default: false
 
-* `-alternateSpellingReplacementPaths`:
-Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: "english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt". Be sure to wrap the whole string with "quotes". Any languages for which no replacements are need can be safely ignored.
-Default: No alternate spelling replacements.
-
 * `-charN`:
 LM character n-gram length.
 Default: 6
+
+* `-alternateSpellingReplacementPaths`:
+Paths to Alternate Spelling Replacement files. If just a simple path is given, the replacements will be applied to all languages.  For language-specific replacements, give multiple comma-separated language/path pairs: "english->rules/en.txt,spanish->rules/sp.txt,french->rules/fr.txt". Be sure to wrap the whole string with "quotes". Any languages for which no replacements are need can be safely ignored.
+Default: No alternate spelling replacements.
 
 ##### Rarely Used Options
 
