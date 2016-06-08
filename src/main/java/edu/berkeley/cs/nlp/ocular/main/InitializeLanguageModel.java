@@ -51,6 +51,9 @@ public class InitializeLanguageModel extends OcularRunnable {
 	@Option(gloss = "Path to the text files (or directory hierarchies) for training the LM.  For each entry, the entire directory will be recursively searched for any files that do not start with `.`.  For a multilingual (code-switching) model, give multiple comma-separated files with language names: \"english->texts/english/,spanish->texts/spanish/,french->texts/french/\".  Be sure to wrap the whole string with \"quotes\".)")
 	public static String inputTextPath = null; // Required.
 	
+	@Option(gloss = "Number of times the character must be seen in order to be included.")
+	public static int minCharCount = 10;
+	
 	@Option(gloss = "Prior probability of each language; ignore for uniform priors. Give multiple comma-separated language/prior pairs: \"english->0.7,spanish->0.2,french->0.1\". Be sure to wrap the whole string with \"quotes\". (Only relevant if multiple languages used.)  Default: Uniform priors.")
 	public static String languagePriors = null;
 	
@@ -223,9 +226,14 @@ public class InitializeLanguageModel extends OcularRunnable {
 			Collections.sort(reverseUnigramCounts, new Tuple2.DefaultLexicographicTuple2Comparator<Integer,Integer>());
 			Collections.reverse(reverseUnigramCounts);
 			for (Tuple2<Integer,Integer> entry : reverseUnigramCounts) {
-				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2));
-				if (entry._1 < 10) activeChars.remove(entry._2); // remove low-count characters
+				StringBuilder note = new StringBuilder();
+				if (entry._1 < minCharCount) {
+					activeChars.remove(entry._2); // remove low-count characters
+					note.append("[skipped due to count < "+minCharCount+"]");
+				}
+				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2)+"   "+note);
 			}
+			System.out.println("Including 'universal punctuation' chars: "+Charset.UNIV_PUNC);
 			for (String c : Charset.UNIV_PUNC) activeChars.add(charIndexer.getIndex(c));
 			
 			List<String> langChars = new ArrayList<String>();
@@ -239,7 +247,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 		}
 		
 		/*
-		 *  Add alternate versions of the characters, but don't necessary 
+		 *  Add alternate versions of the characters, but don't necessarily 
 		 *  associate them with any particular languages since they are not 
 		 *  truly characters in that language.
 		 */

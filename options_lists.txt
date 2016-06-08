@@ -3,9 +3,10 @@
 	inputTextPath
 	outputLmPath
 ##### Additional Options
+	minCharCount
 	insertLongS
-	alternateSpellingReplacementPaths
 	charN
+	alternateSpellingReplacementPaths
 ##### Rarely Used Options
 	removeDiacritics
 	pKeepSameLanguage
