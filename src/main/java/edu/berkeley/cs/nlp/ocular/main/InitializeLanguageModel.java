@@ -89,7 +89,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 	}
 
 	protected void validateOptions() {
-		if (outputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
+		if (outputLmPath == null) throw new IllegalArgumentException("-outputLmPath not set");
 		if (inputTextPath == null) throw new IllegalArgumentException("-inputTextPath not set");
 	}
 

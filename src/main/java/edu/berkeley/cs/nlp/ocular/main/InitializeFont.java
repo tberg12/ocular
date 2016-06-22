@@ -61,8 +61,8 @@ public class InitializeFont extends OcularRunnable {
 	}
 	
 	protected void validateOptions() {
-		if (inputLmPath == null) throw new IllegalArgumentException("-lmPath not set");
-		if (outputFontPath == null) throw new IllegalArgumentException("-fontPath not set");
+		if (inputLmPath == null) throw new IllegalArgumentException("-inputLmPath not set");
+		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 	}
 
 	public void run() {

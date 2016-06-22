@@ -178,7 +178,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 		
 		//
 		
-		if (!(updateLM == (outputLmPath != null))) throw new IllegalArgumentException("-retrainLM is not as expected");
+		if (!(updateLM == (outputLmPath != null))) throw new IllegalArgumentException("-updateLM is not as expected");
 		if (!(updateGsm == (outputGsmPath != null))) throw new IllegalArgumentException("-updateGsm is not as expected");
 		if (!(allowGlyphSubstitution == (inputGsmPath != null || outputGsmPath != null))) throw new IllegalArgumentException("-allowGlyphSubstitution is not as expected");
 	}
