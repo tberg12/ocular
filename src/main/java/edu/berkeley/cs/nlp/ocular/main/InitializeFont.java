@@ -152,7 +152,7 @@ public class InitializeFont extends OcularRunnable {
 	public static void writeFont(Font font, String fontPath) {
 		ObjectOutputStream out = null;
 		try {
-			new File(fontPath).getParentFile().mkdirs();
+			new File(fontPath).getAbsoluteFile().getParentFile().mkdirs();
 			out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(fontPath)));
 			out.writeObject(font);
 		} catch (Exception e) {

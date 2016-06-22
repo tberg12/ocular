@@ -89,7 +89,7 @@ public class InitializeGlyphSubstitutionModel extends OcularRunnable {
 	public static void writeGSM(GlyphSubstitutionModel gsm, String gsmPath) {
 		ObjectOutputStream out = null;
 		try {
-			new File(gsmPath).getParentFile().mkdirs();
+			new File(gsmPath).getAbsoluteFile().getParentFile().mkdirs();
 			out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(gsmPath)));
 			out.writeObject(gsm);
 		} catch (Exception e) {

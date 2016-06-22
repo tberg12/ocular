@@ -15,8 +15,7 @@ public class FileHelper {
 		BufferedWriter out = null;
 		try {
 			File f = new File(path);
-			File parent = f.getParentFile();
-			if (!parent.exists()) parent.mkdirs();
+			f.getAbsoluteFile().getParentFile().mkdirs();
 			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "utf-8"));
 			out.write(str);
 		} catch (IOException ex) {

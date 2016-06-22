@@ -93,7 +93,7 @@ public class LMTrainMain implements Runnable {
 
 	public static void writeLM(NgramLanguageModel lm, String lmPath) {
 		try {
-      new File(lmPath).getParentFile().mkdirs();
+			new File(lmPath).getAbsoluteFile().getParentFile().mkdirs();
 			FileOutputStream fileOut = new FileOutputStream(lmPath);
 			ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(fileOut));
 			out.writeObject(lm);

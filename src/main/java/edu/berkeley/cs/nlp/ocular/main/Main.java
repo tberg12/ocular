@@ -122,10 +122,7 @@ public class Main implements Runnable {
 		long overallNanoTime = System.nanoTime();
 		long overallEmissionCacheNanoTime = 0;
 
-		File outputDir = new File(outputPath);
-		if (!outputDir.exists()) {
-			outputDir.mkdirs();
-		}
+		new File(outputPath).mkdirs();
 		
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 

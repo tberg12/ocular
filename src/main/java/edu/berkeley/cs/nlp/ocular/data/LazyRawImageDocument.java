@@ -133,7 +133,7 @@ public abstract class LazyRawImageDocument implements Document {
 	 */
 	public void writeExtractedLineImagesAggregateFile(String multilineExtractionImagePath) {
 		System.out.println("Writing file line-extraction image to: " + multilineExtractionImagePath);
-		new File(multilineExtractionImagePath).getParentFile().mkdirs();
+		new File(multilineExtractionImagePath).getAbsoluteFile().getParentFile().mkdirs();
 		f.writeImage(multilineExtractionImagePath, Visualizer.renderLineExtraction(observations));
 	}
 	

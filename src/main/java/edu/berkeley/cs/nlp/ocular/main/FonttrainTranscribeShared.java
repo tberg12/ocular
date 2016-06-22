@@ -173,8 +173,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 		if (evalExtractedLinesPath != null && evalInputDocPath == null) throw new IllegalArgumentException("-evalExtractedLinesPath not permitted without -evalInputDocPath.");
 
 		// Make the output directory if it doesn't exist yet
-		File outputPathFile = new File(outputPath);
-		if (!outputPathFile.exists()) outputPathFile.mkdirs();
+		new File(outputPath).mkdirs();
 		
 		//
 		

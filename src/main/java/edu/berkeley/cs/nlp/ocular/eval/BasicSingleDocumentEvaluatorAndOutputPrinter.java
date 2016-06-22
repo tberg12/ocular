@@ -69,7 +69,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		
 		
 		String outputFilenameBase = makeOutputFilenameBase(iter, batchId, doc, inputDocPath, outputPath);
-		new File(outputFilenameBase).getParentFile().mkdirs();
+		new File(outputFilenameBase).getAbsoluteFile().getParentFile().mkdirs();
 		
 		//
 		// Evaluate the comparison
