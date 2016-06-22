@@ -30,13 +30,10 @@ public abstract class OcularRunnable implements Runnable {
 	private static String toArgListString(String[] args) {
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < args.length; ++i) {
-		  if (i % 2 == 0) 
-			  sb.append("  " + args[i]);
-		  else 
-			  sb.append(" " + args[i] + "\n");
+			sb.append("  " + args[i]);
+			if (i % 2 != 0)
+				sb.append("\n");
 		}
-		if (sb.codePointAt(sb.length()-1) != '\n')
-			sb.append("\n");
 		return sb.toString();
 	}
 	
