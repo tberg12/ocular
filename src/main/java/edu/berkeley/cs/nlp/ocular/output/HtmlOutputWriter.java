@@ -68,7 +68,7 @@ public class HtmlOutputWriter {
 			outputBuffer.append("<font color=\"" + colors[i+1] + "\">" + (i < 0 ? "none" : langIndexer.getObject(i)) + "</font></br>\n");
 		}
 
-		outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\">\n");
+		outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\" style=\"width: 75%; height: 75%\">\n");
 		outputBuffer.append("</td></tr></table>\n");
 		outputBuffer.append("</body></html>\n");
 		outputBuffer.append("\n\n\n");
