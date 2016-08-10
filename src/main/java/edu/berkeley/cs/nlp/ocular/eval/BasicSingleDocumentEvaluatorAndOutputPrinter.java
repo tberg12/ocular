@@ -190,7 +190,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		// Other files
 		//
 		new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, inputDocPath, outputFilenameBase, mt.viterbiWidths);
-		new HtmlOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, inputDocPath, outputFilenameBase);
+		new HtmlOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc.baseName(), outputFilenameBase);
 	
 		//
 		// Transcription with widths
