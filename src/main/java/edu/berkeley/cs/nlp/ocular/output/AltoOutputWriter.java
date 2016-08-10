@@ -1,17 +1,19 @@
 package edu.berkeley.cs.nlp.ocular.output;
 
+import indexer.Indexer;
+
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import util.Iterators;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import fileio.f;
-import indexer.Indexer;
-import util.Iterators;
 
 /**
  * @author Hannah Alpert-Abrams (halperta@gmail.com)
@@ -33,6 +35,8 @@ public class AltoOutputWriter {
 
 	public void write(int numLines, List<TransitionState>[] viterbiTransStates, String inputDocPath, String outputFilenameBase, List<Integer>[] viterbiWidths) {
 		String altoOutputFilename = outputFilenameBase + ".alto.xml";
+
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss z");
 		
 		StringBuffer outputBuffer = new StringBuffer();
 		outputBuffer.append("<alto xmlns=\"http://schema.ccs-gmbh.com/ALTO\" xmlns:emop=\"http://emop.tamu.edu\">\n");
@@ -44,7 +48,7 @@ public class AltoOutputWriter {
 		outputBuffer.append("    <OCRProcessing>\n"); //IDK how we should "ID" this.
 		outputBuffer.append("      <preProcessingStep></preProcessingStep>\n"); 
 		outputBuffer.append("      <ocrProcessingStep>\n");
-		outputBuffer.append("		 <processingDateTime>"+Calendar.getInstance()+"</processingDateTime>\n"); //not really working...
+		outputBuffer.append("		 <processingDateTime>"+formatter.format(new Date())+"</processingDateTime>\n");
 //			for (StringBuffer s: args) {
 //				StringBuffer arguments = new StringBuffer();
 //				arguments.append(s);
