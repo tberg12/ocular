@@ -252,20 +252,96 @@ public class CollectionHelperTests {
 	
 	@Test
 	public void test_List_take() {
+		{
 		List<String> l1 = CollectionHelper.take(Arrays.asList("one", "two", "three", "four", "five"), 3);
 		assertEquals(3, l1.size());
 		assertEquals("one", l1.get(0));
 		assertEquals("two", l1.get(1));
 		assertEquals("three", l1.get(2));
+		}
+		{
+		List<String> l1 = CollectionHelper.take(Arrays.asList("one", "two", "three", "four", "five"), 5);
+		assertEquals(5, l1.size());
+		assertEquals("one", l1.get(0));
+		assertEquals("two", l1.get(1));
+		assertEquals("three", l1.get(2));
+		assertEquals("four", l1.get(3));
+		assertEquals("five", l1.get(4));
+		}
+		{
+		List<String> l1 = CollectionHelper.take(Arrays.asList("one", "two", "three", "four", "five"), 7);
+		assertEquals(5, l1.size());
+		assertEquals("one", l1.get(0));
+		assertEquals("two", l1.get(1));
+		assertEquals("three", l1.get(2));
+		assertEquals("four", l1.get(3));
+		assertEquals("five", l1.get(4));
+		}
+		{
+		List<String> l1 = CollectionHelper.take(Arrays.asList("one", "two", "three", "four", "five"), 0);
+		assertEquals(0, l1.size());
+		}
 	}
 
 	@Test
 	public void test_List_takeRight() {
-		List<String> l1 = CollectionHelper.takeRight(Arrays.asList("four", "five", "one", "two", "three"), 3);
+		{
+		List<String> l1 = CollectionHelper.takeRight(Arrays.asList("one", "two", "three", "four", "five"), 3);
 		assertEquals(3, l1.size());
+		assertEquals("three", l1.get(0));
+		assertEquals("four", l1.get(1));
+		assertEquals("five", l1.get(2));
+		}
+		{
+		List<String> l1 = CollectionHelper.takeRight(Arrays.asList("one", "two", "three", "four", "five"), 5);
+		assertEquals(5, l1.size());
 		assertEquals("one", l1.get(0));
 		assertEquals("two", l1.get(1));
 		assertEquals("three", l1.get(2));
+		assertEquals("four", l1.get(3));
+		assertEquals("five", l1.get(4));
+		}
+		{
+		List<String> l1 = CollectionHelper.takeRight(Arrays.asList("one", "two", "three", "four", "five"), 7);
+		assertEquals(5, l1.size());
+		assertEquals("one", l1.get(0));
+		assertEquals("two", l1.get(1));
+		assertEquals("three", l1.get(2));
+		assertEquals("four", l1.get(3));
+		assertEquals("five", l1.get(4));
+		}
+		{
+		List<String> l1 = CollectionHelper.takeRight(Arrays.asList("one", "two", "three", "four", "five"), 0);
+		assertEquals(0, l1.size());
+		}
+	}
+
+	@Test
+	public void test_List_drop() {
+		{
+		List<String> l1 = CollectionHelper.drop(Arrays.asList("one", "two", "three", "four", "five"), 2);
+		assertEquals(3, l1.size());
+		assertEquals("three", l1.get(0));
+		assertEquals("four", l1.get(1));
+		assertEquals("five", l1.get(2));
+		}
+		{
+		List<String> l1 = CollectionHelper.drop(Arrays.asList("one", "two", "three", "four", "five"), 5);
+		assertEquals(0, l1.size());
+		}
+		{
+		List<String> l1 = CollectionHelper.drop(Arrays.asList("one", "two", "three", "four", "five"), 7);
+		assertEquals(0, l1.size());
+		}
+		{
+		List<String> l1 = CollectionHelper.drop(Arrays.asList("one", "two", "three", "four", "five"), 0);
+		assertEquals(5, l1.size());
+		assertEquals("one", l1.get(0));
+		assertEquals("two", l1.get(1));
+		assertEquals("three", l1.get(2));
+		assertEquals("four", l1.get(3));
+		assertEquals("five", l1.get(4));
+		}
 	}
 
 	@Test

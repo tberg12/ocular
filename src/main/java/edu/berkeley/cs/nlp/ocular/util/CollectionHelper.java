@@ -184,7 +184,14 @@ public class CollectionHelper {
 
 	public static <A> List<A> takeRight(List<A> list, int n) {
 		List<A> result = new ArrayList<A>();
-		for (int j = list.size() - n; j < list.size(); ++j)
+		for (int j = list.size() - Math.min(n, list.size()); j < list.size(); ++j)
+			result.add(list.get(j));
+		return result;
+	}
+
+	public static <A> List<A> drop(List<A> list, int n) {
+		List<A> result = new ArrayList<A>();
+		for (int j = Math.min(n, list.size()); j < list.size(); ++j)
 			result.add(list.get(j));
 		return result;
 	}
