@@ -48,6 +48,17 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		this.charIncludesDiacritic = charIncludesDiacritic;
 	}
 
+	private String joinLineForPrinting(String[] chars) {
+		return joinLineForPrinting(Arrays.asList(chars));
+	}
+	
+	private String joinLineForPrinting(List<String> chars) {
+		StringBuilder b = new StringBuilder();
+		for (String c : chars)
+			b.append(Charset.unescapeChar(c));
+		return b.toString();
+	}
+	
 	public Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evaluateAndPrintTranscription(int iter, int batchId,
 			Document doc,
 			TransitionState[][] decodeStates, int[][] decodeWidths,
@@ -143,10 +154,10 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			goldComparisonOutputBuffer.append("\n\n");
 			
 			for (int line = 0; line < numLines; ++line) {
-				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MN: " + StringHelper.join(mt.viterbiNormalizedCharLines[line]).trim() + "\n");
-				if (goldNormalizedLineChars != null) goldComparisonOutputBuffer.append("GN: " + StringHelper.join(goldNormalizedLineChars[line]).trim() + "\n");
-				/*                       */          goldComparisonOutputBuffer.append("MD: " + StringHelper.join(mt.viterbiDiplomaticCharLines[line]).trim() + "\n");
-				if (goldDiplomaticLineChars != null) goldComparisonOutputBuffer.append("GD: " + StringHelper.join(goldDiplomaticLineChars[line]).trim() + "\n");
+				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MN: " + joinLineForPrinting(mt.viterbiNormalizedCharLines[line]).trim() + "\n");
+				if (goldNormalizedLineChars != null) goldComparisonOutputBuffer.append("GN: " + joinLineForPrinting(goldNormalizedLineChars[line]).trim() + "\n");
+				/*                       */          goldComparisonOutputBuffer.append("MD: " + joinLineForPrinting(mt.viterbiDiplomaticCharLines[line]).trim() + "\n");
+				if (goldDiplomaticLineChars != null) goldComparisonOutputBuffer.append("GD: " + joinLineForPrinting(goldDiplomaticLineChars[line]).trim() + "\n");
 				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MS: " + transcriptionWithSubsOutputLines.get(line).trim()+"\n");
 				goldComparisonOutputBuffer.append("\n");
 			}
@@ -310,7 +321,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 						// Add diplomatic characters to diplomatic transcription
 						//
 						if (!ts.getGlyphChar().isElided()) {
-							viterbiDiplomaticCharLines[line].add(Charset.unescapeCharPrecomposedOnly(currDiplomaticChar));
+							viterbiDiplomaticCharLines[line].add(Charset.unescapeChar(currDiplomaticChar));
 						}
 						
 						//
@@ -322,7 +333,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 							
 							//
 							// Add to normalized line transcription
-							viterbiNormalizedCharLines[line].add(Charset.unescapeCharPrecomposedOnly(currNormalizedChar));
+							viterbiNormalizedCharLines[line].add(Charset.unescapeChar(currNormalizedChar));
 							
 							//
 							// Add to normalized running transcription
@@ -343,7 +354,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 										// do nothing -- collapse spaces
 									}
 									else {
-										viterbiNormalizedTranscription.add(Charset.unescapeCharPrecomposedOnly(currNormalizedChar));
+										viterbiNormalizedTranscription.add(Charset.unescapeChar(currNormalizedChar));
 									}
 							}
 						}
@@ -368,9 +379,9 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 				int lmChar = ts.getLmCharIndex();
 				GlyphChar glyph = ts.getGlyphChar();
 				int glyphChar = glyph.templateCharIndex;
-				String sglyphChar = Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(glyphChar));
+				String sglyphChar = Charset.unescapeChar(charIndexer.getObject(glyphChar));
 				if (lmChar != glyphChar || glyph.glyphType != GlyphType.NORMAL_CHAR) {
-					String norm = Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(lmChar));
+					String norm = Charset.unescapeChar(charIndexer.getObject(lmChar));
 					String dipl = (glyph.glyphType == GlyphType.DOUBLED ? "2x"+sglyphChar : glyph.isElided() ? "" : sglyphChar);
 					lineBuffer.append("[" + norm + "/" + dipl + "]");
 				}

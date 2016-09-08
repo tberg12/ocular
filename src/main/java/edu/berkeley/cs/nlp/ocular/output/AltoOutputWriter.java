@@ -101,7 +101,7 @@ public class AltoOutputWriter {
 							StringBuffer normalizedTranscriptionBuffer = new StringBuffer();
 							for (TransitionState wts : wordBuffer) {
 								if (!wts.getGlyphChar().isElided()) {
-									diplomaticTranscriptionBuffer.append(Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(wts.getGlyphChar().templateCharIndex))); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
+									diplomaticTranscriptionBuffer.append(Charset.unescapeChar(charIndexer.getObject(wts.getGlyphChar().templateCharIndex))); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
 								}
 								if (wts.getGlyphChar().glyphType != GlyphType.DOUBLED) { // the first in a pair of doubled characters isn't part of the language model transcription
 									switch(wts.getType()) {
@@ -116,7 +116,7 @@ public class AltoOutputWriter {
 										normalizedTranscriptionBuffer.append(Charset.SPACE);
 										break;
 									case TMPL:
-										String s = Charset.unescapeCharPrecomposedOnly(charIndexer.getObject(wts.getLmCharIndex()));
+										String s = Charset.unescapeChar(charIndexer.getObject(wts.getLmCharIndex()));
 										if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "normalized" transcriptions
 										normalizedTranscriptionBuffer.append(s);
 									}
