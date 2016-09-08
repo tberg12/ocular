@@ -281,7 +281,6 @@ public class InitializeLanguageModel extends OcularRunnable {
 					for (String c: textReader.readCharacters(line + " ")) {
 						// validate the character...
 						Charset.normalizeChar(c);
-						Charset.unescapeChar(c);
 						allChars.add(c);
 					}
 					if (allChars.size() >= charsToTake) break outer;

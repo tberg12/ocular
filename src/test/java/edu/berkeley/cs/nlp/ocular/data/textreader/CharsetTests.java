@@ -1,7 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.*;
-import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
@@ -136,6 +135,8 @@ public class CharsetTests {
 		assertEquals("ı", normalizeChar("ı"));
 		assertEquals("ı", normalizeChar("\\ii"));
 
+		assertEquals("a\u0347", normalizeChar("a\u0347"));
+		
 		assertEquals("n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING + ACUTE_COMBINING + GRAVE_COMBINING, normalizeChar("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
 		assertEquals("n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING + ACUTE_COMBINING + GRAVE_COMBINING, normalizeChar("\\`\\'n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
 		assertEquals("q" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING + ACUTE_COMBINING + GRAVE_COMBINING, normalizeChar("\\`\\'q" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
@@ -144,17 +145,11 @@ public class CharsetTests {
 	}
 
 	@Test
-	public void test_readCharAt() {
-		//String s1 = "ing th\\~q || | follies of thõsè, who éither ``sæek'' out th\\\"os\\`e wæys \"and\" means, which either are sq̃uccess lessons";
-		assertEquals(Tuple2("\\\\", 2), readNormalizeCharAt("this\\\\that", 4));
-	}
-	
-	@Test
 	public void test_readNormalizeCharacters() {
 		assertEquals(asList("a", "b\u0311", "c", "d"), readNormalizeCharacters("ab\u0311cd"));
-		assertEquals(asList("a", "b\u0311", "c", "d"), readNormalizeCharacters("ab\u0361cd"));
-		assertEquals(asList("a", "b\u0311", "c", "d"), readNormalizeCharacters("ab\uFE20c\uFE21d"));
-		assertEquals(asList("a", "b\u0311", "c", "d"), readNormalizeCharacters("tau͡gaam"));
+		assertEquals(asList("a", "b\uFE20", "c\uFE21", "d"), readNormalizeCharacters("ab\uFE20c\uFE21d"));
+		assertEquals(asList("a", "b\u0361", "c", "d"), readNormalizeCharacters("ab\u0361cd"));
+		assertEquals(asList("t", "a", "u\u0361", "g", "a", "a", "m"), readNormalizeCharacters("tau͡gaam"));
 	}
 
 }

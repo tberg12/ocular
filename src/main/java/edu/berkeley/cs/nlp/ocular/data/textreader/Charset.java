@@ -37,7 +37,7 @@ public class Charset {
 	 */
 	public static final Set<String> UNIV_PUNC = makeSet("&", ".", ",", "[", "]", HYPHEN, "*", "§", "¶");
 
-	public static boolean isPunctuation(char c) {
+	private static boolean isPunctuation(char c) {
 		return !Character.isWhitespace(c) && !Character.isAlphabetic(c) && !Character.isDigit(c);
 	}
 	public static boolean isPunctuationChar(String s) {
@@ -57,9 +57,11 @@ public class Charset {
 	public static final String MACRON_BELOW_COMBINING = "\0331";
 
 	private static boolean isCombiningChar(String c) {
-		if ("\u0300".compareTo(c) <= 0 && c.compareTo("\u036F") <= 0)
-			return true;
-		return false;
+		return (("\u0300".compareTo(c) <= 0 && c.compareTo("\u036F") <= 0) || 
+				("\u1AB0".compareTo(c) <= 0 && c.compareTo("\u1AFF") <= 0) || 
+				("\u1DC0".compareTo(c) <= 0 && c.compareTo("\u1DFF") <= 0) || 
+				("\u20D0".compareTo(c) <= 0 && c.compareTo("\u20FF") <= 0) || 
+				("\uFE20".compareTo(c) <= 0 && c.compareTo("\uFE2F") <= 0));
 	}
 
 	public static final String GRAVE_ESCAPE = "\\`";
@@ -85,13 +87,13 @@ public class Charset {
 		COMBINING_TO_ESCAPE_MAP.put(MACRON_BELOW_COMBINING, MACRON_BELOW_ESCAPE);
 	}
 	
-	private static String combiningToEscape(String combiningChar) {
-		String escape = COMBINING_TO_ESCAPE_MAP.get(combiningChar);
-		if (escape != null)
-			return escape;
-		else
-			throw new RuntimeException("Unrecognized combining char: [" + combiningChar + "] (" + StringHelper.toUnicode(combiningChar) + ")");
-	}
+//	private static String combiningToEscape(String combiningChar) {
+//		String escape = COMBINING_TO_ESCAPE_MAP.get(combiningChar);
+//		if (escape != null)
+//			return escape;
+//		else
+//			throw new RuntimeException("Unrecognized combining char: [" + combiningChar + "] (" + StringHelper.toUnicode(combiningChar) + ")");
+//	}
 
 	private static String escapeToCombining(String escSeq) {
 		if (GRAVE_ESCAPE.equals(escSeq))
@@ -209,13 +211,24 @@ public class Charset {
 		//note for "breve" (u over letter) mark \va
 	}
 
-	private static final Map<String, String> COMBINED_TO_PRECOMPOSED_MAP = new HashMap<String, String>();
+	private static final Map<String, String> PRECOMPOSED_TO_COMBINED_MAP = new HashMap<String, String>();
 	static {
 		for (Map.Entry<String, String> entry : PRECOMPOSED_TO_ESCAPED_MAP.entrySet()) {
 			String value = entry.getValue();
-			String escapeCode = value.substring(0, value.length() - 1);
 			String baseChar = value.substring(value.length() - 1);
-			COMBINED_TO_PRECOMPOSED_MAP.put(baseChar + escapeToCombining(escapeCode), entry.getKey());
+			String escapeCodes = value.substring(0, value.length() - 1);
+			if (escapeCodes.length() % 2 != 0) throw new RuntimeException("problem with precomposed mapping: " + value);
+			StringBuilder baseWithCombining = new StringBuilder(baseChar);
+			for (int i = escapeCodes.length() - 2; i >= 0; i -= 2)
+				baseWithCombining.append(escapeToCombining(escapeCodes.substring(i, i + 2)));
+			PRECOMPOSED_TO_COMBINED_MAP.put(entry.getKey(), baseWithCombining.toString());
+		}
+	}
+	
+	private static final Map<String, String> COMBINED_TO_PRECOMPOSED_MAP = new HashMap<String, String>();
+	static {
+		for (Map.Entry<String, String> entry : PRECOMPOSED_TO_COMBINED_MAP.entrySet()) {
+			COMBINED_TO_PRECOMPOSED_MAP.put(entry.getValue(), entry.getKey());
 		}
 	}
 	
@@ -375,7 +388,7 @@ public class Charset {
 	 * return the length in the ORIGINAL string of the span used to produce this 
 	 * normalized character (to use as an offset when scanning through the string).
 	 */
-	public static Tuple2<String, Integer> readNormalizeCharAt(String line, int offset) {
+	private static Tuple2<String, Integer> readNormalizeCharAt(String line, int offset) {
 		Tuple3<String, List<String>, Integer> result = readLetterAndNormalDiacriticsAt(line, offset);
 		String c = result._1 + StringHelper.join(result._2);
 		int length = result._3;
@@ -405,59 +418,59 @@ public class Charset {
 		if (lineLen - offset >= 2 && line.substring(offset, offset + 2).equals("\\\\"))
 			return Tuple3("\\\\", (List<String>)new ArrayList<String>(), 2); // "\\" is its own character (for "\"), not an escaped diacritic
 		
-		List<String> escapeDiacritics = new ArrayList<String>();
+		List<String> escapeDiacritics = new ArrayList<String>(); // in reversed order!
+		List<String> combiningDiacritics = new ArrayList<String>();
 
 		// get any escape prefixes characters
 		int i = offset;
 		while (i < lineLen && line.charAt(i) == '\\') {
 			if (i + 1 >= lineLen) throw new RuntimeException("expected more after escape symbol, but found nothing: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 10), i) + "[" + line.substring(i) + "]");
 			String escape = line.substring(i, i + 2);
-			escapeDiacritics.add(escape);
+			escapeDiacritics.add(0, escape);
 			i += 2; // accept the 2-character escape sequence
 		}
 
-		int combiningCharCodeInsertionPoint = escapeDiacritics.size();
-
 		if (i >= lineLen) throw new RuntimeException("expected a letter after escape code, but found nothing: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 50), i) + "[" + line.substring(i) + "]");
-		String letter = line.substring(i, i + 1);
-		if (isCombiningChar(letter)) throw new RuntimeException("expected a letter, but found only a combining character: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 50), i) + "[" + line.substring(i) + "]");
+		String letter = String.valueOf(line.charAt(i));
+		if (isCombiningChar(letter)) throw new RuntimeException("found unexpected combining char: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 50), i) + "[" + line.substring(i) + "]");
 		i += 1; // accept the letter itself
 
 		// get any combining characters
 		while (i < lineLen) {
 			String next = line.substring(i, i + 1);
 			if (!isCombiningChar(next)) break;
-			String escape = combiningToEscape(next);
-			escapeDiacritics.add(combiningCharCodeInsertionPoint, escape);
+			combiningDiacritics.add(next);
 			i++; // accept the combining character
 		}
 
-		String deprecomposedChar = PRECOMPOSED_TO_ESCAPED_MAP.get(letter);
+		String deprecomposedChar = PRECOMPOSED_TO_COMBINED_MAP.get(letter);
 		String letterOnly;
 		if (deprecomposedChar == null) {
 			letterOnly = letter;
 		}
 		else {
-			int dcLen = deprecomposedChar.length();
-			int j = 0;
-			while (j < dcLen && deprecomposedChar.charAt(j) == '\\') {
-				if (j + 1 >= dcLen) throw new RuntimeException("de-precomposed character has no letter after its escape sequence: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 10), i) + "[" + line.substring(i) + "]   ----  ["+deprecomposedChar+"]");
-				String escape = deprecomposedChar.substring(j, j + 2);
-				escapeDiacritics.add(escape);
-				j += 2; // accept the 2-character escape sequence
-			}
-			letterOnly = deprecomposedChar.substring(j, j + 1);
+			letterOnly = String.valueOf(deprecomposedChar.charAt(0));
+			for (int j = 1; j < deprecomposedChar.length(); ++j)
+				combiningDiacritics.add(0, String.valueOf(deprecomposedChar.charAt(j)));
 		}
-		List<String> combiningDiacritics = new ArrayList<String>();
+		
 		for (String diacritic : escapeDiacritics) {
 			if (diacritic.equals("\\i")) {
 				if (!letterOnly.equals("i")) throw new RuntimeException("the \\i escape sequence can only be used on the character 'i' (to indicate a no-dot i)");
 				letterOnly = "ı";
 			}
 			else {
-				combiningDiacritics.add(0, escapeToCombining(diacritic));
+				combiningDiacritics.add(escapeToCombining(diacritic));
 			}
 		}
+		
+		if (letterOnly.length() != 1) throw new RuntimeException("base letter should be length 1, found: " + letterOnly);
+		if (!combiningDiacritics.isEmpty()) {
+			char letterChar = letterOnly.charAt(0);
+			if (!(Character.isAlphabetic(letterChar))) 
+				throw new RuntimeException("because there were diacritics, letter is expected, but something else was found: " + i + "," + lineLen + " " + line.substring(Math.max(0, i - 50), i) + "[" + line.substring(i) + "]");
+		}
+		
 		return Tuple3(letterOnly, combiningDiacritics, i - offset);
 	}
 
