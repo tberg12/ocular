@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.gsm;
 
-import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.TILDE_ESCAPE;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.TILDE_COMBINING;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.makeSet;
 import static org.junit.Assert.assertEquals;
 
@@ -34,7 +34,7 @@ public class BasicGlyphSubstitutionModelTests {
 		Set<Integer> fullCharSet = makeSet(charIndices);
 		@SuppressWarnings("unchecked")
 		Set<Integer>[] activeCharacterSets = new Set[] {fullCharSet, fullCharSet};
-		for (String c : new String[] {"a","b","c","d","e","f","k","n","o","s"}) charIndices.add(charIndexer.getIndex(TILDE_ESCAPE+c));
+		for (String c : new String[] {"a","b","c","d","e","f","k","n","o","s"}) charIndices.add(charIndexer.getIndex(c+TILDE_COMBINING));
 		charIndexer.lock();
 		double gsmPower = 2.0; 
 		int minCountsForEvalGsm = 2;

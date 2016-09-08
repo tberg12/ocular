@@ -46,32 +46,35 @@ public class FontTrainEMTests {
 		public Collection<Tuple2<TransitionState, Double>> forwardTransitions() { return null; }
 		public Collection<Tuple2<TransitionState, Double>> nextLineStartStates() { return null; }
 		public double endLogProb() { return -1; }
+		
+		public String toString() {
+			return "TS("+id+", "+languageIndex+", "+lmCharIndex+", "+type+", "+glyphChar+")";
+		}
 	}
 	
 	@Test
 	public void test_makeFullViterbiStateSeq() {
 
-		GlyphChar gc = new GlyphChar(-1, GlyphType.NORMAL_CHAR);
 		Indexer<String> charIndexer = new HashMapIndexer<String>();
 		charIndexer.index(new String[] { " ", "-", "a", "b", "c" });
 		TransitionState[][] decodeStates = new TransitionState[][] {
-			new TransitionState[]{ 	new TS(1, -1, 0, LMRGN, gc), 
-									new TS(2, -1, 0, LMRGN, gc),
-									new TS(3, -1, 0, TMPL, gc), 
-									new TS(4, 1, 2, TMPL, gc),
-									new TS(5, 1, 3, TMPL, gc), 
-									new TS(6, 1, 4, TMPL, gc), 
-									new TS(7, 1, 1, RMRGN_HPHN_INIT, gc), 
-									new TS(8, 1, 0, RMRGN_HPHN, gc), 
-									new TS(9, 1, 0, RMRGN_HPHN, gc) },
-			new TransitionState[]{ 	new TS(10, 1, 0, LMRGN_HPHN, gc), 
-									new TS(11, 1, 0, LMRGN_HPHN, gc),
-									new TS(12, 1, 0, TMPL, gc),
-									new TS(13, 1, 2, TMPL, gc),
-									new TS(14, 1, 3, TMPL, gc),
-									new TS(15, 1, 4, TMPL, gc),
-									new TS(16, 1, 0, RMRGN, gc),
-									new TS(17, 1, 0, RMRGN, gc) }
+			new TransitionState[]{ 	new TS(1, -1, 0, LMRGN, new GlyphChar(0, GlyphType.NORMAL_CHAR)), 
+									new TS(2, -1, 0, LMRGN, new GlyphChar(0, GlyphType.NORMAL_CHAR)),
+									new TS(3, -1, 0, TMPL, new GlyphChar(0, GlyphType.NORMAL_CHAR)), 
+									new TS(4, 1, 2, TMPL, new GlyphChar(2, GlyphType.NORMAL_CHAR)),
+									new TS(5, 1, 3, TMPL, new GlyphChar(3, GlyphType.NORMAL_CHAR)), 
+									new TS(6, 1, 4, TMPL, new GlyphChar(4, GlyphType.NORMAL_CHAR)), 
+									new TS(7, 1, 1, RMRGN_HPHN_INIT, new GlyphChar(1, GlyphType.NORMAL_CHAR)), 
+									new TS(8, 1, 0, RMRGN_HPHN, new GlyphChar(0, GlyphType.NORMAL_CHAR)), 
+									new TS(9, 1, 0, RMRGN_HPHN, new GlyphChar(0, GlyphType.NORMAL_CHAR)) },
+			new TransitionState[]{ 	new TS(10, 1, 0, LMRGN_HPHN, new GlyphChar(0, GlyphType.NORMAL_CHAR)), 
+									new TS(11, 1, 0, LMRGN_HPHN, new GlyphChar(0, GlyphType.NORMAL_CHAR)),
+									new TS(12, 1, 0, TMPL, new GlyphChar(0, GlyphType.NORMAL_CHAR)),
+									new TS(13, 1, 2, TMPL, new GlyphChar(2, GlyphType.NORMAL_CHAR)),
+									new TS(14, 1, 3, TMPL, new GlyphChar(3, GlyphType.NORMAL_CHAR)),
+									new TS(15, 1, 4, TMPL, new GlyphChar(4, GlyphType.NORMAL_CHAR)),
+									new TS(16, 1, 0, RMRGN, new GlyphChar(0, GlyphType.NORMAL_CHAR)),
+									new TS(17, 1, 0, RMRGN, new GlyphChar(0, GlyphType.NORMAL_CHAR)) }
 		};
 		List<TransitionState> tsSeq = FontTrainer.makeFullViterbiStateSeq(decodeStates, charIndexer);
 		List<Integer> expectedIds = makeList(2, 3, 4, 1);

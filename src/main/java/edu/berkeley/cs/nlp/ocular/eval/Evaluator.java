@@ -232,7 +232,7 @@ public class Evaluator {
 
 	private static String splitOutPunc(String str) {
 		StringBuffer buf = new StringBuffer();
-		for (String c: Charset.readCharacters(str)) {
+		for (String c: Charset.readNormalizeCharacters(str)) {
 			if (!Charset.isPunctuationChar(c)) buf.append(c);
 		}
 		return normalizeWhitespace(buf.toString());

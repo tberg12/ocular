@@ -37,13 +37,13 @@ public class BasicTextReader implements TextReader {
 		 * Split characters and replace diacritics with either diacritic codes or
 		 * diacritic-less letters.
 		 */
-		List<String> escapedChars = new ArrayList<String>();
-		for (String c : Charset.readCharacters(line)) {
+		List<String> normalizedChars = new ArrayList<String>();
+		for (String c : Charset.readNormalizeCharacters(line)) {
 			if (!bannedChars.contains(c)) {
-				escapedChars.add(c);
+				normalizedChars.add(c);
 			}
 		}
-		return escapedChars;
+		return normalizedChars;
 	}
 
 	public String toString() {

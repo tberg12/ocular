@@ -17,7 +17,7 @@ public class RemoveDiacriticsTextReader implements TextReader {
 	public List<String> readCharacters(String line) {
 		List<String> chars = new ArrayList<String>();
 		for (String c : delegate.readCharacters(line)) {
-			chars.add(Charset.removeAnyDiacriticFromChar(c)); // just the letter, which is the last char of the escaped string
+			chars.add(Charset.removeAnyDiacriticFromChar(c));
 		}
 		return chars;
 	}

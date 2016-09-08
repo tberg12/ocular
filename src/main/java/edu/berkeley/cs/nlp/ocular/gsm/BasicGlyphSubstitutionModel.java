@@ -120,10 +120,10 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			this.addTilde = makeAddTildeMap(charIndexer);
 			this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
 			
-			this.sCharIndex = charIndexer.getIndex("s");
+			this.sCharIndex = charIndexer.contains("s") ? charIndexer.getIndex("s") : -1;
 			this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
-			this.fCharIndex = charIndexer.getIndex("f");
-			this.lCharIndex = charIndexer.getIndex("l");
+			this.fCharIndex = charIndexer.contains("f") ? charIndexer.getIndex("f") : -1;
+			this.lCharIndex = charIndexer.contains("l") ? charIndexer.getIndex("l") : -1;
 			this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 			this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 			
@@ -326,11 +326,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 
 		private void printGsmProbs3(int numLanguages, int numChars, int numGlyphs, double[][][] counts, double[][][] probs, int iter, int batchId, String outputFilenameBase) {
 			Set<String> CHARS_TO_PRINT = setUnion(makeSet(" ","-","a","b","c","d",Charset.LONG_S));
-//			for (String c : Charset.LOWERCASE_VOWELS) {
-//				CHARS_TO_PRINT.add(Charset.ACUTE_ESCAPE + c);
-//				CHARS_TO_PRINT.add(Charset.GRAVE_ESCAPE + c);
-//			}
-			
 			StringBuffer sb = new StringBuffer();
 			sb.append("language\tlmChar\tglyph\tcount\tminProb\tprob\n"); 
 			for (int language = 0; language < numLanguages; ++language) {

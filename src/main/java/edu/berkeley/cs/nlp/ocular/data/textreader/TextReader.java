@@ -8,9 +8,8 @@ import java.util.List;
 public interface TextReader {
 
 	/**
-	 * @param line	A line of text possibly containing diacritics (precomposed,
-	 * composed, or escaped).
-	 * @return	A list of escaped characters.
+	 * @param line	A line of text, possibly containing diacritics (precomposed, composed, or escaped).
+	 * @return	A list of normalized characters.
 	 */
 	public List<String> readCharacters(String line);
 	

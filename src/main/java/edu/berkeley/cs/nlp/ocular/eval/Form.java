@@ -31,17 +31,17 @@ public class Form implements Comparable<Form> {
    */
   public static Form charsAsGlyphs(String str, boolean charIncludesDiacritic) {
     List<Glyph> glyphs = new ArrayList<Glyph>();
-    for (String c : Charset.readCharacters(str)) {
+    for (String c : Charset.readNormalizeCharacters(str)) {
       if (charIncludesDiacritic) {
     	  glyphs.add(new Glyph(c));
       }
       else {
-    	  Tuple2<List<String>, String> diacriticsAndLetter = Charset.escapeCharSeparateDiacritics(c);
-    	  Collections.sort(diacriticsAndLetter._1);
-    	  for (String diacriticEscapeCode : diacriticsAndLetter._1) {
-    		  glyphs.add(new Glyph(diacriticEscapeCode));
+    	  Tuple2<String,List<String>> letterAndNormalDiacritics = Charset.normalizeCharSeparateDiacritics(c);
+    	  Collections.sort(letterAndNormalDiacritics._2);
+    	  for (String diacritic : letterAndNormalDiacritics._2) {
+    		  glyphs.add(new Glyph(diacritic));
     	  }
-    	  glyphs.add(new Glyph(diacriticsAndLetter._2));
+    	  glyphs.add(new Glyph(letterAndNormalDiacritics._1));
       }
     }
     return new Form(glyphs);

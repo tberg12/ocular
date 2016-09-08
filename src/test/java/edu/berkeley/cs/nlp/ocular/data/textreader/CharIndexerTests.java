@@ -40,8 +40,8 @@ public class CharIndexerTests {
 		assertEquals(1, i.getIndex("b"));
 		assertEquals("b", i.getObject(1));
 		assertEquals(2, i.getIndex(ec));
-		assertEquals(ee, i.getObject(2));
-		assertEquals(2, i.getIndex(ee));
+		assertEquals(ec, i.getObject(2));
+		assertEquals(2, i.getIndex(ec));
 		assertEquals(3, i.size());
 
 		assertFalse(i.contains(ae));
@@ -58,13 +58,13 @@ public class CharIndexerTests {
 		assertFalse(i.contains(nc));
 		assertFalse(i.contains(np));
 		assertEquals(4, i.getIndex(np));
-		assertEquals(ne, i.getObject(4));
+		assertEquals(nc, i.getObject(4));
 		assertTrue(i.contains(ne));
 		assertTrue(i.contains(nc));
 		assertTrue(i.contains(np));
 		assertEquals(4, i.getIndex(ne));
 		assertEquals(4, i.getIndex(nc));
-		assertEquals(ne, i.getObject(4));
+		assertEquals(nc, i.getObject(4));
 		assertEquals(5, i.size());
 
 		assertFalse(i.locked());

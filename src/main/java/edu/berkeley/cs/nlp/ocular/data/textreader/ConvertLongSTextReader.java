@@ -28,11 +28,13 @@ public class ConvertLongSTextReader implements TextReader {
 		for (int t = 0; t < chars.size() - 1; t++) {
 			if (chars.get(t).equals("s")) {
 				String next = chars.get(t + 1);
-				char nextWithoutDiacritics = next.charAt(next.length() - 1); // just the letter, which is the last char of the escaped string
-				if (t > 0 && chars.get(t - 1).equals(Charset.LONG_S) && nextWithoutDiacritics == 'i') {
+				String nextWithoutDiacritics = Charset.removeAnyDiacriticFromChar(next);
+				if (nextWithoutDiacritics.length() != 1) throw new AssertionError("expected nextWithoutDiacritics.length() == 1");
+				char nextWithoutDiacriticsChar = nextWithoutDiacritics.charAt(0);
+				if (t > 0 && chars.get(t - 1).equals(Charset.LONG_S) && nextWithoutDiacriticsChar == 'i') {
 					// "ſsi": do nothing
 				}
-				else if (Character.isAlphabetic(nextWithoutDiacritics)) {
+				else if (Character.isAlphabetic(nextWithoutDiacriticsChar)) {
 					chars.set(t, Charset.LONG_S);
 				}
 			}

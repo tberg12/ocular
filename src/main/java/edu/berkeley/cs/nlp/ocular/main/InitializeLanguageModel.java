@@ -253,19 +253,18 @@ public class InitializeLanguageModel extends OcularRunnable {
 		 */
 		charIndexer.getIndex(Charset.LONG_S);
 		for (String c : charIndexer.getObjects()) {
-			Tuple2<List<String>,String> originalEscapedDiacriticsAndLetter = Charset.escapeCharSeparateDiacritics(c);
-			String baseLetter = originalEscapedDiacriticsAndLetter._2;
+			String baseLetter = Charset.removeAnyDiacriticFromChar(c);
 			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c))
-				charIndexer.getIndex(Charset.TILDE_ESCAPE + c);
+				charIndexer.getIndex(Charset.addTilde(c));
 			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(baseLetter))
-				charIndexer.getIndex(Charset.TILDE_ESCAPE + baseLetter);
+				charIndexer.getIndex(Charset.addTilde(baseLetter));
 			charIndexer.getIndex(baseLetter);
 		}
 		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
-			List<String> ligature = Charset.readCharacters(entry.getKey());
+			List<String> ligature = Charset.readNormalizeCharacters(entry.getKey());
 			if (ligature.size() > 1) throw new RuntimeException("Ligature ["+entry.getKey()+"] has more than one character: "+ligature);
 			charIndexer.getIndex(ligature.get(0));
-			for (String c : Charset.readCharacters(entry.getValue()))
+			for (String c : Charset.readNormalizeCharacters(entry.getValue()))
 				charIndexer.getIndex(c);
 		}
 		
@@ -281,7 +280,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 					if (line.isEmpty()) continue;
 					for (String c: textReader.readCharacters(line + " ")) {
 						// validate the character...
-						Charset.escapeChar(c);
+						Charset.normalizeChar(c);
 						Charset.unescapeChar(c);
 						allChars.add(c);
 					}

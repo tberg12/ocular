@@ -18,11 +18,11 @@ public class CharIndexer implements Indexer<String> {
 	}
 
 	public boolean contains(String object) {
-		return delegate.contains(Charset.escapeChar(object)); 
+		return delegate.contains(Charset.normalizeChar(object)); 
 	}
 	
 	public int getIndex(String object) { 
-		return delegate.getIndex(Charset.escapeChar(object)); 
+		return delegate.getIndex(Charset.normalizeChar(object)); 
 	}
 	
 	public void index(String[] vect) { 

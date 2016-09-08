@@ -167,7 +167,7 @@ public abstract class LazyRawImageDocument implements Document {
 			try {
 				BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), "UTF-8"));
 				while (in.ready()) {
-					textList.add(Charset.readCharacters(in.readLine()));
+					textList.add(Charset.readNormalizeCharacters(in.readLine()));
 				}
 				in.close();
 			}
