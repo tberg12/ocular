@@ -185,7 +185,6 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 			
 			if (glyph == GLYPH_ELISION_TILDE) {
 				if (addTilde.get(lmChar) == null) return 0.0; // an elision-tilde-decorated char must be elision-tilde-decoratable
-				//System.err.println("soeksofek    addTilde.get("+charIndexer.getObject(lmChar)+") = "+charIndexer.getObject(addTilde.get(lmChar)));
 				return gsmSmoothingCount * elisionSmoothingCountMultiplier;
 			}
 			else if (glyph == GLYPH_TILDE_ELIDED) {
@@ -218,7 +217,7 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 					return 0.0;
 				else if (lmChar == hyphenCharIndex && glyph == spaceCharIndex) // so that line-break hyphens can be elided
 					return gsmSmoothingCount;
-				else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph))
+				else if (canBeReplaced.contains(lmChar) && validSubstitutionChars.contains(glyph) && activeCharacterSets[language].contains(glyph))
 					return gsmSmoothingCount;
 				else if (lmChar == glyph)
 					return gsmSmoothingCount;
