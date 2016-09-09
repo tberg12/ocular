@@ -252,6 +252,13 @@ public class InitializeLanguageModel extends OcularRunnable {
 		 *  truly characters in that language.
 		 */
 		charIndexer.getIndex(Charset.LONG_S);
+		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
+			List<String> ligature = Charset.readNormalizeCharacters(entry.getKey());
+			if (ligature.size() > 1) throw new RuntimeException("Ligature ["+entry.getKey()+"] has more than one character: "+ligature);
+			charIndexer.getIndex(ligature.get(0));
+			for (String c : Charset.readNormalizeCharacters(entry.getValue()))
+				charIndexer.getIndex(c);
+		}
 		for (String c : charIndexer.getObjects()) {
 			String baseLetter = Charset.removeAnyDiacriticFromChar(c);
 			if (Charset.CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(c))
@@ -260,14 +267,6 @@ public class InitializeLanguageModel extends OcularRunnable {
 				charIndexer.getIndex(Charset.addTilde(baseLetter));
 			charIndexer.getIndex(baseLetter);
 		}
-		for (Map.Entry<String,String> entry : Charset.LIGATURES.entrySet()) {
-			List<String> ligature = Charset.readNormalizeCharacters(entry.getKey());
-			if (ligature.size() > 1) throw new RuntimeException("Ligature ["+entry.getKey()+"] has more than one character: "+ligature);
-			charIndexer.getIndex(ligature.get(0));
-			for (String c : Charset.readNormalizeCharacters(entry.getValue()))
-				charIndexer.getIndex(c);
-		}
-		
 		charIndexer.lock();
 		return lmsAndPriors;
 	}
