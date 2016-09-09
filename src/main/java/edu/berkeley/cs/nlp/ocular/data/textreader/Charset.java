@@ -286,12 +286,12 @@ public class Charset {
 			Tuple2<String,List<String>> originalLetterAndCombiningDiacritics = normalizeCharSeparateDiacritics(original);
 			String baseLetter = originalLetterAndCombiningDiacritics._1;
 			if (CHARS_THAT_CAN_BE_DECORATED_WITH_AN_ELISION_TILDE.contains(original)) {
-					m.put(charIndexer.getIndex(original), charIndexer.getIndex(baseLetter + TILDE_COMBINING));
+					m.put(charIndexer.getIndex(original), charIndexer.getIndex(addTilde(baseLetter)));
 			}
 			else if (LETTERS_WITH_DISREGARDEDABLE_DIACRITICS.contains(baseLetter)) {
 				for (String diacritic : originalLetterAndCombiningDiacritics._2) {
 					if (COMBINING_DIACRITICS_THAT_CAN_BE_DISREGARDED.contains(diacritic)) {
-						m.put(charIndexer.getIndex(original), charIndexer.getIndex(baseLetter + TILDE_COMBINING));
+						m.put(charIndexer.getIndex(original), charIndexer.getIndex(addTilde(baseLetter)));
 						break;
 					}
 				}
