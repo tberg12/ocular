@@ -639,7 +639,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.langIndexer = lm.getLanguageIndexer();
 		this.spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
-		this.sCharIndex = charIndexer.getIndex("s");
+		this.sCharIndex = charIndexer.contains("s") ? charIndexer.getIndex("s") : -1;
 		this.longsCharIndex = charIndexer.getIndex(Charset.LONG_S);
 		this.punctSet = makePunctSet(charIndexer);
 		this.canBeReplaced = makeCanBeReplacedSet(charIndexer);
