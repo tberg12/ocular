@@ -361,6 +361,10 @@ Default: false
 Path of the directory that will contain output transcriptions.
 Required.
 
+* `-outputFormats`:
+Output formats to be generated. Choose from one or multiple of {dipl,norm,normlines,comp,html,alto}, comma-separated.  dipl = diplomatic, norm = normalized (lines joined), normlines = normalized (separate lines), comp = comparisons.
+Default: dipl,norm if -allowGlyphSubstitution=true; dipl otherwise.
+
 * `-outputFontPath`:
 Path to write the learned font file to.
 Required if updateFont is set to true, otherwise ignored.
@@ -544,6 +548,10 @@ Default: false
 * `-outputPath`:
 Path of the directory that will contain output transcriptions.
 Required.
+
+* `-outputFormats`:
+Output formats to be generated. Choose from one or multiple of {dipl,norm,normlines,comp,html,alto}, comma-separated.  dipl = diplomatic, norm = normalized (lines joined), normlines = normalized (separate lines), comp = comparisons.
+Default: dipl,norm if -allowGlyphSubstitution=true; dipl otherwise.
 
 ##### Additional Options
 

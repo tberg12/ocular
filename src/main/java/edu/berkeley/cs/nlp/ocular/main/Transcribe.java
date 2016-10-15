@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
@@ -59,6 +60,8 @@ public class Transcribe extends FonttrainTranscribeShared {
 	}
 
 	public void run() {
+		Set<OutputFormat> outputFormats = parseOutputFormats();
+		
 		CodeSwitchLanguageModel initialLM = loadInputLM();
 		Font initialFont = loadInputFont();
 		BasicGlyphSubstitutionModelFactory gsmFactory = makeGsmFactory(initialLM);
@@ -109,7 +112,7 @@ public class Transcribe extends FonttrainTranscribeShared {
 					gsmFactory, documentOutputPrinterAndEvaluator,
 					0, updateDocBatchSize > 0 ? updateDocBatchSize : inputDocuments.size(), true, false,
 					numMstepThreads,
-					newInputDocPath, outputPath,
+					newInputDocPath, outputPath, outputFormats,
 					evalSetEvaluator, Integer.MAX_VALUE, evalBatches);
 		}
 		else {
@@ -117,7 +120,7 @@ public class Transcribe extends FonttrainTranscribeShared {
 			// Transcribe with fixed parameters
 			//
 			System.out.println("Transcribing input data      " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-			MultiDocumentTranscriber transcriber = new BasicMultiDocumentTranscriber(inputDocuments, newInputDocPath, outputPath, decoderEM, documentOutputPrinterAndEvaluator, charIndexer);
+			MultiDocumentTranscriber transcriber = new BasicMultiDocumentTranscriber(inputDocuments, newInputDocPath, outputPath, outputFormats, decoderEM, documentOutputPrinterAndEvaluator, charIndexer);
 			transcriber.transcribe(initialFont, initialLM, initialGSM);
 		}
 	}

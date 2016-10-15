@@ -8,12 +8,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
+import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
@@ -31,18 +33,20 @@ public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
 	private List<Document> documents;
 	private String inputDocPath;
 	private String outputPath;
+	private Set<OutputFormat> outputFormats;
 	private DecoderEM decoderEM;
 	private SingleDocumentEvaluatorAndOutputPrinter docOutputPrinterAndEvaluator;
 	private Indexer<String> charIndexer;
 	
 	public BasicMultiDocumentTranscriber(
-			List<Document> documents, String inputDocPath, String outputPath,
+			List<Document> documents, String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
 			DecoderEM decoderEM,
 			SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator,
 			Indexer<String> charIndexer) {
 		this.documents = documents;
 		this.inputDocPath = inputDocPath;
 		this.outputPath = outputPath;
+		this.outputFormats = outputFormats;
 		this.decoderEM = decoderEM;
 		this.docOutputPrinterAndEvaluator = documentOutputPrinterAndEvaluator;
 		this.charIndexer = charIndexer;
@@ -69,7 +73,7 @@ public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = docOutputPrinterAndEvaluator.evaluateAndPrintTranscription(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath);
+			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = docOutputPrinterAndEvaluator.evaluateAndPrintTranscription(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, outputFormats);
 			if (evals._1 != null) allDiplomaticEvals.add(Tuple2(doc.baseName(), evals._1));
 			if (evals._2 != null) allNormalizedEvals.add(Tuple2(doc.baseName(), evals._2));
 		}

@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
 import java.util.List;
+import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
@@ -49,6 +50,8 @@ public class TrainFont extends FonttrainTranscribeShared {
 	}
 
 	public void run() {
+		Set<OutputFormat> outputFormats = parseOutputFormats();
+		
 		CodeSwitchLanguageModel initialLM = loadInputLM();
 		Font initialFont = loadInputFont();
 		BasicGlyphSubstitutionModelFactory gsmFactory = makeGsmFactory(initialLM);
@@ -79,7 +82,7 @@ public class TrainFont extends FonttrainTranscribeShared {
 				gsmFactory, documentOutputPrinterAndEvaluator,
 				numEMIters, updateDocBatchSize > 0 ? updateDocBatchSize : inputDocuments.size(), false, true,
 				numMstepThreads,
-				newInputDocPath, outputPath,
+				newInputDocPath, outputPath, outputFormats,
 				evalSetEvaluator, evalFreq, evalBatches);
 	}
 

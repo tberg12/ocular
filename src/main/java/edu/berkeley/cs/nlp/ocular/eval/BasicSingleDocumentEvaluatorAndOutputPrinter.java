@@ -12,12 +12,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
+import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat.*;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.output.AltoOutputWriter;
 import edu.berkeley.cs.nlp.ocular.output.HtmlOutputWriter;
@@ -62,7 +65,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 	public Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evaluateAndPrintTranscription(int iter, int batchId,
 			Document doc,
 			TransitionState[][] decodeStates, int[][] decodeWidths,
-			String inputDocPath, String outputPath) {
+			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats) {
 		
 		Tuple2<Tuple3<String[][], String[][], List<String>>, Tuple2<TransitionState[][], int[][]>> goldTranscriptionData = loadGoldTranscriptions(doc, decodeStates, decodeWidths);
 		String[][] goldDiplomaticLineChars = goldTranscriptionData._1._1;
@@ -92,7 +95,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		//
 		// Diplomatic transcription output
 		//
-		{
+		if (outputFormats.contains(DIPL)) {
 			String transcriptionOutputFilename = diplomaticTranscriptionOutputFile(outputFilenameBase);
 			
 			StringBuffer transcriptionOutputBuffer = new StringBuffer();
@@ -109,7 +112,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		//
 		// Normalized transcription lines output
 		//
-		if (allowGlyphSubstitution) {
+		if (allowGlyphSubstitution && outputFormats.contains(NORMLINES)) {
 			String transcriptionOutputFilename = normalizedLinesTranscriptionOutputFile(outputFilenameBase);
 			
 			StringBuffer transcriptionOutputBuffer = new StringBuffer();
@@ -126,7 +129,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		//
 		// Normalized transcription cleaned output
 		//
-		if (allowGlyphSubstitution) {
+		if (allowGlyphSubstitution && outputFormats.contains(NORM)) {
 			String transcriptionOutputFilename = normalizedTranscriptionOutputFile(outputFilenameBase);
 			
 			String transcriptionOutputBuffer = StringHelper.join(mt.viterbiNormalizedTranscription);
@@ -140,7 +143,8 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		//
 		// Make comparison file
 		//
-		if (allowGlyphSubstitution || goldDiplomaticLineChars != null || goldNormalizedLineChars != null) {
+		//if ((allowGlyphSubstitution || goldDiplomaticLineChars != null || goldNormalizedLineChars != null) && outputFormats.contains(COMP)) {
+		if (outputFormats.contains(COMP)) {
 			String transcriptionOutputFilename = comparisonsTranscriptionOutputFile(outputFilenameBase);
 			
 			List<String> transcriptionWithSubsOutputLines = getTranscriptionLinesWithSubs(mt.viterbiTransStates);
@@ -163,18 +167,18 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			}
 			goldComparisonOutputBuffer.append("\n");
 			
-			if (mt.viterbiNormalizedTranscription != null || goldNormalizedChars != null) {
-				if (mt.viterbiNormalizedTranscription != null && goldNormalizedChars != null) {
+			if ((allowGlyphSubstitution && mt.viterbiNormalizedTranscription != null) || goldNormalizedChars != null) {
+				if ((allowGlyphSubstitution && mt.viterbiNormalizedTranscription != null) && goldNormalizedChars != null) {
 					goldComparisonOutputBuffer.append("Model (top) vs. Gold (bottom) normalized transcriptions\n");
 				}
-				else if (mt.viterbiNormalizedTranscription != null) {
+				else if (allowGlyphSubstitution && mt.viterbiNormalizedTranscription != null) {
 					goldComparisonOutputBuffer.append("Model normalized transcription\n");
 				}
 				else if (goldNormalizedChars != null) {
 					goldComparisonOutputBuffer.append("Gold normalized transcription\n");
 				}
 				
-				if (mt.viterbiNormalizedTranscription != null) {
+				if (allowGlyphSubstitution && mt.viterbiNormalizedTranscription != null) {
 					goldComparisonOutputBuffer.append(StringHelper.join(mt.viterbiNormalizedTranscription) + "\n");
 				}
 				if (goldNormalizedChars != null) {
@@ -200,9 +204,15 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		//
 		// Other files
 		//
-		new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, false);
-		new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, true);
-		new HtmlOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc.baseName(), outputFilenameBase);
+		if (outputFormats.contains(ALTO)) {
+			new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, false);
+			if (allowGlyphSubstitution) {
+				new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, true);
+			}
+		}
+		if (outputFormats.contains(HTML)) {
+			new HtmlOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc.baseName(), outputFilenameBase);
+		}
 	
 		//
 		// Transcription with widths

@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
@@ -29,6 +30,7 @@ import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
 import edu.berkeley.cs.nlp.ocular.main.InitializeGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
+import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
@@ -56,7 +58,7 @@ public class FontTrainer {
 				SingleDocumentEvaluatorAndOutputPrinter documentEvaluatorAndOutputPrinter,
 				int numEMIters, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall, boolean writeIntermediateModelsToTemp,
 				int numMstepThreads,
-				String inputDocPath, String outputPath,
+				String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
 				MultiDocumentTranscriber evalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
 		
 		System.out.println("trainFont(numEMIters="+numEMIters+", updateDocBatchSize="+updateDocBatchSize+", noUpdateIfBatchTooSmall="+noUpdateIfBatchTooSmall+", writeIntermediateModelsToTemp="+writeIntermediateModelsToTemp+")");
@@ -91,7 +93,7 @@ public class FontTrainer {
 									documentEvaluatorAndOutputPrinter,
 									numEMIters, updateDocBatchSize, noUpdateIfBatchTooSmall, writeIntermediateModelsToTemp,
 									numMstepThreads,
-									inputDocPath, outputPath,
+									inputDocPath, outputPath, outputFormats,
 									evalSetIterationEvaluator, evalFreq, evalBatches);
 			font = iterationResultModels._1;
 			lm = iterationResultModels._2;
@@ -133,7 +135,7 @@ public class FontTrainer {
 			SingleDocumentEvaluatorAndOutputPrinter documentEvaluatorAndOutputPrinter,
 			int numEMIters, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall, boolean writeIntermediateModelsToTemp,
 			int numMstepThreads,
-			String inputDocPath, String outputPath,
+			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
 			MultiDocumentTranscriber evalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
 		
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
@@ -179,7 +181,7 @@ public class FontTrainer {
 			gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 			
 			// write transcriptions and evaluate
-			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = documentEvaluatorAndOutputPrinter.evaluateAndPrintTranscription(iter, 0, doc, decodeStates, decodeWidths, inputDocPath, outputPath);
+			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = documentEvaluatorAndOutputPrinter.evaluateAndPrintTranscription(iter, 0, doc, decodeStates, decodeWidths, inputDocPath, outputPath, outputFormats);
 			if (evals._1 != null) allDiplomaticTrainEvals.add(Tuple2(doc.baseName(), evals._1));
 			if (evals._2 != null) allNormalizedTrainEvals.add(Tuple2(doc.baseName(), evals._2));
 			
