@@ -1,15 +1,18 @@
 package edu.berkeley.cs.nlp.ocular.output;
 
+import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml3;
 import indexer.Indexer;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import util.Iterators;
+import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
@@ -33,19 +36,21 @@ public class AltoOutputWriter {
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 	}
 
-	public void write(int numLines, List<TransitionState>[] viterbiTransStates, String inputDocPath, String outputFilenameBase, List<Integer>[] viterbiWidths) {
-		String altoOutputFilename = outputFilenameBase + ".alto.xml";
+	public void write(int numLines, List<TransitionState>[] viterbiTransStates, Document doc, String outputFilenameBase, String inputDocPath, List<Integer>[] viterbiWidths, boolean outputNormalized) {
+		String altoOutputFilename = outputFilenameBase + (outputNormalized ? "_norm" : "_dipl") + ".alto.xml";
 
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd hh:mm:ss z");
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+		String imgFilename = doc.baseName();
 		
 		StringBuffer outputBuffer = new StringBuffer();
-		outputBuffer.append("<alto xmlns=\"http://schema.ccs-gmbh.com/ALTO\" xmlns:emop=\"http://emop.tamu.edu\">\n");
+		outputBuffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		outputBuffer.append("<alto xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns=\"http://www.loc.gov/standards/alto/ns-v3#\" xsi:schemaLocation=\"http://www.loc.gov/standards/alto/ns-v3# http://www.loc.gov/standards/alto/v3/alto.xsd\" xmlns:emop=\"http://emop.tamu.edu\">\n");
 		outputBuffer.append("  <Description>\n");
 		outputBuffer.append("    <MeasurementUnit>pixel</MeasurementUnit>\n");
 		outputBuffer.append("    <sourceImageInformation>\n");
-		outputBuffer.append("      <filename>"+(new File(inputDocPath).getName())+"</filename>\n");
+		outputBuffer.append("      <fileName>"+imagePathToFilename(imgFilename)+"</fileName>\n");  //gives filename with extension
 		outputBuffer.append("    </sourceImageInformation>\n");
-		outputBuffer.append("    <OCRProcessing>\n"); //IDK how we should "ID" this.
+		outputBuffer.append("    <OCRProcessing ID=\"Ocular0.0.3\">\n"); 
 		outputBuffer.append("      <preProcessingStep></preProcessingStep>\n"); 
 		outputBuffer.append("      <ocrProcessingStep>\n");
 		outputBuffer.append("		 <processingDateTime>"+formatter.format(new Date())+"</processingDateTime>\n");
@@ -72,13 +77,15 @@ public class AltoOutputWriter {
 		outputBuffer.append("    </OCRProcessing>\n");
 		outputBuffer.append("  </Description>\n");
 		outputBuffer.append("  <Layout>\n");
-		outputBuffer.append("    <Page ID=\"page_1\">\n");
+		outputBuffer.append("    <Page ID=\""+imageFilenameToId(imgFilename)+"\"  PHYSICAL_IMG_NR=\""+imageFilenameToIdNumber(imgFilename)+"\" >\n");
 		outputBuffer.append("      <PrintSpace>\n");
 		outputBuffer.append("        <TextBlock ID=\"par_1\">\n");
 		
 		boolean inWord = false; // (as opposed to a space)
 		int wordIndex = 0;
 		for (int line = 0; line < numLines; ++line) {
+			boolean beginningOfLine = true;
+			
 			outputBuffer.append("    <TextLine ID=\"line_"+(line+1)+"\">\n"); //Opening <TextLine>, assigning ID.
 			@SuppressWarnings("unchecked")
 			Iterator<TransitionState> tsIterator = Iterators.concat(viterbiTransStates[line].iterator(), Iterators.<TransitionState>oneItemIterator(null));
@@ -125,16 +132,30 @@ public class AltoOutputWriter {
 							String diplomaticTranscription = diplomaticTranscriptionBuffer.toString().trim();
 							String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
 							if (!diplomaticTranscription.isEmpty()) {
-								outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+diplomaticTranscription+"\" Language=\""+language+"\"> \n");
-								outputBuffer.append("          <ALTERNATIVE>"+normalizedTranscription+"</ALTERNATIVE>\n");
-								outputBuffer.append("      </String>\n");
+								outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+escapeHtml3(outputNormalized ? normalizedTranscription : diplomaticTranscription)+"\" LANG=\""+language+"\"");
+								if (!normalizedTranscription.equals(diplomaticTranscription)) {
+									outputBuffer.append("> \n");
+									if (outputNormalized) {
+										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Diplomatic\">"+escapeHtml3(normalizedTranscription)+"</ALTERNATIVE>\n");
+									}
+									else {
+										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Normalization\">"+escapeHtml3(diplomaticTranscription)+"</ALTERNATIVE>\n");	
+									}
+									outputBuffer.append("      </String>\n");
+								}
+								else {
+									outputBuffer.append("/> \n");
+								}
+								beginningOfLine = false;
 								wordIndex = wordIndex+1;
 							}
 						}
 					}
-					else { // in space
-						if (wordWidth > 0) {
-							outputBuffer.append("      <SP WIDTH=\""+wordWidth+"\"/>\n");
+					else { // in space TODO: This cannot happen at the beginning of a line.
+						if (!beginningOfLine) {
+							if (wordWidth > 0) {
+								outputBuffer.append("      <SP WIDTH=\""+wordWidth+"\"/>\n");
+							}
 						}
 					}
 					
@@ -160,6 +181,38 @@ public class AltoOutputWriter {
 
 		System.out.println("Writing alto output to " + altoOutputFilename);
 		f.writeString(altoOutputFilename, outputString);
+	}
+	
+    private String imageFilenameToId(String imageFilename) { //pl_blac_012_00013-800.jpg
+        String pattern = "(pl_[a-z]+_\\d+_\\d+).*";
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(imageFilename);
+        if (m.find()) {
+            return m.group(1);
+        } else {
+            return "Error: page ID unknown";
+        }
+	}
+    private String imageFilenameToIdNumber(String imageFilename) { //pl_blac_012_00013-800.jpg
+        String pattern = "pl_[a-z]+_\\d+_(\\d+).*";
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(imageFilename);
+        if (m.find()) {
+            return m.group(1);
+        } else {
+            return "Error: ID Number unknown";
+        }
+	}
+    
+    private String imagePathToFilename(String imageFilename) { //pl_blac_012_00013-800.jpg
+        String pattern = ".*(pl_[a-z]+_\\d+_\\d+.*)";
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(imageFilename);
+        if (m.find()) {
+            return m.group(1);
+        } else {
+            return "Error: filename unknown";
+        }
 	}
 	
 }
