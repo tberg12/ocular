@@ -16,6 +16,7 @@ import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import fileio.f;
 
 /**
@@ -58,7 +59,7 @@ public class AltoOutputWriter {
 //				StringBuffer arguments = new StringBuffer();
 //				arguments.append(s);
 //			};
-//			outputBuffer.append("      	 <processingStepSettings>"+arguments+"</processingStepSettings>\n");//want to print "args" here ...
+		outputBuffer.append("      	 <processingStepSettings>"+StringHelper.join(commandLineArgs, " ")+"</processingStepSettings>\n");
 		outputBuffer.append("        <processingSoftware>\n");
 		outputBuffer.append("          <softwareCreator>Taylor Berg-Kirkpatrick, Greg Durrett, Dan Klein, Dan Garrette, Hannah Alpert-Abrams</softwareCreator>\n");
 		outputBuffer.append("          <softwareName>Ocular</softwareName>\n");
