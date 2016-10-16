@@ -97,7 +97,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		//
 		// Diplomatic transcription output
 		//
-		if (outputFormats.contains(DIPL)) {
+		{
 			String transcriptionOutputFilename = diplomaticTranscriptionOutputFile(outputFilenameBase);
 			
 			StringBuffer transcriptionOutputBuffer = new StringBuffer();
@@ -107,14 +107,16 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			
 			System.out.println("\n" + transcriptionOutputBuffer.toString());
 			
-			System.out.println("Writing transcription output to " + transcriptionOutputFilename);
-			FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+			if (outputFormats.contains(DIPL)) {	
+				System.out.println("Writing transcription output to " + transcriptionOutputFilename);
+				FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+			}
 		}
 
 		//
 		// Normalized transcription lines output
 		//
-		if (allowGlyphSubstitution && outputFormats.contains(NORMLINES)) {
+		if (allowGlyphSubstitution) {
 			String transcriptionOutputFilename = normalizedLinesTranscriptionOutputFile(outputFilenameBase);
 			
 			StringBuffer transcriptionOutputBuffer = new StringBuffer();
@@ -124,22 +126,26 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			
 			//System.out.println("\n" + transcriptionOutputBuffer.toString());
 			
-			System.out.println("Writing normalized transcription lines output to " + transcriptionOutputFilename);
-			FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+			if (outputFormats.contains(NORMLINES)) {
+				System.out.println("Writing normalized transcription lines output to " + transcriptionOutputFilename);
+				FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+			}
 		}
 		
 		//
 		// Normalized transcription cleaned output
 		//
-		if (allowGlyphSubstitution && outputFormats.contains(NORM)) {
+		if (allowGlyphSubstitution) {
 			String transcriptionOutputFilename = normalizedTranscriptionOutputFile(outputFilenameBase);
 			
 			String transcriptionOutputBuffer = StringHelper.join(mt.viterbiNormalizedTranscription);
 			
 			//System.out.println("\n" + transcriptionOutputBuffer.toString() + "\n");
 			
-			System.out.println("Writing normalized transcription output to " + transcriptionOutputFilename);
-			FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+			if (outputFormats.contains(NORM)) {
+				System.out.println("Writing normalized transcription output to " + transcriptionOutputFilename);
+				FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+			}
 		}
 		
 		//
@@ -199,7 +205,6 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			}
 			
 			System.out.println("Writing comparisons to " + transcriptionOutputFilename);
-			//System.out.println(goldComparisonOutputBuffer.toString());
 			f.writeString(transcriptionOutputFilename, goldComparisonOutputBuffer.toString());
 		}
 		

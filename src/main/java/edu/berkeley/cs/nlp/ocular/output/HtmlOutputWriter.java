@@ -27,8 +27,6 @@ public class HtmlOutputWriter {
 	public void write(int numLines, List<TransitionState>[] viterbiTransStates, String imgFilename, String outputFilenameBase) {
 		String htmlOutputFilename = outputFilenameBase + ".html";
 		
-		System.out.println("Multiple languages being used ("+langIndexer.size()+"), so an html file is being generated to show language switching.");
-
 		StringBuffer outputBuffer = new StringBuffer();
 		outputBuffer.append("<HTML xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n");
 		outputBuffer.append("<HEAD><META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></HEAD>\n");
@@ -68,7 +66,8 @@ public class HtmlOutputWriter {
 			outputBuffer.append("<font color=\"" + colors[i+1] + "\">" + (i < 0 ? "none" : langIndexer.getObject(i)) + "</font></br>\n");
 		}
 
-		outputBuffer.append("</td><td><img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\" style=\"width: 75%; height: 75%\">\n");
+		outputBuffer.append("</td><td>\n");
+		outputBuffer.append("<img src=\"" + FileUtil.pathRelativeTo(imgFilename, new File(htmlOutputFilename).getParent()) + "\" style=\"width: 75%; height: 75%\">\n");
 		outputBuffer.append("</td></tr></table>\n");
 		outputBuffer.append("</body></html>\n");
 		outputBuffer.append("\n\n\n");
