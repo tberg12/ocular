@@ -55,10 +55,6 @@ public class AltoOutputWriter {
 		outputBuffer.append("      <preProcessingStep></preProcessingStep>\n"); 
 		outputBuffer.append("      <ocrProcessingStep>\n");
 		outputBuffer.append("		 <processingDateTime>"+formatter.format(new Date())+"</processingDateTime>\n");
-//			for (StringBuffer s: args) {
-//				StringBuffer arguments = new StringBuffer();
-//				arguments.append(s);
-//			};
 		outputBuffer.append("      	 <processingStepSettings>"+StringHelper.join(commandLineArgs, " ")+"</processingStepSettings>\n");
 		outputBuffer.append("        <processingSoftware>\n");
 		outputBuffer.append("          <softwareCreator>Taylor Berg-Kirkpatrick, Greg Durrett, Dan Klein, Dan Garrette, Hannah Alpert-Abrams</softwareCreator>\n");
