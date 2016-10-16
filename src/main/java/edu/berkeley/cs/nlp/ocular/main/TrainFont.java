@@ -49,7 +49,7 @@ public class TrainFont extends FonttrainTranscribeShared {
 		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath is required for font training.");
 	}
 
-	public void run() {
+	public void run(List<String> commandLineArgs) {
 		Set<OutputFormat> outputFormats = parseOutputFormats();
 		
 		CodeSwitchLanguageModel initialLM = loadInputLM();
@@ -63,7 +63,7 @@ public class TrainFont extends FonttrainTranscribeShared {
 		DecoderEM decoderEM = makeDecoder(charIndexer);
 
 		boolean evalCharIncludesDiacritic = true;
-		SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator = new BasicSingleDocumentEvaluatorAndOutputPrinter(charIndexer, langIndexer, allowGlyphSubstitution, evalCharIncludesDiacritic);
+		SingleDocumentEvaluatorAndOutputPrinter documentOutputPrinterAndEvaluator = new BasicSingleDocumentEvaluatorAndOutputPrinter(charIndexer, langIndexer, allowGlyphSubstitution, evalCharIncludesDiacritic, commandLineArgs);
 		
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);

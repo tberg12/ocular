@@ -93,7 +93,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 		if (inputTextPath == null) throw new IllegalArgumentException("-inputTextPath not set");
 	}
 
-	public void run() {
+	public void run(List<String> commandLineArgs) {
 		Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> langIndexerAndLmData = makePathsReadersAndPriors();
 		Indexer<String> langIndexer = langIndexerAndLmData._1;
 		List<Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = langIndexerAndLmData._2;

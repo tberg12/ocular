@@ -36,7 +36,7 @@ public class AltoOutputWriter {
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 	}
 
-	public void write(int numLines, List<TransitionState>[] viterbiTransStates, Document doc, String outputFilenameBase, String inputDocPath, List<Integer>[] viterbiWidths, boolean outputNormalized) {
+	public void write(int numLines, List<TransitionState>[] viterbiTransStates, Document doc, String outputFilenameBase, String inputDocPath, List<Integer>[] viterbiWidths, List<String> commandLineArgs, boolean outputNormalized) {
 		String altoOutputFilename = outputFilenameBase + (outputNormalized ? "_norm" : "_dipl") + ".alto.xml";
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");

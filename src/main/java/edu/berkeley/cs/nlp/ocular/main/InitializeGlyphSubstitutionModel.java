@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -47,7 +48,7 @@ public class InitializeGlyphSubstitutionModel extends OcularRunnable {
 		if (outputGsmPath == null) throw new IllegalArgumentException("-outputGsmPath not set");
 	}
 
-	public void run() {
+	public void run(List<String> commandLineArgs) {
 		final CodeSwitchLanguageModel lm = InitializeLanguageModel.readCodeSwitchLM(inputLmPath);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		final Indexer<String> langIndexer = lm.getLanguageIndexer();

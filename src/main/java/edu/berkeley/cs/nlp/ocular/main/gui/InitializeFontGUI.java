@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -171,7 +172,7 @@ public class InitializeFontGUI {
 				exec.templateMinWidthFraction = Double.valueOf(input_templateMinWidthFraction.getText());
 				exec.spaceMaxWidthFraction = Double.valueOf(input_spaceMaxWidthFraction.getText());
 				exec.spaceMinWidthFraction = Double.valueOf(input_spaceMinWidthFraction.getText());
-				exec.run();
+				exec.run(new ArrayList());
 			}
 		});
 		input_go.setText("Train LM");

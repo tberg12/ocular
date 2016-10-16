@@ -43,12 +43,14 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 	private Indexer<String> langIndexer;
 	private boolean allowGlyphSubstitution;
 	private boolean charIncludesDiacritic;
+	private List<String> commandLineArgs;
 	
-	public BasicSingleDocumentEvaluatorAndOutputPrinter(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution, boolean charIncludesDiacritic) {
+	public BasicSingleDocumentEvaluatorAndOutputPrinter(Indexer<String> charIndexer, Indexer<String> langIndexer, boolean allowGlyphSubstitution, boolean charIncludesDiacritic, List<String> commandLineArgs) {
 		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
 		this.allowGlyphSubstitution = allowGlyphSubstitution;
 		this.charIncludesDiacritic = charIncludesDiacritic;
+		this.commandLineArgs = commandLineArgs;
 	}
 
 	private String joinLineForPrinting(String[] chars) {
@@ -205,9 +207,9 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		// Other files
 		//
 		if (outputFormats.contains(ALTO)) {
-			new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, false);
+			new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, commandLineArgs, false);
 			if (allowGlyphSubstitution) {
-				new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, true);
+				new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, commandLineArgs, true);
 			}
 		}
 		if (outputFormats.contains(HTML)) {

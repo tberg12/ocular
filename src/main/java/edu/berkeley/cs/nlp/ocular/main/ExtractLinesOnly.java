@@ -21,7 +21,7 @@ public class ExtractLinesOnly extends LineExtractionOptions {
 		if (extractedLinesPath == null) throw new IllegalArgumentException("-extractedLinesPath is required.");
 	}
 
-	public void run() {
+	public void run(List<String> commandLineArgs) {
 		List<String> inputDocPathList = getInputDocPathList();
 		List<Document> inputDocuments = LazyRawImageLoader.loadDocuments(inputDocPathList, extractedLinesPath, numDocs, numDocsToSkip, uniformLineHeight, binarizeThreshold, crop);
 		if (inputDocuments.isEmpty()) throw new NoDocumentsFoundException();

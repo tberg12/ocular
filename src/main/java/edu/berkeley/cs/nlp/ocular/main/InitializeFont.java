@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
@@ -65,7 +66,7 @@ public class InitializeFont extends OcularRunnable {
 		if (outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
 	}
 
-	public void run() {
+	public void run(List<String> commandLineArgs) {
 		Set<String> allowedFonts = getAllowedFontsListFromFile();
 		
 		final LanguageModel lm = InitializeLanguageModel.readLM(inputLmPath);
