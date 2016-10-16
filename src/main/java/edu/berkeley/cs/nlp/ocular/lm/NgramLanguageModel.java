@@ -56,6 +56,7 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		Set<Integer> activeCharacters = counter.getActiveCharacters();
 		Indexer<String> charIndexer = new CharIndexer();
 		counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
+		activeCharacters.add(charIndexer.getIndex(Charset.SPACE));
 		for (String c : Charset.UNIV_PUNC) activeCharacters.add(charIndexer.getIndex(c));
 		charIndexer.lock();
 		counter.printStats(-1);

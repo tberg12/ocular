@@ -233,6 +233,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 				}
 				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2)+"   "+note);
 			}
+			activeChars.add(charIndexer.getIndex(Charset.SPACE));
 			System.out.println("Including 'universal punctuation' chars: "+Charset.UNIV_PUNC);
 			for (String c : Charset.UNIV_PUNC) activeChars.add(charIndexer.getIndex(c));
 			
