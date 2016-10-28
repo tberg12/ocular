@@ -20,7 +20,7 @@ mainClass in oneJar := None
 
 
 libraryDependencies ++= Seq(
-  "org.apache.commons" % "commons-lang3" % "3.4",
+//  "org.apache.commons" % "commons-lang3" % "3.4", //to escape HTML special characters
   "org.swinglabs" % "pdf-renderer" % "1.0.5",
   "junit" % "junit" % "4.12" % "test",
   "com.novocode" % "junit-interface" % "0.10" % "test")
