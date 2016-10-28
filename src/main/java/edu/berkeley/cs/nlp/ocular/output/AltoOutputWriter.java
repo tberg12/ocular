@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.output;
 
-import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml3;
+//import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml3; // to escape all HTML special characters
 import indexer.Indexer;
 
 import java.text.SimpleDateFormat;
@@ -129,14 +129,14 @@ public class AltoOutputWriter {
 							String diplomaticTranscription = diplomaticTranscriptionBuffer.toString().trim();
 							String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
 							if (!diplomaticTranscription.isEmpty()) {
-								outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+escapeHtml3(outputNormalized ? normalizedTranscription : diplomaticTranscription)+"\" LANG=\""+language+"\"");
+								outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+escapeCharactersForValidation(outputNormalized ? normalizedTranscription : diplomaticTranscription)+"\" LANG=\""+language+"\"");
 								if (!normalizedTranscription.equals(diplomaticTranscription)) {
 									outputBuffer.append("> \n");
 									if (outputNormalized) {
-										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Diplomatic\">"+escapeHtml3(normalizedTranscription)+"</ALTERNATIVE>\n");
+										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Diplomatic\">"+escapeCharactersForValidation(normalizedTranscription)+"</ALTERNATIVE>\n");
 									}
 									else {
-										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Normalization\">"+escapeHtml3(diplomaticTranscription)+"</ALTERNATIVE>\n");	
+										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Normalization\">"+escapeCharactersForValidation(diplomaticTranscription)+"</ALTERNATIVE>\n");	
 									}
 									outputBuffer.append("      </String>\n");
 								}
@@ -148,7 +148,7 @@ public class AltoOutputWriter {
 							}
 						}
 					}
-					else { // in space TODO: This cannot happen at the beginning of a line.
+					else { // ALTO does not accept spaces at the commencement of a line
 						if (!beginningOfLine) {
 							if (wordWidth > 0) {
 								outputBuffer.append("      <SP WIDTH=\""+wordWidth+"\"/>\n");
@@ -211,5 +211,18 @@ public class AltoOutputWriter {
             return "Error: filename unknown";
         }
 	}
-	
+    private String escapeCharactersForValidation(String inputText) { 
+    	return inputText
+			.replace("&", "&amp;")
+			.replace(">", "&gt;")
+			.replace("<", "&lt;")
+			.replace("'", "&apos;")
+			.replace("\"", "&quot;");
+        
+	}
+//    ·        Ampersand—&—&amp;
+//    ·        greater-than—>—&gt;
+//    ·        less-than—<—&lt;
+//    ·        apostrophe—'—&apos;
+//    ·        quote—"—&quot;
 }
