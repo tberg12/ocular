@@ -308,14 +308,20 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		public final List<String>[] viterbiDiplomaticCharLines;
 		public final List<String>[] viterbiNormalizedCharLines;
 		public final List<String> viterbiNormalizedTranscription; // A continuous string, re-assembling words hyphenated over a line.
+		public final List<Integer> viterbiNormalizedTranscriptionCharIndices; // A continuous string, re-assembling words hyphenated over a line, as character indices.
+		public final List<Integer> viterbiNormalizedTranscriptionLangIndices; // A continuous string, re-assembling words hyphenated over a line, as language indices.
 		public final List<TransitionState>[] viterbiTransStates;
 		public final List<Integer>[] viterbiWidths;
 
 		@SuppressWarnings("unchecked")
 		public ModelTranscriptions(int numLines, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer) {
+			int spaceIndex = charIndexer.getIndex(SPACE);
+			
 			this.viterbiDiplomaticCharLines = new List[numLines];
 			this.viterbiNormalizedCharLines = new List[numLines];
 			this.viterbiNormalizedTranscription = new ArrayList<String>();
+			this.viterbiNormalizedTranscriptionCharIndices = new ArrayList<Integer>();
+			this.viterbiNormalizedTranscriptionLangIndices = new ArrayList<Integer>();
 			this.viterbiTransStates = new List[numLines];
 			this.viterbiWidths = new List[numLines];
 
@@ -363,8 +369,11 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 									
 								case LMRGN:
 								case RMRGN:
-									if (!viterbiNormalizedTranscription.isEmpty() && !SPACE.equals(last(viterbiNormalizedTranscription)))
+									if (!viterbiNormalizedTranscription.isEmpty() && !SPACE.equals(last(viterbiNormalizedTranscription))) {
 										viterbiNormalizedTranscription.add(SPACE);
+										viterbiNormalizedTranscriptionCharIndices.add(spaceIndex);
+										viterbiNormalizedTranscriptionLangIndices.add(ts.getLanguageIndex());
+									}
 									break;
 								
 								case TMPL:
@@ -373,6 +382,8 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 									}
 									else {
 										viterbiNormalizedTranscription.add(Charset.unescapeChar(currNormalizedChar));
+										viterbiNormalizedTranscriptionCharIndices.add(ts.getLmCharIndex());
+										viterbiNormalizedTranscriptionLangIndices.add(ts.getLanguageIndex());
 									}
 							}
 						}
@@ -385,6 +396,8 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 
 			if (SPACE.equals(last(viterbiNormalizedTranscription))) {
 				viterbiNormalizedTranscription.remove(viterbiNormalizedTranscription.size()-1);
+				viterbiNormalizedTranscriptionCharIndices.remove(viterbiNormalizedTranscriptionCharIndices.size()-1);
+				viterbiNormalizedTranscriptionLangIndices.remove(viterbiNormalizedTranscriptionLangIndices.size()-1);
 			}
 		}
 	}
