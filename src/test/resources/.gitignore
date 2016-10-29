@@ -1,0 +1,7 @@
+*.lmser
+*.fontser
+*.gsmser
+train_output/
+test_output/
+extracted_lines/
+
