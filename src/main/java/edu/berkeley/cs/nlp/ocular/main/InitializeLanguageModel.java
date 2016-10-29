@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.main;
 
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
+import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -34,6 +36,7 @@ import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
+import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
 import fileio.f;
 import indexer.HashMapIndexer;
@@ -72,8 +75,8 @@ public class InitializeLanguageModel extends OcularRunnable {
 	@Option(gloss = "A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters.")
 	public static Set<String> explicitCharacterSet = null; // Allow all characters. 
 
-	@Option(gloss = "LM character n-gram length.")
-	public static int charN = 6;
+	@Option(gloss = "LM character n-gram length. If just one language is used, or if all languages should use the same value, just give an integer.  If languages can have different values, give them as comma-separated language/integer pairs: \"english->6,spanish->4,french->4\"; be sure to wrap the whole string with \"quotes\".")
+	public static String charNgramLength = "6";
 	
 	@Option(gloss = "Exponent on LM scores.")
 	public static double lmPower = 4.0;
@@ -94,9 +97,9 @@ public class InitializeLanguageModel extends OcularRunnable {
 	}
 
 	public void run(List<String> commandLineArgs) {
-		Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> langIndexerAndLmData = makePathsReadersAndPriors();
+		Tuple2<Indexer<String>, List<Tuple3<Tuple2<String, TextReader>, Double, Integer>>> langIndexerAndLmData = makePathsReadersAndPriors();
 		Indexer<String> langIndexer = langIndexerAndLmData._1;
-		List<Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = langIndexerAndLmData._2;
+		List<Tuple3<Tuple2<String, TextReader>, Double, Integer>> pathsReadersAndPriors = langIndexerAndLmData._2;
 
 		Indexer<String> charIndexer = new CharIndexer();
 		List<Tuple2<SingleLanguageModel, Double>> lmsAndPriors = makeMultipleSubLMs(pathsReadersAndPriors, charIndexer, langIndexer);
@@ -111,20 +114,25 @@ public class InitializeLanguageModel extends OcularRunnable {
 			String language = langIndexer.getObject(langIndex);
 			priorsSb.append(language).append(" -> ").append(lmsAndPriors.get(langIndex)._2 / priorSum).append(", ");
 		}
-		System.out.println(priorsSb.substring(0, priorsSb.length() - 2));
-		System.out.println("charN = " + charN);
+//		System.out.println(priorsSb.substring(0, priorsSb.length() - 2));
+		StringBuilder ngramLengthSb = new StringBuilder("Char ngram lengths: ");
+		for(int langIndex = 0; langIndex < langIndexer.size(); ++langIndex) {
+			String language = langIndexer.getObject(langIndex);
+			ngramLengthSb.append(language).append(" -> ").append(pathsReadersAndPriors.get(langIndex)._3).append(", ");
+		}
+		System.out.println(ngramLengthSb.substring(0, ngramLengthSb.length() - 2));
 
 		List<String> chars = new ArrayList<String>();
 		for (String c : charIndexer.getObjects()) chars.add(c);
 		Collections.sort(chars);
 		System.out.println("ALL POSSIBLE CHARACTERS: " + chars);
 
-		CodeSwitchLanguageModel codeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, langIndexer, pKeepSameLanguage, charN);
+		CodeSwitchLanguageModel codeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, langIndexer, pKeepSameLanguage);
 		System.out.println("writing LM to " + outputLmPath);
 		writeLM(codeSwitchLM, outputLmPath);
 	}
 
-	public Tuple2<Indexer<String>, List<Tuple2<Tuple2<String, TextReader>, Double>>> makePathsReadersAndPriors() {
+	public Tuple2<Indexer<String>, List<Tuple3<Tuple2<String, TextReader>, Double, Integer>>> makePathsReadersAndPriors() {
 		String inputTextPathString = inputTextPath;
 		if (!inputTextPath.contains("->")) inputTextPathString = "NoLanguageNameGiven->" + inputTextPath; // repair "invalid" input
 		Map<String, String> languagePathMap = new HashMap<String, String>();
@@ -153,6 +161,23 @@ public class InitializeLanguageModel extends OcularRunnable {
 				languagePriorMap.put(language, 1.0);
 		}
 		
+		Map<String, Integer> charNgramLengthMap = new HashMap<String, Integer>();
+		if (Pattern.matches("^\\d+$", charNgramLength)) {
+			for (String language : languagePathMap.keySet())
+				charNgramLengthMap.put(language, Integer.parseInt(charNgramLength));
+		}
+		else {
+			for (String part : charNgramLength.split(",")) {
+				String[] subparts = part.split("->");
+				if (subparts.length != 2) throw new IllegalArgumentException("malformed charNgramLength argument: comma-separated part must be of the form \"LANGUAGE->LENGTH\", was: " + part);
+				String language = subparts[0].trim();
+				Integer ngramLength = Integer.parseInt(subparts[1].trim());
+				charNgramLengthMap.put(language, ngramLength);
+			}
+			if (!languagePathMap.keySet().equals(charNgramLengthMap.keySet()))
+				throw new RuntimeException("-inputTextPath and -languagePriors do not have the same set of languages: " + languagePathMap.keySet() + " vs " + charNgramLengthMap.keySet());
+		}
+		
 		Map<String, String> languageAltSpellPathMap = new HashMap<String, String>();
 		if (alternateSpellingReplacementPaths != null && !alternateSpellingReplacementPaths.isEmpty()) {
 			if (!alternateSpellingReplacementPaths.contains("->")) { // only one path, use for all languages
@@ -173,11 +198,12 @@ public class InitializeLanguageModel extends OcularRunnable {
 			}
 		}
 		
-		List<Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors = new ArrayList<Tuple2<Tuple2<String, TextReader>, Double>>();
+		List<Tuple3<Tuple2<String, TextReader>, Double, Integer>> pathsReadersAndPriors = new ArrayList<Tuple3<Tuple2<String, TextReader>, Double, Integer>>();
 		Indexer<String> langIndexer = new HashMapIndexer<String>();
 		for (String language : languagePathMap.keySet()) {
 			String filepath = languagePathMap.get(language);
 			Double prior = languagePriorMap.get(language);
+			Integer ngramLength = charNgramLengthMap.get(language);
 			System.out.println("For language '" + language + "', using text in " + filepath + ", prior=" + prior
 					+ (languageAltSpellPathMap.keySet().contains(language) ? ", alternate spelling replacement rules in " + languageAltSpellPathMap.get(language) : ""));
 			
@@ -188,7 +214,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
 			
 			langIndexer.getIndex(language);
-			pathsReadersAndPriors.add(Tuple2(Tuple2(filepath, textReader), prior));
+			pathsReadersAndPriors.add(Tuple3(Tuple2(filepath, textReader), prior, ngramLength));
 		}
 
 		return Tuple2(langIndexer, pathsReadersAndPriors);
@@ -203,21 +229,21 @@ public class InitializeLanguageModel extends OcularRunnable {
 		return new ReplaceSomeTextReader(rules, textReader);
 	}
 
-	private List<Tuple2<SingleLanguageModel, Double>> makeMultipleSubLMs(List<Tuple2<Tuple2<String, TextReader>, Double>> pathsReadersAndPriors, Indexer<String> charIndexer, Indexer<String> langIndexer) {
+	private List<Tuple2<SingleLanguageModel, Double>> makeMultipleSubLMs(List<Tuple3<Tuple2<String, TextReader>, Double, Integer>> pathsReadersAndPriors, Indexer<String> charIndexer, Indexer<String> langIndexer) {
 		List<Tuple2<SingleLanguageModel, Double>> lmsAndPriors = new ArrayList<Tuple2<SingleLanguageModel, Double>>();
 		for (int langIndex = 0; langIndex < langIndexer.size(); ++langIndex) {
-			Tuple2<Tuple2<String, TextReader>, Double> pathsReaderAndPrior = pathsReadersAndPriors.get(langIndex);
+			Tuple3<Tuple2<String, TextReader>, Double, Integer> pathsReaderAndPrior = pathsReadersAndPriors.get(langIndex);
 			String language = langIndexer.getObject(langIndex);
 			String filepath = pathsReaderAndPrior._1._1;
 			TextReader textReader = pathsReaderAndPrior._1._2;
 			System.out.println(language + " text reader: " + textReader);
 
-			CorpusCounter counter = new CorpusCounter(charN);
+			int ngramLength = pathsReaderAndPrior._3;
+			CorpusCounter counter = new CorpusCounter(ngramLength);
 			List<String> chars = readFileChars(filepath, textReader, lmCharCount > 0 ? lmCharCount : Long.MAX_VALUE);
 			System.out.println("  using " + chars.size() + " characters for " + language + " read from " + filepath);
 			counter.countChars(chars, charIndexer, 0);
 
-			Double prior = pathsReaderAndPrior._2;
 			Set<Integer> activeChars = counter.getActiveCharacters();
 
 			List<Tuple2<Integer,Integer>> reverseUnigramCounts = new ArrayList<Tuple2<Integer,Integer>>();
@@ -244,6 +270,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 			System.out.println(language + ": " + langChars);
 			
 			SingleLanguageModel lm = new NgramLanguageModel(charIndexer, counter.getCounts(), counter.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
+			Double prior = pathsReaderAndPrior._2;
 			lmsAndPriors.add(Tuple2(lm, prior));
 		}
 		

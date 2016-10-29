@@ -33,7 +33,6 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 	private List<List<Double>> languageTransitionProbs;
 
 	private Indexer<String> charIndexer;
-	private int maxOrder;
 	private double pKeepSameLanguage;
 
 	public Indexer<String> getLanguageIndexer() {
@@ -59,15 +58,11 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 		return charIndexer;
 	}
 
-	public int getMaxOrder() {
-		return maxOrder;
-	}
-
 	public double getProbKeepSameLanguage() {
 		return pKeepSameLanguage;
 	}
 
-	public BasicCodeSwitchLanguageModel(List<Tuple2<SingleLanguageModel, Double>> subModelsAndPriors, Indexer<String> charIndexer, Indexer<String> langIndexer, double pKeepSameLanguage, int maxOrder) {
+	public BasicCodeSwitchLanguageModel(List<Tuple2<SingleLanguageModel, Double>> subModelsAndPriors, Indexer<String> charIndexer, Indexer<String> langIndexer, double pKeepSameLanguage) {
 		if (subModelsAndPriors.isEmpty()) throw new IllegalArgumentException("languageModelsAndPriors may not be empty");
 		if (pKeepSameLanguage <= 0.0 || pKeepSameLanguage > 1.0) throw new IllegalArgumentException("pKeepSameLanguage must be between 0 and 1, was " + pKeepSameLanguage);
 
@@ -91,7 +86,6 @@ public class BasicCodeSwitchLanguageModel implements CodeSwitchLanguageModel {
 
 		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
-		this.maxOrder = maxOrder;
 		this.pKeepSameLanguage = pKeepSameLanguage;
 	}
 

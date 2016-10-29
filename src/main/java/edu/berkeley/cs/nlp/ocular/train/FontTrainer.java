@@ -327,7 +327,7 @@ public class FontTrainer {
 		}
 
 		// Construct the new LM
-		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getLanguageIndexer(), lm.getProbKeepSameLanguage(), lm.getMaxOrder());
+		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getLanguageIndexer(), lm.getProbKeepSameLanguage());
 
 		// Print out some statistics
 		StringBuilder sb = new StringBuilder("Updating language probabilities: ");

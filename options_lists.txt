@@ -5,7 +5,7 @@
 ##### Additional Options
 	minCharCount
 	insertLongS
-	charN
+	charNgramLength
 	alternateSpellingReplacementPaths
 ##### Rarely Used Options
 	removeDiacritics

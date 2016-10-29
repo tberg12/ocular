@@ -247,8 +247,8 @@ Default: 10
 Automatically insert "long s" characters into the language model training data?
 Default: false
 
-* `-charN`:
-LM character n-gram length.
+* `-charNgramLength`:
+LM character n-gram length. If just one language is used, or if all languages should use the same value, just give an integer.  If languages can have different values, give them as comma-separated language/integer pairs: "english->6,spanish->4,french->4"; be sure to wrap the whole string with "quotes".
 Default: 6
 
 * `-alternateSpellingReplacementPaths`:

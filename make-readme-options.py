@@ -5,9 +5,10 @@ import re
 
 main_dir = "src/main/java/edu/berkeley/cs/nlp/ocular/main/"
 
-option_line_re   = re.compile(r"\s*(//\s*)?@Option\(gloss = \"(.*)\"\)\s*")
-gloss_re         = re.compile(r".*gloss = \"([^\"]+)\".*")
-opt_decl_line_re = re.compile(r"\s*(//\s*)?public static \S+ (\S+) = (.*);\s*(// (.+))?\s*")
+option_line_re        = re.compile(r"\s*(//\s*)?@Option\(gloss = \"(.*)\"\)\s*")
+gloss_re              = re.compile(r".*gloss = \"([^\"]+)\".*")
+opt_decl_line_re      = re.compile(r"\s*(//\s*)?public static \S+ (\S+) = (.*);\s*(// (.+))?\s*")
+default_quoted_int_re = re.compile(r'"\d+"')
 
 # def println(s): print(s.strip()+"\n")
 
@@ -72,6 +73,7 @@ for class_file_name in class_file_names:
                 decl_line_match = opt_decl_line_re.match(lines[line_num+1])
                 name = decl_line_match.group(2).strip()
                 default = decl_line_match.group(3).strip()
+                if default_quoted_int_re.match(default): default = default[1:-1]
                 default_explanation = decl_line_match.group(5)
                 if default_explanation: default_explanation = default_explanation.strip()
 

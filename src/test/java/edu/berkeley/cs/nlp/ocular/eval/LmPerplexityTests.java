@@ -91,7 +91,6 @@ public class LmPerplexityTests {
 		
 		final CodeSwitchLanguageModel csLm = new CodeSwitchLanguageModel() {
 			public double getCharNgramProb(int[] context, int c) { throw new RuntimeException(); }
-			public int getMaxOrder() { return 4; }
 			public Indexer<String> getCharacterIndexer() { return charIndexer; }
 			public Indexer<String> getLanguageIndexer() { return langIndexer; }
 			public SingleLanguageModel get(int language) { 
@@ -229,7 +228,6 @@ public class LmPerplexityTests {
 		
 		final CodeSwitchLanguageModel csLm = new CodeSwitchLanguageModel() {
 			public double getCharNgramProb(int[] context, int c) { throw new RuntimeException(); }
-			public int getMaxOrder() { throw new RuntimeException(); }
 			public Indexer<String> getCharacterIndexer() { return charIndexer; }
 			public Indexer<String> getLanguageIndexer() { return langIndexer; }
 			public SingleLanguageModel get(int language) { 

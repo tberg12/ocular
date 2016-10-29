@@ -15,8 +15,6 @@ public class DenseBigramTransitionModel {
 	private double[][] backwardTrans;
 	
 	public DenseBigramTransitionModel(LanguageModel lm) {
-		assert lm.getMaxOrder() >= 2;
-		
 		int numC = lm.getCharacterIndexer().size();
 		
 		this.starts = new double[numC];

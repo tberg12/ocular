@@ -581,7 +581,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	public static final double LINE_MRGN_PROB = 0.5;
 	public static final double LINE_END_HYPHEN_PROB = 1e-8;
 
-	private int n;
 	private Indexer<String> charIndexer;
 	private Indexer<String> langIndexer;
 	private int spaceCharIndex;
@@ -648,8 +647,6 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 		this.canBeElided = makeCanBeElidedSet(charIndexer);
 		this.addTilde = makeAddTildeMap(charIndexer);
 		this.diacriticDisregardMap = makeDiacriticDisregardMap(charIndexer);
-
-		this.n = lm.getMaxOrder();
 
 		this.numLanguages = lm.getLanguageIndexer().size();
 		this.alwaysSpaceTransitionTypes = makeSet(TransitionStateType.LMRGN, TransitionStateType.LMRGN_HPHN, TransitionStateType.RMRGN, TransitionStateType.RMRGN_HPHN);
@@ -821,7 +818,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 	private int[] shrinkContext(int[] originalContext, SingleLanguageModel slm) {
 		int[] newContext = originalContext;
-		while (newContext.length > n - 1)
+		while (newContext.length > slm.getMaxOrder() - 1)
 			newContext = shortenContextForward(newContext);
 		while (slm != null && !slm.containsContext(newContext))
 			newContext = shortenContextForward(newContext);
