@@ -817,8 +817,9 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	}
 
 	private int[] shrinkContext(int[] originalContext, SingleLanguageModel slm) {
+		int n = slm.getMaxOrder();
 		int[] newContext = originalContext;
-		while (newContext.length > slm.getMaxOrder() - 1)
+		while (newContext.length > n - 1)
 			newContext = shortenContextForward(newContext);
 		while (slm != null && !slm.containsContext(newContext))
 			newContext = shortenContextForward(newContext);

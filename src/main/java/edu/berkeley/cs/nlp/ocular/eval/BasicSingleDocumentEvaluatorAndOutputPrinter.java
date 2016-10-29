@@ -19,6 +19,7 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat.*;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
@@ -67,7 +68,8 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 	public Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evaluateAndPrintTranscription(int iter, int batchId,
 			Document doc,
 			TransitionState[][] decodeStates, int[][] decodeWidths,
-			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats) {
+			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
+			CodeSwitchLanguageModel lm) {
 		
 		Tuple2<Tuple3<String[][], String[][], List<String>>, Tuple2<TransitionState[][], int[][]>> goldTranscriptionData = loadGoldTranscriptions(doc, decodeStates, decodeWidths);
 		String[][] goldDiplomaticLineChars = goldTranscriptionData._1._1;
@@ -207,6 +209,9 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			System.out.println("Writing comparisons to " + transcriptionOutputFilename);
 			f.writeString(transcriptionOutputFilename, goldComparisonOutputBuffer.toString());
 		}
+		
+		double lmPerplexity = new LmPerplexity(lm).perplexity(mt.viterbiNormalizedTranscriptionCharIndices, mt.viterbiNormalizedTranscriptionLangIndices);
+		System.out.println("LM perplexity = " + lmPerplexity);
 		
 		//
 		// Other files

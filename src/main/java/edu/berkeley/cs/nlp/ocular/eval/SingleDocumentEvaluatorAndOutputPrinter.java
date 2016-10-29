@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
@@ -17,6 +18,7 @@ public interface SingleDocumentEvaluatorAndOutputPrinter {
 	public Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evaluateAndPrintTranscription(int iter, int batchId,
 			Document doc,
 			TransitionState[][] decodeStates, int[][] decodeWidths,
-			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats);
+			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
+			CodeSwitchLanguageModel lm);
 
 }

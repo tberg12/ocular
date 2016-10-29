@@ -73,7 +73,7 @@ public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
 			final int[][] decodeWidths = decodeResults._1._2;
 			totalJointLogProb += decodeResults._2;
 
-			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = docOutputPrinterAndEvaluator.evaluateAndPrintTranscription(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, outputFormats);
+			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = docOutputPrinterAndEvaluator.evaluateAndPrintTranscription(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, outputFormats, lm);
 			if (evals._1 != null) allDiplomaticEvals.add(Tuple2(doc.baseName(), evals._1));
 			if (evals._2 != null) allNormalizedEvals.add(Tuple2(doc.baseName(), evals._2));
 		}

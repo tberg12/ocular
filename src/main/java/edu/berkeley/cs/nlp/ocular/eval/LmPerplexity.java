@@ -23,12 +23,20 @@ public class LmPerplexity {
 
 	public double perplexity(List<Integer> viterbiNormalizedTranscriptionCharIndices, List<Integer> viterbiNormalizedTranscriptionLangIndices) {
 		double logTotalProbability = 0.0;
-		for(int i=0; i<viterbiNormalizedTranscriptionCharIndices.size(); ++i) {
+		for (int i=0; i<viterbiNormalizedTranscriptionCharIndices.size(); ++i) {
 			int curC = viterbiNormalizedTranscriptionCharIndices.get(i);
 			int curL = viterbiNormalizedTranscriptionLangIndices.get(i);
-			double langTransitionProb = getLangTransitionProb(i, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
-			double ngramProb = getNgramProb(i, curC, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
-			logTotalProbability += Math.log(langTransitionProb) + Math.log(ngramProb);
+			if (curL < 0) {
+				if (this.lm.getLanguageIndexer().size() == 1)
+					curL = 0;
+				else if (i > 0) 
+					throw new RuntimeException("curl="+curL+", i="+i);
+			}
+			else {
+				double langTransitionProb = getLangTransitionProb(i, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
+				double ngramProb = getNgramProb(i, curC, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
+				logTotalProbability += Math.log(langTransitionProb) + Math.log(ngramProb);
+			}
 		}
 		return Math.exp(-logTotalProbability / viterbiNormalizedTranscriptionCharIndices.size());
 	}
