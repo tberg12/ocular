@@ -47,7 +47,7 @@ public class LmPerplexity {
 	
 	private int findStartPoint(int i, int curL, List<Integer> viterbiNormalizedTranscriptionLangIndices) {
 		int startPoint = i;
-		while (startPoint > 0 && viterbiNormalizedTranscriptionLangIndices.get(startPoint-1) == curL && i-startPoint < lm.get(curL).getMaxOrder()-1) {
+		while (startPoint > 0 && getLangIndex(viterbiNormalizedTranscriptionLangIndices, startPoint-1) == curL && i-startPoint < lm.get(curL).getMaxOrder()-1) {
 			--startPoint;
 		}
 		return startPoint;
