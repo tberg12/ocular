@@ -285,9 +285,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we have no current language
 							if (c != spaceCharIndex) {
 								double pDestLang = lm.languagePrior(destLanguage); // no language to transition from
-								int[] shrunkenContext = shrinkContext(context, destLM);
-								double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-								int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+								double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, context, c)) + Math.log(pDestLang);
+								int[] nextContext = (!clearContext ? a.append((destLM!=null ? shrinkContext(context, destLM) : context), c) : new int[] { c });
 								addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
 							}
 						}
@@ -302,24 +301,21 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 								if (punctSet.contains(c)) {
 									if (allowLanguageSwitchOnPunct) {
 										double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
-										int[] shrunkenContext = shrinkContext(context, destLM);
-										double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-										int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+										double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, context, c)) + Math.log(pDestLang);
+										int[] nextContext = (!clearContext ? a.append((destLM!=null ? shrinkContext(context, destLM) : context), c) : new int[] { c });
 										addNoSubGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
 									}
 									else if (this.langIndex == destLanguage) { // switching not allowed, but this is the same language
 										double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-										int[] shrunkenContext = shrinkContext(context, destLM);
-										double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-										int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+										double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, context, c)) + Math.log(pDestLang);
+										int[] nextContext = (!clearContext ? a.append((destLM!=null ? shrinkContext(context, destLM) : context), c) : new int[] { c });
 										addNoSubGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
 									}
 								}
 								else if (c != spaceCharIndex) {
 									double pDestLang = lm.languageTransitionProb(this.langIndex, destLanguage);
-									int[] shrunkenContext = shrinkContext(context, destLM);
-									double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-									int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+									double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, context, c)) + Math.log(pDestLang);
+									int[] nextContext = (!clearContext ? a.append((destLM!=null ? shrinkContext(context, destLM) : context), c) : new int[] { c });
 									addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
 								}
 							}
@@ -331,9 +327,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						for (int c : destLM.getActiveCharacters()) { // punctuation no problem since we're definitely not switching anyway
 							if (c != spaceCharIndex) {
 								double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-								int[] shrunkenContext = shrinkContext(context, destLM);
-								double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, shrunkenContext, c)) + Math.log(pDestLang);
-								int[] nextContext = (!clearContext ? a.append(shrunkenContext, c) : new int[] { c });
+								double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(getNgramProb(destLM, context, c)) + Math.log(pDestLang);
+								int[] nextContext = (!clearContext ? a.append((destLM!=null ? shrinkContext(context, destLM) : context), c) : new int[] { c });
 								addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, destLanguage, score);
 							}
 						}
@@ -346,8 +341,7 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					double pTransition = 0.0;
 					//				if (lmCharIndex == spaceCharIndex) {
 					double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-					int[] shrunkenContext = shrinkContext(context, thisLM);
-					pTransition += getNgramProb(thisLM, shrunkenContext, spaceCharIndex) * pDestLang;
+					pTransition += getNgramProb(thisLM, context, spaceCharIndex) * pDestLang;
 					//				}
 					//				else {
 					//					// total probability of transitioning to a space, regardless of language
@@ -355,11 +349,11 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					//						SingleLanguageModel destLM = lm.get(destLanguage);
 					//						double pDestLang = lm.languageTransitionPrior(this.langIndex, destLanguage);
 					//						int[] shrunkenContext = shrinkContext(context, thisLM);
-					//						pTransition += getNgramProb(thisLM, shrunkenContext, spaceCharIndex) * pDestLang;
+					//						pTransition += getNgramProb(thisLM, context, spaceCharIndex) * pDestLang;
 					//					}
 					//				}
 					double score = Math.log(1.0 - LINE_MRGN_PROB) + prevScore + Math.log(pTransition);
-					int[] nextContext = (!clearContext ? a.append(shrunkenContext, spaceCharIndex) : new int[] { spaceCharIndex });
+					int[] nextContext = (!clearContext ? a.append((thisLM!=null ? shrinkContext(context, thisLM) : context), spaceCharIndex) : new int[] { spaceCharIndex });
 					addNoSubGlyphStates(result, spaceCharIndex, nextContext, TransitionStateType.TMPL, this.langIndex, score);
 				}
 			}
@@ -371,9 +365,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 			if (type == TransitionStateType.TMPL) {
 				// transition from letter to space (left margin)
-				int[] shrunkenContext = shrinkContext(context, thisLM);
-				double scoreWithSpace = Math.log(getNgramProb(thisLM, shrunkenContext, spaceCharIndex));
-				int[] contextWithSpace = a.append(shrunkenContext, spaceCharIndex);
+				double scoreWithSpace = Math.log(getNgramProb(thisLM, context, spaceCharIndex));
+				int[] contextWithSpace = a.append((thisLM!=null ? shrinkContext(context, thisLM) : context), spaceCharIndex);
 
 				{
 					double score = Math.log(LINE_MRGN_PROB) + scoreWithSpace;
@@ -421,9 +414,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 					else {
 						for (int c : thisLM.getActiveCharacters()) {
 							if (c != spaceCharIndex && !punctSet.contains(c)) { // can't start a line after hyphen with space or punct 
-								int[] shrunkenContext = shrinkContext(context, thisLM);
-								double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, shrunkenContext, c)) /*+ Math.log(1.0)*/;
-								int[] nextContext = a.append(shrunkenContext, c);
+								double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, c)) /*+ Math.log(1.0)*/;
+								int[] nextContext = a.append((thisLM!=null ? shrinkContext(context, thisLM) : context), c);
 								addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, this.langIndex, score);
 							}
 						}
@@ -498,9 +490,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 						for (int c : thisLM.getActiveCharacters()) {
 							if (c != spaceCharIndex && !punctSet.contains(c)) { // can't start a line after hyphen with space or punct 
 								double pDestLang = 1.0; // since there's only one language for this character, don't divide its mass across languages
-								int[] shrunkenContext = shrinkContext(context, thisLM);
-								double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, shrunkenContext, c)) + Math.log(pDestLang);
-								int[] nextContext = a.append(shrunkenContext, c);
+								double score = Math.log(1.0 - LINE_MRGN_PROB) + Math.log(getNgramProb(thisLM, context, c)) + Math.log(pDestLang);
+								int[] nextContext = a.append((thisLM!=null ? shrinkContext(context, thisLM) : context), c);
 								addGlyphStates(result, c, nextContext, TransitionStateType.TMPL, this.langIndex, score);
 							}
 						}
@@ -521,9 +512,8 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 			}
 			else if (type == TransitionStateType.TMPL) {
 				{
-					int[] shrunkenContext = shrinkContext(context, thisLM);
-					double score = Math.log(LINE_MRGN_PROB) + Math.log(1.0 - LINE_END_HYPHEN_PROB) + Math.log(getNgramProb(thisLM, shrunkenContext, spaceCharIndex));
-					int[] nextContext = a.append(shrunkenContext, spaceCharIndex);
+					double score = Math.log(LINE_MRGN_PROB) + Math.log(1.0 - LINE_END_HYPHEN_PROB) + Math.log(getNgramProb(thisLM, context, spaceCharIndex));
+					int[] nextContext = a.append((thisLM!=null ? shrinkContext(context, thisLM) : context), spaceCharIndex);
 					addNoSubGlyphStates(result, spaceCharIndex, nextContext, TransitionStateType.RMRGN, this.langIndex, score);
 				}
 
@@ -787,13 +777,15 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 
 	private double getNgramProb(SingleLanguageModel slm, int[] context, int c) {
 		if (slm != null) {
-			return slm.getCharNgramProb(context, c);
+			return slm.getCharNgramProb(shrinkContext(context, slm), c);
 		}
 		else {
 			// No current language, so sum transition to `c` across all languages
 			double totalSpaceProb = 0.0;
-			for (int language = 0; language < numLanguages; ++language)
-				totalSpaceProb += this.lm.get(language).getCharNgramProb(context, c) * this.lm.languagePrior(language);
+			for (int language = 0; language < numLanguages; ++language) {
+				SingleLanguageModel languageLM = this.lm.get(language);
+				totalSpaceProb += languageLM.getCharNgramProb(shrinkContext(context, languageLM), c) * this.lm.languagePrior(language);
+			}
 			return totalSpaceProb;
 		}
 	}

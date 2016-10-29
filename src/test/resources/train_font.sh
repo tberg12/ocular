@@ -16,7 +16,7 @@ target/start edu.berkeley.cs.nlp.ocular.main.TrainFont \
   -inputDocPath src/test/resources/doc.jpg \
   -extractedLinesPath src/test/resources/extracted_lines \
   -outputFontPath src/test/resources/multiling-trained.fontser \
-  -outputPath src/test/resources/train_output \
+  -outputPath src/test/resources/multiling_train_output \
   -numEmIters 1 \
   -allowGlyphSubstitution true \
   -updateGsm true \
