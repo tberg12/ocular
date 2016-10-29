@@ -25,18 +25,16 @@ public class LmPerplexity {
 		double logTotalProbability = 0.0;
 		for (int i=0; i<viterbiNormalizedTranscriptionCharIndices.size(); ++i) {
 			int curC = viterbiNormalizedTranscriptionCharIndices.get(i);
-			int curL = viterbiNormalizedTranscriptionLangIndices.get(i);
-			if (curL < 0) {
-				if (this.lm.getLanguageIndexer().size() == 1)
-					curL = 0;
-				else if (i > 0) 
-					throw new RuntimeException("curl="+curL+", i="+i);
-			}
-			else {
-				double langTransitionProb = getLangTransitionProb(i, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
-				double ngramProb = getNgramProb(i, curC, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
-				logTotalProbability += Math.log(langTransitionProb) + Math.log(ngramProb);
-			}
+			int curL = getLangIndex(viterbiNormalizedTranscriptionLangIndices, i);
+
+			double langTransitionProb = getLangTransitionProb(i, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
+			double ngramProb = getNgramProb(i, curC, curL, viterbiNormalizedTranscriptionCharIndices, viterbiNormalizedTranscriptionLangIndices);
+			logTotalProbability += Math.log(langTransitionProb) + Math.log(ngramProb);
+
+//			StringBuilder ctxString = new StringBuilder();
+//		    for (int c: viterbiNormalizedTranscriptionCharIndices.subList(findStartPoint(i, curL, viterbiNormalizedTranscriptionLangIndices), i))
+//		      ctxString.append(lm.getCharacterIndexer().getObject(c));
+//		    System.out.println(String.format("P_%d(%s | %s) = %s * %s", curL, lm.getCharacterIndexer().getObject(curC), ctxString, ngramProb, langTransitionProb));
 		}
 		return Math.exp(-logTotalProbability / viterbiNormalizedTranscriptionCharIndices.size());
 	}
@@ -58,7 +56,7 @@ public class LmPerplexity {
 	private double getLangTransitionProb(int i, int curL, List<Integer> viterbiNormalizedTranscriptionCharIndices, List<Integer> viterbiNormalizedTranscriptionLangIndices) {
 		if (i > 0) {
 			int prevC = viterbiNormalizedTranscriptionCharIndices.get(i-1);
-			int prevL = viterbiNormalizedTranscriptionLangIndices.get(i-1);
+			int prevL = getLangIndex(viterbiNormalizedTranscriptionLangIndices, i-1);
 			if (prevC != spaceIndex) {
 				if (prevL != curL) throw new RuntimeException("Characters cannot change languages mid-word.");
 				return 1.0;
@@ -72,4 +70,15 @@ public class LmPerplexity {
 		}
 	}
 	
+	private int getLangIndex(List<Integer> viterbiNormalizedTranscriptionLangIndices, int i) {
+		int curL = viterbiNormalizedTranscriptionLangIndices.get(i);
+		if (curL < 0) {
+			if (this.lm.getLanguageIndexer().size() == 1)
+				curL = 0;
+			else if (i > 0) 
+				throw new RuntimeException("curl="+curL+", i="+i);
+		}
+		return curL;
+	}
+
 }
