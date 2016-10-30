@@ -81,14 +81,15 @@ public class AltoOutputWriter {
 		boolean inWord = false; // (as opposed to a space)
 		int wordIndex = 0;
 		for (int line = 0; line < numLines; ++line) {
+			StringBuffer lineOutputBuffer = new StringBuffer();
 			boolean beginningOfLine = true;
 			
-			outputBuffer.append("    <TextLine ID=\"line_"+(line+1)+"\">\n"); //Opening <TextLine>, assigning ID.
 			@SuppressWarnings("unchecked")
 			Iterator<TransitionState> tsIterator = Iterators.concat(viterbiTransStates[line].iterator(), Iterators.<TransitionState>oneItemIterator(null));
 			Iterator<Integer> widthsIterator = viterbiWidths[line].iterator();
 			
 			List<TransitionState> wordBuffer = new ArrayList<TransitionState>(); 
+			
 			int wordWidth = 0;
 			while (tsIterator.hasNext()) {
 				TransitionState ts = tsIterator.next();
@@ -129,19 +130,19 @@ public class AltoOutputWriter {
 							String diplomaticTranscription = diplomaticTranscriptionBuffer.toString().trim();
 							String normalizedTranscription = normalizedTranscriptionBuffer.toString().trim(); //Use this to add in the norm
 							if (!diplomaticTranscription.isEmpty()) {
-								outputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+escapeCharactersForValidation(outputNormalized ? normalizedTranscription : diplomaticTranscription)+"\" LANG=\""+language+"\"");
+								lineOutputBuffer.append("      <String ID=\"word_"+wordIndex+"\" WIDTH=\""+wordWidth+"\" CONTENT=\""+escapeCharactersForValidation(outputNormalized ? normalizedTranscription : diplomaticTranscription)+"\" LANG=\""+language+"\"");
 								if (!normalizedTranscription.equals(diplomaticTranscription)) {
-									outputBuffer.append("> \n");
+									lineOutputBuffer.append("> \n");
 									if (outputNormalized) {
-										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Diplomatic\">"+escapeCharactersForValidation(normalizedTranscription)+"</ALTERNATIVE>\n");
+										lineOutputBuffer.append("          <ALTERNATIVE PURPOSE=\"Diplomatic\">"+escapeCharactersForValidation(normalizedTranscription)+"</ALTERNATIVE>\n");
 									}
 									else {
-										outputBuffer.append("          <ALTERNATIVE PURPOSE=\"Normalization\">"+escapeCharactersForValidation(diplomaticTranscription)+"</ALTERNATIVE>\n");	
+										lineOutputBuffer.append("          <ALTERNATIVE PURPOSE=\"Normalization\">"+escapeCharactersForValidation(diplomaticTranscription)+"</ALTERNATIVE>\n");	
 									}
-									outputBuffer.append("      </String>\n");
+									lineOutputBuffer.append("      </String>\n");
 								}
 								else {
-									outputBuffer.append("/> \n");
+									lineOutputBuffer.append("/> \n");
 								}
 								beginningOfLine = false;
 								wordIndex = wordIndex+1;
@@ -151,12 +152,12 @@ public class AltoOutputWriter {
 					else { // ALTO does not accept spaces at the commencement of a line
 						if (!beginningOfLine) {
 							if (wordWidth > 0) {
-								outputBuffer.append("      <SP WIDTH=\""+wordWidth+"\"/>\n");
+								lineOutputBuffer.append("      <SP WIDTH=\""+wordWidth+"\"/>\n");
 							}
 						}
 					}
 					
-					// get read to start a new span
+					// get ready to start a new span
 					wordBuffer.clear(); 
 					wordWidth = 0;
 					inWord = !isSpace;
@@ -165,9 +166,12 @@ public class AltoOutputWriter {
 				// add the current state into the (existing or freshly-cleared) span buffer
 				wordBuffer.add(ts);
 				wordWidth += (ts != null ? widthsIterator.next() : 0);
-			}			
-			
-			outputBuffer.append("    </TextLine>\n");
+			}
+			if (lineOutputBuffer.length() > 0) {
+				outputBuffer.append("    <TextLine ID=\"line_"+(line+1)+"\">\n"); //Opening <TextLine>, assigning ID.
+				outputBuffer.append(lineOutputBuffer);
+				outputBuffer.append("    </TextLine>\n");
+			}
 		}
 		outputBuffer.append("</TextBlock>\n");
 		outputBuffer.append("</PrintSpace>\n");
@@ -218,10 +222,10 @@ public class AltoOutputWriter {
 			.replace("<", "&lt;")
 			.replace("'", "&apos;")
 			.replace("\"", "&quot;")
-    		.replace("P\u0303", "P\u0303;")
-    		.replace("p\u0303", "p\u0303;")
-    		.replace("Q\u0303", "Q\u0303;")
-    		.replace("q\u0303", "q\u0303;");
+    		.replace("P\u0303", "P\\u0303;")
+    		.replace("p\u0303", "p\\u0303;")
+    		.replace("Q\u0303", "Q\\u0303;")
+    		.replace("q\u0303", "q\\u0303;");
         
 	}
 //    ·        Ampersand—&—&amp;
