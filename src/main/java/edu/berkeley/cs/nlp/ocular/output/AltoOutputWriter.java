@@ -37,7 +37,7 @@ public class AltoOutputWriter {
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 	}
 
-	public void write(int numLines, List<TransitionState>[] viterbiTransStates, Document doc, String outputFilenameBase, String inputDocPath, List<Integer>[] viterbiWidths, List<String> commandLineArgs, boolean outputNormalized) {
+	public void write(int numLines, List<TransitionState>[] viterbiTransStates, Document doc, String outputFilenameBase, String inputDocPath, List<Integer>[] viterbiWidths, List<String> commandLineArgs, boolean outputNormalized, double lmPerplexity) {
 		String altoOutputFilename = outputFilenameBase + (outputNormalized ? "_norm" : "_dipl") + ".alto.xml";
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
@@ -74,7 +74,7 @@ public class AltoOutputWriter {
 		outputBuffer.append("    </OCRProcessing>\n");
 		outputBuffer.append("  </Description>\n");
 		outputBuffer.append("  <Layout>\n");
-		outputBuffer.append("    <Page ID=\""+imageFilenameToId(imgFilename)+"\"  PHYSICAL_IMG_NR=\""+imageFilenameToIdNumber(imgFilename)+"\" >\n");
+		outputBuffer.append("    <Page ID=\""+imageFilenameToId(imgFilename)+"\"  PHYSICAL_IMG_NR=\""+imageFilenameToIdNumber(imgFilename)+"\" ACCURACY=\""+lmPerplexity+"\" >\n");
 		outputBuffer.append("      <PrintSpace>\n");
 		outputBuffer.append("        <TextBlock ID=\"par_1\">\n");
 		
@@ -217,7 +217,11 @@ public class AltoOutputWriter {
 			.replace(">", "&gt;")
 			.replace("<", "&lt;")
 			.replace("'", "&apos;")
-			.replace("\"", "&quot;");
+			.replace("\"", "&quot;")
+    		.replace("P\u0303", "P\u0303;")
+    		.replace("p\u0303", "p\u0303;")
+    		.replace("Q\u0303", "Q\u0303;")
+    		.replace("q\u0303", "q\u0303;");
         
 	}
 //    ·        Ampersand—&—&amp;

@@ -217,9 +217,9 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		// Other files
 		//
 		if (outputFormats.contains(ALTO)) {
-			new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, commandLineArgs, false);
+			new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, commandLineArgs, false, lmPerplexity);
 			if (allowGlyphSubstitution) {
-				new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, commandLineArgs, true);
+				new AltoOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc, outputFilenameBase, inputDocPath, mt.viterbiWidths, commandLineArgs, true, lmPerplexity);
 			}
 		}
 		if (outputFormats.contains(HTML)) {
