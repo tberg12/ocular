@@ -222,10 +222,10 @@ public class AltoOutputWriter {
 			.replace("<", "&lt;")
 			.replace("'", "&apos;")
 			.replace("\"", "&quot;")
-    		.replace("P\u0303", "P\\u0303;")
-    		.replace("p\u0303", "p\\u0303;")
-    		.replace("Q\u0303", "Q\\u0303;")
-    		.replace("q\u0303", "q\\u0303;");
+    		.replace("P\u0303", "P&#0303;")
+    		.replace("p\u0303", "p&#0303;")
+    		.replace("Q\u0303", "Q&#0303;")
+    		.replace("q\u0303", "q&#0303;");
         
 	}
 //    ·        Ampersand—&—&amp;
