@@ -35,6 +35,7 @@ import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
+import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import fig.Option;
@@ -257,7 +258,7 @@ public class InitializeLanguageModel extends OcularRunnable {
 					activeChars.remove(entry._2); // remove low-count characters
 					note.append("[skipped due to count < "+minCharCount+"]");
 				}
-				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2)+"   "+note);
+				System.out.println("    "+entry._1+"  "+charIndexer.getObject(entry._2)+"   "+StringHelper.toUnicode(charIndexer.getObject(entry._2))+"   "+note);
 			}
 			activeChars.add(charIndexer.getIndex(Charset.SPACE));
 			System.out.println("Including 'universal punctuation' chars: "+Charset.UNIV_PUNC);

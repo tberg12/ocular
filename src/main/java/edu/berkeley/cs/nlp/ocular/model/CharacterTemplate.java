@@ -16,6 +16,7 @@ import tuple.Pair;
 import arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
+import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -294,7 +295,7 @@ public class CharacterTemplate implements Serializable {
 		}
 		float[][] blackProbs = blackProbs(EXP_GAINS.length/2, 0, bestWidth);
 		StringBuffer buf = new StringBuffer();
-		buf.append(character).append(":\n");
+		buf.append(character).append("  ").append(StringHelper.toUnicode(character)).append(":\n");
 		for (int j=0; j<LINE_HEIGHT; ++j) {
 			for (int i=0; i<bestWidth; ++i) {
 				float prob = blackProbs[i][j];
