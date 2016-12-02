@@ -134,10 +134,10 @@ public class AltoOutputWriter {
 								if (!normalizedTranscription.equals(diplomaticTranscription)) {
 									lineOutputBuffer.append("> \n");
 									if (outputNormalized) {
-										lineOutputBuffer.append("          <ALTERNATIVE PURPOSE=\"Diplomatic\">"+escapeCharactersForValidation(normalizedTranscription)+"</ALTERNATIVE>\n");
+										lineOutputBuffer.append("          <ALTERNATIVE PURPOSE=\"Diplomatic\">"+escapeCharactersForValidation(diplomaticTranscription)+"</ALTERNATIVE>\n");
 									}
 									else {
-										lineOutputBuffer.append("          <ALTERNATIVE PURPOSE=\"Normalization\">"+escapeCharactersForValidation(diplomaticTranscription)+"</ALTERNATIVE>\n");	
+										lineOutputBuffer.append("          <ALTERNATIVE PURPOSE=\"Normalization\">"+escapeCharactersForValidation(normalizedTranscription)+"</ALTERNATIVE>\n");	
 									}
 									lineOutputBuffer.append("      </String>\n");
 								}
