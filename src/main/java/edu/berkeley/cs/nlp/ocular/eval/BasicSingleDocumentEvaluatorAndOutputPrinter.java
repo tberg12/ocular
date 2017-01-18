@@ -210,8 +210,8 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			f.writeString(transcriptionOutputFilename, goldComparisonOutputBuffer.toString());
 		}
 		
-		double lmPerplexity = new LmPerplexity(lm).perplexity(mt.viterbiNormalizedTranscriptionCharIndices, mt.viterbiNormalizedTranscriptionLangIndices);
-		System.out.println("LM perplexity = " + lmPerplexity);
+		double lmPerplexity = 0; // new LmPerplexity(lm).perplexity(mt.viterbiNormalizedTranscriptionCharIndices, mt.viterbiNormalizedTranscriptionLangIndices);
+//		System.out.println("LM perplexity = " + lmPerplexity);
 		
 		//
 		// Other files

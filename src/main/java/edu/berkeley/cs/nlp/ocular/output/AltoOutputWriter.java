@@ -74,7 +74,7 @@ public class AltoOutputWriter {
 		outputBuffer.append("    </OCRProcessing>\n");
 		outputBuffer.append("  </Description>\n");
 		outputBuffer.append("  <Layout>\n");
-		outputBuffer.append("    <Page ID=\""+imageFilenameToId(imgFilename)+"\"  PHYSICAL_IMG_NR=\""+imageFilenameToIdNumber(imgFilename)+"\" ACCURACY=\""+lmPerplexity+"\" >\n");
+		outputBuffer.append("    <Page ID=\""+imageFilenameToId(imgFilename)+"\"  PHYSICAL_IMG_NR=\""+imageFilenameToIdNumber(imgFilename)+">\n"); //\" ACCURACY=\""+lmPerplexity+"\"
 		outputBuffer.append("      <PrintSpace>\n");
 		outputBuffer.append("        <TextBlock ID=\"par_1\">\n");
 		
