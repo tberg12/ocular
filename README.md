@@ -16,7 +16,7 @@ Its primary features are:
 * Ability to handle noisy documents: inconsistent inking, spacing, vertical alignment, etc.
 * Support for multilingual documents, including those that have considerable word-level code-switching.
 * Unsupervised learning of orthographic variation patterns including archaic spellings and printer shorthand.
-* Simultaneous, joint transcription into both diplomatic (literal) and normalized forms, the first OCR system of its kind.
+* Simultaneous, joint transcription into both diplomatic (literal) and normalized forms.
 
 It is described in the following publications:
 

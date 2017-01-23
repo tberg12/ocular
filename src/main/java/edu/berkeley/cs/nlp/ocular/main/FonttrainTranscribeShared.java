@@ -24,7 +24,7 @@ import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.em.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.em.EmissionCacheInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.em.OpenCLInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.JOCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel.CachingEmissionModelFactory;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel.EmissionModelFactory;
@@ -294,7 +294,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	protected static EmissionCacheInnerLoop getEmissionInnerLoop() {
 		switch (emissionEngine) {
 			case DEFAULT: return new DefaultInnerLoop(numEmissionCacheThreads);
-			case OPENCL: return new OpenCLInnerLoop(numEmissionCacheThreads);
+			case OPENCL: return new JOCLInnerLoop(numEmissionCacheThreads);
 			case CUDA: return new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
 		}
 		throw new RuntimeException("emissionEngine=" + emissionEngine + " not supported");
