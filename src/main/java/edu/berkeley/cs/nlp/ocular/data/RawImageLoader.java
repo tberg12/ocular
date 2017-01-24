@@ -68,7 +68,13 @@ public class RawImageLoader {
 		File dir = new File(inputPath);
 		final String[] dirList = dir.list(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				return !name.startsWith("."); // ignore hidden files
+				if (!name.startsWith(".")) { // ignore hidden files
+					return false;
+				}
+				else if (!name.endsWith(".png") && !name.endsWith(".jpg")) {
+					return false;
+				}
+				return true;
 			}
 		});
 		final Document[] docs = new Document[dirList.length]; 
