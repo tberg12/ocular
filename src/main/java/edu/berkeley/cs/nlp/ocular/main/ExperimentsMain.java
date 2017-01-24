@@ -26,7 +26,7 @@ import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.em.DefaultInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.em.EmissionCacheInnerLoop;
-import edu.berkeley.cs.nlp.ocular.model.em.OpenCLInnerLoop;
+import edu.berkeley.cs.nlp.ocular.model.em.JOCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset;
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel;
@@ -121,7 +121,7 @@ public class ExperimentsMain implements Runnable {
 		if (emissionEngine == EmissionCacheInnerLoopType.DEFAULT) {
 			emissionInnerLoop = new DefaultInnerLoop(numEmissionCacheThreads);
 		} else if (emissionEngine == EmissionCacheInnerLoopType.OPENCL) {
-			emissionInnerLoop = new OpenCLInnerLoop(numEmissionCacheThreads);
+			emissionInnerLoop = new JOCLInnerLoop(numEmissionCacheThreads);
 		} else if (emissionEngine == EmissionCacheInnerLoopType.CUDA) {
 			emissionInnerLoop = new CUDAInnerLoop(numEmissionCacheThreads, cudaDeviceID);
 		}

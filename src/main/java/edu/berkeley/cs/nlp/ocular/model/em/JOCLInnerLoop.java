@@ -7,6 +7,9 @@ import org.jocl.*;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import gpu.CudaUtil;
 
+/**
+ * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ */
 public class JOCLInnerLoop implements EmissionCacheInnerLoop {
 
 	public static final int GPU_BLOCK_SIZE_X = 1;
