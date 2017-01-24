@@ -10,7 +10,7 @@ version := "0.3-SNAPSHOT"
 
 scalaVersion := "2.12.1"
 
-seq(SbtStartScript.startScriptForClassesSettings: _*)
+Seq(SbtStartScript.startScriptForClassesSettings: _*)
 
 SbtStartScript.stage in Compile := Unit
 
