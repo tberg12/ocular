@@ -12,6 +12,10 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.ImageIcon;
@@ -30,6 +34,62 @@ public class ImageUtils {
 	public static final double MAX_LEVEL = 255;
 	public static enum PixelType {BLACK, WHITE, OBSCURED};
 	
+	private static final int[][] directions = new int[][] {{1,0}, {0, 1}, {-1, 0}, {0, -1}};
+
+	public static interface ConnectedComponentProcessor {
+		public void process(double[][] levels, List<int[]> connectedComponent);
+	}
+
+	public static void processConnectedComponents(double[][] levels, double blackThreshold, ConnectedComponentProcessor processor) {
+		boolean[][] closed = new boolean[levels.length][levels[0].length];
+		for (int i=0; i<levels.length; ++i) {
+			closed[i] = new boolean[levels[0].length];
+			Arrays.fill(closed[i], false);
+		}
+		for (int i=0; i<levels.length; ++i) {
+			for (int j=0; j<levels[0].length; ++j) {
+				if (!closed[i][j]) {
+					List<int[]> component = new ArrayList<int[]>();
+					int[] pixel = new int[] {i, j};
+					boolean curIsBlack = levels[pixel[0]][pixel[1]] < blackThreshold;
+					if (curIsBlack) {
+						List<int[]> fringe = new LinkedList<int[]>();
+						fringe.add(pixel);
+						dfsHelperNonRecursive(component, fringe, levels.length, levels[0].length, levels, closed, blackThreshold);
+					}
+					processor.process(levels, component);
+				}
+			}
+		}
+	}
+
+	private static void dfsHelperNonRecursive(List<int[]> component, List<int[]> fringe, int I, int J, double[][] levels, boolean[][] closed, double blackThreshold) {
+		while (!fringe.isEmpty()) {
+			int[] pixel = fringe.remove(0);
+			component.add(pixel);
+			for (int[] dir : directions) {
+				int[] next = nextPixel(pixel, dir, I, J, closed);
+				if (next != null) {
+					boolean nextIsBlack = levels[next[0]][next[1]] < blackThreshold;
+					if (nextIsBlack) {
+						closed[next[0]][next[1]] = true;
+						fringe.add(next);
+					}
+				}
+			}
+		}
+	}
+
+	private static int[] nextPixel(int[] pixel, int[] dir, int I, int J, boolean[][] closed) {
+		int[] next = new int[2];
+		next[0] = pixel[0] + dir[0];
+		next[1] = pixel[1] + dir[1];
+		if (next[0] >= I || next[0] < 0) return null;
+		if (next[1] >= J || next[1] < 0) return null;
+		if (closed[next[0]][next[1]]) return null;
+		return next;
+	}
+
 	public static PixelType[][] getPixelTypes(BufferedImage image) {
 		return getPixelTypes(getLevels(image));
 	}
