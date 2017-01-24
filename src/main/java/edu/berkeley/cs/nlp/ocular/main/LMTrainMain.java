@@ -13,6 +13,7 @@ import java.util.zip.GZIPOutputStream;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ExplicitCharacterSetTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.FlipUVTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
@@ -35,6 +36,9 @@ public class LMTrainMain implements Runnable {
 	@Option(gloss = "Use separate character type for long s.")
 	public static boolean insertLongS = false;
 	
+	@Option(gloss = "Allow 'u' and 'v' to interchange.")
+	public static boolean allowUVFlip = true;
+
 	@Option(gloss = "Remove diacritics?")
 	public static boolean removeDiacritics = false;
 
@@ -67,6 +71,7 @@ public class LMTrainMain implements Runnable {
 		if (explicitCharacterSet != null) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
 		if(removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
 		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
+		if(allowUVFlip) textReader = new FlipUVTextReader(0.5, textReader);
 
 		NgramLanguageModel lm = NgramLanguageModel.buildFromText(textPath, maxLines, charN, LMType.KNESER_NEY, power, textReader);
 		writeLM(lm, lmPath);
