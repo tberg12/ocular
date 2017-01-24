@@ -8,7 +8,7 @@ import java.util.List;
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
-import fileio.f;
+import tberg.murphy.fileio.f;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

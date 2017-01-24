@@ -2,7 +2,7 @@ package edu.berkeley.cs.nlp.ocular.lm;
 
 import java.io.Serializable;
 
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

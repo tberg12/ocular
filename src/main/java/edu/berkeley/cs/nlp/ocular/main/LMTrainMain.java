@@ -17,8 +17,8 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
-import fig.Option;
-import fig.OptionsParser;
+import tberg.murphy.fig.Option;
+import tberg.murphy.fig.OptionsParser;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

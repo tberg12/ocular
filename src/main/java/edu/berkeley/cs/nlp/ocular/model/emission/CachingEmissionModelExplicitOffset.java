@@ -9,9 +9,9 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.em.EmissionCacheInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
-import gpu.CudaUtil;
-import indexer.Indexer;
-import threading.BetterThreader;
+import tberg.murphy.gpu.CudaUtil;
+import tberg.murphy.indexer.Indexer;
+import tberg.murphy.threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

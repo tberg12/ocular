@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
-import fileio.f;
+import tberg.murphy.fileio.f;
 
 /**
  * A document that reads a file only as it is needed (and then stores

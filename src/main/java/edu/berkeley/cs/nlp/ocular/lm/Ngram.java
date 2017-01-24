@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.lm;
 
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * Contains code for carrying out operations on trigrams encoded as longs.

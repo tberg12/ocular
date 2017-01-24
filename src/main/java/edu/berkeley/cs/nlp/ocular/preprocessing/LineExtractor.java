@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.preprocessing.VerticalProfile.VerticalSegmentation;
-import tuple.Pair;
-import fileio.f;
+import tberg.murphy.tuple.Pair;
+import tberg.murphy.fileio.f;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

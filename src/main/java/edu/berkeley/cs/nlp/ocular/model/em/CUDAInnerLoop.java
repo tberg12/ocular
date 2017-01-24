@@ -16,7 +16,7 @@ import jcuda.driver.CUfunction;
 import jcuda.driver.CUmodule;
 import jcuda.driver.CUsharedconfig;
 import jcuda.driver.JCudaDriver;
-import gpu.CudaUtil;
+import tberg.murphy.gpu.CudaUtil;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

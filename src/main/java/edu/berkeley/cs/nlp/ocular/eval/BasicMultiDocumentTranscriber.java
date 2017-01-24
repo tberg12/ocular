@@ -22,7 +22,7 @@ import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * Transcribe all document, write their results to files, and evaluate the results.

@@ -20,7 +20,7 @@ import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

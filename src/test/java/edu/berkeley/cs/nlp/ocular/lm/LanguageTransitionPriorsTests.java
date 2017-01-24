@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import indexer.HashMapIndexer;
-import indexer.Indexer;
+import tberg.murphy.indexer.HashMapIndexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

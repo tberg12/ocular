@@ -12,8 +12,8 @@ import org.junit.Test;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
-import indexer.HashMapIndexer;
-import indexer.Indexer;
+import tberg.murphy.indexer.HashMapIndexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

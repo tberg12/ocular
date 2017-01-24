@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import counter.Counter;
-import counter.CounterMap;
+import tberg.murphy.counter.Counter;
+import tberg.murphy.counter.CounterMap;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
-import tuple.Pair;
-import util.Iterators;
+import tberg.murphy.tuple.Pair;
+import tberg.murphy.util.Iterators;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

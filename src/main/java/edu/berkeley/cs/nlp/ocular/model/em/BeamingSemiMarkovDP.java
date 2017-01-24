@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import threading.BetterThreader;
-import util.GeneralPriorityQueue;
-import arrays.a;
+import tberg.murphy.threading.BetterThreader;
+import tberg.murphy.util.GeneralPriorityQueue;
+import tberg.murphy.arrays.a;
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;

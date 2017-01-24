@@ -3,8 +3,8 @@ package edu.berkeley.cs.nlp.ocular.preprocessing;
 import java.util.Arrays;
 import java.util.Random;
 
-import arrays.a;
-import math.m;
+import tberg.murphy.arrays.a;
+import tberg.murphy.math.m;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

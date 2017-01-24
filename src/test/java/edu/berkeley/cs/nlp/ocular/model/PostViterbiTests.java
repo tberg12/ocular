@@ -1,8 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.model;
 //package com.halperta.ocr.ocular.model;
 //
-//import indexer.HashMapIndexer;
-//import indexer.Indexer;
+//import tberg.murphy.indexer.HashMapIndexer;
+//import tberg.murphy.indexer.Indexer;
 //
 //import java.util.Arrays;
 //import java.util.Collection;
@@ -18,7 +18,7 @@ package edu.berkeley.cs.nlp.ocular.model;
 //
 //import org.junit.Test;
 //
-//import tuple.Pair;
+//import tberg.murphy.tuple.Pair;
 //
 //import com.google.common.collect.Sets;
 //

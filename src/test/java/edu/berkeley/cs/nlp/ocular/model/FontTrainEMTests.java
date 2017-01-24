@@ -13,8 +13,8 @@ import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.Transit
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.*;
-import indexer.HashMapIndexer;
-import indexer.Indexer;
+import tberg.murphy.indexer.HashMapIndexer;
+import tberg.murphy.indexer.Indexer;
 import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import static edu.berkeley.cs.nlp.ocular.model.TransitionStateType.*;
 

@@ -20,10 +20,10 @@ import edu.berkeley.cs.nlp.ocular.image.FontRenderer;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
-import fig.Option;
-import fileio.f;
-import indexer.Indexer;
-import threading.BetterThreader;
+import tberg.murphy.fig.Option;
+import tberg.murphy.fileio.f;
+import tberg.murphy.indexer.Indexer;
+import tberg.murphy.threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

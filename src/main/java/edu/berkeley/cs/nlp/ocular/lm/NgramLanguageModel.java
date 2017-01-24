@@ -8,7 +8,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

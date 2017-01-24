@@ -1,7 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.output;
 
 //import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml3; // to escape all HTML special characters
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import util.Iterators;
+import tberg.murphy.util.Iterators;
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
-import fileio.f;
+import tberg.murphy.fileio.f;
 
 /**
  * @author Hannah Alpert-Abrams (halperta@gmail.com)

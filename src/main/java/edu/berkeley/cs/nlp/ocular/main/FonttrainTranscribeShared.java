@@ -29,8 +29,8 @@ import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel.CachingEmi
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset.CachingEmissionModelExplicitOffsetFactory;
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel.EmissionModelFactory;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
-import fig.Option;
-import indexer.Indexer;
+import tberg.murphy.fig.Option;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

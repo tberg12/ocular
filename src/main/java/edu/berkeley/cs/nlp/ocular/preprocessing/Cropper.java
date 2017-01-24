@@ -4,8 +4,8 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 
 import java.util.Arrays;
 
-import arrays.a;
-import tuple.Pair;
+import tberg.murphy.arrays.a;
+import tberg.murphy.tuple.Pair;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

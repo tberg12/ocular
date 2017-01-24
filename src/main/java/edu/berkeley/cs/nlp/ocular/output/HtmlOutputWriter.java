@@ -8,8 +8,8 @@ import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
-import fileio.f;
-import indexer.Indexer;
+import tberg.murphy.fileio.f;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

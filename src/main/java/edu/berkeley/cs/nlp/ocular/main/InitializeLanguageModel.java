@@ -38,10 +38,10 @@ import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
-import fig.Option;
-import fileio.f;
-import indexer.HashMapIndexer;
-import indexer.Indexer;
+import tberg.murphy.fig.Option;
+import tberg.murphy.fileio.f;
+import tberg.murphy.indexer.HashMapIndexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

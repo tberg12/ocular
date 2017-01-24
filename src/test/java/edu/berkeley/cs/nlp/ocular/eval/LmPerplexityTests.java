@@ -1,8 +1,8 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
 import static org.junit.Assert.*;
-import indexer.HashMapIndexer;
-import indexer.Indexer;
+import tberg.murphy.indexer.HashMapIndexer;
+import tberg.murphy.indexer.Indexer;
 
 import java.util.Arrays;
 import java.util.Set;

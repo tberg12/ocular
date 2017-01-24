@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.data;
 
-import fileio.f;
+import tberg.murphy.fileio.f;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 
@@ -13,7 +13,7 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.Binarizer;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Cropper;
 import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
-import threading.BetterThreader;
+import tberg.murphy.threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

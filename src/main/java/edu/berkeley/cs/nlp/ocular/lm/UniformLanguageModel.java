@@ -1,6 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.lm;
 
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 import java.util.Set;
 

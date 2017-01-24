@@ -16,7 +16,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

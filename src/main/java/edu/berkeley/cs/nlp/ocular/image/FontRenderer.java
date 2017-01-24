@@ -2,7 +2,7 @@ package edu.berkeley.cs.nlp.ocular.image;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 import java.awt.Color;
 import java.awt.Font;

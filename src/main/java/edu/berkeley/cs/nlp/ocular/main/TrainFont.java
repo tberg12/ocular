@@ -16,8 +16,8 @@ import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.train.TrainingRestarter;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
-import fig.Option;
-import indexer.Indexer;
+import tberg.murphy.fig.Option;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

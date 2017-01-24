@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import arrays.a;
+import tberg.murphy.arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
@@ -27,7 +27,7 @@ import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

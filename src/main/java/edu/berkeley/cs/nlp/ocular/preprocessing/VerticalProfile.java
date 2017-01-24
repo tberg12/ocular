@@ -10,8 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import math.SloppyMath;
-import tuple.Pair;
+import tberg.murphy.math.m;
+import tberg.murphy.tuple.Pair;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -112,7 +112,7 @@ public class VerticalProfile {
 				double[][] betas = computeBetas(model, false);
 				logNormalizer = Double.NEGATIVE_INFINITY;
 				for (int state = 0; state < model.numStates(); state++) {
-					logNormalizer = SloppyMath.logAdd(logNormalizer, alphas[alphas.length-1][state]);
+					logNormalizer = m.logAdd(logNormalizer, alphas[alphas.length-1][state]);
 				}
 				SuffStats suffStats = new SuffStats();
 				for (int state = 0; state < model.numStates(); state++) {
@@ -225,7 +225,7 @@ public class VerticalProfile {
 		if (max) {
 			return Math.max(a, b);
 		} else {
-			return SloppyMath.logAdd(a, b);
+			return m.logAdd(a, b);
 		}
 	}
 

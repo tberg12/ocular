@@ -20,7 +20,7 @@ import edu.berkeley.cs.nlp.ocular.model.transition.CodeSwitchTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import threading.BetterThreader;
+import tberg.murphy.threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

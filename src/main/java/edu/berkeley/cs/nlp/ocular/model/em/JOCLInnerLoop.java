@@ -5,7 +5,7 @@ import static org.jocl.CL.*;
 import org.jocl.*;
 
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
-import gpu.CudaUtil;
+import tberg.murphy.gpu.CudaUtil;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

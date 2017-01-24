@@ -1,19 +1,19 @@
 package edu.berkeley.cs.nlp.ocular.model;
 
-import indexer.Indexer;
-import indexer.IntArrayIndexer;
+import tberg.murphy.indexer.Indexer;
+import tberg.murphy.indexer.IntArrayIndexer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import math.m;
-import opt.DifferentiableFunction;
-import opt.LBFGSMinimizer;
-import opt.Minimizer;
-import tuple.Pair;
-import arrays.a;
+import tberg.murphy.math.m;
+import tberg.murphy.opt.DifferentiableFunction;
+import tberg.murphy.opt.LBFGSMinimizer;
+import tberg.murphy.opt.Minimizer;
+import tberg.murphy.tuple.Pair;
+import tberg.murphy.arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;

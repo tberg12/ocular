@@ -5,7 +5,7 @@ import java.io.File;
 
 import edu.berkeley.cs.nlp.ocular.data.PdfImageReader;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
-import fileio.f;
+import tberg.murphy.fileio.f;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

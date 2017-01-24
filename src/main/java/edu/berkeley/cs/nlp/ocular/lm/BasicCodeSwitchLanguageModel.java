@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import indexer.Indexer;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * TODO: Move some of the probability calculations from CodeSwitchTransitionModel to here?

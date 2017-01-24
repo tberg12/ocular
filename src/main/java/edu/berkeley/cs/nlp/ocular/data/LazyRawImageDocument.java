@@ -25,7 +25,7 @@ import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Straightener;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.last;
-import fileio.f;
+import tberg.murphy.fileio.f;
 
 /**
  * A document that reads a file only as it is needed (and then stores

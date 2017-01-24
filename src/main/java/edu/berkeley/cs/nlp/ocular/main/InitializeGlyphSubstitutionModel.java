@@ -14,8 +14,8 @@ import java.util.zip.GZIPOutputStream;
 import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
-import fig.Option;
-import indexer.Indexer;
+import tberg.murphy.fig.Option;
+import tberg.murphy.indexer.Indexer;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import tuple.Pair;
+import tberg.murphy.tuple.Pair;
 import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
-import fig.IOUtils;
+import tberg.murphy.fig.IOUtils;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

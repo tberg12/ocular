@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import arrays.a;
+import tberg.murphy.arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.TextAndLineImagesLoader;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
@@ -35,11 +35,11 @@ import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModel
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
-import fig.Execution;
-import fig.Option;
-import fileio.f;
-import indexer.Indexer;
-import threading.BetterThreader;
+import tberg.murphy.fig.Execution;
+import tberg.murphy.fig.Option;
+import tberg.murphy.fileio.f;
+import tberg.murphy.indexer.Indexer;
+import tberg.murphy.threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

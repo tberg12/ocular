@@ -40,8 +40,8 @@ import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.Transit
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
-import indexer.Indexer;
-import threading.BetterThreader;
+import tberg.murphy.indexer.Indexer;
+import tberg.murphy.threading.BetterThreader;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)

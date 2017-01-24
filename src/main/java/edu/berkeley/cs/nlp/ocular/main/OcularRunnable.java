@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import fig.OptionsParser;
+import tberg.murphy.fig.OptionsParser;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)

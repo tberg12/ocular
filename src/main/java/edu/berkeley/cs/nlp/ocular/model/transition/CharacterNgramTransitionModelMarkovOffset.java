@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import arrays.a;
+import tberg.murphy.arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
