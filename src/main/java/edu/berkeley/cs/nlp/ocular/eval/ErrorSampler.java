@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import tberg.murphy.tuple.Pair;
 import edu.berkeley.cs.nlp.ocular.eval.MarkovEditDistanceComputer.EditDistanceParams;
-import tberg.murphy.fig.IOUtils;
+import tberg.murphy.fileio.f;
+import tberg.murphy.tuple.Pair;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
@@ -107,7 +107,7 @@ public class ErrorSampler {
   }
   
   public static Pair<List<String>,List<String>> getGoldGuessLinesFromOutput(String outFile) {
-    List<String> lines = IOUtils.readLinesHard(outFile);
+    List<String> lines = f.readLines(outFile);
     List<String> guessLines = new ArrayList<String>();
     List<String> goldLines = new ArrayList<String>();
     for (int i = 0; i < lines.size(); i++) {
