@@ -72,6 +72,20 @@ public class VerticalProfile {
 			}
 			return lineBoundaries;
 		}
+
+		public List<Integer> retrieveBaselines() {
+			List<Integer> baselines = new ArrayList<Integer>();
+			for (int i = 0; i < segments.size(); i++) {
+				if (segments.get(i).getFirst() == VerticalModelStateType.BASE) {
+					if (i >= segments.size()-1) {
+						baselines.add(totalSize);
+					} else {
+						baselines.add(segments.get(i+1).getSecond());
+					}
+				}
+			}
+			return baselines;
+		}
 	}
 
 	public final double[][] image;
@@ -102,7 +116,7 @@ public class VerticalProfile {
 	public VerticalModel runEM(int numItrs, int numRestarts, EMCallback callback) {
 		double bestLogProb = Double.NEGATIVE_INFINITY;
 		VerticalModel bestModel = null;
-		Random rand = new Random();
+		Random rand = new Random(0);
 		for (int r=0; r<numRestarts; ++r) {
 			VerticalModel model = VerticalModel.getRandomlyInitializedModel(image.length, rand);
 			double logNormalizer = Double.NEGATIVE_INFINITY;
