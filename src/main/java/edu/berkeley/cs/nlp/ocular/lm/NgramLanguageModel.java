@@ -8,6 +8,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import tberg.murphy.indexer.Indexer;
 
 /**
@@ -52,10 +53,16 @@ public class NgramLanguageModel implements SingleLanguageModel {
 	}
 
 	public static NgramLanguageModel buildFromText(String fileName, int maxNumLines, int maxOrder, LMType type, double lmPower, TextReader textReader) {
+		return buildFromText(CollectionHelper.makeList(fileName), maxNumLines, maxOrder, type, lmPower, textReader);
+	}
+
+	public static NgramLanguageModel buildFromText(List<String> fileNames, int maxNumLines, int maxOrder, LMType type, double lmPower, TextReader textReader) {
 		CorpusCounter counter = new CorpusCounter(maxOrder);
 		Set<Integer> activeCharacters = counter.getActiveCharacters();
 		Indexer<String> charIndexer = new CharIndexer();
-		counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
+		for (String fileName : fileNames) {
+			counter.countRecursive(fileName, maxNumLines, charIndexer, textReader);
+		}
 		activeCharacters.add(charIndexer.getIndex(Charset.SPACE));
 		for (String c : Charset.UNIV_PUNC) activeCharacters.add(charIndexer.getIndex(c));
 		charIndexer.lock();
