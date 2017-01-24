@@ -2,6 +2,7 @@ package edu.berkeley.cs.nlp.ocular.preprocessing;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Arrays;
 import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
@@ -22,6 +23,7 @@ public class ManualStackCropperPrep {
 				return name.endsWith(".png") || name.endsWith(".jpg");
 			}
 		});
+		Arrays.sort(names);
 		File oddDirCol1 = new File(path + "/odd_col1");
 		File oddDirCol2 = new File(path + "/odd_col2");
 		oddDirCol1.mkdirs();

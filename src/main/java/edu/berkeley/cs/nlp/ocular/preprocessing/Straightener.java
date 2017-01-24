@@ -3,6 +3,7 @@ package edu.berkeley.cs.nlp.ocular.preprocessing;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Arrays;
 import java.util.List;
 
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
@@ -61,6 +62,7 @@ public class Straightener {
 				return name.endsWith(".png") || name.endsWith(".jpg");
 			}
 		});
+		Arrays.sort(names);
 		File straightDir = new File(path + "/straight");
 		straightDir.mkdirs();
 		for (String name : names) {
