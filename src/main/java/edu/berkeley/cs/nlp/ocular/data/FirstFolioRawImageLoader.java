@@ -8,7 +8,6 @@ import java.util.List;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.ConnectedComponentProcessor;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
-import edu.berkeley.cs.nlp.ocular.main.Main;
 import edu.berkeley.cs.nlp.ocular.preprocessing.Binarizer;
 import edu.berkeley.cs.nlp.ocular.preprocessing.LineExtractor;
 import tberg.murphy.arrays.a;
@@ -21,7 +20,7 @@ public class FirstFolioRawImageLoader {
 		private final String baseName;
 		final PixelType[][][] observations;
 		
-		public FirstFolioRawImageDocument(String inputPath, String baseName, int lineHeight) {
+		public FirstFolioRawImageDocument(String inputPath, String baseName, int lineHeight, double binarizeThreshold) {
 			this.baseName = baseName;
 			double[][] levels = ImageUtils.getLevels(f.readImage(inputPath+"/"+baseName));
 			ConnectedComponentProcessor ccprocBig = new ConnectedComponentProcessor() {
@@ -34,7 +33,7 @@ public class FirstFolioRawImageLoader {
 				}
 			};
 			ImageUtils.processConnectedComponents(levels, 50.0, ccprocBig);
-			Binarizer.binarizeGlobal(Main.binarizeThreshold, levels);
+			Binarizer.binarizeGlobal(binarizeThreshold, levels);
 			ConnectedComponentProcessor ccprocSmall = new ConnectedComponentProcessor() {
 				public void process(double[][] levels, List<int[]> connectedComponent) {
 					if (connectedComponent.size() < 20 || connectedComponent.size() > 1000) {
@@ -82,28 +81,24 @@ public class FirstFolioRawImageLoader {
 		}
 	}
 	
-	private final String inputPath;
-	private final int lineHeight;
-	private final int numThreads;
-
-	public FirstFolioRawImageLoader(String inputPath, int lineHeight, int numThreads) {
-		this.inputPath = inputPath;
-		this.lineHeight = lineHeight;
-		this.numThreads = numThreads;
-	}
-	
-	public List<Document> readDataset() {
-		System.out.println("Extracting text line images from dataset..");
+	public static List<Document> loadDocuments(final String inputPath, final int lineHeight, final double binarizeThreshold, final int numThreads) {
+		System.out.println("Extracting text line images from dataset "+inputPath);
 		File dir = new File(inputPath);
 		final String[] dirList = dir.list(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				return name.endsWith(".png") || name.endsWith(".jpg");
+				if (!name.startsWith(".")) { // ignore hidden files
+					return false;
+				}
+				else if (!name.endsWith(".png") && !name.endsWith(".jpg")) {
+					return false;
+				}
+				return true;
 			}
 		});
 		final Document[] docs = new Document[dirList.length]; 
 		BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer i, Object ignore){
 			String baseName = dirList[i];
-			docs[i] = new FirstFolioRawImageDocument(inputPath, baseName, lineHeight);
+			docs[i] = new FirstFolioRawImageDocument(inputPath, baseName, lineHeight, binarizeThreshold);
 		}};
 		BetterThreader<Integer,Object> threader = new BetterThreader<Integer,Object>(func, numThreads);
 		for (int i=0; i<dirList.length; ++i) threader.addFunctionArgument(i);
