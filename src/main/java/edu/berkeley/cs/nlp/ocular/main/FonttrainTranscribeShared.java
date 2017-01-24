@@ -41,7 +41,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 	@Option(gloss = "Path of the directory that will contain output transcriptions.")
 	public static String outputPath = null; // Required.
 
-	public static enum OutputFormat { DIPL, NORM, NORMLINES, COMP, HTML, ALTO };
+	public static enum OutputFormat { DIPL, NORM, NORMLINES, COMP, HTML, ALTO, WHITESPACE };
 	@Option(gloss = "Output formats to be generated. Choose from one or multiple of {dipl,norm,normlines,comp,html,alto}, comma-separated.  dipl = diplomatic, norm = normalized (lines joined), normlines = normalized (separate lines), comp = comparisons.  Default: dipl,norm if -allowGlyphSubstitution=true; dipl otherwise.")
 	public static String outputFormats = "";
 

@@ -225,7 +225,36 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		if (outputFormats.contains(HTML)) {
 			new HtmlOutputWriter(charIndexer, langIndexer).write(numLines, mt.viterbiTransStates, doc.baseName(), outputFilenameBase);
 		}
-	
+		if (outputFormats.contains(WHITESPACE)) {
+			StringBuilder whitespaceFileBuf = new StringBuilder();
+			Indexer<String> charIndexer = lm.getCharacterIndexer();
+			for (DecodeState[] decodeStateLine : decodeStates) {
+				int whitespace = 0;
+				for (DecodeState ds : decodeStateLine) {
+					int c = ds.ts.getGlyphChar().templateCharIndex;
+					if (c == charIndexer.getIndex(Charset.SPACE)) {
+						whitespace += ds.charWidth;
+					}
+					else {
+						if (whitespace > 0) {
+							whitespaceFileBuf.append("{" + whitespace + "}");
+							whitespace = 0;
+						}
+						whitespaceFileBuf.append(Charset.unescapeChar(charIndexer.getObject(c)));
+					}
+					whitespace += ds.padWidth;
+				}
+				if (whitespace > 0) {
+					whitespaceFileBuf.append("{" + whitespace + "}");
+				}
+				whitespaceFileBuf.append("\n");
+			}
+
+			String whitespaceOutputFilename = outputFilenameBase + "_whitespace.txt";
+			System.out.println("Writing whitespace layout to " + whitespaceOutputFilename);
+			f.writeString(whitespaceOutputFilename, whitespaceFileBuf.toString());
+		}
+
 		//
 		// Transcription with widths
 		//
