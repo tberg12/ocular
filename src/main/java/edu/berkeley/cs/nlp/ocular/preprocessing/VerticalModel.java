@@ -84,17 +84,17 @@ public class VerticalModel {
   public static VerticalModel getRandomlyInitializedModel(int imageWidth, Random rand) {
 	  double[] emissionMeans = new double[VerticalModelStateType.values().length];
 //	  emissionMeans[0] = 0.1 * imageWidth;
-//	  emissionMeans[1] = 0.2 * imageWidth;
+//	  emissionMeans[1] = 0.3 * imageWidth;
 //	  emissionMeans[2] = 0.0 * imageWidth;
 	  double[] blackFractions = new double[2];
 	  for (int i = 0; i < blackFractions.length; i++) {
-		  blackFractions[i] = 0.2*rand.nextDouble();
+		  blackFractions[i] = 0.8 * rand.nextDouble();
 	  }
 	  Arrays.sort(blackFractions);
 	  emissionMeans[0] = blackFractions[0] * imageWidth;
 	  emissionMeans[1] = blackFractions[1] * imageWidth;
 	  emissionMeans[2] = blackFractions[0] * imageWidth;
-	  double emissionStd = 0.1;
+	  double emissionStd = 0.05;
 	  double emissionVariance = (emissionStd * imageWidth) * (emissionStd * imageWidth);
 	  double[] sizeMeans = new double[VerticalModelStateType.values().length];
 	  double nonSpaceMean = rand.nextInt(Math.min(maxSizes[0], maxSizes[1])-Math.max(minSizes[0], minSizes[1])) + Math.max(minSizes[0], minSizes[1]);
