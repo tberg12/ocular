@@ -8,7 +8,7 @@ organization := "edu.berkeley.cs.nlp"
 
 version := "0.3-SNAPSHOT"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.12.1"
 
 seq(SbtStartScript.startScriptForClassesSettings: _*)
 
