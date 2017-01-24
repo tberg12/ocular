@@ -56,14 +56,14 @@ public class DecoderEM {
 		this.decodeBatchSize = decodeBatchSize;
 	}
 
-	public Tuple2<Tuple2<TransitionState[][], int[][]>, Double> computeEStep(
+	public Tuple2<DecodeState[][], Double> computeEStep(
 			Document doc, boolean updateFontParameterCounts,
 			CodeSwitchLanguageModel lm, GlyphSubstitutionModel gsm, final CharacterTemplate[] templates,
 			DenseBigramTransitionModel backwardTransitionModel) {
 		
 		final PixelType[][][] pixels = doc.loadLineImages();
-		TransitionState[][] decodeStates = new TransitionState[pixels.length][0];
-		int[][] decodeWidths = new int[pixels.length][0];
+		
+		DecodeState[][] allDecodeStates = new DecodeState[pixels.length][0];
 
 		int totalNanoTime = 0;
 		double totalJointLogProb = 0.0;
@@ -101,20 +101,30 @@ public class DecoderEM {
 			final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
 			final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 			totalJointLogProb += decodeStatesAndWidthsAndJointLogProb._2;
-			for (int line = 0; line < emissionModel.numSequences(); ++line) {
-				decodeStates[startLine + line] = batchDecodeStates[line];
-				decodeWidths[startLine + line] = batchDecodeWidths[line];
+			for (int batchLine = 0; batchLine < emissionModel.numSequences(); ++batchLine) {
+				int line = startLine + batchLine;
+				TransitionState[] decodeStates = batchDecodeStates[batchLine];
+				int[] decodeWidths = batchDecodeWidths[batchLine];
+				allDecodeStates[line] = new DecodeState[decodeStates.length];
+				int stateStartCol = 0;
+				for (int di=0; di<decodeStates.length; ++di) {
+					int charAndPadWidth = decodeWidths[di];
+					int padWidth = emissionModel.getPadWidth(line, stateStartCol, decodeStates[di], charAndPadWidth);
+					int exposure = emissionModel.getExposure(line, stateStartCol, decodeStates[di], charAndPadWidth);
+					int verticalOffset = emissionModel.getOffset(line, stateStartCol, decodeStates[di], charAndPadWidth);
+					allDecodeStates[line][di] = new DecodeState(decodeStates[di], charAndPadWidth, padWidth, exposure, verticalOffset);
+					stateStartCol += charAndPadWidth;
+				}
 			}
 
 			if (updateFontParameterCounts) {
 				System.out.println("Ready to run increment counts");
 				incrementCounts(emissionModel, batchDecodeStates, batchDecodeWidths);
 			}
-			
 		}
 		System.out.println("Decode: " + (totalNanoTime / 1000000) + "ms");
 		double avgLogProb = totalJointLogProb / numBatches;
-		return Tuple2(Tuple2(decodeStates, decodeWidths), avgLogProb);
+		return Tuple2(allDecodeStates, avgLogProb);
 	}
 
 	private SparseTransitionModel constructTransitionModel(CodeSwitchLanguageModel codeSwitchLM, GlyphSubstitutionModel codeSwitchGSM) {

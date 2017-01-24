@@ -15,6 +15,7 @@ import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
@@ -230,9 +231,9 @@ public class BasicGlyphSubstitutionModel implements GlyphSubstitutionModel {
 		/**
 		 * Traverse the sequence of viterbi states, adding counts
 		 */
-		public void incrementCounts(double[/*language*/][/*lmChar*/][/*glyph*/] counts, List<TransitionState> fullViterbiStateSeq) {
+		public void incrementCounts(double[/*language*/][/*lmChar*/][/*glyph*/] counts, List<DecodeState> fullViterbiStateSeq) {
 			for (int i = 0; i < fullViterbiStateSeq.size(); ++i) {
-				TransitionState currTs = fullViterbiStateSeq.get(i);
+				TransitionState currTs = fullViterbiStateSeq.get(i).ts;
 				TransitionStateType currType = currTs.getType();
 				if (currType == TransitionStateType.TMPL) {
 					int language = currTs.getLanguageIndex();

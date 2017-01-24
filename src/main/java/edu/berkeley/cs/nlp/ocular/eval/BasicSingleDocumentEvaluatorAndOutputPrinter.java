@@ -3,6 +3,7 @@ package edu.berkeley.cs.nlp.ocular.eval;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.LONG_S;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.SPACE;
+import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat.*;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.last;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
@@ -21,7 +22,7 @@ import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
-import static edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat.*;
+import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.output.AltoOutputWriter;
 import edu.berkeley.cs.nlp.ocular.output.HtmlOutputWriter;
@@ -67,23 +68,22 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 	
 	public Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evaluateAndPrintTranscription(int iter, int batchId,
 			Document doc,
-			TransitionState[][] decodeStates, int[][] decodeWidths,
+			DecodeState[][] decodeStates,
 			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
 			CodeSwitchLanguageModel lm) {
 		
-		Tuple2<Tuple3<String[][], String[][], List<String>>, Tuple2<TransitionState[][], int[][]>> goldTranscriptionData = loadGoldTranscriptions(doc, decodeStates, decodeWidths);
+		Tuple2<Tuple3<String[][], String[][], List<String>>, DecodeState[][]> goldTranscriptionData = loadGoldTranscriptions(doc, decodeStates);
 		String[][] goldDiplomaticLineChars = goldTranscriptionData._1._1;
 		String[][] goldNormalizedLineChars = goldTranscriptionData._1._2;
 		List<String> goldNormalizedChars = goldTranscriptionData._1._3;
-		decodeStates = goldTranscriptionData._2._1;
-		decodeWidths = goldTranscriptionData._2._2;
+		decodeStates = goldTranscriptionData._2; // in case we needed to add blank rows
 		
 		int numLines = decodeStates.length;
 		
 		//
 		// Get the model output
 		//
-		ModelTranscriptions mt = new ModelTranscriptions(numLines, decodeStates, decodeWidths, charIndexer);
+		ModelTranscriptions mt = new ModelTranscriptions(numLines, decodeStates, charIndexer);
 		
 		
 		String outputFilenameBase = makeOutputFilenameBase(iter, batchId, doc, inputDocPath, outputPath);
@@ -249,7 +249,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		return Tuple2(diplomaticEvals, normalizedEvals);
 	}
 
-	private Tuple2<Tuple3<String[][], String[][], List<String>>, Tuple2<TransitionState[][], int[][]>> loadGoldTranscriptions(Document doc, TransitionState[][] decodeStates, int[][] decodeWidths) {
+	private Tuple2<Tuple3<String[][], String[][], List<String>>, DecodeState[][]> loadGoldTranscriptions(Document doc, DecodeState[][] decodeStates) {
 		String[][] goldDiplomaticCharLines = doc.loadDiplomaticTextLines();
 		String[][] goldNormalizedCharLines = doc.loadNormalizedTextLines();
 		List<String> goldNormalizedChars = doc.loadNormalizedText();
@@ -264,14 +264,11 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		
 		if (decodeStates.length < numLines) { // if we need to pad the end with blank lines
 			numLines = goldDiplomaticCharLines.length;
-			TransitionState[][] newDecodeStates = new TransitionState[numLines][];
-			int[][] newDeocdeWidths = new int[numLines][];
+			DecodeState[][] newDecodeStates = new DecodeState[numLines][];
 			for (int line = 0; line < numLines; ++line) {
-				newDecodeStates[line] = line < decodeStates.length ? decodeStates[line] : new TransitionState[0];
-				newDeocdeWidths[line] = line < decodeWidths.length ? decodeWidths[line] : new int[0];
+				newDecodeStates[line] = line < decodeStates.length ? decodeStates[line] : new DecodeState[0];
 			}
 			decodeStates = newDecodeStates;
-			decodeWidths = newDeocdeWidths;
 		}
 		if (goldDiplomaticCharLines != null && goldDiplomaticCharLines.length < numLines) { // if we need to pad the end with blank lines
 			String[][] newText = new String[numLines][];
@@ -288,7 +285,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			goldNormalizedCharLines = newText;
 		}
 		
-		return Tuple2(Tuple3(goldDiplomaticCharLines, goldNormalizedCharLines, goldNormalizedChars), Tuple2(decodeStates, decodeWidths));
+		return Tuple2(Tuple3(goldDiplomaticCharLines, goldNormalizedCharLines, goldNormalizedChars), decodeStates);
 	}
 	
 	public static String makeOutputFilenameBase(Document doc, String inputDocPath, String outputPath) {
@@ -319,7 +316,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		public final List<Integer>[] viterbiWidths;
 
 		@SuppressWarnings("unchecked")
-		public ModelTranscriptions(int numLines, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer) {
+		public ModelTranscriptions(int numLines, DecodeState[][] decodeStates, Indexer<String> charIndexer) {
 			int spaceIndex = charIndexer.getIndex(SPACE);
 			
 			this.viterbiDiplomaticCharLines = new List[numLines];
@@ -338,7 +335,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 				viterbiWidths[line] = new ArrayList<Integer>();
 				
 				for (int i = 0; i < decodeStates[line].length; ++i) {
-					TransitionState ts = decodeStates[line][i];
+					TransitionState ts = decodeStates[line][i].ts;
 					String currDiplomaticChar = charIndexer.getObject(ts.getGlyphChar().templateCharIndex);
 					String prevDiplomaticChar = CollectionHelper.last(viterbiDiplomaticCharLines[line]);
 					if (HYPHEN.equals(prevDiplomaticChar) && HYPHEN.equals(currDiplomaticChar)) {
@@ -395,7 +392,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 					}
 						
 					viterbiTransStates[line].add(ts);
-					viterbiWidths[line].add(decodeWidths[line][i]);
+					viterbiWidths[line].add(decodeStates[line][i].charAndPadWidth);
 				}
 			}
 

@@ -27,11 +27,12 @@ import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
+import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
 import edu.berkeley.cs.nlp.ocular.main.InitializeGlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.main.InitializeLanguageModel;
-import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
@@ -171,17 +172,16 @@ public class FontTrainer {
 			doc.loadNormalizedText();
 
 			// e-step
-			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, true, lm, gsm, templates, backwardTransitionModel);
-			final TransitionState[][] decodeStates = decodeResults._1._1;
-			final int[][] decodeWidths = decodeResults._1._2;
+			Tuple2<DecodeState[][], Double> decodeResults = decoderEM.computeEStep(doc, true, lm, gsm, templates, backwardTransitionModel);
+			final DecodeState[][] decodeStates = decodeResults._1;
 			totalIterationJointLogProb += decodeResults._2;
 			totalBatchJointLogProb += decodeResults._2;
-			List<TransitionState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
+			List<DecodeState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 			incrementLmCounts(languageCounts, fullViterbiStateSeq, charIndexer);
 			gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 			
 			// write transcriptions and evaluate
-			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = documentEvaluatorAndOutputPrinter.evaluateAndPrintTranscription(iter, 0, doc, decodeStates, decodeWidths, inputDocPath, outputPath, outputFormats, lm);
+			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = documentEvaluatorAndOutputPrinter.evaluateAndPrintTranscription(iter, 0, doc, decodeStates, inputDocPath, outputPath, outputFormats, lm);
 			if (evals._1 != null) allDiplomaticTrainEvals.add(Tuple2(doc.baseName(), evals._1));
 			if (evals._2 != null) allNormalizedTrainEvals.add(Tuple2(doc.baseName(), evals._2));
 			
@@ -301,9 +301,10 @@ public class FontTrainer {
 	/**
 	 * Pass over the decoded states to accumulate counts
 	 */
-	private void incrementLmCounts(int[] languageCounts, List<TransitionState> fullViterbiStateSeq, Indexer<String> charIndexer) {
+	private void incrementLmCounts(int[] languageCounts, List<DecodeState> fullViterbiStateSeq, Indexer<String> charIndexer) {
 		int spaceCharIndex = charIndexer.getIndex(" ");
-		for (TransitionState ts : fullViterbiStateSeq) {
+		for (DecodeState ds : fullViterbiStateSeq) {
+			TransitionState ts = ds.ts;
 			int currLanguage = ts.getLanguageIndex();
 			if (currLanguage >= 0 && ts.getType() == TransitionStateType.TMPL && ts.getLmCharIndex() != spaceCharIndex) { 
 				languageCounts[currLanguage] += 1;
@@ -342,11 +343,11 @@ public class FontTrainer {
 	/**
 	 * Make a single sequence of states
 	 */
-	public static List<TransitionState> makeFullViterbiStateSeq(TransitionState[][] decodeStates, Indexer<String> charIndexer) {
+	public static List<DecodeState> makeFullViterbiStateSeq(DecodeState[][] decodeStates, Indexer<String> charIndexer) {
 		int numLines = decodeStates.length;
 		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[numLines];
-		List<TransitionState> fullViterbiStateSeq = new ArrayList<TransitionState>();
+		List<DecodeState> fullViterbiStateSeq = new ArrayList<DecodeState>();
 		for (int line = 0; line < numLines; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
 			if (line < decodeStates.length) {
@@ -354,11 +355,11 @@ public class FontTrainer {
 				
 				// Handle all the states
 				for (int i = 0; i < lineLength; ++i) {
-					TransitionState ts = decodeStates[line][i];
-					int c = ts.getGlyphChar().templateCharIndex;
+					DecodeState decodeState = decodeStates[line][i];
+					int c = decodeState.ts.getGlyphChar().templateCharIndex;
 					if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size() - 1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 						viterbiChars[line].add(charIndexer.getObject(c));
-						fullViterbiStateSeq.add(ts);
+						fullViterbiStateSeq.add(decodeState);
 					}
 				}
 			}

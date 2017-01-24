@@ -17,9 +17,9 @@ import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
-import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.train.FontTrainer;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import indexer.Indexer;
@@ -68,12 +68,11 @@ public class BasicMultiDocumentTranscriber implements MultiDocumentTranscriber {
 			Document doc = documents.get(docNum);
 			System.out.println((iter > 0 ? "Training iteration "+iter+", " : "") + (batchId > 0 ? "batch "+batchId+", " : "") + "Transcribing eval document "+(docNum+1)+" of "+numDocs+":  "+doc.baseName() + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			
-			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeResults = decoderEM.computeEStep(doc, false, lm, gsm, templates, backwardTransitionModel);
-			final TransitionState[][] decodeStates = decodeResults._1._1;
-			final int[][] decodeWidths = decodeResults._1._2;
+			Tuple2<DecodeState[][], Double> decodeResults = decoderEM.computeEStep(doc, false, lm, gsm, templates, backwardTransitionModel);
+			final DecodeState[][] decodeStates = decodeResults._1;
 			totalJointLogProb += decodeResults._2;
 
-			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = docOutputPrinterAndEvaluator.evaluateAndPrintTranscription(iter, batchId, doc, decodeStates, decodeWidths, inputDocPath, outputPath, outputFormats, lm);
+			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = docOutputPrinterAndEvaluator.evaluateAndPrintTranscription(iter, batchId, doc, decodeStates, inputDocPath, outputPath, outputFormats, lm);
 			if (evals._1 != null) allDiplomaticEvals.add(Tuple2(doc.baseName(), evals._1));
 			if (evals._2 != null) allNormalizedEvals.add(Tuple2(doc.baseName(), evals._2));
 		}
