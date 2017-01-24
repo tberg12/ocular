@@ -83,17 +83,17 @@ public class DecoderEM {
 			}
 
 			System.out.println("Initializing EmissionModel    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-			final EmissionModel emissionModel = emissionModelFactory.make(templates, batchPixels);
+			final EmissionModel batchEmissionModel = emissionModelFactory.make(templates, batchPixels);
 			System.out.println("Rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//long emissionCacheNanoTime = System.nanoTime();
-			emissionModel.rebuildCache();
+			batchEmissionModel.rebuildCache();
 			System.out.println("Done rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 
 			long nanoTime = System.nanoTime();
 			System.out.println("Constructing forwardTransitionModel");
 			SparseTransitionModel forwardTransitionModel = constructTransitionModel(lm, gsm);
-			BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
+			BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(batchEmissionModel, forwardTransitionModel, backwardTransitionModel);
 			System.out.println("Ready to run decoder");
 			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
 			System.out.println("Done running decoder");
@@ -101,7 +101,7 @@ public class DecoderEM {
 			final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
 			final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 			totalJointLogProb += decodeStatesAndWidthsAndJointLogProb._2;
-			for (int batchLine = 0; batchLine < emissionModel.numSequences(); ++batchLine) {
+			for (int batchLine = 0; batchLine < batchEmissionModel.numSequences(); ++batchLine) {
 				int line = startLine + batchLine;
 				TransitionState[] decodeStates = batchDecodeStates[batchLine];
 				int[] decodeWidths = batchDecodeWidths[batchLine];
@@ -109,9 +109,9 @@ public class DecoderEM {
 				int stateStartCol = 0;
 				for (int di=0; di<decodeStates.length; ++di) {
 					int charAndPadWidth = decodeWidths[di];
-					int padWidth = emissionModel.getPadWidth(line, stateStartCol, decodeStates[di], charAndPadWidth);
-					int exposure = emissionModel.getExposure(line, stateStartCol, decodeStates[di], charAndPadWidth);
-					int verticalOffset = emissionModel.getOffset(line, stateStartCol, decodeStates[di], charAndPadWidth);
+					int padWidth = batchEmissionModel.getPadWidth(batchLine, stateStartCol, decodeStates[di], charAndPadWidth);
+					int exposure = batchEmissionModel.getExposure(batchLine, stateStartCol, decodeStates[di], charAndPadWidth);
+					int verticalOffset = batchEmissionModel.getOffset(batchLine, stateStartCol, decodeStates[di], charAndPadWidth);
 					allDecodeStates[line][di] = new DecodeState(decodeStates[di], charAndPadWidth, padWidth, exposure, verticalOffset);
 					stateStartCol += charAndPadWidth;
 				}
@@ -119,7 +119,7 @@ public class DecoderEM {
 
 			if (updateFontParameterCounts) {
 				System.out.println("Ready to run increment counts");
-				incrementCounts(emissionModel, batchDecodeStates, batchDecodeWidths);
+				incrementCounts(batchEmissionModel, batchDecodeStates, batchDecodeWidths);
 			}
 		}
 		System.out.println("Decode: " + (totalNanoTime / 1000000) + "ms");
