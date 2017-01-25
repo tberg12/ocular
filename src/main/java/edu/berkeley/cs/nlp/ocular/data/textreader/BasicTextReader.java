@@ -29,6 +29,8 @@ public class BasicTextReader implements TextReader {
 	}
 
 	public List<String> readCharacters(String line) {
+		
+		line = line.replaceAll("\\\\", "");
 		line = line.replaceAll("``", "\"");
 		line = line.replaceAll("''", "\"");
 		line = line.replaceAll("\t", "    ");

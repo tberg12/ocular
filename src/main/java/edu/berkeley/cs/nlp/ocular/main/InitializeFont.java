@@ -52,7 +52,7 @@ public class InitializeFont extends OcularRunnable {
 	public static double spaceMaxWidthFraction = 1.0;
 
 	@Option(gloss = "Min space template width as fraction of text line height.")
-	public static double spaceMinWidthFraction = 0.0;
+	public static double spaceMinWidthFraction = 0.08;
 	
 	
 	public static void main(String[] args) {

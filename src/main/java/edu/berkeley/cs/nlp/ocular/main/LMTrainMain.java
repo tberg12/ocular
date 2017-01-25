@@ -34,7 +34,7 @@ public class LMTrainMain implements Runnable {
 	public static String textPath = null;
 	
 	@Option(gloss = "Use separate character type for long s.")
-	public static boolean insertLongS = false;
+	public static boolean insertLongS = true;
 	
 	@Option(gloss = "Allow 'u' and 'v' to interchange.")
 	public static boolean allowUVFlip = true;

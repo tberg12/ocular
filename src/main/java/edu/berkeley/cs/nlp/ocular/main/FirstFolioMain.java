@@ -57,16 +57,16 @@ import tberg.murphy.threading.BetterThreader;
 public class FirstFolioMain implements Runnable {
 
 	@Option(gloss = "Path of the directory that contains the input document images.")
-	public static String inputPath = "/Users/tberg/Desktop/F-tem/seg_extraction";
+	public static String inputPath = null;
 
 	@Option(gloss = "Whether to use prebuilt LM.")
 	public static boolean usePrebuiltLM = true;
 	
 	@Option(gloss = "Path to the language model file.")
-	public static String lmPath = "/Users/tberg/Desktop/ob-longs-uv.lmser";
+	public static String lmPath = null;
 
 	@Option(gloss = "Path to the language text files to train LM.")
-	public static String lmTextPath = "/Users/tberg/git/first_folio_attr/data/txt/F-lr";
+	public static String lmTextPath = null;
 	
 	@Option(gloss = "LM n-gram order.")
 	public static int lmOrder = 6;
@@ -75,16 +75,16 @@ public class FirstFolioMain implements Runnable {
 	public static double lmPower = 4.0;
 	
 	@Option(gloss = "Path of the font initializer file.")
-	public static String initFontPath = "/Users/tberg/Desktop/init.fontser";
+	public static String initFontPath = null;
 
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
 	public static boolean learnFont = true;
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
-	public static String outputPath = "/Users/tberg/Desktop/F-tem-output-ob-uv-git";
+	public static String outputPath = null;
 
 	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
-	public static String outputFontPath = "Users/tberg/Desktop/F-tem-output-ob-uv-git/learned.fontser";
+	public static String outputFontPath = null;
 
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 3;
