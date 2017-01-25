@@ -1,14 +1,16 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.ACUTE_COMBINING;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.DIAERESIS_COMBINING;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.GRAVE_COMBINING;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.MACRON_COMBINING;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.TILDE_COMBINING;
 import static org.junit.Assert.assertEquals;
-import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.*;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
-
-import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
@@ -20,15 +22,15 @@ public class BasicTextReaderTests {
 	@Test
 	public void test_readCharacters_qtilde() {
 		TextReader tr = new BasicTextReader();
-		assertEquals(Arrays.asList("q" + TILDE_COMBINING), tr.readCharacters("q̃"));
-		assertEquals(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("thq̃r"));
-		assertEquals(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("th\\~qr"));
+		assertEqualsList(Arrays.asList("q" + TILDE_COMBINING), tr.readCharacters("q̃"));
+		assertEqualsList(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("thq̃r"));
+		assertEqualsList(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("th\\~qr"));
 	}
 
 	@Test
 	public void test_readCharacters_stackedDiacritics() {
 		TextReader tr = new BasicTextReader();
-		assertEquals(Arrays.asList("n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING + ACUTE_COMBINING + GRAVE_COMBINING), tr.readCharacters("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
+		assertEqualsList(Arrays.asList("n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING + ACUTE_COMBINING + GRAVE_COMBINING), tr.readCharacters("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
 	}
 
 	@Test
@@ -45,17 +47,10 @@ public class BasicTextReaderTests {
 		assertEquals(r, tr.readCharacters("this\\\\that\\\\the\\\\"));
 	}
 
-	@Test
-	public void test_readCharacters_banned() {
-		String s = "thi&s\\\\tha$t\\\\t$he\\\\";
-		
-		TextReader tr = new BasicTextReader();
-		List<String> r = Arrays.asList("t", "h", "i", "&", "s", "\\\\", "t", "h", "a", "$", "t", "\\\\", "t", "$", "h", "e", "\\\\");
-		assertEquals(r, tr.readCharacters(s));
-
-		TextReader tr2 = new BasicTextReader(CollectionHelper.makeSet("$","&"));
-		List<String> r2 = Arrays.asList("t", "h", "i", "s", "\\\\", "t", "h", "a", "t", "\\\\", "t", "h", "e", "\\\\");
-		assertEquals(r2, tr2.readCharacters(s));
+	private <A> void assertEqualsList(List<A> expected, List<A> actual) {
+		assertEquals(expected.size(), actual.size());
+		for (int i = 0; i < expected.size(); ++i) {
+			assertEquals(expected.get(i), actual.get(i));
+		}
 	}
-
 }

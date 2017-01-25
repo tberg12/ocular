@@ -12,31 +12,37 @@ import org.junit.Test;
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class RemoveDiacriticsTextReaderTests {
+public class RemoveAllDiacriticsTextReaderTests {
 
 	private String s1 = "ing th\\~q || | follies of thõsè, who éither ``sæek'' out th\\\"os\\`e wæys \"and\" means, which either are sq̃uccess lessons";
 
 	@Test
 	public void test_readCharacters_qtilde_nodia() {
-		TextReader tr = new RemoveDiacriticsTextReader(new BasicTextReader());
-		assertEquals(Arrays.asList("t", "h", "q", "r"), tr.readCharacters("thq̃r"));
-		assertEquals(Arrays.asList("t", "h", "q", "r"), tr.readCharacters("th\\~qr"));
+		TextReader tr = new RemoveAllDiacriticsTextReader(new BasicTextReader());
+		assertEqualsList(Arrays.asList("t", "h", "q", "r"), tr.readCharacters("thq̃r"));
+		assertEqualsList(Arrays.asList("t", "h", "q", "r"), tr.readCharacters("th\\~qr"));
 	}
 
 	@Test
 	public void test_readCharacters_stackedDiacritics_nodia() {
-		TextReader tr = new RemoveDiacriticsTextReader(new BasicTextReader());
-		assertEquals(Arrays.asList("n"), tr.readCharacters("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
+		TextReader tr = new RemoveAllDiacriticsTextReader(new BasicTextReader());
+		assertEqualsList(Arrays.asList("n"), tr.readCharacters("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
 	}
 
 	@Test
 	public void test_readCharacters_plain() {
-		TextReader tr = new RemoveDiacriticsTextReader(new BasicTextReader());
-		//assertEquals(Arrays.asList(), tr.readCharacters("tiquinhu\\-almoqu\\-ixtililia"));
+		TextReader tr = new RemoveAllDiacriticsTextReader(new BasicTextReader());
+		//assertEqualsList(Arrays.asList(), tr.readCharacters("tiquinhu\\-almoqu\\-ixtililia"));
 
 		List<String> r = Arrays.asList("i", "n", "g", " ", "t", "h", "q", " ", "|", "|", " ", "|", " ", "f", "o", "l", "l", "i", "e", "s", " ", "o", "f", " ", "t", "h", "o", "s", "e", ",", " ", "w", "h", "o", " ", "e", "i", "t", "h", "e", "r", " ", "\"", "s", "æ", "e", "k", "\"", " ", "o", "u", "t", " ", "t", "h", "o", "s", "e", " ", "w", "æ", "y", "s", " ", "\"", "a", "n", "d", "\"", " ", "m", "e", "a", "n", "s", ",", " ", "w", "h", "i", "c", "h", " ", "e", "i", "t", "h", "e", "r", " ", "a", "r", "e", " ", "s", "q", "u", "c", "c", "e", "s", "s", " ", "l", "e", "s", "s", "o", "n", "s");
 		assertEquals(r, tr.readCharacters(s1));
 
 	}
 
+	private <A> void assertEqualsList(List<A> expected, List<A> actual) {
+		assertEquals(expected.size(), actual.size());
+		for (int i = 0; i < expected.size(); ++i) {
+			assertEquals(expected.get(i), actual.get(i));
+		}
+	}
 }

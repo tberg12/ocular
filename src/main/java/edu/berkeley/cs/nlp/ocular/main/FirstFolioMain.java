@@ -14,12 +14,10 @@ import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.FirstFolioRawImageLoader;
-import edu.berkeley.cs.nlp.ocular.data.RawImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.ExplicitCharacterSetTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.WhitelistCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.FlipUVTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
@@ -47,7 +45,6 @@ import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import tberg.murphy.fig.Option;
 import tberg.murphy.fig.OptionsParser;
 import tberg.murphy.fileio.f;
-import tberg.murphy.indexer.HashMapIndexer;
 import tberg.murphy.indexer.Indexer;
 import tberg.murphy.threading.BetterThreader;
 
@@ -189,7 +186,7 @@ public class FirstFolioMain implements Runnable {
 			boolean allowUVFlip = false;
 			
 			TextReader textReader = new BasicTextReader();
-			textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
+			textReader = new WhitelistCharacterSetTextReader(explicitCharacterSet, textReader);
 			if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
 			if(allowUVFlip) textReader = new FlipUVTextReader(0.5, textReader);
 			

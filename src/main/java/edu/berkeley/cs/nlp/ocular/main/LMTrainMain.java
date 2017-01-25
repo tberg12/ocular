@@ -12,9 +12,9 @@ import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.ExplicitCharacterSetTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.WhitelistCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.FlipUVTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveAllDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
@@ -68,8 +68,8 @@ public class LMTrainMain implements Runnable {
 		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
 		TextReader textReader = new BasicTextReader();
-		if (explicitCharacterSet != null) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
-		if(removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+		if (explicitCharacterSet != null) textReader = new WhitelistCharacterSetTextReader(explicitCharacterSet, textReader);
+		if(removeDiacritics) textReader = new RemoveAllDiacriticsTextReader(textReader);
 		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
 		if(allowUVFlip) textReader = new FlipUVTextReader(0.5, textReader);
 
