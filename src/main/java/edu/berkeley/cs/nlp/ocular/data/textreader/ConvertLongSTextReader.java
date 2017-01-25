@@ -29,7 +29,11 @@ public class ConvertLongSTextReader implements TextReader {
 			if (chars.get(t).equals("s")) {
 				String next = chars.get(t + 1);
 				String nextWithoutDiacritics = Charset.removeAnyDiacriticFromChar(next);
-				if (nextWithoutDiacritics.length() != 1) throw new AssertionError("expected nextWithoutDiacritics.length() == 1");
+				if (nextWithoutDiacritics.length() != 1) {
+					if (!nextWithoutDiacritics.equals("\\\\")) {
+						throw new AssertionError("expected nextWithoutDiacritics [" + nextWithoutDiacritics + "] length() == 1");
+					}
+				}
 				char nextWithoutDiacriticsChar = nextWithoutDiacritics.charAt(0);
 				if (t > 0 && chars.get(t - 1).equals(Charset.LONG_S) && nextWithoutDiacriticsChar == 'i') {
 					// "ſsi": do nothing
