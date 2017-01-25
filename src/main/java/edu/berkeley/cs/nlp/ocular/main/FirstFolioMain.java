@@ -15,6 +15,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.FirstFolioRawImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.WhitelistCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.FlipUVTextReader;
@@ -24,9 +25,11 @@ import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
+import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
+import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.em.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.em.DefaultInnerLoop;
@@ -168,18 +171,14 @@ public class FirstFolioMain implements Runnable {
 				}
 			}));
 
-			String SPACE = " ";
 			String HYPHEN = "-";
-			String LONGS = "|";
 			Set<String> PUNC = CollectionHelper.makeSet("&", ".", ",", ";", ":", "\"", "'", "!", "?", "(", ")", HYPHEN); 
 			Set<String> ALPHABET = CollectionHelper.makeSet("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",  "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"); 
 			
 			Set<String> explicitCharacterSet = new HashSet<String>();
 			explicitCharacterSet.addAll(PUNC);
 			explicitCharacterSet.addAll(ALPHABET);
-			explicitCharacterSet.add(SPACE);
 			explicitCharacterSet.add(HYPHEN);
-			explicitCharacterSet.add(LONGS);
 			
 			int maxLines = Integer.MAX_VALUE;
 			boolean insertLongS = true;
@@ -236,8 +235,7 @@ public class FirstFolioMain implements Runnable {
 
 				// e-step
 
-				TransitionState[][] decodeStates = new TransitionState[pixels.length][0];
-				int[][] decodeWidths = new int[pixels.length][0];
+				DecodeState[][] allDecodeStates = new DecodeState[pixels.length][0];
 				int numBatches = (int) Math.ceil(pixels.length / (double) decodeBatchSize);
 
 				for (int b=0; b<numBatches; ++b) {
@@ -254,13 +252,13 @@ public class FirstFolioMain implements Runnable {
 						batchPixels[line-startLine] = pixels[line];
 					}
 
-					final EmissionModel emissionModel = (markovVerticalOffset ? new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+					final EmissionModel batchEmissionModel = (markovVerticalOffset ? new CachingEmissionModelExplicitOffset(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : new CachingEmissionModel(templates, charIndexer, batchPixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
 					long emissionCacheNanoTime = System.nanoTime();
-					emissionModel.rebuildCache();
+					batchEmissionModel.rebuildCache();
 					overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 
 					long nanoTime = System.nanoTime();
-					BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
+					BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(batchEmissionModel, forwardTransitionModel, backwardTransitionModel);
 					Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
 					final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
 					final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
@@ -269,23 +267,38 @@ public class FirstFolioMain implements Runnable {
 					if (iter <= numEMIters) {
 						nanoTime = System.nanoTime();
 						BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer line, Object ignore){
-							emissionModel.incrementCounts(line, batchDecodeStates[line], batchDecodeWidths[line]);
+							batchEmissionModel.incrementCounts(line, batchDecodeStates[line], batchDecodeWidths[line]);
 						}};
 						BetterThreader<Integer,Object> threader = new BetterThreader<Integer,Object>(func, numMstepThreads);
-						for (int line=0; line<emissionModel.numSequences(); ++line) threader.addFunctionArgument(line);
+						for (int line=0; line<batchEmissionModel.numSequences(); ++line) threader.addFunctionArgument(line);
 						threader.run();
 						System.out.println("Increment counts: " + (System.nanoTime() - nanoTime)/1000000 + "ms");
 					}
 
-					for (int line=0; line<emissionModel.numSequences(); ++line) {
-						decodeStates[startLine+line] = batchDecodeStates[line];
-						decodeWidths[startLine+line] = batchDecodeWidths[line];
+					for (int batchLine = 0; batchLine < batchEmissionModel.numSequences(); ++batchLine) {
+						int line = startLine + batchLine;
+						TransitionState[] decodeStates = batchDecodeStates[batchLine];
+						int[] decodeWidths = batchDecodeWidths[batchLine];
+						allDecodeStates[line] = new DecodeState[decodeStates.length];
+						int stateStartCol = 0;
+						for (int di=0; di<decodeStates.length; ++di) {
+							int charAndPadWidth = decodeWidths[di];
+							int padWidth = batchEmissionModel.getPadWidth(batchLine, stateStartCol, decodeStates[di], charAndPadWidth);
+							int exposure = batchEmissionModel.getExposure(batchLine, stateStartCol, decodeStates[di], charAndPadWidth);
+							int verticalOffset = batchEmissionModel.getOffset(batchLine, stateStartCol, decodeStates[di], charAndPadWidth);
+							allDecodeStates[line][di] = new DecodeState(decodeStates[di], charAndPadWidth, padWidth, exposure, verticalOffset);
+							stateStartCol += charAndPadWidth;
+						}
 					}
 				}
 
 				// evaluate
 
-				printTranscription(iter, doc, allEvals, text, decodeStates, charIndexer);
+				printTranscription(iter, doc, allEvals, text, allDecodeStates, charIndexer);
+				
+				if (!learnFont || iter == numEMIters) {
+					writeWhitespaceTranscription(allDecodeStates, lm, outputPath+"/"+doc.baseName());
+				}
 
 			}
 
@@ -346,14 +359,14 @@ public class FirstFolioMain implements Runnable {
 		System.out.println(buf.toString());
 	}
 
-	private static void printTranscription(int iter, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, String[][] text, TransitionState[][] decodeStates, Indexer<String> charIndexer) {
+	private static void printTranscription(int iter, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, String[][] text, DecodeState[][] decodeStates, Indexer<String> charIndexer) {
 		@SuppressWarnings("unchecked")
 		List<String>[] viterbiChars = new List[decodeStates.length];
 		for (int line=0; line<decodeStates.length; ++line) {
 			viterbiChars[line] = new ArrayList<String>();
 
 			for (int i=0; i<decodeStates[line].length; ++i) {
-				int c = decodeStates[line][i].getGlyphChar().templateCharIndex;
+				int c = decodeStates[line][i].ts.getGlyphChar().templateCharIndex;
 				if (viterbiChars[line].isEmpty() || !(HYPHEN.equals(viterbiChars[line].get(viterbiChars[line].size()-1)) && HYPHEN.equals(charIndexer.getObject(c)))) {
 					viterbiChars[line].add(charIndexer.getObject(c));
 				}
@@ -403,4 +416,33 @@ public class FirstFolioMain implements Runnable {
 		}
 	}
 
+	void writeWhitespaceTranscription(DecodeState[][] decodeStates, LanguageModel lm, String outputFilenameBase) {
+		StringBuilder whitespaceFileBuf = new StringBuilder();
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		for (DecodeState[] decodeStateLine : decodeStates) {
+			int whitespace = 0;
+			for (DecodeState ds : decodeStateLine) {
+				int c = ds.ts.getGlyphChar().templateCharIndex;
+				if (c == charIndexer.getIndex(Charset.SPACE)) {
+					whitespace += ds.charWidth;
+				}
+				else {
+					if (whitespace > 0) {
+						whitespaceFileBuf.append("{" + whitespace + "}");
+						whitespace = 0;
+					}
+					whitespaceFileBuf.append(Charset.unescapeChar(charIndexer.getObject(c)));
+				}
+				whitespace += ds.padWidth;
+			}
+			if (whitespace > 0) {
+				whitespaceFileBuf.append("{" + whitespace + "}");
+			}
+			whitespaceFileBuf.append("\n");
+		}
+
+		String whitespaceOutputFilename = outputFilenameBase + "_whitespace.txt";
+		System.out.println("Writing whitespace layout to " + whitespaceOutputFilename);
+		f.writeString(whitespaceOutputFilename, whitespaceFileBuf.toString());
+	}
 }
