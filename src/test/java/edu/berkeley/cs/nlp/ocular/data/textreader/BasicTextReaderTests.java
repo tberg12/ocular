@@ -6,6 +6,7 @@ import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.GRAVE_COMBINING
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.MACRON_COMBINING;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.TILDE_COMBINING;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,12 +46,18 @@ public class BasicTextReaderTests {
 		TextReader tr = new BasicTextReader();
 		List<String> r = Arrays.asList("t", "h", "i", "s", "\\\\", "t", "h", "a", "t", "\\\\", "t", "h", "e", "\\\\");
 		assertEquals(r, tr.readCharacters("this\\\\that\\\\the\\\\"));
+		try {
+			List<String> r2 = tr.readCharacters("this\\that\\the\\");
+			fail("Exception expected, found: ["+r2+"]");
+		} catch (RuntimeException e) {
+			assertEquals("Unrecognized escape sequence: [\\t]", e.getMessage());
+		}
 	}
 
 	@Test
 	public void test_readCharacters_noEscapeChar() {
-		TextReader tr = new BasicTextReader(false);
-		assertEquals(Arrays.asList("t", "h", "\\\\", "~", "q", "r"), tr.readCharacters("th\\~qr"));
+		BasicTextReader tr = new BasicTextReader(false);
+		assertEquals(Arrays.asList("t", "h", "\\\\", "~", "q", "r", "\\\\", "\\\\", "x"), tr.readCharacters("th\\~qr\\\\x"));
 	}
 
 }
