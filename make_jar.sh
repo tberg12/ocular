@@ -15,7 +15,7 @@ cd $TEMPDIR
 jar -xf $FILENAME
 rm $FILENAME
 cp ../lib/*.jar lib/
-cp ../lib/JCuda-All-0.8.0-bin-linux-x86_64/* lib/
+cp ../lib/JCuda-*/* lib/
 jar cmf META-INF/MANIFEST.MF ../$JARNAME *
 cd ..
 rm -r $TEMPDIR
