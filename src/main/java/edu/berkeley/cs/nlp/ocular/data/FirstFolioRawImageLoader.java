@@ -86,7 +86,7 @@ public class FirstFolioRawImageLoader {
 		File dir = new File(inputPath);
 		final String[] dirList = dir.list(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				if (!name.startsWith(".")) { // ignore hidden files
+				if (name.startsWith(".")) { // ignore hidden files
 					return false;
 				}
 				else if (!name.endsWith(".png") && !name.endsWith(".jpg")) {

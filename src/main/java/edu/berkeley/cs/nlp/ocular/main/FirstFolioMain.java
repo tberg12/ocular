@@ -75,16 +75,16 @@ public class FirstFolioMain implements Runnable {
 	public static double lmPower = 4.0;
 	
 	@Option(gloss = "Path of the font initializer file.")
-	public static String initFontPath = null;
+	public static String initFontPath = "/Users/tberg/Desktop/init.fontser";
 
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
-	public static boolean learnFont = false;
+	public static boolean learnFont = true;
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
-	public static String outputPath = null;
+	public static String outputPath = "/Users/tberg/Desktop/F-tem-output-ob-uv-git";
 
 	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
-	public static String outputFontPath = null;
+	public static String outputFontPath = "Users/tberg/Desktop/F-tem-output-ob-uv-git/learned.fontser";
 
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 3;
@@ -101,7 +101,7 @@ public class FirstFolioMain implements Runnable {
 
 
 	@Option(gloss = "Engine to use for inner loop of emission cache computation. DEFAULT: Uses Java on CPU, which works on any machine but is the slowest method. OPENCL: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. CUDA: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
-	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT;
+	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.CUDA;
 
 	@Option(gloss = "GPU ID when using CUDA emission engine.")
 	public static int cudaDeviceID = 0;
