@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
+import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
@@ -302,7 +303,7 @@ public class FontTrainer {
 	 * Pass over the decoded states to accumulate counts
 	 */
 	private void incrementLmCounts(int[] languageCounts, List<DecodeState> fullViterbiStateSeq, Indexer<String> charIndexer) {
-		int spaceCharIndex = charIndexer.getIndex(" ");
+		int spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
 		for (DecodeState ds : fullViterbiStateSeq) {
 			TransitionState ts = ds.ts;
 			int currLanguage = ts.getLanguageIndex();
