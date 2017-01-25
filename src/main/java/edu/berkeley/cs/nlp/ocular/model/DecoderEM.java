@@ -146,10 +146,10 @@ public class DecoderEM {
 		else { // only one language, default to original (monolingual) Ocular code because it will be faster.
 			SingleLanguageModel singleLm = codeSwitchLM.get(0);
 			if (markovVerticalOffset) {
-				transitionModel = new CharacterNgramTransitionModelMarkovOffset(singleLm, singleLm.getMaxOrder());
+				transitionModel = new CharacterNgramTransitionModelMarkovOffset(singleLm);
 				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModelMarkovOffset");
 			} else {
-				transitionModel = new CharacterNgramTransitionModel(singleLm, singleLm.getMaxOrder());
+				transitionModel = new CharacterNgramTransitionModel(singleLm);
 				System.out.println("Using OnlyOneLanguageCodeSwitchLM and CharacterNgramTransitionModel");
 			}
 		}

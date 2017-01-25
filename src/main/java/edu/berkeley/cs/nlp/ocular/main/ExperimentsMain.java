@@ -154,9 +154,9 @@ public class ExperimentsMain implements Runnable {
 			
 			SparseTransitionModel forwardTransitionModel = null;
 			if (markovVerticalOffset) {
-				forwardTransitionModel = new CharacterNgramTransitionModelMarkovOffset(lm, lm.getMaxOrder());
+				forwardTransitionModel = new CharacterNgramTransitionModelMarkovOffset(lm);
 			} else {
-				forwardTransitionModel = new CharacterNgramTransitionModel(lm, lm.getMaxOrder());
+				forwardTransitionModel = new CharacterNgramTransitionModel(lm);
 			}
 			
 			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);

@@ -139,9 +139,9 @@ public class Main implements Runnable {
 		DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 		SparseTransitionModel forwardTransitionModel = null;
 		if (markovVerticalOffset) {
-			forwardTransitionModel = new CharacterNgramTransitionModelMarkovOffset(lm, lm.getMaxOrder());
+			forwardTransitionModel = new CharacterNgramTransitionModelMarkovOffset(lm);
 		} else {
-			forwardTransitionModel = new CharacterNgramTransitionModel(lm, lm.getMaxOrder());
+			forwardTransitionModel = new CharacterNgramTransitionModel(lm);
 		}
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		System.out.println("Characters: " + charIndexer.getObjects());

@@ -26,6 +26,7 @@ import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
+import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import tberg.murphy.indexer.Indexer;
 
@@ -809,24 +810,13 @@ public class CodeSwitchTransitionModel implements SparseTransitionModel {
 	}
 
 	private int[] shrinkContext(int[] originalContext, SingleLanguageModel slm) {
-		int n = slm.getMaxOrder();
+		int maxOrder = slm.getMaxOrder();
 		int[] newContext = originalContext;
-		while (newContext.length > n - 1)
-			newContext = shortenContextForward(newContext);
-		while (slm != null && !slm.containsContext(newContext))
-			newContext = shortenContextForward(newContext);
+		while (newContext.length > maxOrder - 1)
+			newContext = ArrayHelper.takeRight(newContext, maxOrder - 1);
+		if (slm != null) {
+			newContext = slm.shrinkContext(newContext);
+		}
 		return newContext;
 	}
-
-	private static int[] shortenContextForward(int[] context) {
-		if (context.length > 0) {
-			int[] result = new int[context.length - 1];
-			System.arraycopy(context, 1, result, 0, result.length);
-			return result;
-		}
-		else {
-			return context;
-		}
-	}
-
 }

@@ -234,15 +234,13 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 	public static final double LINE_MRGN_PROB = 0.5;
 	public static final double LINE_END_HYPHEN_PROB = 1e-8;
 	
-	private int n;
 	private SingleLanguageModel lm;
 	private int spaceCharIndex;
 	private int hyphenCharIndex;
 	private boolean[] isPunc;
 
-	public CharacterNgramTransitionModel(SingleLanguageModel lm, int n) {
+	public CharacterNgramTransitionModel(SingleLanguageModel lm) {
 		this.lm = lm;
-		this.n = n;
 		this.spaceCharIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);
 		this.hyphenCharIndex = lm.getCharacterIndexer().getIndex(Charset.HYPHEN);
 		this.isPunc = new boolean[lm.getCharacterIndexer().size()];
@@ -263,24 +261,7 @@ public class CharacterNgramTransitionModel implements SparseTransitionModel {
 	}
 	
 	private int[] shrinkContext(int[] context) {
-		if (context.length > n-1) context = shortenContextForward(context);
-		while (!lm.containsContext(context)) {
-			if (context.length == 0) {
-			  throw new AssertionError("shrinkContext: context.length == 0;");
-			}
-			context = shortenContextForward(context);
-		}
-		return context;
-	}
-	
-	private static int[] shortenContextForward(int[] context) {
-		if (context.length > 0) {
-			int[] result = new int[context.length-1];
-			System.arraycopy(context, 1, result, 0, result.length);
-			return result;
-		} else {
-			return context;
-		}
+		return lm.shrinkContext(context);
 	}
 	
 }

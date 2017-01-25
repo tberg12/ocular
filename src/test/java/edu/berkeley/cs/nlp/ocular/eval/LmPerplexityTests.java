@@ -67,7 +67,7 @@ public class LmPerplexityTests {
 			}
 			public Indexer<String> getCharacterIndexer() { return charIndexer; }
 			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
 		};
 
 		final SingleLanguageModel lang2Lm = new SingleLanguageModel() {
@@ -86,7 +86,7 @@ public class LmPerplexityTests {
 			}
 			public Indexer<String> getCharacterIndexer() { return charIndexer; }
 			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
 		};
 		
 		final CodeSwitchLanguageModel csLm = new CodeSwitchLanguageModel() {
@@ -204,7 +204,7 @@ public class LmPerplexityTests {
 			}
 			public Indexer<String> getCharacterIndexer() { return charIndexer; }
 			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
 		};
 
 		final SingleLanguageModel lang2Lm = new SingleLanguageModel() {
@@ -223,7 +223,7 @@ public class LmPerplexityTests {
 			}
 			public Indexer<String> getCharacterIndexer() { return charIndexer; }
 			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
 		};
 		
 		final CodeSwitchLanguageModel csLm = new CodeSwitchLanguageModel() {

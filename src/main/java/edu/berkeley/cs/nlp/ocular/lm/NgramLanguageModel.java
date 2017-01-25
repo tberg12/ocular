@@ -8,6 +8,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import tberg.murphy.indexer.Indexer;
 
@@ -35,6 +36,7 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		this.charIndexer = charIndexer;
 		this.countDbs = countDbs;
 		this.maxOrder = countDbs.length;
+		if (maxOrder <= 0) throw new RuntimeException("maxOrder must be greater than zero.");
 		this.type = type;
 		this.lmPower = lmPower;
 		this.allContextsSet = new HashSet<LongArrWrapper>();
@@ -86,7 +88,18 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		return maxOrder;
 	}
 
-	public boolean containsContext(int[] context) {
+	public int[] shrinkContext(int[] originalContext) {
+		int[] newContext = originalContext;
+		if (newContext.length > maxOrder - 1) {
+			newContext = ArrayHelper.takeRight(newContext, maxOrder - 1);
+		}
+		while (!containsContext(newContext) && newContext.length > 0) {
+			newContext = ArrayHelper.takeRight(newContext, newContext.length - 1);
+		}
+		return newContext;
+	}
+	
+	private boolean containsContext(int[] context) {
 		if (context.length == 0)
 			return true;
 		else

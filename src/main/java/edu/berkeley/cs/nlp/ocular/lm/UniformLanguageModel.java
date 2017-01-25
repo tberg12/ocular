@@ -34,8 +34,8 @@ public class UniformLanguageModel implements SingleLanguageModel {
 		return activeCharacters;
 	}
 
-	public boolean containsContext(int[] context) {
-		return true;
+	public int[] shrinkContext(int[] context) {
+		return context;
 	}
 
 	public double getCharNgramProb(int[] context, int c) {

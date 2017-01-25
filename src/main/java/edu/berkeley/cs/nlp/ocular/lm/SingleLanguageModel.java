@@ -12,6 +12,6 @@ public interface SingleLanguageModel extends LanguageModel, Serializable {
 
 	public Set<Integer> getActiveCharacters();
 	public int getMaxOrder();
-	public boolean containsContext(int[] context);
+	public int[] shrinkContext(int[] originalContext);
 	
 }
