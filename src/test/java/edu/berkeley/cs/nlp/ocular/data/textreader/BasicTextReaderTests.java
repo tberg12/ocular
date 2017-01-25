@@ -47,6 +47,12 @@ public class BasicTextReaderTests {
 		assertEquals(r, tr.readCharacters("this\\\\that\\\\the\\\\"));
 	}
 
+	@Test
+	public void test_readCharacters_noEscapeChar() {
+		TextReader tr = new BasicTextReader(false);
+		assertEqualsList(Arrays.asList("t", "h", "\\\\", "~", "q", "r"), tr.readCharacters("th\\~qr"));
+	}
+
 	private <A> void assertEqualsList(List<A> expected, List<A> actual) {
 		assertEquals(expected.size(), actual.size());
 		for (int i = 0; i < expected.size(); ++i) {

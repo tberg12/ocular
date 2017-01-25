@@ -185,7 +185,7 @@ public class FirstFolioMain implements Runnable {
 			boolean insertLongS = true;
 			boolean allowUVFlip = false;
 			
-			TextReader textReader = new BasicTextReader();
+			TextReader textReader = new BasicTextReader(false);
 			textReader = new WhitelistCharacterSetTextReader(explicitCharacterSet, textReader);
 			if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
 			if(allowUVFlip) textReader = new FlipUVTextReader(0.5, textReader);

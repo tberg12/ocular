@@ -8,6 +8,16 @@ import java.util.List;
  */
 public class BasicTextReader implements TextReader {
 
+	private boolean treatBackslashAsEscape;
+
+	public BasicTextReader(boolean treatBackslashAsEscape) {
+		this.treatBackslashAsEscape = treatBackslashAsEscape;
+	}
+
+	public BasicTextReader() {
+		this.treatBackslashAsEscape = true;
+	}
+
 	public List<List<String>> readCharacters(List<String> lines) {
 		List<List<String>> characterLines = new ArrayList<List<String>>();
 		for (String l : lines)
@@ -16,9 +26,13 @@ public class BasicTextReader implements TextReader {
 	}
 
 	public List<String> readCharacters(String line) {
-		line = line.replaceAll("``", "\"");
-		line = line.replaceAll("''", "\"");
-		line = line.replaceAll("\t", "    ");
+		if (!treatBackslashAsEscape) {
+			line = line.replace("\\", "\\\\");
+		}
+
+		line = line.replace("``", "\"");
+		line = line.replace("''", "\"");
+		line = line.replace("\t", "    ");
 
 		// Split characters and convert to diacritic-normalized forms.
 		List<String> normalizedChars = new ArrayList<String>();
@@ -29,7 +43,7 @@ public class BasicTextReader implements TextReader {
 	}
 
 	public String toString() {
-		return "BasicTextReader()";
+		return "BasicTextReader(" + treatBackslashAsEscape + ")";
 	}
 
 }

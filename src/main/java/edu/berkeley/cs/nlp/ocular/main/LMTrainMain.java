@@ -67,7 +67,7 @@ public class LMTrainMain implements Runnable {
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (textPath == null) throw new IllegalArgumentException("-textPath not set");
 		
-		TextReader textReader = new BasicTextReader();
+		TextReader textReader = new BasicTextReader(false);
 		if (explicitCharacterSet != null) textReader = new WhitelistCharacterSetTextReader(explicitCharacterSet, textReader);
 		if(removeDiacritics) textReader = new RemoveAllDiacriticsTextReader(textReader);
 		if(insertLongS) textReader = new ConvertLongSTextReader(textReader);
