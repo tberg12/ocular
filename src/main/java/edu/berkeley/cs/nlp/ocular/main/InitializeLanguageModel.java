@@ -20,11 +20,12 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.BlacklistCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.ExplicitCharacterSetTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveDiacriticsTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.WhitelistCharacterSetTextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveAllDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ReplaceSomeTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
@@ -72,6 +73,9 @@ public class InitializeLanguageModel extends OcularRunnable {
 	
 	@Option(gloss = "Remove diacritics?")
 	public static boolean removeDiacritics = false;
+
+	@Option(gloss = "Treat backslashes in text as escape characters?")
+	public static boolean escapes = false;
 
 	@Option(gloss = "A set of valid characters. If a character with a diacritic is found but not in this set, the diacritic will be dropped. Other excluded characters will simply be dropped. Ignore to allow all characters.")
 	public static Set<String> explicitCharacterSet = null; // Allow all characters. 
@@ -208,9 +212,10 @@ public class InitializeLanguageModel extends OcularRunnable {
 			System.out.println("For language '" + language + "', using text in " + filepath + ", prior=" + prior
 					+ (languageAltSpellPathMap.keySet().contains(language) ? ", alternate spelling replacement rules in " + languageAltSpellPathMap.get(language) : ""));
 			
-			TextReader textReader = new BasicTextReader(Charset.BANNED_CHARS);
-			if (explicitCharacterSet != null && !explicitCharacterSet.isEmpty()) textReader = new ExplicitCharacterSetTextReader(textReader, explicitCharacterSet);
-			if (removeDiacritics) textReader = new RemoveDiacriticsTextReader(textReader);
+			TextReader textReader = new BasicTextReader(escapes);
+			textReader = new BlacklistCharacterSetTextReader(Charset.BANNED_CHARS, textReader);
+			if (explicitCharacterSet != null && !explicitCharacterSet.isEmpty()) textReader = new WhitelistCharacterSetTextReader(explicitCharacterSet, textReader);
+			if (removeDiacritics) textReader = new RemoveAllDiacriticsTextReader(textReader);
 			if (insertLongS) textReader = new ConvertLongSTextReader(textReader);
 			if (languageAltSpellPathMap.keySet().contains(language)) textReader = handleReplacementRulesOption(textReader, languageAltSpellPathMap.get(language));
 			

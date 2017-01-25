@@ -39,7 +39,7 @@ public class CharsetTests {
 		assertEquals("ı", unescapeChar("\\ii"));
 		assertEquals("ı", unescapeChar("ı"));
 		
-		assertEquals("\\\\", unescapeChar("\\\\"));
+		assertEquals("\\", unescapeChar("\\\\"));
 	}
 
 	@Test
@@ -55,7 +55,7 @@ public class CharsetTests {
 		assertEquals("ı", unescapeCharPrecomposedOnly("\\ii"));
 		assertEquals("ı", unescapeCharPrecomposedOnly("ı"));
 		
-		assertEquals("\\\\", unescapeCharPrecomposedOnly("\\\\"));
+		assertEquals("\\", unescapeCharPrecomposedOnly("\\\\"));
 	}
 
 	@Test

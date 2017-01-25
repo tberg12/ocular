@@ -501,7 +501,7 @@ public class Charset {
 	 * Convert character into unicode precomposed and combining characters
 	 */
 	public static String unescapeChar(String c) {
-		if (c.equals("\\\\")) return c;
+		if (c.equals("\\\\")) return "\\";
 		
 		Tuple2<String,List<String>> letterAndNormalDiacritics = normalizeCharSeparateDiacritics(c); // use combining chars only (and make sure it's a valid character)
 		String baseLetter = letterAndNormalDiacritics._1;
@@ -531,7 +531,7 @@ public class Charset {
 	 * Convert character into a precomposed character (if applicable) and explicit escape sequences
 	 */
 	public static String unescapeCharPrecomposedOnly(String c) {
-		if (c.equals("\\\\")) return c;
+		if (c.equals("\\\\")) return "\\";
 		
 		Tuple2<String,List<String>> letterAndNormalDiacritics = normalizeCharSeparateDiacritics(c); // use combining chars only (and make sure it's a valid character)
 		String baseLetter = letterAndNormalDiacritics._1;

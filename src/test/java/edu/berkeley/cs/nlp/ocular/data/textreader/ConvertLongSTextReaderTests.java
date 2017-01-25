@@ -13,7 +13,7 @@ import org.junit.Test;
  */
 public class ConvertLongSTextReaderTests {
 
-	private String s1 = "ing th\\~q || | follies of thõsè, who éither ``sæek'' out th\\\"os\\`e wæys \"and\" means, which either are sq̃uccess confession asi lessons";
+	private String s1 = "ing th\\~q || | follies of thõsè, who éither ``sæek'' out th\\\"os\\`e wæys \"and\" means, which either are sq̃uccess confession asi \\\\lessons";
 
 	@Test
 	public void test_readCharacters() {
@@ -26,14 +26,14 @@ public class ConvertLongSTextReaderTests {
 		assertEquals(Arrays.asList("a", "ſ", "s", "i"), tr.readCharacters("assi"));
 		assertEquals(Arrays.asList("ſ", "s", "i", "n"), tr.readCharacters("ssin"));
 		assertEquals(Arrays.asList("a", "ſ", "s", "i", "n"), tr.readCharacters("assin"));
-		List<String> r = Arrays.asList("i", "n", "g", " ", "t", "h", "q" + TILDE_COMBINING, " ", "|", "|", " ", "|", " ", "f", "o", "l", "l", "i", "e", "s", " ", "o", "f", " ", "t", "h", "o" + TILDE_COMBINING, "ſ", "e" + GRAVE_COMBINING, ",", " ", "w", "h", "o", " ", "e" + ACUTE_COMBINING, "i", "t", "h", "e", "r", " ", "\"", "ſ", "æ", "e", "k", "\"", " ", "o", "u", "t", " ", "t", "h", "o" + DIAERESIS_COMBINING, "ſ", "e" + GRAVE_COMBINING, " ", "w", "æ", "y", "s", " ", "\"", "a", "n", "d", "\"", " ", "m", "e", "a", "n", "s", ",", " ", "w", "h", "i", "c", "h", " ", "e", "i", "t", "h", "e", "r", " ", "a", "r", "e", " ", "ſ", "q" + TILDE_COMBINING, "u", "c", "c", "e", "ſ", "s", " ", "c", "o", "n", "f", "e", "ſ", "s", "i", "o", "n", " ", "a", "ſ", "i", " ", "l", "e", "ſ", "ſ", "o", "n", "s");
+		List<String> r = Arrays.asList("i", "n", "g", " ", "t", "h", "q" + TILDE_COMBINING, " ", "|", "|", " ", "|", " ", "f", "o", "l", "l", "i", "e", "s", " ", "o", "f", " ", "t", "h", "o" + TILDE_COMBINING, "ſ", "e" + GRAVE_COMBINING, ",", " ", "w", "h", "o", " ", "e" + ACUTE_COMBINING, "i", "t", "h", "e", "r", " ", "\"", "ſ", "æ", "e", "k", "\"", " ", "o", "u", "t", " ", "t", "h", "o" + DIAERESIS_COMBINING, "ſ", "e" + GRAVE_COMBINING, " ", "w", "æ", "y", "s", " ", "\"", "a", "n", "d", "\"", " ", "m", "e", "a", "n", "s", ",", " ", "w", "h", "i", "c", "h", " ", "e", "i", "t", "h", "e", "r", " ", "a", "r", "e", " ", "ſ", "q" + TILDE_COMBINING, "u", "c", "c", "e", "ſ", "s", " ", "c", "o", "n", "f", "e", "ſ", "s", "i", "o", "n", " ", "a", "ſ", "i", " ", "\\\\", "l", "e", "ſ", "ſ", "o", "n", "s");
 		assertEquals(r, tr.readCharacters(s1));
 	}
 
 	@Test
 	public void test_readCharacters_removeDia() {
-		TextReader tr = new ConvertLongSTextReader(new RemoveDiacriticsTextReader(new BasicTextReader()));
-		List<String> r = Arrays.asList("i", "n", "g", " ", "t", "h", "q", " ", "|", "|", " ", "|", " ", "f", "o", "l", "l", "i", "e", "s", " ", "o", "f", " ", "t", "h", "o", "ſ", "e", ",", " ", "w", "h", "o", " ", "e", "i", "t", "h", "e", "r", " ", "\"", "ſ", "æ", "e", "k", "\"", " ", "o", "u", "t", " ", "t", "h", "o", "ſ", "e", " ", "w", "æ", "y", "s", " ", "\"", "a", "n", "d", "\"", " ", "m", "e", "a", "n", "s", ",", " ", "w", "h", "i", "c", "h", " ", "e", "i", "t", "h", "e", "r", " ", "a", "r", "e", " ", "ſ", "q", "u", "c", "c", "e", "ſ", "s", " ", "c", "o", "n", "f", "e", "ſ", "s", "i", "o", "n", " ", "a", "ſ", "i", " ", "l", "e", "ſ", "ſ", "o", "n", "s");
+		TextReader tr = new ConvertLongSTextReader(new RemoveAllDiacriticsTextReader(new BasicTextReader()));
+		List<String> r = Arrays.asList("i", "n", "g", " ", "t", "h", "q", " ", "|", "|", " ", "|", " ", "f", "o", "l", "l", "i", "e", "s", " ", "o", "f", " ", "t", "h", "o", "ſ", "e", ",", " ", "w", "h", "o", " ", "e", "i", "t", "h", "e", "r", " ", "\"", "ſ", "æ", "e", "k", "\"", " ", "o", "u", "t", " ", "t", "h", "o", "ſ", "e", " ", "w", "æ", "y", "s", " ", "\"", "a", "n", "d", "\"", " ", "m", "e", "a", "n", "s", ",", " ", "w", "h", "i", "c", "h", " ", "e", "i", "t", "h", "e", "r", " ", "a", "r", "e", " ", "ſ", "q", "u", "c", "c", "e", "ſ", "s", " ", "c", "o", "n", "f", "e", "ſ", "s", "i", "o", "n", " ", "a", "ſ", "i", " ", "\\\\", "l", "e", "ſ", "ſ", "o", "n", "s");
 		assertEquals(r, tr.readCharacters(s1));
 	}
 

@@ -6,11 +6,11 @@ import java.util.List;
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
-public class RemoveDiacriticsTextReader implements TextReader {
+public class RemoveAllDiacriticsTextReader implements TextReader {
 
 	private TextReader delegate;
 
-	public RemoveDiacriticsTextReader(TextReader delegate) {
+	public RemoveAllDiacriticsTextReader(TextReader delegate) {
 		this.delegate = delegate;
 	}
 
@@ -23,7 +23,7 @@ public class RemoveDiacriticsTextReader implements TextReader {
 	}
 
 	public String toString() {
-		return "RemoveDiacriticsTextReader(" + delegate + ")";
+		return "RemoveAllDiacriticsTextReader(" + delegate + ")";
 	}
 
 }

@@ -1,26 +1,23 @@
 package edu.berkeley.cs.nlp.ocular.data.textreader;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Dan Garrette (dhgarrette@gmail.com)
  */
 public class BasicTextReader implements TextReader {
 
-	private Set<String> bannedChars;
-	
-	@SuppressWarnings("unchecked")
+	private boolean treatBackslashAsEscape;
+
+	public BasicTextReader(boolean treatBackslashAsEscape) {
+		this.treatBackslashAsEscape = treatBackslashAsEscape;
+	}
+
 	public BasicTextReader() {
-		this.bannedChars = Collections.EMPTY_SET;
+		this.treatBackslashAsEscape = true;
 	}
-	
-	public BasicTextReader(Set<String> bannedChars) {
-		this.bannedChars = bannedChars;
-	}
-	
+
 	public List<List<String>> readCharacters(List<String> lines) {
 		List<List<String>> characterLines = new ArrayList<List<String>>();
 		for (String l : lines)
@@ -29,27 +26,24 @@ public class BasicTextReader implements TextReader {
 	}
 
 	public List<String> readCharacters(String line) {
-		
-		line = line.replaceAll("\\\\", "");
-		line = line.replaceAll("``", "\"");
-		line = line.replaceAll("''", "\"");
-		line = line.replaceAll("\t", "    ");
+		if (!treatBackslashAsEscape) {
+			line = line.replace("\\", "\\\\");
+		}
 
-		/*
-		 * Split characters and replace diacritics with either diacritic codes or
-		 * diacritic-less letters.
-		 */
+		line = line.replace("``", "\"");
+		line = line.replace("''", "\"");
+		line = line.replace("\t", "    ");
+
+		// Split characters and convert to diacritic-normalized forms.
 		List<String> normalizedChars = new ArrayList<String>();
 		for (String c : Charset.readNormalizeCharacters(line)) {
-			if (!bannedChars.contains(c)) {
-				normalizedChars.add(c);
-			}
+			normalizedChars.add(c);
 		}
 		return normalizedChars;
 	}
 
 	public String toString() {
-		return "BasicTextReader()";
+		return "BasicTextReader(" + treatBackslashAsEscape + ")";
 	}
 
 }
