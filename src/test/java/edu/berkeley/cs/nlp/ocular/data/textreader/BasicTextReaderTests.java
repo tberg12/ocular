@@ -22,15 +22,15 @@ public class BasicTextReaderTests {
 	@Test
 	public void test_readCharacters_qtilde() {
 		TextReader tr = new BasicTextReader();
-		assertEqualsList(Arrays.asList("q" + TILDE_COMBINING), tr.readCharacters("q̃"));
-		assertEqualsList(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("thq̃r"));
-		assertEqualsList(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("th\\~qr"));
+		assertEquals(Arrays.asList("q" + TILDE_COMBINING), tr.readCharacters("q̃"));
+		assertEquals(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("thq̃r"));
+		assertEquals(Arrays.asList("t", "h", "q" + TILDE_COMBINING, "r"), tr.readCharacters("th\\~qr"));
 	}
 
 	@Test
 	public void test_readCharacters_stackedDiacritics() {
 		TextReader tr = new BasicTextReader();
-		assertEqualsList(Arrays.asList("n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING + ACUTE_COMBINING + GRAVE_COMBINING), tr.readCharacters("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
+		assertEquals(Arrays.asList("n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING + ACUTE_COMBINING + GRAVE_COMBINING), tr.readCharacters("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
 	}
 
 	@Test
@@ -50,13 +50,7 @@ public class BasicTextReaderTests {
 	@Test
 	public void test_readCharacters_noEscapeChar() {
 		TextReader tr = new BasicTextReader(false);
-		assertEqualsList(Arrays.asList("t", "h", "\\\\", "~", "q", "r"), tr.readCharacters("th\\~qr"));
+		assertEquals(Arrays.asList("t", "h", "\\\\", "~", "q", "r"), tr.readCharacters("th\\~qr"));
 	}
 
-	private <A> void assertEqualsList(List<A> expected, List<A> actual) {
-		assertEquals(expected.size(), actual.size());
-		for (int i = 0; i < expected.size(); ++i) {
-			assertEquals(expected.get(i), actual.get(i));
-		}
-	}
 }
