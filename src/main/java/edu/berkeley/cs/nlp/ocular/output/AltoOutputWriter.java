@@ -1,8 +1,5 @@
 package edu.berkeley.cs.nlp.ocular.output;
 
-//import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml3; // to escape all HTML special characters
-import tberg.murphy.indexer.Indexer;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,13 +8,16 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import tberg.murphy.util.Iterators;
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
+import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import tberg.murphy.fileio.f;
+//import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml3; // to escape all HTML special characters
+import tberg.murphy.indexer.Indexer;
+import tberg.murphy.util.Iterators;
 
 /**
  * @author Hannah Alpert-Abrams (halperta@gmail.com)
@@ -37,7 +37,7 @@ public class AltoOutputWriter {
 		this.hyphenCharIndex = charIndexer.getIndex(Charset.HYPHEN);
 	}
 
-	public void write(int numLines, List<TransitionState>[] viterbiTransStates, Document doc, String outputFilenameBase, String inputDocPath, List<Integer>[] viterbiWidths, List<String> commandLineArgs, boolean outputNormalized, double lmPerplexity) {
+	public void write(int numLines, List<DecodeState>[] viterbiDecodeStates, Document doc, String outputFilenameBase, String inputDocPath, List<String> commandLineArgs, boolean outputNormalized, double lmPerplexity) {
 		String altoOutputFilename = outputFilenameBase + (outputNormalized ? "_norm" : "_dipl") + ".alto.xml";
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
@@ -85,26 +85,27 @@ public class AltoOutputWriter {
 			boolean beginningOfLine = true;
 			
 			@SuppressWarnings("unchecked")
-			Iterator<TransitionState> tsIterator = Iterators.concat(viterbiTransStates[line].iterator(), Iterators.<TransitionState>oneItemIterator(null));
-			Iterator<Integer> widthsIterator = viterbiWidths[line].iterator();
+			Iterator<DecodeState> dsIterator = Iterators.concat(viterbiDecodeStates[line].iterator(), Iterators.<DecodeState>oneItemIterator(null));
 			
-			List<TransitionState> wordBuffer = new ArrayList<TransitionState>(); 
+			List<DecodeState> wordBuffer = new ArrayList<DecodeState>(); 
 			
 			int wordWidth = 0;
-			while (tsIterator.hasNext()) {
-				TransitionState ts = tsIterator.next();
+			while (dsIterator.hasNext()) {
+				DecodeState ds = dsIterator.next();
+				TransitionState ts = ds.ts;
 				boolean isSpace = ts != null ? ts.getLmCharIndex() == spaceCharIndex && ts.getGlyphChar().templateCharIndex == spaceCharIndex : true;
 				boolean isPunct = ts != null ? ts.getLmCharIndex() != hyphenCharIndex && Charset.isPunctuationChar(charIndexer.getObject(ts.getLmCharIndex())) : false;
-				boolean endOfSpan = (isSpace == inWord) || isPunct || !tsIterator.hasNext(); // end of word, contiguous space sequence, or line
+				boolean endOfSpan = (isSpace == inWord) || isPunct || !dsIterator.hasNext(); // end of word, contiguous space sequence, or line
 				
 				if (endOfSpan) { // if we're at a transition point between spans, we need to write out the complete span's information
 					if (inWord) { // if we're completing a word (as opposed to a sequence of spaces)
 						if (!wordBuffer.isEmpty()) { // if there's wordiness to print out (hopefully this will always be true if we get to this point)
-							int languageIndex = wordBuffer.get(0).getLanguageIndex();
+							int languageIndex = wordBuffer.get(0).ts.getLanguageIndex();
 							String language = languageIndex >= 0 ? langIndexer.getObject(languageIndex) : "None";
 							StringBuffer diplomaticTranscriptionBuffer = new StringBuffer();
 							StringBuffer normalizedTranscriptionBuffer = new StringBuffer();
-							for (TransitionState wts : wordBuffer) {
+							for (DecodeState wds : wordBuffer) {
+								TransitionState wts = wds.ts;
 								if (!wts.getGlyphChar().isElided()) {
 									diplomaticTranscriptionBuffer.append(Charset.unescapeChar(charIndexer.getObject(wts.getGlyphChar().templateCharIndex))); //w/ normalized ocular, we'll want to preserve things like "shorthand" or whatever.
 								}
@@ -164,8 +165,8 @@ public class AltoOutputWriter {
 				}
 				
 				// add the current state into the (existing or freshly-cleared) span buffer
-				wordBuffer.add(ts);
-				wordWidth += (ts != null ? widthsIterator.next() : 0);
+				wordBuffer.add(ds);
+				wordWidth += (ds != null ? ds.charAndPadWidth : 0);
 			}
 			if (lineOutputBuffer.length() > 0) {
 				outputBuffer.append("    <TextLine ID=\"line_"+(line+1)+"\">\n"); //Opening <TextLine>, assigning ID.
