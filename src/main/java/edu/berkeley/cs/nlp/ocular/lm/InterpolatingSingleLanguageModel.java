@@ -55,7 +55,8 @@ public class InterpolatingSingleLanguageModel implements SingleLanguageModel {
 	public double getCharNgramProb(int[] context, int c) {
 		double probSum = 0.0;
 		for (int i = 0; i < numModels; ++i) {
-			probSum += subModels[i].getCharNgramProb(context, c) * interpWeights[i];
+			int[] shrunkenContext = subModels[i].shrinkContext(context); // context may be different for different submodels
+			probSum += subModels[i].getCharNgramProb(shrunkenContext, c) * interpWeights[i];
 		}
 		return probSum;
 	}

@@ -88,6 +88,10 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		return maxOrder;
 	}
 
+	public double getLmPower() {
+		return lmPower;
+	}
+
 	public int[] shrinkContext(int[] originalContext) {
 		int[] newContext = originalContext;
 		if (newContext.length > maxOrder - 1) {

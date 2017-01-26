@@ -152,7 +152,7 @@ public class FontTrainer {
 
 		// Containers for counts that will be accumulated
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
-		List<DecodeState[][]> accumulatedTranscriptions = new ArrayList<DecodeState[][]>(); // for re-estimating the LM
+		List<DecodeState[][]> accumulatedTranscriptions; // for re-estimating the LM
 		double[][][] gsmCounts;
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allDiplomaticTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
@@ -162,6 +162,7 @@ public class FontTrainer {
 
 		// Clear counts at the start of the iteration
 		clearTemplates(templates);
+		accumulatedTranscriptions = new ArrayList<DecodeState[][]>();
 		gsmCounts = gsmFactory.initializeNewCountsMatrix();
 
 		double totalIterationJointLogProb = 0.0;
@@ -181,6 +182,7 @@ public class FontTrainer {
 			final DecodeState[][] decodeStates = decodeResults._1;
 			totalIterationJointLogProb += decodeResults._2;
 			totalBatchJointLogProb += decodeResults._2;
+			accumulatedTranscriptions.add(decodeStates);
 			List<DecodeState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 			gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 			
@@ -218,6 +220,7 @@ public class FontTrainer {
 				// Clear counts at the end of a batch
 				System.out.println("Clearing font parameter statistics.");
 				clearTemplates(templates);
+				accumulatedTranscriptions = new ArrayList<DecodeState[][]>();
 				gsmCounts = gsmFactory.initializeNewCountsMatrix();
 				
 				double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
@@ -325,6 +328,7 @@ public class FontTrainer {
 		Indexer<String> langIndexer = cslm.getLanguageIndexer();
 		int numLangs = langIndexer.size();
 		
+		System.out.println("Retraining LM");
 		List<List<List<String>>> allTranscriptionsByLanguage = separateTranscriptionsByLanguage(accumulatedTranscriptions, charIndexer, langIndexer);
 		
 		List<Tuple2<SingleLanguageModel, Double>> lmsAndPriors = new ArrayList<Tuple2<SingleLanguageModel, Double>>();
@@ -333,13 +337,16 @@ public class FontTrainer {
 			if (langBaseLM instanceof InterpolatingSingleLanguageModel) {
 				langBaseLM = ((InterpolatingSingleLanguageModel)langBaseLM).getSubModel(0);
 			}
-			CorpusCounter counter = new CorpusCounter(langBaseLM.getMaxOrder());
+			int ngramLength = langBaseLM.getMaxOrder();
+			CorpusCounter counter = new CorpusCounter(ngramLength);
+			List<List<String>> charsByFile = allTranscriptionsByLanguage.get(langIndex);
 			int totalChars = 0;
-			for (List<String> chars : allTranscriptionsByLanguage.get(langIndex)) { 
+			for (List<String> chars : charsByFile) {
 				counter.countChars(chars, charIndexer, 0);
 				totalChars += chars.size();
 			}
-			double lmPower = 4.0;
+			System.out.println("  using " + totalChars + " characters for " + langIndexer.getObject(langIndex) + " read from transcription output");
+			double lmPower = (langBaseLM instanceof NgramLanguageModel ? ((NgramLanguageModel)langBaseLM).getLmPower() : 4.0);
 			SingleLanguageModel langNewLM = new NgramLanguageModel(charIndexer, counter.getCounts(), langBaseLM.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
 			SingleLanguageModel langInterpLM = new InterpolatingSingleLanguageModel(CollectionHelper.makeList(
 					Tuple2(langBaseLM, 1.0 - newDataInterpolationWeight), Tuple2(langNewLM, newDataInterpolationWeight)));
@@ -369,17 +376,31 @@ public class FontTrainer {
 			List<String> currentOutput = new ArrayList<String>();
 			for (Tuple2<String, String> charLang : normalizedCharLangTranscription) {
 				String currLanguage = charLang._2;
-				if (!currLanguage.equals(prevLanguage)) {
-					int prevLangIndex = (prevLanguage == null && numLangs == 1 ? 0 : langIndexer.getIndex(prevLanguage));
-					allTranscriptionsByLanguage.get(prevLangIndex).add(currentOutput);
+				if (!equalsNullSafe(currLanguage, prevLanguage)) {
+					if (!currentOutput.isEmpty()) {
+						int prevLangIndex = (prevLanguage == null && numLangs == 1 ? 0 : langIndexer.getIndex(prevLanguage));
+						allTranscriptionsByLanguage.get(prevLangIndex).add(currentOutput);
+					}
 					currentOutput = new ArrayList<String>();
 					prevLanguage = currLanguage;
 				}
 				currentOutput.add(charLang._1);
 			}
+			if (!currentOutput.isEmpty()) {
+				int prevLangIndex = (prevLanguage == null && numLangs == 1 ? 0 : langIndexer.getIndex(prevLanguage));
+				allTranscriptionsByLanguage.get(prevLangIndex).add(currentOutput);
+			}
 		}
 		
 		return allTranscriptionsByLanguage;
+	}
+
+	private <A> boolean equalsNullSafe(A o1, A o2) {
+		if (o1 == null && o2 == null)
+			return true;
+		if (o1 == null || o2 == null)
+			return false;
+		return o1.equals(o2);
 	}
 
 	/**
