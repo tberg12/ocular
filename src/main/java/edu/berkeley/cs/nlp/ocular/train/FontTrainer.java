@@ -321,6 +321,9 @@ public class FontTrainer {
 	
 	/**
 	 * Hard-EM update on language model probabilities
+	 * 
+	 * TODO Increase newDataInterpolationWeight on each interation.
+	 * TODO Use lower newDataInterpolationWeight if totalChars for the language is too low.
 	 */
 	private CodeSwitchLanguageModel reestimateLM(List<DecodeState[][]> accumulatedTranscriptions, CodeSwitchLanguageModel cslm, double newDataInterpolationWeight) {
 		long nanoTime = System.nanoTime();
@@ -339,19 +342,27 @@ public class FontTrainer {
 			}
 			int ngramLength = langBaseLM.getMaxOrder();
 			CorpusCounter counter = new CorpusCounter(ngramLength);
-			List<List<String>> charsByFile = allTranscriptionsByLanguage.get(langIndex);
-			int totalChars = 0;
-			for (List<String> chars : charsByFile) {
+			int totalLangChars = 0;
+			for (List<String> chars : allTranscriptionsByLanguage.get(langIndex)) {
 				counter.countChars(chars, charIndexer, 0);
-				totalChars += chars.size();
+				totalLangChars += chars.size();
 			}
-			System.out.println("  using " + totalChars + " characters for " + langIndexer.getObject(langIndex) + " read from transcription output");
-			double lmPower = (langBaseLM instanceof NgramLanguageModel ? ((NgramLanguageModel)langBaseLM).getLmPower() : 4.0);
-			SingleLanguageModel langNewLM = new NgramLanguageModel(charIndexer, counter.getCounts(), langBaseLM.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
-			SingleLanguageModel langInterpLM = new InterpolatingSingleLanguageModel(CollectionHelper.makeList(
-					Tuple2(langBaseLM, 1.0 - newDataInterpolationWeight), Tuple2(langNewLM, newDataInterpolationWeight)));
-			double prior = totalChars + 1.0; // for smoothing
-			lmsAndPriors.add(Tuple2(langInterpLM, prior));
+			System.out.println("  found " + totalLangChars + " characters for " + langIndexer.getObject(langIndex) + " read from transcription output");
+			
+			SingleLanguageModel langUpdatedLM;
+			if (totalLangChars > 0) {
+				double lmPower = (langBaseLM instanceof NgramLanguageModel ? ((NgramLanguageModel)langBaseLM).getLmPower() : 4.0);
+				SingleLanguageModel langNewLM = new NgramLanguageModel(charIndexer, counter.getCounts(), langBaseLM.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
+				langUpdatedLM = new InterpolatingSingleLanguageModel(CollectionHelper.makeList(
+						Tuple2(langBaseLM, 1.0 - newDataInterpolationWeight), Tuple2(langNewLM, newDataInterpolationWeight)));
+				System.out.println("  using new interpolated lm for " + langIndexer.getObject(langIndex));
+			}
+			else {
+				System.out.println("  using original lm for " + langIndexer.getObject(langIndex));
+				langUpdatedLM = langBaseLM; // this language doesn't appear in the transcription, so nothing to interpolate with.
+			}
+			double prior = totalLangChars + 1.0; // for smoothing
+			lmsAndPriors.add(Tuple2(langUpdatedLM, prior)); // prior gets normalized later
 		}
 		CodeSwitchLanguageModel newCodeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, langIndexer, cslm.getProbKeepSameLanguage());
 		
