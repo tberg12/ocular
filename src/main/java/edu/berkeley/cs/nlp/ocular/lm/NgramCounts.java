@@ -64,14 +64,15 @@ public class NgramCounts {
   public int getHighestUsableOrder() {
     for (int i = getNgramOrder() - 1; i >= 0; i--) {
       if (tokenCounts[i] > 0) {
-        assert tokenNormalizers[i] > 0 : "Bad counts: " + this.toString();
+        if (tokenNormalizers[i] <= 0) {
+        	throw new RuntimeException("Bad counts: " + this);
+        }
       }
       if (tokenNormalizers[i] > 0) {
         return i+1;
       }
     }
-    assert false;
-    return 0;
+    throw new RuntimeException("getHighestUsableOrder() failed.  getNgramOrder()="+getNgramOrder());
   }
   
   public double getTokenMle() {

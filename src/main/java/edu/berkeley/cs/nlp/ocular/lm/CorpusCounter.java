@@ -173,7 +173,7 @@ public class CorpusCounter {
   }
 
   private void incrementCounts(int[] ngramArr, int order) {
-    assert order >= 1;
+    if (order < 1) throw new RuntimeException("order < 1.  was order=" + order);
     // Increment token and type counts for the highest-order n-gram
     // Lower-order token counts that involve this order of n-gram are stored
     // and indexed in lower-order count databases, but incremented here

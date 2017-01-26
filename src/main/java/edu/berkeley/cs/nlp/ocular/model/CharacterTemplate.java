@@ -314,7 +314,7 @@ public class CharacterTemplate implements Serializable {
 	}
 
 	private String renderWidthProbs(float[] probs, int firstIndex) {
-		assert probs.length > 0;
+		if (probs.length <= 0) throw new RuntimeException("probs.length <= 0. was probs.length=" + probs.length);
 		StringBuffer buf = new StringBuffer();
 		for (int i=0; i<probs.length; ++i) {
 			buf.append(i+firstIndex).append(" = ").append(String.format("%.2f", probs[i])).append(", ");
