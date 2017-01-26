@@ -246,9 +246,13 @@ public class InitializeLanguageModel extends OcularRunnable {
 
 			int ngramLength = pathsReaderAndPrior._3;
 			CorpusCounter counter = new CorpusCounter(ngramLength);
-			List<String> chars = readFileChars(filepath, textReader, lmCharCount > 0 ? lmCharCount : Long.MAX_VALUE);
-			System.out.println("  using " + chars.size() + " characters for " + language + " read from " + filepath);
-			counter.countChars(chars, charIndexer, 0);
+			List<List<String>> charsByFile = readFileChars(filepath, textReader, lmCharCount > 0 ? lmCharCount : Long.MAX_VALUE);
+			int totalChars = 0;
+			for (List<String> chars : charsByFile) { 
+				counter.countChars(chars, charIndexer, 0);
+				totalChars += chars.size();
+			}
+			System.out.println("  using " + totalChars + " characters for " + language + " read from " + filepath);
 
 			Set<Integer> activeChars = counter.getActiveCharacters();
 
@@ -305,19 +309,23 @@ public class InitializeLanguageModel extends OcularRunnable {
 		return lmsAndPriors;
 	}
 
-	private List<String> readFileChars(String filepath, TextReader textReader, long charsToTake) {
-		List<String> allChars = new ArrayList<String>();
+	private List<List<String>> readFileChars(String filepath, TextReader textReader, long charsToTake) {
+		List<List<String>> allChars = new ArrayList<List<String>>();
+		int allCharCount = 0;
 		outer: 
 			for (File file : FileUtil.recursiveFiles(filepath)) {
+				List<String> fileChars = new ArrayList<String>();
 				for (String line : f.readLines(file.getPath())) {
 					if (line.isEmpty()) continue;
 					for (String c: textReader.readCharacters(line + " ")) {
 						// validate the character...
 						Charset.normalizeChar(c);
-						allChars.add(c);
+						fileChars.add(c);
+						++allCharCount;
 					}
-					if (allChars.size() >= charsToTake) break outer;
+					if (allCharCount >= charsToTake) break outer;
 				}
+				allChars.add(fileChars);
 			}
 		return allChars;
 	}

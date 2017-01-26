@@ -99,7 +99,7 @@ public class NgramLanguageModel implements SingleLanguageModel {
 		return newContext;
 	}
 	
-	private boolean containsContext(int[] context) {
+	public boolean containsContext(int[] context) {
 		if (context.length == 0)
 			return true;
 		else

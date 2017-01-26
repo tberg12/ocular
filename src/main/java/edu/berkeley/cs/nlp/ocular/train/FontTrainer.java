@@ -11,7 +11,6 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,7 @@ import java.util.Set;
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.eval.ModelTranscriptions;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
 import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
 import edu.berkeley.cs.nlp.ocular.font.Font;
@@ -27,6 +27,10 @@ import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubs
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.CorpusCounter;
+import edu.berkeley.cs.nlp.ocular.lm.InterpolatingSingleLanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.main.FonttrainTranscribeShared.OutputFormat;
 import edu.berkeley.cs.nlp.ocular.main.InitializeFont;
@@ -38,6 +42,7 @@ import edu.berkeley.cs.nlp.ocular.model.DecoderEM;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.model.em.DenseBigramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
+import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
@@ -147,7 +152,7 @@ public class FontTrainer {
 
 		// Containers for counts that will be accumulated
 		final CharacterTemplate[] templates = loadTemplates(font, charIndexer);
-		int[] languageCounts = new int[numLanguages]; // The number of characters assigned to a particular language (to re-estimate language probabilities).
+		List<DecodeState[][]> accumulatedTranscriptions = new ArrayList<DecodeState[][]>(); // for re-estimating the LM
 		double[][][] gsmCounts;
 
 		List<Tuple2<String, Map<String, EvalSuffStats>>> allDiplomaticTrainEvals = new ArrayList<Tuple2<String, Map<String, EvalSuffStats>>>();
@@ -157,7 +162,6 @@ public class FontTrainer {
 
 		// Clear counts at the start of the iteration
 		clearTemplates(templates);
-		Arrays.fill(languageCounts, 1); // one-count smooth
 		gsmCounts = gsmFactory.initializeNewCountsMatrix();
 
 		double totalIterationJointLogProb = 0.0;
@@ -178,7 +182,6 @@ public class FontTrainer {
 			totalIterationJointLogProb += decodeResults._2;
 			totalBatchJointLogProb += decodeResults._2;
 			List<DecodeState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
-			incrementLmCounts(languageCounts, fullViterbiStateSeq, charIndexer);
 			gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 			
 			// write transcriptions and evaluate
@@ -197,7 +200,8 @@ public class FontTrainer {
 					InitializeFont.writeFont(font, writePath);
 				}
 				if (outputLmPath != null) {
-					lm = reestimateLM(languageCounts, lm);
+					double newDataInterpolationWeight = 0.5;
+					lm = reestimateLM(accumulatedTranscriptions, lm, newDataInterpolationWeight);
 					String writePath = writeIntermediateModelsToTemp ? makeLmPath(outputPath, iter, completedBatchesInIteration) : outputLmPath;
 					System.out.println("Writing updated lm to " + writePath);
 					InitializeLanguageModel.writeLM(lm, writePath);
@@ -214,7 +218,6 @@ public class FontTrainer {
 				// Clear counts at the end of a batch
 				System.out.println("Clearing font parameter statistics.");
 				clearTemplates(templates);
-				Arrays.fill(languageCounts, 1); // one-count smooth
 				gsmCounts = gsmFactory.initializeNewCountsMatrix();
 				
 				double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
@@ -316,29 +319,67 @@ public class FontTrainer {
 	/**
 	 * Hard-EM update on language model probabilities
 	 */
-	private CodeSwitchLanguageModel reestimateLM(int[] languageCounts, CodeSwitchLanguageModel lm) {
+	private CodeSwitchLanguageModel reestimateLM(List<DecodeState[][]> accumulatedTranscriptions, CodeSwitchLanguageModel cslm, double newDataInterpolationWeight) {
 		long nanoTime = System.nanoTime();
+		Indexer<String> charIndexer = cslm.getCharacterIndexer();
+		Indexer<String> langIndexer = cslm.getLanguageIndexer();
+		int numLangs = langIndexer.size();
 		
-		// Update the parameters using counts
-		List<Tuple2<SingleLanguageModel, Double>> newSubModelsAndPriors = new ArrayList<Tuple2<SingleLanguageModel, Double>>();
-		double languageCountSum = 0;
-		for (int language = 0; language < languageCounts.length; ++language) {
-			double newPrior = languageCounts[language];
-			newSubModelsAndPriors.add(Tuple2(lm.get(language), newPrior));
-			languageCountSum += newPrior;
+		List<List<List<String>>> allTranscriptionsByLanguage = separateTranscriptionsByLanguage(accumulatedTranscriptions, charIndexer, langIndexer);
+		
+		List<Tuple2<SingleLanguageModel, Double>> lmsAndPriors = new ArrayList<Tuple2<SingleLanguageModel, Double>>();
+		for (int langIndex = 0; langIndex < numLangs; ++langIndex) {
+			SingleLanguageModel langBaseLM = cslm.get(langIndex);
+			if (langBaseLM instanceof InterpolatingSingleLanguageModel) {
+				langBaseLM = ((InterpolatingSingleLanguageModel)langBaseLM).getSubModel(0);
+			}
+			CorpusCounter counter = new CorpusCounter(langBaseLM.getMaxOrder());
+			int totalChars = 0;
+			for (List<String> chars : allTranscriptionsByLanguage.get(langIndex)) { 
+				counter.countChars(chars, charIndexer, 0);
+				totalChars += chars.size();
+			}
+			double lmPower = 4.0;
+			SingleLanguageModel langNewLM = new NgramLanguageModel(charIndexer, counter.getCounts(), langBaseLM.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
+			SingleLanguageModel langInterpLM = new InterpolatingSingleLanguageModel(CollectionHelper.makeList(
+					Tuple2(langBaseLM, 1.0 - newDataInterpolationWeight), Tuple2(langNewLM, newDataInterpolationWeight)));
+			double prior = totalChars + 1.0; // for smoothing
+			lmsAndPriors.add(Tuple2(langInterpLM, prior));
 		}
-
-		// Construct the new LM
-		CodeSwitchLanguageModel newLM = new BasicCodeSwitchLanguageModel(newSubModelsAndPriors, lm.getCharacterIndexer(), lm.getLanguageIndexer(), lm.getProbKeepSameLanguage());
-
-		// Print out some statistics
-		StringBuilder sb = new StringBuilder("Updating language probabilities: ");
-		for (int language = 0; language < languageCounts.length; ++language)
-			sb.append(lm.getLanguageIndexer().getObject(language)).append("->").append(languageCounts[language] / languageCountSum).append("  ");
-		System.out.println(sb);
+		CodeSwitchLanguageModel newCodeSwitchLM = new BasicCodeSwitchLanguageModel(lmsAndPriors, charIndexer, langIndexer, cslm.getProbKeepSameLanguage());
 		
 		System.out.println("New LM: " + (System.nanoTime() - nanoTime) / 1000000 + "ms");
-		return newLM;
+		return newCodeSwitchLM;
+	}
+	
+	private List<List<List<String>>> separateTranscriptionsByLanguage(List<DecodeState[][]> accumulatedTranscriptions, Indexer<String> charIndexer, Indexer<String> langIndexer) {
+		int numLangs = langIndexer.size();
+		
+		// For each language, we will have a list of passages.
+		List<List<List<String>>> allTranscriptionsByLanguage = new ArrayList<List<List<String>>>();
+		for (int i = 0; i < numLangs; ++i) {
+			allTranscriptionsByLanguage.add(new ArrayList<List<String>>());
+		}
+		
+		for (DecodeState[][] decodeStates : accumulatedTranscriptions) {
+			ModelTranscriptions mt = new ModelTranscriptions(decodeStates, charIndexer, langIndexer);
+			List<Tuple2<String, String>> normalizedCharLangTranscription = mt.getViterbiNormalizedCharLangTranscription();
+			
+			String prevLanguage = null;
+			List<String> currentOutput = new ArrayList<String>();
+			for (Tuple2<String, String> charLang : normalizedCharLangTranscription) {
+				String currLanguage = charLang._2;
+				if (!currLanguage.equals(prevLanguage)) {
+					int prevLangIndex = (prevLanguage == null && numLangs == 1 ? 0 : langIndexer.getIndex(prevLanguage));
+					allTranscriptionsByLanguage.get(prevLangIndex).add(currentOutput);
+					currentOutput = new ArrayList<String>();
+					prevLanguage = currLanguage;
+				}
+				currentOutput.add(charLang._1);
+			}
+		}
+		
+		return allTranscriptionsByLanguage;
 	}
 
 	/**
