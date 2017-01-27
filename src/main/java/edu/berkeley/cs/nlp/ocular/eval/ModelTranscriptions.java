@@ -68,7 +68,7 @@ public class ModelTranscriptions {
 					//
 					if (ts.getGlyphChar().glyphType != GlyphType.DOUBLED) { // the first in a pair of doubled characters isn't part of the normalized transcription
 						String currNormalizedChar = charIndexer.getObject(ts.getLmCharIndex());
-						if (LONG_S.equals(currNormalizedChar)) currNormalizedChar = "s"; // don't use long-s in normalized transcriptions
+						//if (LONG_S.equals(currNormalizedChar)) currNormalizedChar = "s"; // don't use long-s in normalized transcriptions
 						
 						//
 						// Add to normalized line transcription

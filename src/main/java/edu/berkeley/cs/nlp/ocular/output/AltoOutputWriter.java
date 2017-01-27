@@ -123,7 +123,7 @@ public class AltoOutputWriter {
 										break;
 									case TMPL:
 										String s = Charset.unescapeChar(charIndexer.getObject(wts.getLmCharIndex()));
-										if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "normalized" transcriptions
+										//if (s.equals(Charset.LONG_S)) s = "s"; // don't use long-s in "normalized" transcriptions
 										normalizedTranscriptionBuffer.append(s);
 									}
 								}
