@@ -34,7 +34,7 @@ public class LmPerplexityTests {
 		final int b = charIndexer.getIndex("b");
 		final int x = charIndexer.getIndex("x");
 		final int y = charIndexer.getIndex("y");
-		final int _ = charIndexer.getIndex(" ");
+		final int s = charIndexer.getIndex(" ");
 		
 		final int l1 = langIndexer.getIndex("Lang1");
 		final int l2 = langIndexer.getIndex("Lang2");
@@ -42,9 +42,9 @@ public class LmPerplexityTests {
 		final int[] ctx_ = new int[] {};
 		final int[] ctx_a = new int[] { a };
 		final int[] ctx_ab = new int[] { a , b };
-		final int[] ctx_ab_ = new int[] { a , b , _ };
-		final int[] ctx_b_a = new int[] { b , _ , a };
-		final int[] ctx__ab = new int[] { _, a , b };
+		final int[] ctx_ab_ = new int[] { a , b , s };
+		final int[] ctx_b_a = new int[] { b , s , a };
+		final int[] ctx__ab = new int[] { s, a , b };
 		final int[] ctx_x = new int[] { x };
 		final int[] ctx_xy = new int[] { x , y };
 		
@@ -59,7 +59,7 @@ public class LmPerplexityTests {
 					if (sameIntArray(context, ctx_a)) return 0.13; 
 					if (sameIntArray(context, ctx_b_a)) return 0.14; 
 				}
-				if (c == _) {
+				if (c == s) {
 					if (sameIntArray(context, ctx_ab)) return 0.15; 
 					if (sameIntArray(context, ctx__ab)) return 0.16; 
 				}
@@ -80,7 +80,7 @@ public class LmPerplexityTests {
 				if (c == y) {
 					if (sameIntArray(context, ctx_x)) return 0.22; 
 				}
-				if (c == _) {
+				if (c == s) {
 					if (sameIntArray(context, ctx_xy)) return 0.23; 
 				}
 				throw new RuntimeException("getCharNgramProb(" + intArrayToList(context) + ", " + c + ")");
@@ -131,7 +131,7 @@ public class LmPerplexityTests {
 		 *                            =  0.00066495 ^(-1/3)
 		 *                            =  11.456984790348551
 		 */
-		double p1 = lmPerplexity.perplexity(Arrays.asList(a, b, _), Arrays.asList(l1, l1, l1));
+		double p1 = lmPerplexity.perplexity(Arrays.asList(a, b, s), Arrays.asList(l1, l1, l1));
 		assertEquals(11.456984790348551, p1, 0.00000000000001);
 		
 		/*
@@ -155,7 +155,7 @@ public class LmPerplexityTests {
 		 *                            =  1.0038205132552398E-11 ^(-1/11)
 		 *                            =  9.996534024760905
 		 */
-		double p2 = lmPerplexity.perplexity(Arrays.asList(a, b, _, a, b, _, x, y, _, a, b), Arrays.asList(l1, l1, l1, l1, l1, l1, l2, l2, l2, l1, l1));
+		double p2 = lmPerplexity.perplexity(Arrays.asList(a, b, s, a, b, s, x, y, s, a, b), Arrays.asList(l1, l1, l1, l1, l1, l1, l2, l2, l2, l1, l1));
 		assertEquals(9.996534024760905, p2, 0.00000000000001);
 	}
 
@@ -173,7 +173,7 @@ public class LmPerplexityTests {
 		final int b = charIndexer.getIndex("b");
 		final int x = charIndexer.getIndex("x");
 		final int y = charIndexer.getIndex("y");
-		final int _ = charIndexer.getIndex(" ");
+		final int s = charIndexer.getIndex(" ");
 		
 		final int l1 = langIndexer.getIndex("Lang1");
 		final int l2 = langIndexer.getIndex("Lang2");
@@ -181,9 +181,9 @@ public class LmPerplexityTests {
 		final int[] ctx_ = new int[] {};
 		final int[] ctx_a = new int[] { a };
 		final int[] ctx_ab = new int[] { a , b };
-		final int[] ctx_ab_ = new int[] { a , b , _ };
-		final int[] ctx_ab_a = new int[] { a, b , _ , a };
-		final int[] ctx_b_ab = new int[] { b, _, a , b };
+		final int[] ctx_ab_ = new int[] { a , b , s };
+		final int[] ctx_ab_a = new int[] { a, b , s , a };
+		final int[] ctx_b_ab = new int[] { b, s, a , b };
 		final int[] ctx_x = new int[] { x };
 		final int[] ctx_xy = new int[] { x , y };
 		
@@ -198,7 +198,7 @@ public class LmPerplexityTests {
 					if (sameIntArray(context, ctx_a)) return 0.13; 
 					if (sameIntArray(context, ctx_ab_a)) return 0.14; 
 				}
-				if (c == _) {
+				if (c == s) {
 					if (sameIntArray(context, ctx_ab)) return 0.15; 
 					if (sameIntArray(context, ctx_b_ab)) return 0.16; 
 				}
@@ -219,7 +219,7 @@ public class LmPerplexityTests {
 				if (c == y) {
 					if (sameIntArray(context, ctx_x)) return 0.22; 
 				}
-				if (c == _) {
+				if (c == s) {
 					if (sameIntArray(context, ctx_xy)) return 0.23; 
 				}
 				throw new RuntimeException("getCharNgramProb(" + intArrayToList(context) + ", " + c + ")");
@@ -281,7 +281,7 @@ public class LmPerplexityTests {
 		 *                            =  1.0038205132552398E-11 ^(-1/11)
 		 *                            =  9.996534024760905
 		 */
-		double p2 = lmPerplexity.perplexity(Arrays.asList(a, b, _, a, b, _, x, y, _, a, b), Arrays.asList(l1, l1, l1, l1, l1, l1, l2, l2, l2, l1, l1));
+		double p2 = lmPerplexity.perplexity(Arrays.asList(a, b, s, a, b, s, x, y, s, a, b), Arrays.asList(l1, l1, l1, l1, l1, l1, l2, l2, l2, l1, l1));
 		assertEquals(9.996534024760905, p2, 0.00000000000001);
 	}
 
