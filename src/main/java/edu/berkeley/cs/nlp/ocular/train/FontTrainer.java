@@ -1,6 +1,7 @@
 package edu.berkeley.cs.nlp.ocular.train;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
+import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.SPACE;
 import static edu.berkeley.cs.nlp.ocular.eval.EvalPrinter.printEvaluation;
 import static edu.berkeley.cs.nlp.ocular.train.ModelPathMaker.makeFontPath;
 import static edu.berkeley.cs.nlp.ocular.train.ModelPathMaker.makeGsmPath;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.Document;
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.eval.ModelTranscriptions;
 import edu.berkeley.cs.nlp.ocular.eval.MultiDocumentTranscriber;
@@ -309,7 +309,7 @@ public class FontTrainer {
 	 * Pass over the decoded states to accumulate counts
 	 */
 	private void incrementLmCounts(int[] languageCounts, List<DecodeState> fullViterbiStateSeq, Indexer<String> charIndexer) {
-		int spaceCharIndex = charIndexer.getIndex(Charset.SPACE);
+		int spaceCharIndex = charIndexer.getIndex(SPACE);
 		for (DecodeState ds : fullViterbiStateSeq) {
 			TransitionState ts = ds.ts;
 			int currLanguage = ts.getLanguageIndex();
@@ -348,6 +348,9 @@ public class FontTrainer {
 				totalLangChars += chars.size();
 			}
 			System.out.println("  found " + totalLangChars + " characters for " + langIndexer.getObject(langIndex) + " read from transcription output");
+//			for (List<String> chars : allTranscriptionsByLanguage.get(langIndex)) {
+//				System.err.println("    " + StringHelper.join(chars));
+//			}
 			
 			SingleLanguageModel langUpdatedLM;
 			if (totalLangChars > 0) {
@@ -395,7 +398,9 @@ public class FontTrainer {
 					currentOutput = new ArrayList<String>();
 					prevLanguage = currLanguage;
 				}
-				currentOutput.add(charLang._1);
+				if (!SPACE.equals(charLang._1) || currentOutput.isEmpty() || !SPACE.equals(CollectionHelper.last(currentOutput))) { // don't put two spaces in a row
+					currentOutput.add(charLang._1);
+				}
 			}
 			if (!currentOutput.isEmpty()) {
 				int prevLangIndex = (prevLanguage == null && numLangs == 1 ? 0 : langIndexer.getIndex(prevLanguage));
