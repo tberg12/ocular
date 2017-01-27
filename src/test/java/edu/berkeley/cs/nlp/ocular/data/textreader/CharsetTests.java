@@ -43,19 +43,19 @@ public class CharsetTests {
 	}
 
 	@Test
-	public void test_unescapeCharPrecomposedOnly() {
-		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + "ñ", unescapeCharPrecomposedOnly("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING));
-		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + "ñ", unescapeCharPrecomposedOnly("\\`\\'n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
-		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + TILDE_ESCAPE + "q", unescapeCharPrecomposedOnly("\\`\\'q" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING));
+	public void test_unescapeChar_precomposedOnly() {
+		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + "ñ", unescapeChar("\\`\\'ñ" + MACRON_COMBINING + DIAERESIS_COMBINING, true));
+		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + "ñ", unescapeChar("\\`\\'n" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING, true));
+		assertEquals(GRAVE_ESCAPE + ACUTE_ESCAPE + DIAERESIS_ESCAPE + MACRON_ESCAPE + TILDE_ESCAPE + "q", unescapeChar("\\`\\'q" + TILDE_COMBINING + MACRON_COMBINING + DIAERESIS_COMBINING, true));
 
-		assertEquals("ñ", unescapeCharPrecomposedOnly("ñ"));
-		assertEquals("ñ", unescapeCharPrecomposedOnly("\\~n"));
-		assertEquals("\\~q", unescapeCharPrecomposedOnly("q" + TILDE_COMBINING));
-		assertEquals("\\~q", unescapeCharPrecomposedOnly("\\~q"));
-		assertEquals("ı", unescapeCharPrecomposedOnly("\\ii"));
-		assertEquals("ı", unescapeCharPrecomposedOnly("ı"));
+		assertEquals("ñ", unescapeChar("ñ", true));
+		assertEquals("ñ", unescapeChar("\\~n", true));
+		assertEquals("\\~q", unescapeChar("q" + TILDE_COMBINING, true));
+		assertEquals("\\~q", unescapeChar("\\~q", true));
+		assertEquals("ı", unescapeChar("\\ii", true));
+		assertEquals("ı", unescapeChar("ı", true));
 		
-		assertEquals("\\", unescapeCharPrecomposedOnly("\\\\"));
+		assertEquals("\\", unescapeChar("\\\\", true));
 	}
 
 	@Test
