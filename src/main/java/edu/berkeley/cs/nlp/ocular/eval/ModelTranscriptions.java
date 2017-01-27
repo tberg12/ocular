@@ -1,7 +1,6 @@
 package edu.berkeley.cs.nlp.ocular.eval;
 
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.HYPHEN;
-import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.LONG_S;
 import static edu.berkeley.cs.nlp.ocular.data.textreader.Charset.SPACE;
 import static edu.berkeley.cs.nlp.ocular.util.CollectionHelper.last;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
@@ -9,7 +8,6 @@ import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphChar.GlyphType;
 import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
@@ -26,19 +24,17 @@ public class ModelTranscriptions {
 	private List<Tuple2<String,String>> viterbiNormalizedCharLangTranscription; // A continuous string, re-assembling words hyphenated over a line.
 	private List<DecodeState>[] viterbiDecodeStates;
 	
-	private Indexer<String> charIndexer;
 	private Indexer<String> langIndexer;
 
 	@SuppressWarnings("unchecked")
 	public ModelTranscriptions(DecodeState[][] decodeStates, Indexer<String> charIndexer, Indexer<String> langIndexer) {
-		this.charIndexer = charIndexer;
 		this.langIndexer = langIndexer;
 		int numLines = decodeStates.length;
 		
-		this.viterbiDiplomaticCharLangLines = new List[numLines];
-		this.viterbiNormalizedCharLangLines = new List[numLines];
-		this.viterbiNormalizedCharLangTranscription = new ArrayList<Tuple2<String,String>>();
-		this.viterbiDecodeStates = new List[numLines];
+		viterbiDiplomaticCharLangLines = new List[numLines];
+		viterbiNormalizedCharLangLines = new List[numLines];
+		viterbiNormalizedCharLangTranscription = new ArrayList<Tuple2<String,String>>();
+		viterbiDecodeStates = new List[numLines];
 
 		for (int line = 0; line < numLines; ++line) {
 			viterbiDiplomaticCharLangLines[line] = new ArrayList<Tuple2<String,String>>();
@@ -60,7 +56,7 @@ public class ModelTranscriptions {
 					// Add diplomatic characters to diplomatic transcription
 					//
 					if (!ts.getGlyphChar().isElided()) {
-						viterbiDiplomaticCharLangLines[line].add(makeCharLangTuple(Charset.unescapeChar(currDiplomaticChar), ts.getLanguageIndex()));
+						viterbiDiplomaticCharLangLines[line].add(makeCharLangTuple(currDiplomaticChar, ts.getLanguageIndex()));
 					}
 					
 					//
@@ -72,7 +68,7 @@ public class ModelTranscriptions {
 						
 						//
 						// Add to normalized line transcription
-						viterbiNormalizedCharLangLines[line].add(makeCharLangTuple(Charset.unescapeChar(currNormalizedChar), ts.getLanguageIndex()));
+						viterbiNormalizedCharLangLines[line].add(makeCharLangTuple(currNormalizedChar, ts.getLanguageIndex()));
 						
 						//
 						// Add to normalized running transcription
@@ -94,7 +90,7 @@ public class ModelTranscriptions {
 									// do nothing -- collapse spaces
 								}
 								else {
-									viterbiNormalizedCharLangTranscription.add(makeCharLangTuple(Charset.unescapeChar(currNormalizedChar), ts.getLanguageIndex()));
+									viterbiNormalizedCharLangTranscription.add(makeCharLangTuple(currNormalizedChar, ts.getLanguageIndex()));
 								}
 						}
 					}

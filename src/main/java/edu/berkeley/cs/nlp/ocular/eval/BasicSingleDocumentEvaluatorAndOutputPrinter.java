@@ -56,10 +56,6 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		this.commandLineArgs = commandLineArgs;
 	}
 
-	private String joinLineForPrinting(String[] chars) {
-		return joinLineForPrinting(Arrays.asList(chars));
-	}
-	
 	private String joinLineForPrinting(List<String> chars) {
 		StringBuilder b = new StringBuilder();
 		for (String c : chars)
@@ -105,7 +101,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			
 			StringBuffer transcriptionOutputBuffer = new StringBuffer();
 			for (int line = 0; line < numLines; ++line) {
-				transcriptionOutputBuffer.append(StringHelper.join(mt.getViterbiDiplomaticCharLines()[line]) + "\n");
+				transcriptionOutputBuffer.append(joinLineForPrinting(mt.getViterbiDiplomaticCharLines()[line]) + "\n");
 			}
 			
 			System.out.println("\n" + transcriptionOutputBuffer.toString());
@@ -124,7 +120,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			
 			StringBuffer transcriptionOutputBuffer = new StringBuffer();
 			for (int line = 0; line < numLines; ++line) {
-				transcriptionOutputBuffer.append(StringHelper.join(mt.getViterbiNormalizedCharLines()[line]) + "\n");
+				transcriptionOutputBuffer.append(joinLineForPrinting(mt.getViterbiNormalizedCharLines()[line]) + "\n");
 			}
 			
 			//System.out.println("\n" + transcriptionOutputBuffer.toString());
@@ -141,13 +137,13 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		if (allowGlyphSubstitution) {
 			String transcriptionOutputFilename = normalizedTranscriptionOutputFile(outputFilenameBase);
 			
-			String transcriptionOutputBuffer = StringHelper.join(mt.getViterbiNormalizedCharTranscription());
+			String transcriptionOutputBuffer = joinLineForPrinting(mt.getViterbiNormalizedCharTranscription());
 			
 			//System.out.println("\n" + transcriptionOutputBuffer.toString() + "\n");
 			
 			if (outputFormats.contains(NORM)) {
 				System.out.println("Writing normalized transcription output to " + transcriptionOutputFilename);
-				FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer.toString());
+				FileHelper.writeString(transcriptionOutputFilename, transcriptionOutputBuffer);
 			}
 		}
 		
@@ -170,9 +166,9 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			
 			for (int line = 0; line < numLines; ++line) {
 				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MN: " + joinLineForPrinting(mt.getViterbiNormalizedCharLines()[line]).trim() + "\n");
-				if (goldNormalizedLineChars != null) goldComparisonOutputBuffer.append("GN: " + joinLineForPrinting(goldNormalizedLineChars[line]).trim() + "\n");
+				if (goldNormalizedLineChars != null) goldComparisonOutputBuffer.append("GN: " + joinLineForPrinting(Arrays.asList(goldNormalizedLineChars[line])).trim() + "\n");
 				/*                       */          goldComparisonOutputBuffer.append("MD: " + joinLineForPrinting(mt.getViterbiDiplomaticCharLines()[line]).trim() + "\n");
-				if (goldDiplomaticLineChars != null) goldComparisonOutputBuffer.append("GD: " + joinLineForPrinting(goldDiplomaticLineChars[line]).trim() + "\n");
+				if (goldDiplomaticLineChars != null) goldComparisonOutputBuffer.append("GD: " + joinLineForPrinting(Arrays.asList(goldDiplomaticLineChars[line])).trim() + "\n");
 				if (allowGlyphSubstitution)          goldComparisonOutputBuffer.append("MS: " + transcriptionWithSubsOutputLines.get(line).trim()+"\n");
 				goldComparisonOutputBuffer.append("\n");
 			}
@@ -190,10 +186,10 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 				}
 				
 				if (allowGlyphSubstitution && mt.getViterbiNormalizedCharTranscription() != null) {
-					goldComparisonOutputBuffer.append(StringHelper.join(mt.getViterbiNormalizedCharTranscription()) + "\n");
+					goldComparisonOutputBuffer.append(joinLineForPrinting(mt.getViterbiNormalizedCharTranscription()) + "\n");
 				}
 				if (goldNormalizedChars != null) {
-					goldComparisonOutputBuffer.append(StringHelper.join(goldNormalizedChars) + "\n");
+					goldComparisonOutputBuffer.append(joinLineForPrinting(goldNormalizedChars) + "\n");
 				}
 			}
 			
