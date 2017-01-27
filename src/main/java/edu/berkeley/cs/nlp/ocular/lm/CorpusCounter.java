@@ -104,6 +104,8 @@ public class CorpusCounter {
       int[] indexedLine = new int[chars.size()];
       int t = 0;
       for (String currChar : chars) {
+        if ("\\".equals(currChar))
+          currChar = "\\\\";
         if (charIndexer.locked() && !charIndexer.contains(currChar)) {
           // TODO: Change if we want to use UNK instead of -1
           indexedLine[t++] = -1; // charIndexer.getIndex("UNK");
