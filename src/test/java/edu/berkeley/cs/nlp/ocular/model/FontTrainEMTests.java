@@ -37,18 +37,18 @@ public class FontTrainEMTests {
 			this.type = type;
 			this.glyphChar = glyphChar;
 		}
-		public int getLanguageIndex() { return languageIndex; }
-		public int getLmCharIndex() { return lmCharIndex; }
-		public TransitionStateType getType() { return type; }
-		public GlyphChar getGlyphChar() { return glyphChar; }
+		@Override public int getLanguageIndex() { return languageIndex; }
+		@Override public int getLmCharIndex() { return lmCharIndex; }
+		@Override public TransitionStateType getType() { return type; }
+		@Override public GlyphChar getGlyphChar() { return glyphChar; }
 		
-		public int getOffset() { return -1; }
-		public int getExposure() { return -1; }
-		public Collection<Tuple2<TransitionState, Double>> forwardTransitions() { return null; }
-		public Collection<Tuple2<TransitionState, Double>> nextLineStartStates() { return null; }
-		public double endLogProb() { return -1; }
+		@Override public int getOffset() { return -1; }
+		@Override public int getExposure() { return -1; }
+		@Override public Collection<Tuple2<TransitionState, Double>> forwardTransitions() { return null; }
+		@Override public Collection<Tuple2<TransitionState, Double>> nextLineStartStates() { return null; }
+		@Override public double endLogProb() { return -1; }
 		
-		public String toString() {
+		@Override public String toString() {
 			return "TS("+id+", "+languageIndex+", "+lmCharIndex+", "+type+", "+glyphChar+")";
 		}
 	}

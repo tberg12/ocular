@@ -49,8 +49,8 @@ public class LmPerplexityTests {
 		final int[] ctx_xy = new int[] { x , y };
 		
 		final SingleLanguageModel lang1Lm = new SingleLanguageModel() {
-			public int getMaxOrder() { return 4; }
-			public double getCharNgramProb(int[] context, int c) {
+			@Override public int getMaxOrder() { return 4; }
+			@Override public double getCharNgramProb(int[] context, int c) {
 				if (c == a) {
 					if (sameIntArray(context, ctx_)) return 0.11; 
 					if (sameIntArray(context, ctx_ab_)) return 0.12; 
@@ -65,15 +65,15 @@ public class LmPerplexityTests {
 				}
 				throw new RuntimeException("getCharNgramProb(" + intArrayToList(context) + ", " + c + ")");
 			}
-			public Indexer<String> getCharacterIndexer() { return charIndexer; }
-			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			@Override public Indexer<String> getCharacterIndexer() { return charIndexer; }
+			@Override public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
+			@Override public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
+			@Override public boolean containsContext(int[] context) { throw new RuntimeException(); }
 		};
 
 		final SingleLanguageModel lang2Lm = new SingleLanguageModel() {
-			public int getMaxOrder() { return 4; }
-			public double getCharNgramProb(int[] context, int c) {
+			@Override public int getMaxOrder() { return 4; }
+			@Override public double getCharNgramProb(int[] context, int c) {
 				if (c == x) {
 					if (sameIntArray(context, ctx_)) return 0.21; 
 				}
@@ -85,26 +85,26 @@ public class LmPerplexityTests {
 				}
 				throw new RuntimeException("getCharNgramProb(" + intArrayToList(context) + ", " + c + ")");
 			}
-			public Indexer<String> getCharacterIndexer() { return charIndexer; }
-			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			@Override public Indexer<String> getCharacterIndexer() { return charIndexer; }
+			@Override public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
+			@Override public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
+			@Override public boolean containsContext(int[] context) { throw new RuntimeException(); }
 		};
 		
 		final CodeSwitchLanguageModel csLm = new CodeSwitchLanguageModel() {
-			public double getCharNgramProb(int[] context, int c) { throw new RuntimeException(); }
-			public Indexer<String> getCharacterIndexer() { return charIndexer; }
-			public Indexer<String> getLanguageIndexer() { return langIndexer; }
-			public SingleLanguageModel get(int language) { 
+			@Override public double getCharNgramProb(int[] context, int c) { throw new RuntimeException(); }
+			@Override public Indexer<String> getCharacterIndexer() { return charIndexer; }
+			@Override public Indexer<String> getLanguageIndexer() { return langIndexer; }
+			@Override public SingleLanguageModel get(int language) { 
 				if (language == langIndexer.getIndex("Lang1")) return lang1Lm;
 				if (language == langIndexer.getIndex("Lang2")) return lang2Lm;
 				throw new RuntimeException();
 			}
-			public double languagePrior(int language)  { 
+			@Override public double languagePrior(int language)  { 
 				if (language == langIndexer.getIndex("Lang1")) return 0.31;
 				throw new RuntimeException();
 			}
-			public double languageTransitionProb(int fromLanguage, int destLanguage) { 
+			@Override public double languageTransitionProb(int fromLanguage, int destLanguage) { 
 				if (fromLanguage == langIndexer.getIndex("Lang1")) {
 					if (destLanguage == langIndexer.getIndex("Lang1")) return 0.32;
 					if (destLanguage == langIndexer.getIndex("Lang2")) return 0.33;
@@ -115,7 +115,7 @@ public class LmPerplexityTests {
 				}
 				throw new RuntimeException();
 			}
-			public double getProbKeepSameLanguage() { throw new RuntimeException(); }
+			@Override public double getProbKeepSameLanguage() { throw new RuntimeException(); }
 		};
 
 		
@@ -188,8 +188,8 @@ public class LmPerplexityTests {
 		final int[] ctx_xy = new int[] { x , y };
 		
 		final SingleLanguageModel lang1Lm = new SingleLanguageModel() {
-			public int getMaxOrder() { return 5; }
-			public double getCharNgramProb(int[] context, int c) {
+			@Override public int getMaxOrder() { return 5; }
+			@Override public double getCharNgramProb(int[] context, int c) {
 				if (c == a) {
 					if (sameIntArray(context, ctx_)) return 0.11; 
 					if (sameIntArray(context, ctx_ab_)) return 0.12; 
@@ -204,15 +204,15 @@ public class LmPerplexityTests {
 				}
 				throw new RuntimeException("getCharNgramProb(" + intArrayToList(context) + ", " + c + ")");
 			}
-			public Indexer<String> getCharacterIndexer() { return charIndexer; }
-			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			@Override public Indexer<String> getCharacterIndexer() { return charIndexer; }
+			@Override public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
+			@Override public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
+			@Override public boolean containsContext(int[] context) { throw new RuntimeException(); }
 		};
 
 		final SingleLanguageModel lang2Lm = new SingleLanguageModel() {
-			public int getMaxOrder() { return 4; }
-			public double getCharNgramProb(int[] context, int c) {
+			@Override public int getMaxOrder() { return 4; }
+			@Override public double getCharNgramProb(int[] context, int c) {
 				if (c == x) {
 					if (sameIntArray(context, ctx_)) return 0.21; 
 				}
@@ -224,26 +224,26 @@ public class LmPerplexityTests {
 				}
 				throw new RuntimeException("getCharNgramProb(" + intArrayToList(context) + ", " + c + ")");
 			}
-			public Indexer<String> getCharacterIndexer() { return charIndexer; }
-			public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
-			public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
-			public boolean containsContext(int[] context) { throw new RuntimeException(); }
+			@Override public Indexer<String> getCharacterIndexer() { return charIndexer; }
+			@Override public Set<Integer> getActiveCharacters() { throw new RuntimeException(); }
+			@Override public int[] shrinkContext(int[] originalContext) { throw new RuntimeException(); }
+			@Override public boolean containsContext(int[] context) { throw new RuntimeException(); }
 		};
 		
 		final CodeSwitchLanguageModel csLm = new CodeSwitchLanguageModel() {
-			public double getCharNgramProb(int[] context, int c) { throw new RuntimeException(); }
-			public Indexer<String> getCharacterIndexer() { return charIndexer; }
-			public Indexer<String> getLanguageIndexer() { return langIndexer; }
-			public SingleLanguageModel get(int language) { 
+			@Override public double getCharNgramProb(int[] context, int c) { throw new RuntimeException(); }
+			@Override public Indexer<String> getCharacterIndexer() { return charIndexer; }
+			@Override public Indexer<String> getLanguageIndexer() { return langIndexer; }
+			@Override public SingleLanguageModel get(int language) { 
 				if (language == langIndexer.getIndex("Lang1")) return lang1Lm;
 				if (language == langIndexer.getIndex("Lang2")) return lang2Lm;
 				throw new RuntimeException();
 			}
-			public double languagePrior(int language)  { 
+			@Override public double languagePrior(int language)  { 
 				if (language == langIndexer.getIndex("Lang1")) return 0.31;
 				throw new RuntimeException();
 			}
-			public double languageTransitionProb(int fromLanguage, int destLanguage) { 
+			@Override public double languageTransitionProb(int fromLanguage, int destLanguage) { 
 				if (fromLanguage == langIndexer.getIndex("Lang1")) {
 					if (destLanguage == langIndexer.getIndex("Lang1")) return 0.32;
 					if (destLanguage == langIndexer.getIndex("Lang2")) return 0.33;
@@ -254,7 +254,7 @@ public class LmPerplexityTests {
 				}
 				throw new RuntimeException();
 			}
-			public double getProbKeepSameLanguage() { throw new RuntimeException(); }
+			@Override public double getProbKeepSameLanguage() { throw new RuntimeException(); }
 		};
 
 		
