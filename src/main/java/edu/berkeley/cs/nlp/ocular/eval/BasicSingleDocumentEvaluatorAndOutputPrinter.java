@@ -31,7 +31,6 @@ import edu.berkeley.cs.nlp.ocular.output.HtmlOutputWriter;
 import edu.berkeley.cs.nlp.ocular.util.ArrayHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileHelper;
 import edu.berkeley.cs.nlp.ocular.util.FileUtil;
-import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
 import tberg.murphy.fileio.f;
