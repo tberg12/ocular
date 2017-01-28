@@ -136,7 +136,7 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 		if (allowGlyphSubstitution) {
 			String transcriptionOutputFilename = normalizedTranscriptionOutputFile(outputFilenameBase);
 			
-			String transcriptionOutputBuffer = joinLineForPrinting(mt.getViterbiNormalizedCharTranscription());
+			String transcriptionOutputBuffer = joinLineForPrinting(mt.getViterbiNormalizedCharRunning());
 			
 			//System.out.println("\n" + transcriptionOutputBuffer.toString() + "\n");
 			
@@ -173,19 +173,19 @@ public class BasicSingleDocumentEvaluatorAndOutputPrinter implements SingleDocum
 			}
 			goldComparisonOutputBuffer.append("\n");
 			
-			if ((allowGlyphSubstitution && mt.getViterbiNormalizedCharTranscription() != null) || goldNormalizedChars != null) {
-				if ((allowGlyphSubstitution && mt.getViterbiNormalizedCharTranscription() != null) && goldNormalizedChars != null) {
+			if ((allowGlyphSubstitution && mt.getViterbiNormalizedCharRunning() != null) || goldNormalizedChars != null) {
+				if ((allowGlyphSubstitution && mt.getViterbiNormalizedCharRunning() != null) && goldNormalizedChars != null) {
 					goldComparisonOutputBuffer.append("Model (top) vs. Gold (bottom) normalized transcriptions\n");
 				}
-				else if (allowGlyphSubstitution && mt.getViterbiNormalizedCharTranscription() != null) {
+				else if (allowGlyphSubstitution && mt.getViterbiNormalizedCharRunning() != null) {
 					goldComparisonOutputBuffer.append("Model normalized transcription\n");
 				}
 				else if (goldNormalizedChars != null) {
 					goldComparisonOutputBuffer.append("Gold normalized transcription\n");
 				}
 				
-				if (allowGlyphSubstitution && mt.getViterbiNormalizedCharTranscription() != null) {
-					goldComparisonOutputBuffer.append(joinLineForPrinting(mt.getViterbiNormalizedCharTranscription()) + "\n");
+				if (allowGlyphSubstitution && mt.getViterbiNormalizedCharRunning() != null) {
+					goldComparisonOutputBuffer.append(joinLineForPrinting(mt.getViterbiNormalizedCharRunning()) + "\n");
 				}
 				if (goldNormalizedChars != null) {
 					goldComparisonOutputBuffer.append(joinLineForPrinting(goldNormalizedChars) + "\n");

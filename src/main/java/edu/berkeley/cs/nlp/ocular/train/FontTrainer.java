@@ -384,7 +384,7 @@ public class FontTrainer {
 		
 		for (DecodeState[][] decodeStates : accumulatedTranscriptions) {
 			ModelTranscriptions mt = new ModelTranscriptions(decodeStates, charIndexer, langIndexer);
-			List<Tuple2<String, String>> normalizedCharLangTranscription = mt.getViterbiNormalizedCharLangTranscription();
+			List<Tuple2<String, String>> normalizedCharLangTranscription = mt.getViterbiNormalizedCharLangRunning();
 			
 			String prevLanguage = null;
 			List<String> currentOutput = new ArrayList<String>();

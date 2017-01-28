@@ -21,7 +21,7 @@ import tberg.murphy.indexer.Indexer;
 public class ModelTranscriptions {
 	private List<Tuple2<String,String>>[] viterbiDiplomaticCharLangLines;
 	private List<Tuple2<String,String>>[] viterbiNormalizedCharLangLines;
-	private List<Tuple2<String,String>> viterbiNormalizedCharLangTranscription; // A continuous string, re-assembling words hyphenated over a line.
+	private List<Tuple2<String,String>> viterbiNormalizedCharLangRunning; // A continuous string, re-assembling words hyphenated over a line.
 	private List<DecodeState>[] viterbiDecodeStates;
 	
 	private Indexer<String> langIndexer;
@@ -33,7 +33,7 @@ public class ModelTranscriptions {
 		
 		viterbiDiplomaticCharLangLines = new List[numLines];
 		viterbiNormalizedCharLangLines = new List[numLines];
-		viterbiNormalizedCharLangTranscription = new ArrayList<Tuple2<String,String>>();
+		viterbiNormalizedCharLangRunning = new ArrayList<Tuple2<String,String>>();
 		viterbiDecodeStates = new List[numLines];
 
 		for (int line = 0; line < numLines; ++line) {
@@ -45,7 +45,7 @@ public class ModelTranscriptions {
 				DecodeState ds = decodeStates[line][i];
 				TransitionState ts = ds.ts;
 				String currDiplomaticChar = charIndexer.getObject(ts.getGlyphChar().templateCharIndex);
-				String prevDiplomaticChar = (!viterbiDiplomaticCharLangLines[line].isEmpty() ? CollectionHelper.last(viterbiDiplomaticCharLangLines[line])._1 : null); // null if start of line, but that's ok
+				String prevDiplomaticChar = (!viterbiDiplomaticCharLangLines[line].isEmpty() ? last(viterbiDiplomaticCharLangLines[line])._1 : null); // null if start of line, but that's ok
 				if (HYPHEN.equals(prevDiplomaticChar) && HYPHEN.equals(currDiplomaticChar)) {
 					// collapse multi-hyphens
 				}
@@ -80,17 +80,17 @@ public class ModelTranscriptions {
 								
 							case LMRGN:
 							case RMRGN:
-								if (!viterbiNormalizedCharLangTranscription.isEmpty() && !SPACE.equals(last(viterbiNormalizedCharLangTranscription))) {
-									viterbiNormalizedCharLangTranscription.add(makeCharLangTuple(SPACE, ts.getLanguageIndex()));
+								if (!viterbiNormalizedCharLangRunning.isEmpty() && !SPACE.equals(last(viterbiNormalizedCharLangRunning)._1)) {
+									viterbiNormalizedCharLangRunning.add(makeCharLangTuple(SPACE, ts.getLanguageIndex()));
 								}
 								break;
 							
 							case TMPL:
-								if (SPACE.equals(currNormalizedChar) && (viterbiNormalizedCharLangTranscription.isEmpty() || SPACE.equals(last(viterbiNormalizedCharLangTranscription)))) {
+								if (SPACE.equals(currNormalizedChar) && (viterbiNormalizedCharLangRunning.isEmpty() || SPACE.equals(last(viterbiNormalizedCharLangRunning)._1))) {
 									// do nothing -- collapse spaces
 								}
 								else {
-									viterbiNormalizedCharLangTranscription.add(makeCharLangTuple(currNormalizedChar, ts.getLanguageIndex()));
+									viterbiNormalizedCharLangRunning.add(makeCharLangTuple(currNormalizedChar, ts.getLanguageIndex()));
 								}
 						}
 					}
@@ -98,8 +98,8 @@ public class ModelTranscriptions {
 			}
 		}
 
-		if (SPACE.equals(last(viterbiNormalizedCharLangTranscription))) {
-			viterbiNormalizedCharLangTranscription.remove(viterbiNormalizedCharLangTranscription.size() - 1);
+		if (!viterbiNormalizedCharLangRunning.isEmpty() && SPACE.equals(last(viterbiNormalizedCharLangRunning)._1)) {
+			viterbiNormalizedCharLangRunning.remove(viterbiNormalizedCharLangRunning.size() - 1);
 		}
 	}
 	
@@ -148,16 +148,16 @@ public class ModelTranscriptions {
 		return output;
 	}
 
-	public List<Tuple2<String, String>> getViterbiNormalizedCharLangTranscription() {
-		return viterbiNormalizedCharLangTranscription;
+	public List<Tuple2<String, String>> getViterbiNormalizedCharLangRunning() {
+		return viterbiNormalizedCharLangRunning;
 	}
 
-	public List<String> getViterbiNormalizedCharTranscription() {
-		return mapToElement1(viterbiNormalizedCharLangTranscription);
+	public List<String> getViterbiNormalizedCharRunning() {
+		return mapToElement1(viterbiNormalizedCharLangRunning);
 	}
 
-	public List<String> getViterbiNormalizedLangTranscription() {
-		return mapToElement2(viterbiNormalizedCharLangTranscription);
+	public List<String> getViterbiNormalizedLangRunning() {
+		return mapToElement2(viterbiNormalizedCharLangRunning);
 	}
 
 	public List<DecodeState>[] getViterbiDecodeStates() {

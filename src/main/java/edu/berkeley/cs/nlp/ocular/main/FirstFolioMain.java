@@ -17,14 +17,16 @@ import edu.berkeley.cs.nlp.ocular.data.FirstFolioRawImageLoader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.BasicTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.data.textreader.ConvertLongSTextReader;
-import edu.berkeley.cs.nlp.ocular.data.textreader.WhitelistCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.FlipUVTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import edu.berkeley.cs.nlp.ocular.data.textreader.WhitelistCharacterSetTextReader;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
+import edu.berkeley.cs.nlp.ocular.eval.ModelTranscriptions;
 import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
+import edu.berkeley.cs.nlp.ocular.lm.CorpusCounter;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
@@ -44,10 +46,12 @@ import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModel
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
+import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import tberg.murphy.fig.Option;
 import tberg.murphy.fig.OptionsParser;
 import tberg.murphy.fileio.f;
+import tberg.murphy.indexer.HashMapIndexer;
 import tberg.murphy.indexer.Indexer;
 import tberg.murphy.threading.BetterThreader;
 
@@ -80,11 +84,17 @@ public class FirstFolioMain implements Runnable {
 	@Option(gloss = "Whether to learn the font from the input documents and write the font to a file.")
 	public static boolean learnFont = true;
 
+	@Option(gloss = "Whether to learn the language model from the input documents and write the model to a file.")
+	public static boolean learnLM = false;
+
 	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
 	public static String outputPath = null;
 
 	@Option(gloss = "Path to write the learned font file to. (Only if learnFont is set to true.)")
 	public static String outputFontPath = null;
+
+	@Option(gloss = "Path to write the learned font file to. (Only if learnLM is set to true.)")
+	public static String outputLMPath = null;
 
 	@Option(gloss = "Number of iterations of EM to use for font learning.")
 	public static int numEMIters = 3;
@@ -141,6 +151,7 @@ public class FirstFolioMain implements Runnable {
 		if (inputPath == null) throw new IllegalArgumentException("-inputPath not set");
 		if (outputPath == null) throw new IllegalArgumentException("-outputPath not set");
 		if (learnFont && outputFontPath == null) throw new IllegalArgumentException("-outputFontPath not set");
+		if (learnLM && outputLMPath == null) throw new IllegalArgumentException("-outputLMPath not set");
 		if (lmPath == null) throw new IllegalArgumentException("-lmPath not set");
 		if (initFontPath == null) throw new IllegalArgumentException("-initFontPath not set");
 		
@@ -226,6 +237,7 @@ public class FirstFolioMain implements Runnable {
 			else System.out.println("Transcribing (learnFont = false).");
 
 			for (int c=0; c<templates.length; ++c) if (templates[c] != null) templates[c].clearCounts();
+			List<DecodeState[][]> allDocsDecoded = new ArrayList<DecodeState[][]>();
 
 			for (Document doc : documents) {
 				System.out.println("Document: "+doc.baseName());
@@ -291,6 +303,7 @@ public class FirstFolioMain implements Runnable {
 						}
 					}
 				}
+				allDocsDecoded.add(allDecodeStates);
 
 				// evaluate
 
@@ -307,12 +320,32 @@ public class FirstFolioMain implements Runnable {
 			if (iter <= numEMIters) {
 				long nanoTime = System.nanoTime();
 				{
+					// Update font parameters
 					BetterThreader.Function<Integer,Object> func = new BetterThreader.Function<Integer,Object>(){public void call(Integer c, Object ignore){
 						if (templates[c] != null) templates[c].updateParameters();
 					}};
 					BetterThreader<Integer,Object> threader = new BetterThreader<Integer,Object>(func, numMstepThreads);
 					for (int c=0; c<templates.length; ++c) threader.addFunctionArgument(c);
 					threader.run();
+				}
+				if (learnLM) {
+					// Update LM parameters
+					int ngramLength = lm.getMaxOrder();
+					CorpusCounter counter = new CorpusCounter(ngramLength);
+					for (DecodeState[][] decodeStates : allDocsDecoded) {
+						ModelTranscriptions mt = new ModelTranscriptions(decodeStates, charIndexer, new HashMapIndexer<String>());
+						List<String> transcription = mt.getViterbiNormalizedCharRunning();
+						System.err.println("   >>"+StringHelper.join(transcription));
+						counter.countChars(transcription, charIndexer, 0);
+					}
+					counter.printStats(-1);
+					lm = new NgramLanguageModel(charIndexer, counter.getCounts(), lm.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
+					backwardTransitionModel = new DenseBigramTransitionModel(lm);
+					if (markovVerticalOffset) {
+						forwardTransitionModel = new CharacterNgramTransitionModelMarkovOffset(lm);
+					} else {
+						forwardTransitionModel = new CharacterNgramTransitionModel(lm);
+					}
 				}
 				System.out.println("Update parameters: " + (System.nanoTime() - nanoTime)/1000000 + "ms");
 			}
@@ -321,6 +354,9 @@ public class FirstFolioMain implements Runnable {
 		
 		if (learnFont) {
 			InitializeFont.writeFont(font, outputFontPath);
+		}
+		if (learnLM) {
+			LMTrainMain.writeLM(lm, outputLMPath);
 		}
 
 		if (!allEvals.isEmpty()) {
