@@ -37,13 +37,13 @@ public class InterpolatingSingleLanguageModel implements SingleLanguageModel {
 			if (charIndexer == null) {
 				charIndexer = subModels[i].getCharacterIndexer();
 				activeCharacters = subModels[i].getActiveCharacters();
-				maxOrder = subModels[i].getMaxOrder();
+				int thisMaxOrder = subModels[i].getMaxOrder();
+				if (thisMaxOrder > maxOrder)
+					maxOrder = thisMaxOrder;
 			} else if (charIndexer != subModels[i].getCharacterIndexer()) {
 				throw new RuntimeException("Sub-models don't all use the same character indexer");
 			} else if (activeCharacters != subModels[i].getActiveCharacters()) {
 				throw new RuntimeException("Sub-models don't all use the same active-character set");
-			} else if (maxOrder != subModels[i].getMaxOrder()) {
-				throw new RuntimeException("Different maxOrder values for sub-models is not supported yet.");
 			}
 		}
 		for (int i = 0; i < numModels; ++i) {

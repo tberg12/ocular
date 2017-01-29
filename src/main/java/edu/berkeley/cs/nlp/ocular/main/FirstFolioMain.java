@@ -89,7 +89,10 @@ public class FirstFolioMain implements Runnable {
 	public static boolean learnLM = false;
 	
 	@Option(gloss = "The weight to give to the new LM when iterpolating it with the origina LM.")
-	public static double newLMInterpWeight = 0.5;
+	public static double newLmInterpWeight = 0.5;
+
+	@Option(gloss = "The weight to give to the new LM when iterpolating it with the origina LM.")
+	public static int newSubLmOrder = 4;
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
 	public static String outputPath = null;
@@ -334,8 +337,7 @@ public class FirstFolioMain implements Runnable {
 				}
 				if (learnLM) {
 					// Update LM parameters
-					int ngramLength = lm.getMaxOrder();
-					CorpusCounter counter = new CorpusCounter(ngramLength);
+					CorpusCounter counter = new CorpusCounter(newSubLmOrder);
 					for (DecodeState[][] decodeStates : allDocsDecoded) {
 						ModelTranscriptions mt = new ModelTranscriptions(decodeStates, charIndexer, new HashMapIndexer<String>());
 						List<String> transcription = mt.getViterbiNormalizedCharRunning();
@@ -345,8 +347,8 @@ public class FirstFolioMain implements Runnable {
 					counter.printStats(-1);
 					SingleLanguageModel newLM = new NgramLanguageModel(charIndexer, counter.getCounts(), lm.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
 					lm = new InterpolatingSingleLanguageModel(CollectionHelper.makeList(
-							Tuple2(lm, 1.0 - newLMInterpWeight), Tuple2(newLM, newLMInterpWeight)));
-					System.out.println("Trained new interpolated LM, weighting new text at " + newLMInterpWeight);
+							Tuple2(lm, 1.0 - newLmInterpWeight), Tuple2(newLM, newLmInterpWeight)));
+					System.out.println("Trained new interpolated LM, weighting new text at " + newLmInterpWeight);
 					backwardTransitionModel = new DenseBigramTransitionModel(lm);
 					if (markovVerticalOffset) {
 						forwardTransitionModel = new CharacterNgramTransitionModelMarkovOffset(lm);
