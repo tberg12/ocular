@@ -295,10 +295,8 @@ public class FirstFolioMain implements Runnable {
 				// evaluate
 
 				printTranscription(iter, doc, allEvals, text, allDecodeStates, charIndexer);
-				
-				if (!learnFont || iter == numEMIters) {
-					writeWhitespaceTranscription(allDecodeStates, lm, outputPath+"/"+doc.baseName());
-				}
+				writeWhitespaceSumSpacesTranscription(iter, doc, allDecodeStates, lm);
+				writeWhitespaceTranscription(iter, doc, allDecodeStates, lm);
 
 			}
 
@@ -416,7 +414,7 @@ public class FirstFolioMain implements Runnable {
 		}
 	}
 
-	void writeWhitespaceTranscription(DecodeState[][] decodeStates, LanguageModel lm, String outputFilenameBase) {
+	void writeWhitespaceSumSpacesTranscription(int iter, Document doc, DecodeState[][] decodeStates, LanguageModel lm) {
 		StringBuilder whitespaceFileBuf = new StringBuilder();
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
 		for (DecodeState[] decodeStateLine : decodeStates) {
@@ -425,24 +423,38 @@ public class FirstFolioMain implements Runnable {
 				int c = ds.ts.getGlyphChar().templateCharIndex;
 				if (c == charIndexer.getIndex(Charset.SPACE)) {
 					whitespace += ds.charWidth;
-				}
-				else {
-					if (whitespace > 0) {
-						whitespaceFileBuf.append("{" + whitespace + "}");
-						whitespace = 0;
-					}
+				} else {
+					whitespaceFileBuf.append("{" + whitespace + "}");
+					whitespace = 0;
 					whitespaceFileBuf.append(Charset.unescapeChar(charIndexer.getObject(c)));
 				}
 				whitespace += ds.padWidth;
 			}
-			if (whitespace > 0) {
-				whitespaceFileBuf.append("{" + whitespace + "}");
+			whitespaceFileBuf.append("{" + whitespace + "}");
+			whitespaceFileBuf.append("\n");
+		}
+		f.writeString(outputPath+"/"+doc.baseName()+"_white_sum.iter-"+iter+".txt", whitespaceFileBuf.toString());
+	}
+	
+	void writeWhitespaceTranscription(int iter, Document doc, DecodeState[][] decodeStates, LanguageModel lm) {
+		StringBuilder whitespaceFileBuf = new StringBuilder();
+		Indexer<String> charIndexer = lm.getCharacterIndexer();
+		for (DecodeState[] decodeStateLine : decodeStates) {
+			for (DecodeState ds : decodeStateLine) {
+				int charWidth = ds.charWidth;
+				int padWidth = ds.padWidth;
+				int c = ds.ts.getGlyphChar().templateCharIndex;
+				if (c == charIndexer.getIndex(Charset.SPACE)) {
+					whitespaceFileBuf.append(Charset.unescapeChar(charIndexer.getObject(c)));
+					whitespaceFileBuf.append("{" + (charWidth+padWidth) + "}");
+				} else {
+					whitespaceFileBuf.append(Charset.unescapeChar(charIndexer.getObject(c)));
+					whitespaceFileBuf.append("{" + padWidth + "}");
+				}
 			}
 			whitespaceFileBuf.append("\n");
 		}
-
-		String whitespaceOutputFilename = outputFilenameBase + "_whitespace.txt";
-		System.out.println("Writing whitespace layout to " + whitespaceOutputFilename);
-		f.writeString(whitespaceOutputFilename, whitespaceFileBuf.toString());
+		f.writeString(outputPath+"/"+doc.baseName()+"_white.iter-"+iter+".txt", whitespaceFileBuf.toString());
 	}
+	
 }
