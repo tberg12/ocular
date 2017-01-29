@@ -20,6 +20,7 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.em.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
@@ -134,7 +135,7 @@ public class ExperimentsMain implements Runnable {
 		for (Document doc : documents) {
 			System.out.println("Loading LM..");
 			boolean useLongS = ((TextAndLineImagesLoader.TextAndLineImagesDocument) doc).useLongS();
-			final NgramLanguageModel lm = (useLongS ? LMTrainMain.readLM(lmDir+"/"+lmBaseName+"_longs.lmser") : LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser"));
+			final SingleLanguageModel lm = (useLongS ? LMTrainMain.readLM(lmDir+"/"+lmBaseName+"_longs.lmser") : LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser"));
 			final Indexer<String> charIndexer = lm.getCharacterIndexer();
 			
 			System.out.println("Loading font initializer..");

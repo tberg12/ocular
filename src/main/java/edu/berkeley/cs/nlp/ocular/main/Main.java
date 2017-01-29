@@ -17,6 +17,7 @@ import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
+import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.em.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
@@ -135,7 +136,7 @@ public class Main implements Runnable {
 		}
 
 		System.out.println("Loading LM..");
-		final NgramLanguageModel lm = LMTrainMain.readLM(lmPath);
+		final SingleLanguageModel lm = LMTrainMain.readLM(lmPath);
 		DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm);
 		SparseTransitionModel forwardTransitionModel = null;
 		if (markovVerticalOffset) {
