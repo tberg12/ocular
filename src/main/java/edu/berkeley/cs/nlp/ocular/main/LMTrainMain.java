@@ -19,6 +19,7 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveAllDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
+import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import tberg.murphy.fig.Option;
 import tberg.murphy.fig.OptionsParser;
@@ -85,8 +86,8 @@ public class LMTrainMain implements Runnable {
 		writeLM(lm, lmPath);
 	}
 	
-	public static NgramLanguageModel readLM(String lmPath) {
-		NgramLanguageModel lm = null;
+	public static SingleLanguageModel readLM(String lmPath) {
+		SingleLanguageModel lm = null;
 		try {
 			File file = new File(lmPath);
 			if (!file.exists()) {
@@ -95,7 +96,7 @@ public class LMTrainMain implements Runnable {
 			}
 			FileInputStream fileIn = new FileInputStream(file);
 			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
-			lm = (NgramLanguageModel) in.readObject();
+			lm = (SingleLanguageModel) in.readObject();
 			in.close();
 			fileIn.close();
 		} catch(Exception e) {
@@ -104,7 +105,7 @@ public class LMTrainMain implements Runnable {
 		return lm;
 	}
 
-	public static void writeLM(NgramLanguageModel lm, String lmPath) {
+	public static void writeLM(SingleLanguageModel lm, String lmPath) {
 		try {
 			new File(lmPath).getAbsoluteFile().getParentFile().mkdirs();
 			FileOutputStream fileOut = new FileOutputStream(lmPath);

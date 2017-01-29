@@ -27,9 +27,11 @@ import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.lm.CorpusCounter;
+import edu.berkeley.cs.nlp.ocular.lm.InterpolatingSingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
+import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.DecodeState;
 import edu.berkeley.cs.nlp.ocular.model.em.BeamingSemiMarkovDP;
@@ -46,7 +48,6 @@ import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModel
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
-import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import tberg.murphy.fig.Option;
 import tberg.murphy.fig.OptionsParser;
@@ -86,6 +87,9 @@ public class FirstFolioMain implements Runnable {
 
 	@Option(gloss = "Whether to learn the language model from the input documents and write the model to a file.")
 	public static boolean learnLM = false;
+	
+	@Option(gloss = "The weight to give to the new LM when iterpolating it with the origina LM.")
+	public static double newLMInterpWeight = 0.5;
 
 	@Option(gloss = "Path of the directory that will contain output transcriptions and line extractions.")
 	public static String outputPath = null;
@@ -172,7 +176,7 @@ public class FirstFolioMain implements Runnable {
 
 		System.out.println("Loading LM..");
 //		final NgramLanguageModel lm = LMTrainMain.readLM(lmPath);
-		NgramLanguageModel lm = null;
+		SingleLanguageModel lm = null;
 		if (usePrebuiltLM) {
 			lm = LMTrainMain.readLM(lmPath);
 		} else {
@@ -335,11 +339,14 @@ public class FirstFolioMain implements Runnable {
 					for (DecodeState[][] decodeStates : allDocsDecoded) {
 						ModelTranscriptions mt = new ModelTranscriptions(decodeStates, charIndexer, new HashMapIndexer<String>());
 						List<String> transcription = mt.getViterbiNormalizedCharRunning();
-						System.err.println("   >>"+StringHelper.join(transcription));
+						//System.err.println("   >>"+StringHelper.join(transcription));
 						counter.countChars(transcription, charIndexer, 0);
 					}
 					counter.printStats(-1);
-					lm = new NgramLanguageModel(charIndexer, counter.getCounts(), lm.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
+					SingleLanguageModel newLM = new NgramLanguageModel(charIndexer, counter.getCounts(), lm.getActiveCharacters(), LMType.KNESER_NEY, lmPower);
+					lm = new InterpolatingSingleLanguageModel(CollectionHelper.makeList(
+							Tuple2(lm, 1.0 - newLMInterpWeight), Tuple2(newLM, newLMInterpWeight)));
+					System.out.println("Trained new interpolated LM, weighting new text at " + newLMInterpWeight);
 					backwardTransitionModel = new DenseBigramTransitionModel(lm);
 					if (markovVerticalOffset) {
 						forwardTransitionModel = new CharacterNgramTransitionModelMarkovOffset(lm);
@@ -355,7 +362,7 @@ public class FirstFolioMain implements Runnable {
 		if (learnFont) {
 			InitializeFont.writeFont(font, outputFontPath);
 		}
-		if (learnLM) {
+		if (outputLMPath != null) {
 			LMTrainMain.writeLM(lm, outputLMPath);
 		}
 
