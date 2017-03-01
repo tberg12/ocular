@@ -52,17 +52,17 @@ import tberg.murphy.threading.BetterThreader;
 public class FixedAlignExperimentsMain implements Runnable {
 	
 	@Option(gloss = "")
-	public static String inputPath = "/Users/shruti/Documents/HistoricalOcr/ocular/names.txt";
+	public static String inputPath = "/Users/tberg/git/ocular/names.txt";
 	
 	@Option(gloss = "")
 	public static String outputRelPath = "";
 	
 	
 	@Option(gloss = "")
-	public static String fontPath = "/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser";
+	public static String fontPath = "/Users/tberg/git/ocular/font/font-init.fontser";
 	
 	@Option(gloss = "")
-	public static String lmDir = "/Users/shruti/Documents/HistoricalOcr/ocular/lm";
+	public static String lmDir = "/Users/tberg/git/ocular/lm";
 	
 	@Option(gloss = "")
 	public static String lmBaseName = "english";
@@ -102,13 +102,13 @@ public class FixedAlignExperimentsMain implements Runnable {
 
 	
 	@Option(gloss = "")
-	public static boolean popupVisuals = false;
+	public static boolean popupVisuals = true;
 	
 	@Option(gloss = "")
-	public static boolean writeVisuals = false;
+	public static boolean writeVisuals = true;
 
 	@Option(gloss = "")
-	public static boolean evaluate = false;
+	public static boolean evaluate = true;
 	
 	
 	public static enum EmissionCacheInnerLoopType {DEFAULT, OPENCL, CUDA};
@@ -165,15 +165,11 @@ public class FixedAlignExperimentsMain implements Runnable {
 
 			final EmissionModel emissionModel = (markovVerticalOffset ? new CachingEmissionModelExplicitOffset(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : new CachingEmissionModel(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
 			
-//			final SingleLanguageModel lm2 = (useLongS ? LMTrainMain.readLM(lmDir+"/"+lmBaseName+"_longs.lmser") : LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser"));
-			
-			CodeSwitchLanguageModel lm2 = InitializeLanguageModel.readCodeSwitchLM(lmDir+"/"+lmBaseName+".lmser");
-			
 			SparseTransitionModel forwardTransitionModel = null;
 			
 			forwardTransitionModel = new ForcedAlignmentTransitionModel(lm);			
 			
-			DenseBigramTransitionModel backwardTransitionModel = new DenseBigramTransitionModel(lm2);
+			DenseBigramTransitionModel nullBackwardTransitionModel = new DenseBigramTransitionModel(lm.getCharacterIndexer().size());
 			
 			long emissionCacheNanoTime = System.nanoTime();
 			emissionModel.rebuildCache();
@@ -184,7 +180,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 				System.out.println("Iteration "+iter+" e-step");
 				double logJointProb = Double.NEGATIVE_INFINITY;
 				long nanoTime = System.nanoTime();
-				BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, backwardTransitionModel);
+				BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(emissionModel, forwardTransitionModel, nullBackwardTransitionModel);
 				Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
 				logJointProb = decodeStatesAndWidthsAndJointLogProb._2;
 				final TransitionState[][] decodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
