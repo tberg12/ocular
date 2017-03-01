@@ -1,31 +1,36 @@
 package edu.berkeley.cs.nlp.ocular.model.em;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.lm.FixedLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.LanguageModel;
 import tberg.murphy.arrays.a;
 
 /**
  * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
  */
-public class DenseBigramTransitionModel {
+public class ForcedAlignBigramTransition {
 	private static double SPC_TO_SPC_SMOOTH = 1e-2;
 	
 	private double[] starts;
 	private double[][] forwardTrans;
 	private double[][] backwardTrans;
 	
-	public DenseBigramTransitionModel(LanguageModel lm) {
+	public ForcedAlignBigramTransition(FixedLanguageModel lm) {
 		int numC = lm.getCharacterIndexer().size();
 		
 		this.starts = new double[numC];
+		int startChar = lm.getCharAtPos(0);
 		for (int c=0; c<numC; ++c) {
-			this.starts[c] = Math.log(1.0);
+			if (c == startChar) {
+				this.starts[c] = Math.log(lm.getCharNgramProb());
+			}
+			this.starts[c] = Math.log(1.0-lm.getCharNgramProb());
 		}
 		
 		this.forwardTrans = new double[numC][numC];
 		for (int prevC=0; prevC<numC; ++prevC) {
 			for (int c=0; c<numC; ++c) {
-				this.forwardTrans[prevC][c] = Math.log(1.0);
+				this.forwardTrans[prevC][c] = Math.log(lm.getCharNgramProb());
 			}
 		}
 		int spaceIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);

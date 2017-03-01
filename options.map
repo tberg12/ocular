@@ -1,0 +1,33 @@
+log.maxIndLevel	10
+log.msPerLine	1000
+log.file	
+log.stdout	true
+log.note	
+log.forcePrint	false
+log.maxPrintErrors	10000
+FixedAlignExperimentsMain.inputPath	/Users/shruti/Documents/HistoricalOcr/ocular/names.txt
+FixedAlignExperimentsMain.outputRelPath	
+FixedAlignExperimentsMain.fontPath	/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser
+FixedAlignExperimentsMain.lmDir	/Users/shruti/Documents/HistoricalOcr/ocular/lm
+FixedAlignExperimentsMain.lmBaseName	english
+FixedAlignExperimentsMain.paddingMinWidth	1
+FixedAlignExperimentsMain.paddingMaxWidth	5
+FixedAlignExperimentsMain.markovVerticalOffset	false
+FixedAlignExperimentsMain.beamSize	10
+FixedAlignExperimentsMain.numEMIters	4
+FixedAlignExperimentsMain.emissionEngine	DEFAULT
+FixedAlignExperimentsMain.cudaDeviceID	0
+FixedAlignExperimentsMain.numMstepThreads	4
+FixedAlignExperimentsMain.numEmissionCacheThreads	4
+FixedAlignExperimentsMain.numDecodeThreads	4
+FixedAlignExperimentsMain.popupVisuals	false
+FixedAlignExperimentsMain.writeVisuals	false
+FixedAlignExperimentsMain.evaluate	false
+exec.create	false
+exec.execDir	
+exec.execPoolDir	
+exec.actualExecPoolDir	
+exec.overwriteExecDir	false
+exec.useStandardExecPoolDirStrategy	false
+exec.printOptionsAndExit	false
+exec.charEncoding	
