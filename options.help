@@ -5,10 +5,10 @@ log.stdout                     < bool> : Whether to output to the console. [true
 log.note                       <  str> : Dummy placeholder for a comment [] {}
 log.forcePrint                 < bool> : Force printing from logs* [false] {}
 log.maxPrintErrors             <  int> : Maximum number of errors (via error()) to print [10000] {}
-FixedAlignExperimentsMain.inputPath <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/names.txt] {}
+FixedAlignExperimentsMain.inputPath <  str> :  [/Users/tberg/git/ocular/names.txt] {}
 FixedAlignExperimentsMain.outputRelPath <  str> :  [] {}
-FixedAlignExperimentsMain.fontPath <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser] {}
-FixedAlignExperimentsMain.lmDir <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/lm] {}
+FixedAlignExperimentsMain.fontPath <  str> :  [/Users/tberg/git/ocular/font/font-init.fontser] {}
+FixedAlignExperimentsMain.lmDir <  str> :  [/Users/tberg/git/ocular/lm] {}
 FixedAlignExperimentsMain.lmBaseName <  str> :  [english] {}
 FixedAlignExperimentsMain.paddingMinWidth <  int> :  [1] {}
 FixedAlignExperimentsMain.paddingMaxWidth <  int> :  [5] {}
@@ -20,9 +20,9 @@ FixedAlignExperimentsMain.cudaDeviceID <  int> :  [0] {}
 FixedAlignExperimentsMain.numMstepThreads <  int> :  [4] {}
 FixedAlignExperimentsMain.numEmissionCacheThreads <  int> :  [4] {}
 FixedAlignExperimentsMain.numDecodeThreads <  int> :  [4] {}
-FixedAlignExperimentsMain.popupVisuals < bool> :  [false] {}
-FixedAlignExperimentsMain.writeVisuals < bool> :  [false] {}
-FixedAlignExperimentsMain.evaluate < bool> :  [false] {}
+FixedAlignExperimentsMain.popupVisuals < bool> :  [true] {}
+FixedAlignExperimentsMain.writeVisuals < bool> :  [true] {}
+FixedAlignExperimentsMain.evaluate < bool> :  [true] {}
 exec.create                    < bool> : Whether to create a directory for this run; if not, don't generate output files [false] {}
 exec.execDir                   <  str> : Directory to put all output files; if blank, use execPoolDir. [] {}
 exec.execPoolDir               <  str> : Directory which contains all the executions (or symlinks). [] {}

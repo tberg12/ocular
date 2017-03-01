@@ -68,9 +68,10 @@ public class BeamingSemiMarkovDP {
 
 	public Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decode(final int beamSize, int numThreads) {
 		System.out.print("Decoding");
+		return decodeSingleThread(beamSize);
 		
-		if (numThreads == 1) return decodeSingleThread(beamSize);
-		else return decodeMultipleThreads(beamSize, numThreads);
+//		if (numThreads == 1) return decodeSingleThread(beamSize);
+//		else return decodeMultipleThreads(beamSize, numThreads);
 	}
 
 	private Tuple2<Tuple2<TransitionState[][],int[][]>,Double> decodeSingleThread(int beamSize) {

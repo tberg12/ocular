@@ -5,10 +5,10 @@ log.stdout	true
 log.note	
 log.forcePrint	false
 log.maxPrintErrors	10000
-FixedAlignExperimentsMain.inputPath	/Users/shruti/Documents/HistoricalOcr/ocular/names.txt
+FixedAlignExperimentsMain.inputPath	/Users/tberg/git/ocular/names.txt
 FixedAlignExperimentsMain.outputRelPath	
-FixedAlignExperimentsMain.fontPath	/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser
-FixedAlignExperimentsMain.lmDir	/Users/shruti/Documents/HistoricalOcr/ocular/lm
+FixedAlignExperimentsMain.fontPath	/Users/tberg/git/ocular/font/font-init.fontser
+FixedAlignExperimentsMain.lmDir	/Users/tberg/git/ocular/lm
 FixedAlignExperimentsMain.lmBaseName	english
 FixedAlignExperimentsMain.paddingMinWidth	1
 FixedAlignExperimentsMain.paddingMaxWidth	5
@@ -20,9 +20,9 @@ FixedAlignExperimentsMain.cudaDeviceID	0
 FixedAlignExperimentsMain.numMstepThreads	4
 FixedAlignExperimentsMain.numEmissionCacheThreads	4
 FixedAlignExperimentsMain.numDecodeThreads	4
-FixedAlignExperimentsMain.popupVisuals	false
-FixedAlignExperimentsMain.writeVisuals	false
-FixedAlignExperimentsMain.evaluate	false
+FixedAlignExperimentsMain.popupVisuals	true
+FixedAlignExperimentsMain.writeVisuals	true
+FixedAlignExperimentsMain.evaluate	true
 exec.create	false
 exec.execDir	
 exec.execPoolDir	
