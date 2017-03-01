@@ -1,0 +1,1 @@
+temp_img	.png	tempest.txt	false	1	30

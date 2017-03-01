@@ -1,0 +1,33 @@
+log.maxIndLevel                <  int> : Maximum indent level. [10] {}
+log.msPerLine                  <  int> : Maximum number of milliseconds between consecutive lines of output. [1000] {}
+log.file                       <  str> : File to write log. [] {}
+log.stdout                     < bool> : Whether to output to the console. [true] {}
+log.note                       <  str> : Dummy placeholder for a comment [] {}
+log.forcePrint                 < bool> : Force printing from logs* [false] {}
+log.maxPrintErrors             <  int> : Maximum number of errors (via error()) to print [10000] {}
+FixedAlignExperimentsMain.inputPath <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/names.txt] {}
+FixedAlignExperimentsMain.outputRelPath <  str> :  [] {}
+FixedAlignExperimentsMain.fontPath <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser] {}
+FixedAlignExperimentsMain.lmDir <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/lm] {}
+FixedAlignExperimentsMain.lmBaseName <  str> :  [english] {}
+FixedAlignExperimentsMain.paddingMinWidth <  int> :  [1] {}
+FixedAlignExperimentsMain.paddingMaxWidth <  int> :  [5] {}
+FixedAlignExperimentsMain.markovVerticalOffset < bool> :  [false] {}
+FixedAlignExperimentsMain.beamSize <  int> :  [10] {}
+FixedAlignExperimentsMain.numEMIters <  int> :  [4] {}
+FixedAlignExperimentsMain.emissionEngine < enum> :  [DEFAULT] {} DEFAULT|OPENCL|CUDA
+FixedAlignExperimentsMain.cudaDeviceID <  int> :  [0] {}
+FixedAlignExperimentsMain.numMstepThreads <  int> :  [4] {}
+FixedAlignExperimentsMain.numEmissionCacheThreads <  int> :  [4] {}
+FixedAlignExperimentsMain.numDecodeThreads <  int> :  [4] {}
+FixedAlignExperimentsMain.popupVisuals < bool> :  [false] {}
+FixedAlignExperimentsMain.writeVisuals < bool> :  [false] {}
+FixedAlignExperimentsMain.evaluate < bool> :  [false] {}
+exec.create                    < bool> : Whether to create a directory for this run; if not, don't generate output files [false] {}
+exec.execDir                   <  str> : Directory to put all output files; if blank, use execPoolDir. [] {}
+exec.execPoolDir               <  str> : Directory which contains all the executions (or symlinks). [] {}
+exec.actualExecPoolDir         <  str> : Directory which actually holds the executions. [] {}
+exec.overwriteExecDir          < bool> : Overwrite the contents of the execDir if it doesn't exist (e.g., when running a thunk). [false] {}
+exec.useStandardExecPoolDirStrategy < bool> : Assume in the run directory, automatically set execPoolDir and actualExecPoolDir [false] {}
+exec.printOptionsAndExit       < bool> : Simply print options and exit. [false] {}
+exec.charEncoding              <  str> : Character encoding [] {}

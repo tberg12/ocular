@@ -2,6 +2,7 @@ package edu.berkeley.cs.nlp.ocular.data;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import tberg.murphy.fileio.f;
@@ -78,6 +79,8 @@ public class TextAndLineImagesLoader {
 		for (String line : lines) {
 			if (line.trim().equals("")) continue;
 			String[] split = line.split("\\s+");
+
+			System.out.println(Arrays.toString(split));
 			docs.add(new TextAndLineImagesDocument(inputFile.getParentFile().getAbsolutePath()+"/"+split[0], split[1], inputFile.getParentFile().getAbsolutePath()+"/"+split[2], Boolean.parseBoolean(split[3]), Integer.parseInt(split[4]), lineHeight));
 		}
 		return docs;

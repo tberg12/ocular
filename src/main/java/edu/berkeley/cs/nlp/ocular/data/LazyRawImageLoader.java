@@ -32,6 +32,7 @@ public class LazyRawImageLoader {
 	public static List<Document> loadDocuments(List<String> inputPaths, String extractedLinesPath, int numDocs, int numDocsToSkip, boolean uniformLineHeight, double binarizeThreshold, boolean crop) {
 		List<Document> lazyDocs = new ArrayList<Document>();
 		for (String inputPath : inputPaths) {
+			System.out.println("here " + inputPath);
 			lazyDocs.addAll(loadDocumentsFromDir(inputPath, extractedLinesPath, uniformLineHeight, binarizeThreshold, crop));
 		}
 
