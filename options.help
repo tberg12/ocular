@@ -5,10 +5,10 @@ log.stdout                     < bool> : Whether to output to the console. [true
 log.note                       <  str> : Dummy placeholder for a comment [] {}
 log.forcePrint                 < bool> : Force printing from logs* [false] {}
 log.maxPrintErrors             <  int> : Maximum number of errors (via error()) to print [10000] {}
-FixedAlignExperimentsMain.inputPath <  str> :  [/Users/tberg/git/ocular/names.txt] {}
+FixedAlignExperimentsMain.inputPath <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/names.txt] {}
 FixedAlignExperimentsMain.outputRelPath <  str> :  [] {}
-FixedAlignExperimentsMain.fontPath <  str> :  [/Users/tberg/git/ocular/font/font-init.fontser] {}
-FixedAlignExperimentsMain.lmDir <  str> :  [/Users/tberg/git/ocular/lm] {}
+FixedAlignExperimentsMain.fontPath <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser] {}
+FixedAlignExperimentsMain.lmDir <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/lm] {}
 FixedAlignExperimentsMain.lmBaseName <  str> :  [english] {}
 FixedAlignExperimentsMain.paddingMinWidth <  int> :  [1] {}
 FixedAlignExperimentsMain.paddingMaxWidth <  int> :  [5] {}
@@ -19,7 +19,7 @@ FixedAlignExperimentsMain.emissionEngine < enum> :  [DEFAULT] {} DEFAULT|OPENCL|
 FixedAlignExperimentsMain.cudaDeviceID <  int> :  [0] {}
 FixedAlignExperimentsMain.numMstepThreads <  int> :  [4] {}
 FixedAlignExperimentsMain.numEmissionCacheThreads <  int> :  [4] {}
-FixedAlignExperimentsMain.numDecodeThreads <  int> :  [4] {}
+FixedAlignExperimentsMain.numDecodeThreads <  int> :  [1] {}
 FixedAlignExperimentsMain.popupVisuals < bool> :  [true] {}
 FixedAlignExperimentsMain.writeVisuals < bool> :  [true] {}
 FixedAlignExperimentsMain.evaluate < bool> :  [true] {}

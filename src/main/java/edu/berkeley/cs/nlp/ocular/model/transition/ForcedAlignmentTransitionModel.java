@@ -218,7 +218,7 @@ public class ForcedAlignmentTransitionModel implements SparseTransitionModel {
 		}
 	}
 	
-	public static final double LINE_MRGN_PROB = 0.5;
+	public static final double LINE_MRGN_PROB = 0.3;
 	public static final double LINE_END_HYPHEN_PROB = 1e-6;
 	public static final double SPACE_CONTINUE_PROB = 1e-6;
 	
