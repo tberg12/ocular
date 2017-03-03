@@ -52,17 +52,18 @@ import tberg.murphy.threading.BetterThreader;
 public class FixedAlignExperimentsMain implements Runnable {
 	
 	@Option(gloss = "")
-	public static String inputPath = "/Users/tberg/git/ocular/names.txt";
+//	public static String inputPath = "/Users/tberg/git/ocular/names.txt";
+	public static String inputPath = "/Users/shruti/Documents/HistoricalOcr/ocular/names.txt";
 	
 	@Option(gloss = "")
 	public static String outputRelPath = "";
 	
 	
 	@Option(gloss = "")
-	public static String fontPath = "/Users/tberg/git/ocular/font/font-init.fontser";
+	public static String fontPath = "/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser";
 	
 	@Option(gloss = "")
-	public static String lmDir = "/Users/tberg/git/ocular/lm";
+	public static String lmDir = "/Users/shruti/Documents/HistoricalOcr/ocular/lm";
 	
 	@Option(gloss = "")
 	public static String lmBaseName = "english";
@@ -98,7 +99,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 	public static int numEmissionCacheThreads = 4;
 	
 	@Option(gloss = "")
-	public static int numDecodeThreads = 4;
+	public static int numDecodeThreads = 1;
 
 	
 	@Option(gloss = "")
