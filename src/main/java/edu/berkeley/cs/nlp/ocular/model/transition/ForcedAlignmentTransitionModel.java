@@ -175,7 +175,7 @@ public class ForcedAlignmentTransitionModel implements SparseTransitionModel {
 				}
 				{
 					double score = Math.log(LINE_MRGN_PROB) + Math.log(LINE_END_HYPHEN_PROB);
-					if (score != Double.NEGATIVE_INFINITY) {
+					if (score != Double.NEGATIVE_INFINITY && nextChar != lm.getCharacterIndexer().getIndex(Charset.SPACE)) {
 						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos, TransitionStateType.RMRGN_HPHN_INIT), score));
 					}
 				}
@@ -219,8 +219,8 @@ public class ForcedAlignmentTransitionModel implements SparseTransitionModel {
 	}
 	
 	public static final double LINE_MRGN_PROB = 0.3;
-	public static final double LINE_END_HYPHEN_PROB = 1e-6;
-	public static final double SPACE_CONTINUE_PROB = 1e-6;
+	public static final double LINE_END_HYPHEN_PROB = 1e-8;
+	public static final double SPACE_CONTINUE_PROB = 1e-8;
 	
 	private FixedLanguageModel lm;
 	private int spaceCharIndex;

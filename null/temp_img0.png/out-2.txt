@@ -94,7 +94,7 @@ Mira. O good Sir, I doe.
    Pros. I pray thee marke me:        
 Pros. I pray thee marke me:
 
-  I thus neglecting worldly ends, all dedicated    
+ I thus neglecting worldly ends, all dedicated    
 I thus neglecting worldly ends, all dedicated
 
  To closenes, and the bettering of my mind     
@@ -196,13 +196,13 @@ Mira. I should sinne
  To thinke but Noblie of my Grand‑mother,    
 To thinke but Noblie of my Grand‑mother,
 
-                G-   
+                Goo-   
 Good
 
-CER, keep punc  : 0.0011115227862171174
-CER, keep punc, allow f->s: 0.0011115227862171174
-CER, remove punc: 0.001170046801872075
-CER, remove punc, allow f->s: 0.001170046801872075
+CER, keep punc  : 3.705075954057058E-4
+CER, keep punc, allow f->s: 3.705075954057058E-4
+CER, remove punc: 3.90015600624025E-4
+CER, remove punc, allow f->s: 3.90015600624025E-4
 WER, keep punc  : 0.002044989775051125
 WER, keep punc, allow f->s: 0.002044989775051125
 WER, remove punc: 0.002044989775051125
