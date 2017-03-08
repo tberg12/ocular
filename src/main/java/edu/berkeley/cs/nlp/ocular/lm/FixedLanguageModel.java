@@ -12,6 +12,7 @@ import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import sun.security.util.Length;
 import tberg.murphy.indexer.Indexer;
 
 public class FixedLanguageModel {
@@ -19,11 +20,15 @@ public class FixedLanguageModel {
 	private Indexer<String> charIndexer;
 	private int maxOrder;
 	List<Integer> fixedText;
+	private final double fixedProb;
+	private final double subProb;
 	
 	public FixedLanguageModel(String fileName) {
 		maxOrder = 1;
 		charIndexer = new CharIndexer();		
 		fixedText = new ArrayList<Integer>();
+		
+		fixedProb = 1.0 - 1e-8;
 		
 		charIndexer.getIndex(Charset.SPACE);
 		charIndexer.getIndex(Charset.HYPHEN);
@@ -43,13 +48,18 @@ public class FixedLanguageModel {
 	      in.close();
 	    } catch (IOException e) {
 	      throw new RuntimeException(e);
-	    }	
+	    }
+		
+		subProb = (1.0-fixedProb)/(charIndexer.size()-1);
 	}
 	
 
-	public double getCharNgramProb() {
-		// TODO Auto-generated method stub
-		return 1;
+	public double getCharNgramProb(int nextChar, int c) {
+		if (c == nextChar) {
+			return fixedProb;
+		}
+		
+		return subProb;
 	}
 	
 	public int getCharAtPos(int pos) {
