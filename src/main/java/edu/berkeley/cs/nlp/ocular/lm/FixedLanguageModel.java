@@ -53,7 +53,9 @@ public class FixedLanguageModel {
 	}
 	
 	public int getCharAtPos(int pos) {
-		return fixedText.get(pos);
+		if (pos < fixedText.size())
+			return fixedText.get(pos);
+		return charIndexer.getIndex(Charset.SPACE);
 	}
 	
 	public Indexer<String> getCharacterIndexer() {

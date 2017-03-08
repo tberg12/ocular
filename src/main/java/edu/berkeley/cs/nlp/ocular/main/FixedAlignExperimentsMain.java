@@ -80,7 +80,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 	public static boolean markovVerticalOffset = false;
 	
 	@Option(gloss = "")
-	public static int beamSize = 10;
+	public static int beamSize = 50;
 	
 	@Option(gloss = "")
 	public static int numEMIters = 4;
@@ -99,7 +99,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 	public static int numEmissionCacheThreads = 4;
 	
 	@Option(gloss = "")
-	public static int numDecodeThreads = 1;
+	public static int numDecodeThreads = 4;
 
 	
 	@Option(gloss = "")
@@ -141,7 +141,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 		List<String> paths = new ArrayList<String>();
 		paths.add("temp_img0.png");
 		
-		List<Document> documents = LazyRawImageLoader.loadDocuments(paths, null, Integer.MAX_VALUE, 0, true, 0.12, true);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(paths, null, Integer.MAX_VALUE, 0, true, 0.12, false);
 		
 		if (documents.isEmpty()) throw new NoDocumentsFoundException();
 

@@ -13,13 +13,13 @@ FixedAlignExperimentsMain.lmBaseName	english
 FixedAlignExperimentsMain.paddingMinWidth	1
 FixedAlignExperimentsMain.paddingMaxWidth	5
 FixedAlignExperimentsMain.markovVerticalOffset	false
-FixedAlignExperimentsMain.beamSize	10
+FixedAlignExperimentsMain.beamSize	50
 FixedAlignExperimentsMain.numEMIters	4
 FixedAlignExperimentsMain.emissionEngine	DEFAULT
 FixedAlignExperimentsMain.cudaDeviceID	0
 FixedAlignExperimentsMain.numMstepThreads	4
 FixedAlignExperimentsMain.numEmissionCacheThreads	4
-FixedAlignExperimentsMain.numDecodeThreads	1
+FixedAlignExperimentsMain.numDecodeThreads	4
 FixedAlignExperimentsMain.popupVisuals	true
 FixedAlignExperimentsMain.writeVisuals	true
 FixedAlignExperimentsMain.evaluate	true
