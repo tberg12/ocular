@@ -134,7 +134,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 		
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 		
-		String lmFileName = "tempest.txt";
+		String lmFileName = "temp_img0.txt";
 		
 //		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 	
