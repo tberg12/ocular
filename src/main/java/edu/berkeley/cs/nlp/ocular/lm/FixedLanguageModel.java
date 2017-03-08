@@ -28,7 +28,7 @@ public class FixedLanguageModel {
 		charIndexer = new CharIndexer();		
 		fixedText = new ArrayList<Integer>();
 		
-		fixedProb = 1.0 - 1e-8;
+		fixedProb = 1.0 - 1e-20;
 		
 		charIndexer.getIndex(Charset.SPACE);
 		charIndexer.getIndex(Charset.HYPHEN);
