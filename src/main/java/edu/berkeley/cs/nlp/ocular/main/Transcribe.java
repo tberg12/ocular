@@ -113,14 +113,15 @@ public class Transcribe extends FonttrainTranscribeShared {
 					0, updateDocBatchSize > 0 ? updateDocBatchSize : inputDocuments.size(), true, false,
 					numMstepThreads,
 					newInputDocPath, outputPath, outputFormats,
-					evalSetEvaluator, Integer.MAX_VALUE, evalBatches);
+					evalSetEvaluator, Integer.MAX_VALUE, evalBatches,
+					skipFailedDocs);
 		}
 		else {
 			//
 			// Transcribe with fixed parameters
 			//
 			System.out.println("Transcribing input data      " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-			MultiDocumentTranscriber transcriber = new BasicMultiDocumentTranscriber(inputDocuments, newInputDocPath, outputPath, outputFormats, decoderEM, documentOutputPrinterAndEvaluator, charIndexer);
+			MultiDocumentTranscriber transcriber = new BasicMultiDocumentTranscriber(inputDocuments, newInputDocPath, outputPath, outputFormats, decoderEM, documentOutputPrinterAndEvaluator, charIndexer, skipFailedDocs);
 			transcriber.transcribe(initialFont, initialLM, initialGSM);
 		}
 	}

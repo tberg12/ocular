@@ -66,7 +66,8 @@ public class FontTrainer {
 				int numEMIters, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall, boolean writeIntermediateModelsToTemp,
 				int numMstepThreads,
 				String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
-				MultiDocumentTranscriber evalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
+				MultiDocumentTranscriber evalSetIterationEvaluator, int evalFreq, boolean evalBatches,
+				boolean skipFailedDocs) {
 		
 		System.out.println("trainFont(numEMIters="+numEMIters+", updateDocBatchSize="+updateDocBatchSize+", noUpdateIfBatchTooSmall="+noUpdateIfBatchTooSmall+", writeIntermediateModelsToTemp="+writeIntermediateModelsToTemp+")");
 		
@@ -101,7 +102,8 @@ public class FontTrainer {
 									numEMIters, updateDocBatchSize, noUpdateIfBatchTooSmall, writeIntermediateModelsToTemp,
 									numMstepThreads,
 									inputDocPath, outputPath, outputFormats,
-									evalSetIterationEvaluator, evalFreq, evalBatches);
+									evalSetIterationEvaluator, evalFreq, evalBatches,
+									skipFailedDocs);
 			font = iterationResultModels._1;
 			lm = iterationResultModels._2;
 			gsm = iterationResultModels._3;
@@ -143,7 +145,8 @@ public class FontTrainer {
 			int numEMIters, int updateDocBatchSize, boolean noUpdateIfBatchTooSmall, boolean writeIntermediateModelsToTemp,
 			int numMstepThreads,
 			String inputDocPath, String outputPath, Set<OutputFormat> outputFormats,
-			MultiDocumentTranscriber evalSetIterationEvaluator, int evalFreq, boolean evalBatches) {
+			MultiDocumentTranscriber evalSetIterationEvaluator, int evalFreq, boolean evalBatches,
+			boolean skipFailedDocs) {
 		
 		Indexer<String> charIndexer = lm.getCharacterIndexer();
 		Indexer<String> langIndexer = lm.getLanguageIndexer();
@@ -178,63 +181,72 @@ public class FontTrainer {
 			doc.loadNormalizedText();
 
 			// e-step
-			Tuple2<DecodeState[][], Double> decodeResults = decoderEM.computeEStep(doc, true, lm, gsm, templates, backwardTransitionModel);
-			final DecodeState[][] decodeStates = decodeResults._1;
-			totalIterationJointLogProb += decodeResults._2;
-			totalBatchJointLogProb += decodeResults._2;
-			accumulatedTranscriptions.add(decodeStates);
-			List<DecodeState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
-			gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
-			
-			// write transcriptions and evaluate
-			Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = documentEvaluatorAndOutputPrinter.evaluateAndPrintTranscription(iter, 0, doc, decodeStates, inputDocPath, outputPath, outputFormats, lm);
-			if (evals._1 != null) allDiplomaticTrainEvals.add(Tuple2(doc.baseName(), evals._1));
-			if (evals._2 != null) allNormalizedTrainEvals.add(Tuple2(doc.baseName(), evals._2));
-			
-			// m-step
-			if (isBatchComplete(numUsableDocs, docNum, batchDocsCounter, updateDocBatchSize, noUpdateIfBatchTooSmall)) {
-				++completedBatchesInIteration;
+			try {
+				Tuple2<DecodeState[][], Double> decodeResults = decoderEM.computeEStep(doc, true, lm, gsm, templates, backwardTransitionModel);
+				final DecodeState[][] decodeStates = decodeResults._1;
+				totalIterationJointLogProb += decodeResults._2;
+				totalBatchJointLogProb += decodeResults._2;
+				accumulatedTranscriptions.add(decodeStates);
+				List<DecodeState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
+				gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 				
-				if (outputFontPath != null) {
-					updateFontParameters(templates, numMstepThreads);
-					String writePath = writeIntermediateModelsToTemp ? makeFontPath(outputPath, iter, completedBatchesInIteration) : outputFontPath;
-					System.out.println("Writing updated font to " + writePath);
-					InitializeFont.writeFont(font, writePath);
-				}
-				if (outputLmPath != null) {
-					double newDataInterpolationWeight = 0.5;
-					lm = reestimateLM(accumulatedTranscriptions, lm, newDataInterpolationWeight);
-					String writePath = writeIntermediateModelsToTemp ? makeLmPath(outputPath, iter, completedBatchesInIteration) : outputLmPath;
-					System.out.println("Writing updated lm to " + writePath);
-					InitializeLanguageModel.writeLM(lm, writePath);
-					backwardTransitionModel = new DenseBigramTransitionModel(lm);
-				}
-				if (outputGsmPath != null) {
-					System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+completedBatchesInIteration);
-					gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
-					String writePath = writeIntermediateModelsToTemp ? makeGsmPath(outputPath, iter, completedBatchesInIteration) : outputGsmPath;
-					System.out.println("Writing updated gsm to " + writePath);
-					InitializeGlyphSubstitutionModel.writeGSM(gsm, writePath);
-				}
-
-				// Clear counts at the end of a batch
-				System.out.println("Clearing font parameter statistics.");
-				clearTemplates(templates);
-				accumulatedTranscriptions = new ArrayList<DecodeState[][]>();
-				gsmCounts = gsmFactory.initializeNewCountsMatrix();
+				// write transcriptions and evaluate
+				Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = documentEvaluatorAndOutputPrinter.evaluateAndPrintTranscription(iter, 0, doc, decodeStates, inputDocPath, outputPath, outputFormats, lm);
+				if (evals._1 != null) allDiplomaticTrainEvals.add(Tuple2(doc.baseName(), evals._1));
+				if (evals._2 != null) allNormalizedTrainEvals.add(Tuple2(doc.baseName(), evals._2));
 				
-				double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
-				System.out.println("Completed Batch: Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
-				if (evalBatches) {
-					if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
-						if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
-							evalSetIterationEvaluator.transcribe(iter, completedBatchesInIteration, font, lm, gsm);
+				// m-step
+				if (isBatchComplete(numUsableDocs, docNum, batchDocsCounter, updateDocBatchSize, noUpdateIfBatchTooSmall)) {
+					++completedBatchesInIteration;
+					
+					if (outputFontPath != null) {
+						updateFontParameters(templates, numMstepThreads);
+						String writePath = writeIntermediateModelsToTemp ? makeFontPath(outputPath, iter, completedBatchesInIteration) : outputFontPath;
+						System.out.println("Writing updated font to " + writePath);
+						InitializeFont.writeFont(font, writePath);
+					}
+					if (outputLmPath != null) {
+						double newDataInterpolationWeight = 0.5;
+						lm = reestimateLM(accumulatedTranscriptions, lm, newDataInterpolationWeight);
+						String writePath = writeIntermediateModelsToTemp ? makeLmPath(outputPath, iter, completedBatchesInIteration) : outputLmPath;
+						System.out.println("Writing updated lm to " + writePath);
+						InitializeLanguageModel.writeLM(lm, writePath);
+						backwardTransitionModel = new DenseBigramTransitionModel(lm);
+					}
+					if (outputGsmPath != null) {
+						System.out.println("Estimating parameters of a new Glyph Substitution Model.  Iter: "+iter+", batch: "+completedBatchesInIteration);
+						gsm = gsmFactory.make(gsmCounts, iter, completedBatchesInIteration);
+						String writePath = writeIntermediateModelsToTemp ? makeGsmPath(outputPath, iter, completedBatchesInIteration) : outputGsmPath;
+						System.out.println("Writing updated gsm to " + writePath);
+						InitializeGlyphSubstitutionModel.writeGSM(gsm, writePath);
+					}
+	
+					// Clear counts at the end of a batch
+					System.out.println("Clearing font parameter statistics.");
+					clearTemplates(templates);
+					accumulatedTranscriptions = new ArrayList<DecodeState[][]>();
+					gsmCounts = gsmFactory.initializeNewCountsMatrix();
+					
+					double avgLogProb = ((double)totalBatchJointLogProb) / batchDocsCounter;
+					System.out.println("Completed Batch: Iteration "+iter+", batch "+completedBatchesInIteration+": avg joint log prob: " + avgLogProb + "    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
+					if (evalBatches) {
+						if (iter % evalFreq == 0 || iter == numEMIters) { // evaluate after evalFreq iterations, and at the very end
+							if (iter != numEMIters || docNum+1 != numUsableDocs) { // don't evaluate the last batch of the training because it will be done below
+								evalSetIterationEvaluator.transcribe(iter, completedBatchesInIteration, font, lm, gsm);
+							}
 						}
 					}
+					totalBatchJointLogProb = 0;
+					batchDocsCounter = 0;
+				} // end: m-step
+			} catch(RuntimeException e) {
+				if (skipFailedDocs) {
+					System.err.println("DOCUMENT FAILED! Skipping " + doc.baseName());
+					e.printStackTrace();
+				} else {
+					throw e;
 				}
-				totalBatchJointLogProb = 0;
-				batchDocsCounter = 0;
-			} // end: m-step
+			}
 		} // end: for (doc in usableDocs)
 		
 		// evaluate on training data

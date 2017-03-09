@@ -83,7 +83,8 @@ public class TrainFont extends FonttrainTranscribeShared {
 				numEMIters, updateDocBatchSize > 0 ? updateDocBatchSize : inputDocuments.size(), false, true,
 				numMstepThreads,
 				newInputDocPath, outputPath, outputFormats,
-				evalSetEvaluator, evalFreq, evalBatches);
+				evalSetEvaluator, evalFreq, evalBatches,
+				skipFailedDocs);
 	}
 
 }

@@ -100,6 +100,9 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 
 	// ##### Miscellaneous Options
 
+	@Option(gloss = "Should documents that cause errors be skipped instead of stopping the whole program?")
+	public static boolean skipFailedDocs = false;
+	
 	public static enum EmissionCacheInnerLoopType { DEFAULT, OPENCL, CUDA };
 	@Option(gloss = "Engine to use for inner loop of emission cache computation. `DEFAULT`: Uses Java on CPU, which works on any machine but is the slowest method. `OPENCL`: Faster engine that uses either the CPU or integrated GPU (depending on processor) and requires OpenCL installation. `CUDA`: Fastest method, but requires a discrete NVIDIA GPU and CUDA installation.")
 	public static EmissionCacheInnerLoopType emissionEngine = EmissionCacheInnerLoopType.DEFAULT; // Default: DEFAULT
@@ -309,7 +312,7 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 				if (doc.loadDiplomaticTextLines() == null & doc.loadNormalizedText() == null) 
 					throw new RuntimeException("Evaluation document "+doc.baseName()+" has no gold transcriptions.");
 			}
-			return new BasicMultiDocumentTranscriber(evalDocuments, evalInputDocPath, outputPath, parseOutputFormats(), decoderEM, documentOutputPrinterAndEvaluator, charIndexer);
+			return new BasicMultiDocumentTranscriber(evalDocuments, evalInputDocPath, outputPath, parseOutputFormats(), decoderEM, documentOutputPrinterAndEvaluator, charIndexer, skipFailedDocs);
 		}
 		else {
 			return new MultiDocumentTranscriber.NoOpMultiDocumentTranscriber();
