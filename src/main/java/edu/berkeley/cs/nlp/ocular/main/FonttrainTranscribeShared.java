@@ -180,7 +180,6 @@ public abstract class FonttrainTranscribeShared extends LineExtractionOptions {
 		}
 		if (formats.isEmpty()) {
 			formats.add(DIPL);
-			formats.add(ALTO); // Always output ALTO format from emop
 			if (allowGlyphSubstitution)
 				formats.add(NORM);
 		}
