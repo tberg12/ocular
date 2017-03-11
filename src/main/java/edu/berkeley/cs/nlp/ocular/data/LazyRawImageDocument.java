@@ -61,14 +61,14 @@ public abstract class LazyRawImageDocument implements Document {
 	final public PixelType[][][] loadLineImages() {
 	  if (observations == null) { // file has already been loaded in this Ocular run
 		    if (extractedLinesPath == null) { // no pre-extraction path given
-		    	doLoadObservationsFromFile(); // load data from original file
+		    	observations = doLoadObservationsFromFile(); // load data from original file
 		    }
 		    else { // a pre-extraction path was given
 		      if (extractionFilesPresent()) { // pre-extracted lines exist at the specified location
-		      	doLoadObservationsFromLineExtractionFiles(); // load data from pre-extracted line files
+		      	observations = doLoadObservationsFromLineExtractionFiles(); // load data from pre-extracted line files
 		      }
 		      else { // pre-extraction has not been done yet; do it now.
-		      	doLoadObservationsFromFile(); // load data from original file
+		      	observations = doLoadObservationsFromFile(); // load data from original file
 		      	writeExtractedLineImagesAggregateFile();
         		writeIndividualExtractedLineImageFiles(); // write extracted lines to files so they don't have to be re-extracted next time
 		      }
@@ -77,20 +77,21 @@ public abstract class LazyRawImageDocument implements Document {
 	  return observations;
 	}
 
-	private void doLoadObservationsFromFile() {
+	private PixelType[][][] doLoadObservationsFromFile() {
 		BufferedImage bi = doLoadBufferedImage();
 		double[][] levels = ImageUtils.getLevels(bi);
 		double[][] rotLevels = Straightener.straighten(levels);
 		double[][] cropLevels = crop ? Cropper.crop(rotLevels, binarizeThreshold) : rotLevels;
 		Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
 		List<double[][]> lines = LineExtractor.extractLines(cropLevels);
-		observations = new PixelType[lines.size()][][];
+		PixelType[][][] loadedObservations = new PixelType[lines.size()][][];
 		for (int i = 0; i < lines.size(); ++i) {
-			observations[i] = imageToObservation(ImageUtils.makeImage(lines.get(i)));
+			loadedObservations[i] = imageToObservation(ImageUtils.makeImage(lines.get(i)));
 		}
+		return loadedObservations;
 	}
 	
-	private void doLoadObservationsFromLineExtractionFiles() {
+	private PixelType[][][] doLoadObservationsFromLineExtractionFiles() {
 		System.out.println("Loading pre-extracted line images from " + leLineDir());
 		final Pattern pattern = Pattern.compile("line(\\d+)\\." + ext());
 		File[] lineImageFiles = new File(leLineDir()).listFiles(new FilenameFilter() {
@@ -102,19 +103,20 @@ public abstract class LazyRawImageDocument implements Document {
 		if (lineImageFiles.length == 0) throw new RuntimeException("lineImageFiles.length == 0");
 		Arrays.sort(lineImageFiles);
 
-		observations = new PixelType[lineImageFiles.length][][];
+		PixelType[][][] loadedObservations = new PixelType[lineImageFiles.length][][];
 		for (int i = 0; i < lineImageFiles.length; ++i) {
 			Matcher m = pattern.matcher(lineImageFiles[i].getName());
 			if (m.find() && Integer.valueOf(m.group(1)) != i) throw new RuntimeException("Trying to load lines from "+leLineDir()+" but the file for line "+i+" is missing (found "+m.group(1)+" instead).");
 			String lineImageFile = fullLeLinePath(i);
 			System.out.println("    Loading pre-extracted line from " + lineImageFile);
 			try {
-				observations[i] = imageToObservation(f.readImage(lineImageFile));
+				loadedObservations[i] = imageToObservation(f.readImage(lineImageFile));
 			}
 			catch (Exception e) {
 				throw new RuntimeException("Couldn't read line image from: " + lineImageFile, e);
 			}
 		}
+		return loadedObservations;
 	}
 	
 	private PixelType[][] imageToObservation(BufferedImage image) {
