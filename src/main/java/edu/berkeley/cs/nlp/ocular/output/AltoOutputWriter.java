@@ -92,9 +92,8 @@ public class AltoOutputWriter {
 			int wordWidth = 0;
 			while (dsIterator.hasNext()) {
 				DecodeState ds = dsIterator.next();
-				TransitionState ts = ds.ts;
-				boolean isSpace = ts != null ? ts.getLmCharIndex() == spaceCharIndex && ts.getGlyphChar().templateCharIndex == spaceCharIndex : true;
-				boolean isPunct = ts != null ? ts.getLmCharIndex() != hyphenCharIndex && Charset.isPunctuationChar(charIndexer.getObject(ts.getLmCharIndex())) : false;
+				boolean isSpace = ds != null ? ds.ts.getLmCharIndex() == spaceCharIndex && ds.ts.getGlyphChar().templateCharIndex == spaceCharIndex : true;
+				boolean isPunct = ds != null ? ds.ts.getLmCharIndex() != hyphenCharIndex && Charset.isPunctuationChar(charIndexer.getObject(ds.ts.getLmCharIndex())) : false;
 				boolean endOfSpan = (isSpace == inWord) || isPunct || !dsIterator.hasNext(); // end of word, contiguous space sequence, or line
 				
 				if (endOfSpan) { // if we're at a transition point between spans, we need to write out the complete span's information
