@@ -17,9 +17,9 @@ FixedAlignExperimentsMain.beamSize <  int> :  [50] {}
 FixedAlignExperimentsMain.numEMIters <  int> :  [4] {}
 FixedAlignExperimentsMain.emissionEngine < enum> :  [DEFAULT] {} DEFAULT|OPENCL|CUDA
 FixedAlignExperimentsMain.cudaDeviceID <  int> :  [0] {}
-FixedAlignExperimentsMain.numMstepThreads <  int> :  [4] {}
-FixedAlignExperimentsMain.numEmissionCacheThreads <  int> :  [4] {}
-FixedAlignExperimentsMain.numDecodeThreads <  int> :  [4] {}
+FixedAlignExperimentsMain.numMstepThreads <  int> :  [2] {}
+FixedAlignExperimentsMain.numEmissionCacheThreads <  int> :  [2] {}
+FixedAlignExperimentsMain.numDecodeThreads <  int> :  [2] {}
 FixedAlignExperimentsMain.popupVisuals < bool> :  [true] {}
 FixedAlignExperimentsMain.writeVisuals < bool> :  [true] {}
 FixedAlignExperimentsMain.evaluate < bool> :  [true] {}

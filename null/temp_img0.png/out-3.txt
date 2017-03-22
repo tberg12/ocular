@@ -1,29 +1,29 @@
- Or blessed was't we did?          
+ w                                 
 Or blessed was't we did?
 
-   Pros. Both, both my Girle.         
+                                      
 Pros. Both, both my Girle.
 
-  By fowle‑play (as thou saist) were we heau'd thence, 
+  Mw                                                   
 By fowle‑play (as thou saist) were we heau'd thence,
 
- But blessedly holpe hither.          
+                                       
 But blessedly holpe hither.
 
-   Mira. O my heart bleedes        
+                                   
 Mira. O my heart bleedes
 
- To thinke oth' teene that I haue turn'd you to,   
+                                                -   
 To thinke oth' teene that I haue turn'd you to,
 
- Which is from my remembrance, please you, farther;  
+                                                      
 Which is from my remembrance, please you, farther;
 
-CER, keep punc  : 0.0
-CER, keep punc, allow f->s: 0.0
-CER, remove punc: 0.0
-CER, remove punc, allow f->s: 0.0
-WER, keep punc  : 0.0
-WER, keep punc, allow f->s: 0.0
-WER, remove punc: 0.0
-WER, remove punc, allow f->s: 0.0
+CER, keep punc  : 0.984375
+CER, keep punc, allow f->s: 0.984375
+CER, remove punc: 0.9873949579831933
+CER, remove punc, allow f->s: 0.9873949579831933
+WER, keep punc  : 1.0
+WER, keep punc, allow f->s: 1.0
+WER, remove punc: 1.0
+WER, remove punc, allow f->s: 1.0

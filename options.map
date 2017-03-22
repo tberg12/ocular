@@ -17,9 +17,9 @@ FixedAlignExperimentsMain.beamSize	50
 FixedAlignExperimentsMain.numEMIters	4
 FixedAlignExperimentsMain.emissionEngine	DEFAULT
 FixedAlignExperimentsMain.cudaDeviceID	0
-FixedAlignExperimentsMain.numMstepThreads	4
-FixedAlignExperimentsMain.numEmissionCacheThreads	4
-FixedAlignExperimentsMain.numDecodeThreads	4
+FixedAlignExperimentsMain.numMstepThreads	2
+FixedAlignExperimentsMain.numEmissionCacheThreads	2
+FixedAlignExperimentsMain.numDecodeThreads	2
 FixedAlignExperimentsMain.popupVisuals	true
 FixedAlignExperimentsMain.writeVisuals	true
 FixedAlignExperimentsMain.evaluate	true
