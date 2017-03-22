@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.sun.org.apache.bcel.internal.generic.LMUL;
+
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import sun.security.util.Length;
@@ -28,7 +30,7 @@ public class FixedLanguageModel {
 		charIndexer = new CharIndexer();		
 		fixedText = new ArrayList<Integer>();
 		
-		fixedProb = 1.0 - 1e-20;
+		fixedProb = 1-1e-15;
 		
 		charIndexer.getIndex(Charset.SPACE);
 		charIndexer.getIndex(Charset.HYPHEN);
@@ -50,12 +52,13 @@ public class FixedLanguageModel {
 	      throw new RuntimeException(e);
 	    }
 		
-		subProb = (1.0-fixedProb)/(charIndexer.size()-1);
+		subProb = (1-fixedProb)/charIndexer.size();
+		System.out.println(subProb);
 	}
 	
 
-	public double getCharNgramProb(int nextChar, int c) {
-		if (c == nextChar) {
+	public double getCharNgramProb(int pos, int c) {
+		if (c == this.getCharAtPos(pos)) {
 			return fixedProb;
 		}
 		

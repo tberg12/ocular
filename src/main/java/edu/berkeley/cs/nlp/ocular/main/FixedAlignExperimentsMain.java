@@ -36,6 +36,7 @@ import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOff
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModelMarkovOffset;
+import edu.berkeley.cs.nlp.ocular.model.transition.FixedAlignTransition;
 import edu.berkeley.cs.nlp.ocular.model.transition.ForcedAlignmentTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
@@ -93,13 +94,13 @@ public class FixedAlignExperimentsMain implements Runnable {
 	public static int cudaDeviceID = 0;
 	
 	@Option(gloss = "")
-	public static int numMstepThreads = 4;
+	public static int numMstepThreads = 2;
 	
 	@Option(gloss = "")
-	public static int numEmissionCacheThreads = 4;
+	public static int numEmissionCacheThreads = 2;
 	
 	@Option(gloss = "")
-	public static int numDecodeThreads = 4;
+	public static int numDecodeThreads = 2;
 
 	
 	@Option(gloss = "")
@@ -134,7 +135,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 		
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 		
-		String lmFileName = "temp_img0.txt";
+		String lmFileName = "temp_img0_mod.txt";
 		
 //		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 	
@@ -168,7 +169,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 			
 			SparseTransitionModel forwardTransitionModel = null;
 			
-			forwardTransitionModel = new ForcedAlignmentTransitionModel(lm);			
+			forwardTransitionModel = new FixedAlignTransition(lm);			
 			
 			DenseBigramTransitionModel nullBackwardTransitionModel = new DenseBigramTransitionModel(lm.getCharacterIndexer().size());
 			
