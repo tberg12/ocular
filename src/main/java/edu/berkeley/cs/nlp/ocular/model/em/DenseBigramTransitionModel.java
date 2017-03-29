@@ -19,13 +19,15 @@ public class DenseBigramTransitionModel {
 		
 		this.starts = new double[numC];
 		for (int c=0; c<numC; ++c) {
-			this.starts[c] = Math.log(lm.getCharNgramProb(new int[0], c));
+//			this.starts[c] = Math.log(lm.getCharNgramProb(new int[0], c));
+			this.starts[c] = Math.log(1.0);
 		}
 		
 		this.forwardTrans = new double[numC][numC];
 		for (int prevC=0; prevC<numC; ++prevC) {
 			for (int c=0; c<numC; ++c) {
-				this.forwardTrans[prevC][c] = Math.log(lm.getCharNgramProb(new int[] {prevC}, c));
+//				this.forwardTrans[prevC][c] = Math.log(lm.getCharNgramProb(new int[] {prevC}, c));
+				this.forwardTrans[prevC][c] = Math.log(1.0);
 			}
 		}
 		int spaceIndex = lm.getCharacterIndexer().getIndex(Charset.SPACE);

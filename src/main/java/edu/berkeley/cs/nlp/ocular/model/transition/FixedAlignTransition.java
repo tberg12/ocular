@@ -58,7 +58,7 @@ public class FixedAlignTransition implements SparseTransitionModel {
 		}
 		
 		public int hashCode() {
-			return 1013 * Integer.hashCode(pos) + 1009 * this.type.ordinal() + 1013 * Integer.hashCode(lmCharIndex);
+			return 1013 * Integer.hashCode(pos) + 1009 * this.type.ordinal() + 1019 * Integer.hashCode(lmCharIndex);
 		}
 		
 		public Collection<Tuple2<TransitionState,Double>> nextLineStartStates() {
@@ -76,9 +76,11 @@ public class FixedAlignTransition implements SparseTransitionModel {
 						}
 					}
 					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
-						double score = Math.log((1.0 - LINE_MRGN_PROB)) + scoreWithSpace + Math.log(lm.getCharNgramProb(pos+2, c));
-						if (score != Double.NEGATIVE_INFINITY) {
-							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+2, c, TransitionStateType.TMPL), score));
+						if (c != spaceCharIndex && !isPunc[c]) {
+							double score = Math.log((1.0 - LINE_MRGN_PROB)) + scoreWithSpace + Math.log(lm.getCharNgramProb(pos+2, c));
+							if (score != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+2, c, TransitionStateType.TMPL), score));
+							}
 						}
 					}
 				}

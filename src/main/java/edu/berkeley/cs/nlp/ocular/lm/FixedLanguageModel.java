@@ -22,17 +22,18 @@ public class FixedLanguageModel {
 	private Indexer<String> charIndexer;
 	private int maxOrder;
 	List<Integer> fixedText;
-	private final double fixedProb;
-	private final double subProb;
+	
+	private int[] counts;
+	
+	private double[][] transitionProb;
 	
 	public FixedLanguageModel(String fileName) {
 		maxOrder = 1;
 		charIndexer = new CharIndexer();		
 		fixedText = new ArrayList<Integer>();
 		
-		double eps = 1e-15;
-		
-		fixedProb = 1-eps;
+		double eps = 1e-15;		
+		double fixedProb = 1-eps;
 		
 		charIndexer.getIndex(Charset.HYPHEN);
 		
@@ -51,21 +52,32 @@ public class FixedLanguageModel {
 	      in.close();
 	    } catch (IOException e) {
 	      throw new RuntimeException(e);
-	    }		
+	    }
 
 		charIndexer.getIndex(Charset.SPACE);
 		
-		subProb = eps/(charIndexer.size()-1);
+		double subProb = eps/(charIndexer.size()-1);
 		System.out.println(subProb);
+		
+		this.transitionProb = new double[charIndexer.size()][charIndexer.size()];
+		
+		for (int i = 0; i<this.transitionProb.length; i++) {
+			Arrays.fill(this.transitionProb[i], subProb);
+			this.transitionProb[i][i] = fixedProb;
+		}
+		
+		this.counts = new int[charIndexer.size()];
+		Arrays.fill(counts, 0);
+		
+		for (int c : fixedText) {
+			counts[c] += 1;
+		}
+		
 	}
 	
 
-	public double getCharNgramProb(int pos, int c) {
-		if (c == this.getCharAtPos(pos)) {
-			return fixedProb;
-		}
-		
-		return subProb;
+	public double getCharNgramProb(int pos, int c) {		
+		return transitionProb[this.getCharAtPos(pos)][c];
 	}
 	
 	public int getCharAtPos(int pos) {
@@ -98,6 +110,23 @@ public class FixedLanguageModel {
 	public boolean containsContext(int[] context) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+	
+	public void updateProbs(String guess) {
+		
+		for (int i = 0; i<this.transitionProb.length; i++) {
+			Arrays.fill(this.transitionProb[i], 0.0);
+		}		
+							
+		for (int pos=0; pos<guess.length(); pos++) {
+			transitionProb[getCharAtPos(pos)][getCharacterIndexer().getIndex(String.valueOf(guess.charAt(pos)))] += 1;
+		}
+		
+		for (int i = 0; i<this.transitionProb.length; i++) {
+			for (int j = 0; j<this.transitionProb[i].length; j++) {
+				transitionProb[i][j] /= counts[i];
+			}
+		}		
 	}
 	
 }

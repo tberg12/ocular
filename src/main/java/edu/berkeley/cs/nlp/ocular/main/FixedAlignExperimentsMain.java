@@ -82,7 +82,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 	public static boolean markovVerticalOffset = false;
 	
 	@Option(gloss = "")
-	public static int beamSize = 200;
+	public static int beamSize = 50;
 	
 	@Option(gloss = "")
 	public static int numEMIters = 4;
@@ -197,12 +197,17 @@ public class FixedAlignExperimentsMain implements Runnable {
 				System.out.println("Iteration "+iter+": "+logJointProb);
 
 				// visualize
-				printTranscription(iter, doc, allEvals, pixels, text, decodeStates, decodeWidths, charIndexer, templates, emissionModel);
-
+				String guess = printTranscription(iter, doc, allEvals, pixels, text, decodeStates, decodeWidths, charIndexer, templates, emissionModel);
+			
 				if (iter < numEMIters-1) {
 					// m-step
 					nanoTime = System.nanoTime();
 					{
+						guess = guess.replaceAll("\\s+", " ");
+						guess = guess.trim();
+												
+						lm.updateProbs(guess.concat(" "));
+						
 						for (int c=0; c<templates.length; ++c) if (templates[c] != null) templates[c].clearCounts();
 						BetterThreader.Function<Integer,Object> func1 = new BetterThreader.Function<Integer,Object>(){public void call(Integer line, Object ignore){
 							emissionModel.incrementCounts(line, decodeStates[line], decodeWidths[line]);
@@ -261,7 +266,8 @@ public class FixedAlignExperimentsMain implements Runnable {
 		System.out.println(buf.toString());
 	}
 	
-	private static void printTranscription(int iter, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, PixelType[][][] pixels, String[][] text, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, CharacterTemplate[] templates, EmissionModel emissionModel) {
+	private static String printTranscription(int iter, Document doc, List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals, PixelType[][][] pixels, String[][] text, TransitionState[][] decodeStates, int[][] decodeWidths, Indexer<String> charIndexer, CharacterTemplate[] templates, EmissionModel emissionModel) {
+		StringBuffer guessOut = new StringBuffer();
 		if (evaluate || writeVisuals || popupVisuals) {
 			@SuppressWarnings("unchecked")
 			List<Integer>[] segmentBoundaries = new List[pixels.length];
@@ -334,6 +340,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 			}
 			double[][][] alphabetBlackProbs = new double[1][alphabetBlackProbsList.size()][];
 			for (int i=0; i<alphabetBlackProbsList.size(); ++i) alphabetBlackProbs[0][i] = alphabetBlackProbsList.get(i);
+			
 
 			if (text != null && evaluate) {
 				@SuppressWarnings("unchecked")
@@ -349,6 +356,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 				for (int d=0; d<viterbiChars.length; ++d) {
 					for (String c : viterbiChars[d]) {
 						guessAndGoldOut.append(c);
+						guessOut.append(c);
 					}
 					guessAndGoldOut.append("\n");
 					for (String c : goldCharSequences[d]) {
@@ -356,6 +364,8 @@ public class FixedAlignExperimentsMain implements Runnable {
 					}
 					guessAndGoldOut.append("\n");
 					guessAndGoldOut.append("\n");
+
+					guessOut.append("\n");
 				}
 
 				Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences, true);
@@ -368,7 +378,6 @@ public class FixedAlignExperimentsMain implements Runnable {
 				outputDir.mkdirs();
 				f.writeString(Execution.getVirtualExecDir()+"/"+outputRelPath+"/"+doc.baseName()+"/out-"+iter+".txt", guessAndGoldOut.toString()+Evaluator.renderEval(evals));
 			} else {
-				StringBuffer guessOut = new StringBuffer();
 				for (int d=0; d<viterbiChars.length; ++d) {
 					for (String c : viterbiChars[d]) {
 						guessOut.append(c);
@@ -397,6 +406,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 				ImageUtils.display(Visualizer.renderBlackProbsAndSegmentation(pixelsBlackProbs, segmentBoundaries));
 			}
 		}
+		return guessOut.toString();
 	}
 
 }
