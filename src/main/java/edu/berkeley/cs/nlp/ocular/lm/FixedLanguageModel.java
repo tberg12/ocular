@@ -30,9 +30,10 @@ public class FixedLanguageModel {
 		charIndexer = new CharIndexer();		
 		fixedText = new ArrayList<Integer>();
 		
-		fixedProb = 1-1e-15;
+		double eps = 1e-15;
 		
-		charIndexer.getIndex(Charset.SPACE);
+		fixedProb = 1-eps;
+		
 		charIndexer.getIndex(Charset.HYPHEN);
 		
 		try {
@@ -50,9 +51,11 @@ public class FixedLanguageModel {
 	      in.close();
 	    } catch (IOException e) {
 	      throw new RuntimeException(e);
-	    }
+	    }		
+
+		charIndexer.getIndex(Charset.SPACE);
 		
-		subProb = (1-fixedProb)/charIndexer.size();
+		subProb = eps/(charIndexer.size()-1);
 		System.out.println(subProb);
 	}
 	

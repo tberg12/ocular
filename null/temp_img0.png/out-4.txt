@@ -1,29 +1,29 @@
- O                                 
+ w                                 
 Or blessed was't we did?
 
                                       
 Pros. Both, both my Girle.
 
- O                                                    
+  ww                                                   
 By fowle‑play (as thou saist) were we heau'd thence,
 
-  OO                                   
+   w                                   
 But blessedly holpe hither.
 
                                    
 Mira. O my heart bleedes
 
- O                                              -   
+                                                -   
 To thinke oth' teene that I haue turn'd you to,
 
- O                                                    
+                                                      
 Which is from my remembrance, please you, farther;
 
 CER, keep punc  : 0.97265625
 CER, keep punc, allow f->s: 0.97265625
 CER, remove punc: 0.9747899159663865
 CER, remove punc, allow f->s: 0.9747899159663865
-WER, keep punc  : 0.9782608695652174
-WER, keep punc, allow f->s: 0.9782608695652174
-WER, remove punc: 0.9782608695652174
-WER, remove punc, allow f->s: 0.9782608695652174
+WER, keep punc  : 1.0
+WER, keep punc, allow f->s: 1.0
+WER, remove punc: 1.0
+WER, remove punc, allow f->s: 1.0

@@ -1,22 +1,22 @@
 All evals:
 Document: temp_img0.png
-CER, keep punc  : 0.984375
-CER, keep punc, allow f->s: 0.984375
-CER, remove punc: 0.9873949579831933
-CER, remove punc, allow f->s: 0.9873949579831933
-WER, keep punc  : 1.0
-WER, keep punc, allow f->s: 1.0
-WER, remove punc: 1.0
-WER, remove punc, allow f->s: 1.0
+CER, keep punc  : 0.9765625
+CER, keep punc, allow f->s: 0.9765625
+CER, remove punc: 0.9789915966386554
+CER, remove punc, allow f->s: 0.9789915966386554
+WER, keep punc  : 0.9782608695652174
+WER, keep punc, allow f->s: 0.9782608695652174
+WER, remove punc: 0.9782608695652174
+WER, remove punc, allow f->s: 0.9782608695652174
 
 
 Marco-avg total eval:
-CER, keep punc  : 0.984375
-CER, keep punc, allow f->s: 0.984375
-CER, remove punc: 0.9873949579831933
-CER, remove punc, allow f->s: 0.9873949579831933
-WER, keep punc  : 1.0
-WER, keep punc, allow f->s: 1.0
-WER, remove punc: 1.0
-WER, remove punc, allow f->s: 1.0
+CER, keep punc  : 0.9765625
+CER, keep punc, allow f->s: 0.9765625
+CER, remove punc: 0.9789915966386554
+CER, remove punc, allow f->s: 0.9789915966386554
+WER, keep punc  : 0.9782608695652174
+WER, keep punc, allow f->s: 0.9782608695652174
+WER, remove punc: 0.9782608695652174
+WER, remove punc, allow f->s: 0.9782608695652174
 

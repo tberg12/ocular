@@ -17,6 +17,7 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.WhitelistCharacterSetTextReade
 import edu.berkeley.cs.nlp.ocular.data.textreader.FlipUVTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.RemoveAllDiacriticsTextReader;
 import edu.berkeley.cs.nlp.ocular.data.textreader.TextReader;
+import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel.LMType;
 import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
@@ -86,8 +87,8 @@ public class LMTrainMain implements Runnable {
 		writeLM(lm, lmPath);
 	}
 	
-	public static SingleLanguageModel readLM(String lmPath) {
-		SingleLanguageModel lm = null;
+	public static BasicCodeSwitchLanguageModel readLM(String lmPath) {
+		BasicCodeSwitchLanguageModel lm = null;
 		try {
 			File file = new File(lmPath);
 			if (!file.exists()) {
@@ -96,7 +97,7 @@ public class LMTrainMain implements Runnable {
 			}
 			FileInputStream fileIn = new FileInputStream(file);
 			ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(fileIn));
-			lm = (SingleLanguageModel) in.readObject();
+			lm = (BasicCodeSwitchLanguageModel) in.readObject();
 			in.close();
 			fileIn.close();
 		} catch(Exception e) {

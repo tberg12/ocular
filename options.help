@@ -13,7 +13,7 @@ FixedAlignExperimentsMain.lmBaseName <  str> :  [english] {}
 FixedAlignExperimentsMain.paddingMinWidth <  int> :  [1] {}
 FixedAlignExperimentsMain.paddingMaxWidth <  int> :  [5] {}
 FixedAlignExperimentsMain.markovVerticalOffset < bool> :  [false] {}
-FixedAlignExperimentsMain.beamSize <  int> :  [50] {}
+FixedAlignExperimentsMain.beamSize <  int> :  [200] {}
 FixedAlignExperimentsMain.numEMIters <  int> :  [4] {}
 FixedAlignExperimentsMain.emissionEngine < enum> :  [DEFAULT] {} DEFAULT|OPENCL|CUDA
 FixedAlignExperimentsMain.cudaDeviceID <  int> :  [0] {}

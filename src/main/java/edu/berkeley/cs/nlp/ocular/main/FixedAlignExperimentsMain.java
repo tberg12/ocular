@@ -20,6 +20,7 @@ import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
+import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.FixedLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
@@ -81,7 +82,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 	public static boolean markovVerticalOffset = false;
 	
 	@Option(gloss = "")
-	public static int beamSize = 50;
+	public static int beamSize = 200;
 	
 	@Option(gloss = "")
 	public static int numEMIters = 4;
@@ -167,11 +168,13 @@ public class FixedAlignExperimentsMain implements Runnable {
 
 			final EmissionModel emissionModel = (markovVerticalOffset ? new CachingEmissionModelExplicitOffset(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : new CachingEmissionModel(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
 			
+			final BasicCodeSwitchLanguageModel lm2 = LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser");
+			
 			SparseTransitionModel forwardTransitionModel = null;
 			
-			forwardTransitionModel = new FixedAlignTransition(lm);			
+			forwardTransitionModel = new FixedAlignTransition(lm);
 			
-			DenseBigramTransitionModel nullBackwardTransitionModel = new DenseBigramTransitionModel(lm.getCharacterIndexer().size());
+			DenseBigramTransitionModel nullBackwardTransitionModel = new DenseBigramTransitionModel(lm2);
 			
 			long emissionCacheNanoTime = System.nanoTime();
 			emissionModel.rebuildCache();

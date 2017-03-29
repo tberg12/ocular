@@ -47,6 +47,8 @@ public class FixedAlignTransition implements SparseTransitionModel {
 		    		return false;
 		    	} else if (this.pos != that.pos) {
 		    		return false;
+		    	} else if (this.lmCharIndex != that.lmCharIndex) {
+		    		return false;
 		    	} else {
 		    		return true;
 		    	}
@@ -56,7 +58,7 @@ public class FixedAlignTransition implements SparseTransitionModel {
 		}
 		
 		public int hashCode() {
-			return 1013 * Integer.hashCode(pos) + 1009 * this.type.ordinal();
+			return 1013 * Integer.hashCode(pos) + 1009 * this.type.ordinal() + 1013 * Integer.hashCode(lmCharIndex);
 		}
 		
 		public Collection<Tuple2<TransitionState,Double>> nextLineStartStates() {
@@ -88,9 +90,11 @@ public class FixedAlignTransition implements SparseTransitionModel {
 					}
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
-					double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
-					if (score != Double.NEGATIVE_INFINITY) {
-						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+					if (c != spaceCharIndex && !isPunc[c]) {
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+						}
 					}
 				}
 			} else if (type == TransitionStateType.RMRGN_HPHN || type == TransitionStateType.RMRGN_HPHN_INIT) {
@@ -114,9 +118,11 @@ public class FixedAlignTransition implements SparseTransitionModel {
 					}
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
-					double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
-					if (score != Double.NEGATIVE_INFINITY) {
-						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+					if (c != spaceCharIndex && !isPunc[c]) {
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+						}
 					}
 				}
 			}
@@ -139,9 +145,11 @@ public class FixedAlignTransition implements SparseTransitionModel {
 					}
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
-					double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
-					if (score != Double.NEGATIVE_INFINITY) {
-						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+					if (c != spaceCharIndex && !isPunc[c]) {
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+						}
 					}
 				}
 			} else if (type == TransitionStateType.LMRGN_HPHN) {
@@ -152,9 +160,11 @@ public class FixedAlignTransition implements SparseTransitionModel {
 					}
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
-					double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
 					if (c != spaceCharIndex && !isPunc[c]) {
-						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
+						if (c != spaceCharIndex && !isPunc[c]) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+						}
 					}
 				}
 			} else if (type == TransitionStateType.RMRGN) {
@@ -249,7 +259,9 @@ public class FixedAlignTransition implements SparseTransitionModel {
 		List<Tuple2<TransitionState,Double>> result = new ArrayList<Tuple2<TransitionState,Double>>();
 		result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(-1, -1, TransitionStateType.LMRGN), Math.log(LINE_MRGN_PROB)));
 		for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+			if (c != spaceCharIndex && !isPunc[c]) {
 			result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(0, c, TransitionStateType.TMPL), Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(0, c))));
+			}
 		}
 		return result;
 	}

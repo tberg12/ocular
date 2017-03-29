@@ -85,6 +85,7 @@ public abstract class LazyRawImageDocument implements Document {
 		Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
 		List<double[][]> lines = LineExtractor.extractLines(cropLevels);
 		PixelType[][][] loadedObservations = new PixelType[lines.size()][][];
+
 		for (int i = 0; i < lines.size(); ++i) {
 			loadedObservations[i] = imageToObservation(ImageUtils.makeImage(lines.get(i)));
 		}

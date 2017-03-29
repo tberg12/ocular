@@ -13,7 +13,7 @@ FixedAlignExperimentsMain.lmBaseName	english
 FixedAlignExperimentsMain.paddingMinWidth	1
 FixedAlignExperimentsMain.paddingMaxWidth	5
 FixedAlignExperimentsMain.markovVerticalOffset	false
-FixedAlignExperimentsMain.beamSize	50
+FixedAlignExperimentsMain.beamSize	200
 FixedAlignExperimentsMain.numEMIters	4
 FixedAlignExperimentsMain.emissionEngine	DEFAULT
 FixedAlignExperimentsMain.cudaDeviceID	0
