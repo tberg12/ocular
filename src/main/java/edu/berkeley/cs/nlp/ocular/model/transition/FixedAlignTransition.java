@@ -17,7 +17,7 @@ import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 
 /**
- * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ * @author Shruti Rijhwani
  */
 public class FixedAlignTransition implements SparseTransitionModel {
 	

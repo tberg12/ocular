@@ -49,7 +49,7 @@ import tberg.murphy.indexer.Indexer;
 import tberg.murphy.threading.BetterThreader;
 
 /**
- * @author Taylor Berg-Kirkpatrick (tberg@eecs.berkeley.edu)
+ * @author Shruti Rijhwani
  */
 public class FixedAlignExperimentsMain implements Runnable {
 	
