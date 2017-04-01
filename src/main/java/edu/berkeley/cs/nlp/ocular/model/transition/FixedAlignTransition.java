@@ -77,11 +77,34 @@ public class FixedAlignTransition implements SparseTransitionModel {
 					}
 					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
 						if (c != spaceCharIndex && !isPunc[c]) {
-							double score = Math.log((1.0 - LINE_MRGN_PROB)) + scoreWithSpace + Math.log(lm.getCharNgramProb(pos+2, c));
+							double score = Math.log((1.0 - LINE_MRGN_PROB)) + scoreWithSpace + Math.log(lm.getInsertProb(-1)) + Math.log(lm.getKeepProb(lm.getCharAtPos(pos+2))) + Math.log(lm.getCharNgramProb(pos+2, c));
 							if (score != Double.NEGATIVE_INFINITY) {
 								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+2, c, TransitionStateType.TMPL), score));
 							}
+							
+							score = Math.log((1.0 - LINE_MRGN_PROB)) + scoreWithSpace + Math.log(lm.getInsertProb(c));
+							if (score != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+							}
 						}
+					}
+					
+					int curPos = pos+2;
+					double score = Math.log((1.0 - LINE_MRGN_PROB)) + scoreWithSpace;
+					
+					while(lm.getCharAtPos(curPos) != spaceCharIndex) {
+						score += Math.log(lm.getDeleteProb(lm.getCharAtPos(curPos)));
+						
+						for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+							if (c != spaceCharIndex && !isPunc[c]) {
+								double score2 = score + Math.log(lm.getKeepProb(lm.getCharAtPos(curPos+1))) + Math.log(lm.getCharNgramProb(curPos+1, c));
+								if (score2 != Double.NEGATIVE_INFINITY) {
+									result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(curPos+1, c, TransitionStateType.TMPL), score2));
+								}
+							}
+						}						
+						
+						curPos += 1;
 					}
 				}
 			} else if (type == TransitionStateType.RMRGN) {
@@ -93,11 +116,33 @@ public class FixedAlignTransition implements SparseTransitionModel {
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
 					if (c != spaceCharIndex && !isPunc[c]) {
-						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(-1)) + Math.log(lm.getKeepProb(lm.getCharAtPos(pos+1))) + Math.log(lm.getCharNgramProb(pos+1, c));
 						if (score != Double.NEGATIVE_INFINITY) {
 							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
 						}
+						
+						score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos, c, TransitionStateType.TMPL), score));
+						}
 					}
+				}
+				
+				int curPos = pos+1;
+				double score = Math.log((1.0 - LINE_MRGN_PROB));
+				
+				while(lm.getCharAtPos(curPos) != spaceCharIndex) {
+					score += Math.log(lm.getDeleteProb(lm.getCharAtPos(curPos)));
+					
+					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+						if (c != spaceCharIndex && !isPunc[c]) {
+							double score2 = score + Math.log(lm.getKeepProb(lm.getCharAtPos(curPos+1))) + Math.log(lm.getCharNgramProb(curPos+1, c));
+							if (score2 != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(curPos+1, c, TransitionStateType.TMPL), score2));
+							}							
+						}
+					}
+					curPos += 1;
 				}
 			} else if (type == TransitionStateType.RMRGN_HPHN || type == TransitionStateType.RMRGN_HPHN_INIT) {
 				{
@@ -107,10 +152,33 @@ public class FixedAlignTransition implements SparseTransitionModel {
 					}
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
-					double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
 					if (c != spaceCharIndex && !isPunc[c]) {
-						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(-1)) + Math.log(lm.getKeepProb(lm.getCharAtPos(pos+1))) + Math.log(lm.getCharNgramProb(pos+1, c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
+						}
+						
+						score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos, c, TransitionStateType.TMPL), score));
+						}
 					}
+				}
+				int curPos = pos+1;
+				double score = Math.log((1.0 - LINE_MRGN_PROB));
+				
+				while(lm.getCharAtPos(curPos) != spaceCharIndex) {
+					score += Math.log(lm.getDeleteProb(lm.getCharAtPos(curPos)));
+					
+					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+						if (c != spaceCharIndex && !isPunc[c]) {
+							double score2 = score + Math.log(lm.getKeepProb(lm.getCharAtPos(curPos+1))) + Math.log(lm.getCharNgramProb(curPos+1, c));
+							if (score2 != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(curPos+1, c, TransitionStateType.TMPL), score2));
+							}
+						}
+					}
+					curPos += 1;
 				}
 			} else if (type == TransitionStateType.LMRGN || type == TransitionStateType.LMRGN_HPHN) {
 				{
@@ -121,11 +189,33 @@ public class FixedAlignTransition implements SparseTransitionModel {
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
 					if (c != spaceCharIndex && !isPunc[c]) {
-						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(-1)) + Math.log(lm.getKeepProb(lm.getCharAtPos(pos+1))) + Math.log(lm.getCharNgramProb(pos+1, c));
 						if (score != Double.NEGATIVE_INFINITY) {
 							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
 						}
+						
+						score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos, c, TransitionStateType.TMPL), score));
+						}
 					}
+				}
+				int curPos = pos+1;
+				double score = Math.log((1.0 - LINE_MRGN_PROB));
+				
+				while(lm.getCharAtPos(curPos) != spaceCharIndex) {
+					score += Math.log(lm.getDeleteProb(lm.getCharAtPos(curPos)));
+					
+					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+						if (c != spaceCharIndex && !isPunc[c]) {
+							double score2 = score + Math.log(lm.getKeepProb(lm.getCharAtPos(curPos+1))) + Math.log(lm.getCharNgramProb(curPos+1, c));
+							if (score2 != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(curPos+1, c, TransitionStateType.TMPL), score2));
+							}
+						}
+					}						
+					
+					curPos += 1;
 				}
 			}
 			return result;
@@ -148,11 +238,33 @@ public class FixedAlignTransition implements SparseTransitionModel {
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
 					if (c != spaceCharIndex && !isPunc[c]) {
-						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(-1)) + Math.log(lm.getKeepProb(lm.getCharAtPos(pos+1))) + Math.log(lm.getCharNgramProb(pos+1, c));
 						if (score != Double.NEGATIVE_INFINITY) {
 							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
 						}
+						
+						score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos, c, TransitionStateType.TMPL), score));
+						}
 					}
+				}
+				int curPos = pos+1;
+				double score = Math.log((1.0 - LINE_MRGN_PROB));
+				
+				while(lm.getCharAtPos(curPos) != spaceCharIndex) {
+					score += Math.log(lm.getDeleteProb(lm.getCharAtPos(curPos)));
+					
+					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+						if (c != spaceCharIndex && !isPunc[c]) {
+							double score2 = score + Math.log(lm.getKeepProb(lm.getCharAtPos(curPos+1))) + Math.log(lm.getCharNgramProb(curPos+1, c));
+							if (score2 != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(curPos+1, c, TransitionStateType.TMPL), score2));
+							}
+						}
+					}						
+					
+					curPos += 1;
 				}
 			} else if (type == TransitionStateType.LMRGN_HPHN) {
 				{
@@ -163,11 +275,33 @@ public class FixedAlignTransition implements SparseTransitionModel {
 				}
 				for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
 					if (c != spaceCharIndex && !isPunc[c]) {
-						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, c));
-						if (c != spaceCharIndex && !isPunc[c]) {
+						double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(-1)) + Math.log(lm.getKeepProb(lm.getCharAtPos(pos+1))) + Math.log(lm.getCharNgramProb(pos+1, c));
+						if (score != Double.NEGATIVE_INFINITY) {
 							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, c, TransitionStateType.TMPL), score));
 						}
+						
+						score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(c));
+						if (score != Double.NEGATIVE_INFINITY) {
+							result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos, c, TransitionStateType.TMPL), score));
+						}						
 					}
+				}
+				int curPos = pos+1;
+				double score = Math.log((1.0 - LINE_MRGN_PROB));
+				
+				while(lm.getCharAtPos(curPos) != spaceCharIndex) {
+					score += Math.log(lm.getDeleteProb(lm.getCharAtPos(curPos)));
+					
+					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+						if (c != spaceCharIndex && !isPunc[c]) {
+							double score2 = score + Math.log(lm.getKeepProb(lm.getCharAtPos(curPos+1))) + Math.log(lm.getCharNgramProb(curPos+1, c));
+							if (score2 != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(curPos+1, c, TransitionStateType.TMPL), score2));
+							}
+						}
+					}						
+					
+					curPos += 1;
 				}
 			} else if (type == TransitionStateType.RMRGN) {
 				double score = Math.log(LINE_MRGN_PROB);
@@ -198,10 +332,29 @@ public class FixedAlignTransition implements SparseTransitionModel {
 					}
 				}
 				for (int nextC=0; nextC<lm.getCharacterIndexer().size(); ++nextC) {
-					double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getCharNgramProb(pos+1, nextC));
+					double score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(-1)) + Math.log(lm.getKeepProb(lm.getCharAtPos(pos+1))) + Math.log(lm.getCharNgramProb(pos+1, nextC));
 					if (score != Double.NEGATIVE_INFINITY) {
 						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos+1, nextC, TransitionStateType.TMPL), score));
 					}
+					
+					score = Math.log((1.0 - LINE_MRGN_PROB)) + Math.log(lm.getInsertProb(nextC));
+					if (score != Double.NEGATIVE_INFINITY) {
+						result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(pos, nextC, TransitionStateType.TMPL), score));
+					}
+				}
+				int curPos = pos+1;
+				double score = Math.log((1.0 - LINE_MRGN_PROB));
+				
+				while(lm.getCharAtPos(curPos) != spaceCharIndex) {
+					score += Math.log(lm.getDeleteProb(lm.getCharAtPos(curPos)));
+					
+					for (int c=0; c<lm.getCharacterIndexer().size(); ++c) {
+							double score2 = score + Math.log(lm.getKeepProb(lm.getCharAtPos(curPos+1))) + Math.log(lm.getCharNgramProb(curPos+1, c));
+							if (score2 != Double.NEGATIVE_INFINITY) {
+								result.add(Tuple2((TransitionState) new CharacterNgramTransitionState(curPos+1, c, TransitionStateType.TMPL), score2));
+							}						
+					}		
+					curPos += 1;
 				}
 			}
 			return result;
@@ -217,7 +370,8 @@ public class FixedAlignTransition implements SparseTransitionModel {
 		}
 		
 		public int getOffset() {
-			throw new Error("Method not implemented");
+//			throw new Error("Method not implemented");
+			return pos;
 		}
 		
 		public int getExposure() {

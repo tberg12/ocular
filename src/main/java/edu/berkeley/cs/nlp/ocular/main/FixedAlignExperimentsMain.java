@@ -136,12 +136,12 @@ public class FixedAlignExperimentsMain implements Runnable {
 		
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 		
-		String lmFileName = "temp_img0_mod.txt";
+		String lmFileName = "short_temp_mod.txt";
 		
 //		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 	
 		List<String> paths = new ArrayList<String>();
-		paths.add("temp_img0.png");
+		paths.add("short_temp.png");
 		
 		List<Document> documents = LazyRawImageLoader.loadDocuments(paths, null, Integer.MAX_VALUE, 0, true, 0.12, false);
 		
@@ -203,10 +203,10 @@ public class FixedAlignExperimentsMain implements Runnable {
 					// m-step
 					nanoTime = System.nanoTime();
 					{
-						guess = guess.replaceAll("\\s+", " ");
-						guess = guess.trim();
+//						guess = guess.replaceAll("\\s+", " ");
+//						guess = guess.trim();
 												
-						lm.updateProbs(guess.concat(" "));
+						lm.updateProbs(decodeStates);
 						
 						for (int c=0; c<templates.length; ++c) if (templates[c] != null) templates[c].clearCounts();
 						BetterThreader.Function<Integer,Object> func1 = new BetterThreader.Function<Integer,Object>(){public void call(Integer line, Object ignore){
