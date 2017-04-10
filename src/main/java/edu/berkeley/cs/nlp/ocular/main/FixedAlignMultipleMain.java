@@ -51,7 +51,7 @@ import tberg.murphy.threading.BetterThreader;
 /**
  * @author Shruti Rijhwani
  */
-public class FixedAlignExperimentsMain implements Runnable {
+public class FixedAlignMultipleMain implements Runnable {
 	
 	@Option(gloss = "")
 //	public static String inputPath = "/Users/tberg/git/ocular/names.txt";
@@ -117,7 +117,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 	public static enum EmissionCacheInnerLoopType {DEFAULT, OPENCL, CUDA};
 
 	public static void main(String[] args) {
-		FixedAlignExperimentsMain main = new FixedAlignExperimentsMain();
+		FixedAlignMultipleMain main = new FixedAlignMultipleMain();
 		Execution.run(args, main);
 	}
 
@@ -142,45 +142,53 @@ public class FixedAlignExperimentsMain implements Runnable {
 	
 		List<String> paths = new ArrayList<String>();
 		paths.add("1.png");
+		paths.add("2.png");
+		paths.add("3.png");
+		paths.add("4.png");
 		
 		List<Document> documents = LazyRawImageLoader.loadDocuments(paths, null, Integer.MAX_VALUE, 0, true, 0.13, false);
 		
 		if (documents.isEmpty()) throw new NoDocumentsFoundException();
+		
+		System.out.println("Loading LM..");
+		
+		final FixedLanguageModel lm = new FixedLanguageModel(lmFileName);
+		final Indexer<String> charIndexer = lm.getCharacterIndexer();
+		
+		System.out.println("Loading font initializer..");
+		Font font = InitializeFont.readFont(fontPath);
+		final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
+		for (int c=0; c<templates.length; ++c) {
+			templates[c] = font.get(charIndexer.getObject(c));
+		}
+		
+		System.out.println("Characters: " + charIndexer.getObjects());
+		System.out.println("Num characters: " + charIndexer.size());			
 
-		for (Document doc : documents) {
-			System.out.println("Loading LM..");
-			boolean useLongS = false;
-			final FixedLanguageModel lm = new FixedLanguageModel(lmFileName);
-			final Indexer<String> charIndexer = lm.getCharacterIndexer();
-			
-			System.out.println("Loading font initializer..");
-			Font font = InitializeFont.readFont(fontPath);
-			final CharacterTemplate[] templates = new CharacterTemplate[charIndexer.size()];
-			for (int c=0; c<templates.length; ++c) {
-				templates[c] = font.get(charIndexer.getObject(c));
-			}
-			
-			System.out.println("Characters: " + charIndexer.getObjects());
-			System.out.println("Num characters: " + charIndexer.size());
-			
-			final PixelType[][][] pixels = doc.loadLineImages();
-			final String[][] text = doc.loadDiplomaticTextLines();
+		final BasicCodeSwitchLanguageModel lm2 = LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser");
+		
 
-			final EmissionModel emissionModel = (markovVerticalOffset ? new CachingEmissionModelExplicitOffset(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : new CachingEmissionModel(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+		for (int iter=0; iter<numEMIters; ++iter) {
 			
-			final BasicCodeSwitchLanguageModel lm2 = LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser");
+			List<TransitionState[][]> nDecodeStates = new ArrayList<TransitionState[][]>();
 			
-			SparseTransitionModel forwardTransitionModel = null;
+			for (Document doc : documents) {
+				
+				final PixelType[][][] pixels = doc.loadLineImages();
+				final String[][] text = doc.loadDiplomaticTextLines();
+	
+				final EmissionModel emissionModel = (markovVerticalOffset ? new CachingEmissionModelExplicitOffset(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop) : new CachingEmissionModel(templates, charIndexer, pixels, paddingMinWidth, paddingMaxWidth, emissionInnerLoop));
+								
+				SparseTransitionModel forwardTransitionModel = null;
+				
+				forwardTransitionModel = new FixedAlignTransition(lm);
+				
+				DenseBigramTransitionModel nullBackwardTransitionModel = new DenseBigramTransitionModel(lm2);
+				
+				long emissionCacheNanoTime = System.nanoTime();
+				emissionModel.rebuildCache();
+				overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 			
-			forwardTransitionModel = new FixedAlignTransition(lm);
-			
-			DenseBigramTransitionModel nullBackwardTransitionModel = new DenseBigramTransitionModel(lm2);
-			
-			long emissionCacheNanoTime = System.nanoTime();
-			emissionModel.rebuildCache();
-			overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
-
-			for (int iter=0; iter<numEMIters; ++iter) {
 				// e-step
 				System.out.println("Iteration "+iter+" e-step");
 				double logJointProb = Double.NEGATIVE_INFINITY;
@@ -197,16 +205,13 @@ public class FixedAlignExperimentsMain implements Runnable {
 				System.out.println("Iteration "+iter+": "+logJointProb);
 
 				// visualize
-				String guess = printTranscription(iter, doc, allEvals, pixels, text, decodeStates, decodeWidths, charIndexer, templates, emissionModel);
+				printTranscription(iter, doc, allEvals, pixels, text, decodeStates, decodeWidths, charIndexer, templates, emissionModel);
 			
 				if (iter < numEMIters-1) {
 					// m-step
 					nanoTime = System.nanoTime();
-					{
-//						guess = guess.replaceAll("\\s+", " ");
-//						guess = guess.trim();
-												
-//						lm.updateProbs(decodeStates);
+					{												
+						nDecodeStates.add(decodeStates);
 						
 						for (int c=0; c<templates.length; ++c) if (templates[c] != null) templates[c].clearCounts();
 						BetterThreader.Function<Integer,Object> func1 = new BetterThreader.Function<Integer,Object>(){public void call(Integer line, Object ignore){
@@ -227,6 +232,10 @@ public class FixedAlignExperimentsMain implements Runnable {
 					emissionModel.rebuildCache();
 					overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 				}
+			}
+
+			if (nDecodeStates.size() > 0) {
+				lm.updateProbs(nDecodeStates);
 			}
 		}
 		
@@ -369,7 +378,7 @@ public class FixedAlignExperimentsMain implements Runnable {
 				}
 
 				Map<String,EvalSuffStats> evals = Evaluator.getUnsegmentedEval(viterbiChars, goldCharSequences, true);
-				if (iter == FixedAlignExperimentsMain.numEMIters-1) {
+				if (iter == FixedAlignMultipleMain.numEMIters-1) {
 					allEvals.add(Tuple2(doc.baseName(), evals));
 				}
 				System.out.println(guessAndGoldOut.toString()+Evaluator.renderEval(evals));
