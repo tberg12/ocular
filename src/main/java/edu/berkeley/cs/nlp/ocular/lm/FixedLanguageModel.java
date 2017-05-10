@@ -9,10 +9,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import edu.berkeley.cs.nlp.ocular.data.textreader.CharIndexer;
 import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
+import edu.berkeley.cs.nlp.ocular.lm.SearchStateModel.SearchState;
+import edu.berkeley.cs.nlp.ocular.main.LMTrainMain;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
 import edu.berkeley.cs.nlp.ocular.model.transition.FixedAlignTransition;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
@@ -38,7 +41,13 @@ public class FixedLanguageModel {
 	
 	private double noInsert;
 	
-	private int spaceIndex;
+	private int spaceIndex;	
+
+	private static String lmDir = "/Users/shruti/Documents/HistoricalOcr/ocular/lm";
+	private static String lmBaseName = "nyt";
+	
+	LanguageModel lm;
+	HashMap<Integer, Integer> lmMapping;
 	
 	private void langModelInit() {
 
@@ -107,6 +116,14 @@ public class FixedLanguageModel {
 	    }
 
 		this.spaceIndex = charIndexer.getIndex(Charset.SPACE);
+		
+		this.lm = LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser");
+		
+		lmMapping = new HashMap<Integer, Integer>();
+		
+		for (int c=0; c<charIndexer.size(); c++) {
+			lmMapping.put(c, this.lm.getCharacterIndexer().getIndex(this.getCharacterIndexer().getObject(c)));
+		}
 				
 		langModelInit();
 	}
@@ -171,123 +188,28 @@ public class FixedLanguageModel {
 		}
 	}
 	
-	private void updateModern(List<List<TransitionState>> nDocStates) {
-		List<Integer> newText = new ArrayList<Integer>();
-		int docPos[] = new int[nDocStates.size()];
-		Arrays.fill(docPos, 0);
+	private String updateModern(List<Transcription> docs) {
+		SearchStateModel sm = new SearchStateModel(substituteProb, insertProb, deleteProb, noInsert, this.getCharacterIndexer().size(), docs, lm, lmMapping);
 		
-		for (int pos=0; pos<this.fixedText.size(); pos++) {
-			HashMap<String, Pair<Integer, Double>> score = new HashMap<>();
-			HashMap<String, Pair<Integer, Double>> insert = new HashMap<>();
-			
-			for (int doc=0; doc<nDocStates.size(); doc++) {
-				List<TransitionState> curDoc = nDocStates.get(doc);
-				if (curDoc.size()-1 < docPos[doc]) {
-					continue;
-				}
-				TransitionState state = curDoc.get(docPos[doc]);
-				
-				if (state.getOffset() > pos) {
-					Pair<Integer, Double> curValue = score.get("$");
-					
-					if (curValue == null) {
-						curValue = new Pair<Integer, Double>(0, 0.0);
-					}
-					
-					score.put("$", new Pair<Integer, Double>(curValue.getKey()+1, this.deleteProb[fixedText.get(pos)]));
-					continue;
-				}
-				
-				if (state.getOffset() == pos) {
-					String charAtPos = Integer.toString(state.getLmCharIndex());
-					Pair<Integer, Double> curValue = score.get(charAtPos);
-					
-					if (curValue == null) {
-						curValue = new Pair<Integer, Double>(0, 0.0);
-					}
-					
-					score.put(charAtPos, new Pair<Integer, Double>(curValue.getKey()+1, this.substituteProb[fixedText.get(pos)][state.getLmCharIndex()]));
-				}
-				
-				int curDocPos = docPos[doc] + 1;
-				String posInsert = "";
-				double insertProb = 1.0;
-				
-				while (curDocPos < curDoc.size()) {
-					state = curDoc.get(curDocPos);
-					if (state.getOffset() != pos) {
-						break;
-					}
-					posInsert += Integer.toString(state.getLmCharIndex()) + " ";
-					insertProb *= this.insertProb[state.getLmCharIndex()];
-					curDocPos += 1;
-				}
-				
-				if (posInsert.length() == 0) {
-					posInsert = "$";
-					insertProb = this.noInsert;
-				}
-					
-				Pair<Integer, Double> curValue = insert.get(posInsert.trim());
-				
-				if (curValue == null) {
-					curValue = new Pair<Integer, Double>(0, 0.0);
-				}
-				
-				insert.put(posInsert.trim(), new Pair<Integer, Double>(curValue.getKey()+1, insertProb));
-				
-				docPos[doc] = curDocPos;
+		BeamSearch beamSearch = new BeamSearch(5, 3, sm, docs.get(0).getDocLength()+20);
+		
+		List<SearchState> bestPath = beamSearch.startBeam();
+		
+		ListIterator<SearchState> li = bestPath.listIterator(bestPath.size());
+		
+		String text = "";
+		
+		while (li.hasPrevious()) {
+			SearchState searchState = li.previous();
+			if (searchState.getContext().length < 1) {
+				continue;
 			}
-			
-			double max = 0.0;
-			int count = 0;
-			String toPut = "";
-			
-			for (String key : score.keySet()) {
-				Pair<Integer, Double> val = score.get(key);
-				if (val.getKey() > count) {
-					max = val.getValue();
-					toPut = key;
-					count = val.getKey();
-				}
-				else if (val.getKey() == count && val.getValue() > max) {
-					max = val.getValue();
-					toPut = key;
-				}
-			}
-			
-			if (toPut != "$" && toPut != "") {
-				newText.add(Integer.parseInt(toPut));
-			}
-			
-			max = 0.0;
-			toPut = "";
-			count = 0;
-			
-			for (String key : insert.keySet()) {
-				Pair<Integer, Double> val = insert.get(key);
-				if (val.getKey() > count) {
-					max = val.getValue();
-					toPut = key;
-					count = val.getKey();
-				}
-				else if (val.getKey() == count && val.getValue() > max) {
-					max = val.getValue();
-					toPut = key;
-				}
-			}
-			
-			String[] spl = toPut.split(" ");
-			
-			for (String val : spl) {
-				if (val == "$" || val == "") {
-					continue;
-				}
-				newText.add(Integer.parseInt(val));
-			}
+			text += this.lm.getCharacterIndexer().getObject(searchState.getContext()[searchState.getContext().length-1]);
 		}
-		this.printFixedText();
-		this.fixedText = newText;
+		
+		System.out.println(text);
+		
+		return text;		
 	}
 	
 	public void updateProbs(List<TransitionState[][]> nDecodeStates) {
@@ -301,12 +223,15 @@ public class FixedLanguageModel {
 		double numInserts = 0;
 		int numChars = 0;
 		
-		List<List<TransitionState>> flattened = new ArrayList<List<TransitionState>>();
+//		List<List<TransitionState>> flattened = new ArrayList<List<TransitionState>>();
+		List<Transcription> docs = new ArrayList<Transcription>();
 				
 		for (TransitionState[][] decodeState : nDecodeStates) {	
 			int prevPos = -1;
 			
-			List<TransitionState> curDoc = new ArrayList<TransitionState>();
+			List<Integer> curDoc = new ArrayList<Integer>();
+			
+//			List<TransitionState> curDoc = new ArrayList<TransitionState>();
 			
 			for(TransitionState[] line : decodeState) {
 				for(TransitionState state : line) {
@@ -314,7 +239,7 @@ public class FixedLanguageModel {
 						continue;
 					}
 					
-					curDoc.add(state);
+					curDoc.add(state.getLmCharIndex());
 					
 					numChars += 1;
 					
@@ -342,10 +267,12 @@ public class FixedLanguageModel {
 					prevPos += 1;
 					substituteProb[this.spaceIndex][this.spaceIndex] += 1;
 					
-					TransitionState spaceState = new TempTransitionState(prevPos, spaceIndex, TransitionStateType.TMPL);											curDoc.add(spaceState);					
+					TransitionState spaceState = new TempTransitionState(prevPos, spaceIndex, TransitionStateType.TMPL);											
+					curDoc.add(this.spaceIndex);					
 				}
 			}
-			flattened.add(curDoc);
+//			flattened.add(curDoc);
+			docs.add(new Transcription(curDoc));
 		}		
 		
 		for (int i = 0; i<this.substituteProb.length; i++) {
@@ -373,7 +300,7 @@ public class FixedLanguageModel {
 			deleteProb[i] /= counts[i];
 		}
 		
-		this.updateModern(flattened);
+		this.updateModern(docs);
 		this.printFixedText();
 		this.langModelInit();
 	}

@@ -68,7 +68,7 @@ public class FixedAlignMultipleMain implements Runnable {
 	public static String lmDir = "/Users/shruti/Documents/HistoricalOcr/ocular/lm";
 	
 	@Option(gloss = "")
-	public static String lmBaseName = "english";
+	public static String lmBaseName = "nyt";
 	
 	
 	@Option(gloss = "")
@@ -141,12 +141,12 @@ public class FixedAlignMultipleMain implements Runnable {
 //		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 	
 		List<String> paths = new ArrayList<String>();
-		paths.add("1.png");
-		paths.add("2.png");
-		paths.add("3.png");
-		paths.add("4.png");
+		paths.add("9.jpg");
+//		paths.add("16.jpg");
+//		paths.add("3.png");
+//		paths.add("4.png");
 		
-		List<Document> documents = LazyRawImageLoader.loadDocuments(paths, null, Integer.MAX_VALUE, 0, true, 0.13, false);
+		List<Document> documents = LazyRawImageLoader.loadDocuments(paths, null, Integer.MAX_VALUE, 0, true, 0.12, false);
 		
 		if (documents.isEmpty()) throw new NoDocumentsFoundException();
 		

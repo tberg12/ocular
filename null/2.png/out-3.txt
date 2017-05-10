@@ -1,0 +1,23 @@
+ Lea. Heare me recreant,on thine allegeance heare me;
+Lea. Heare me recreant,on thine allegeance heare me;
+
+ That thou haſt ſought to make vs breake our vowes, 
+That thou hast sought to make vs breake our vowes,
+
+ Which we durſt neuer yet; and with ſtrain'd pride,  
+Which we durst neuer yet; and with strain'd pride,
+
+ To come betwixt our ſentence,,and our power,  
+To come betwixt our sentences,and our power,
+
+ Which,nor our nature,nor our place,can beare;   
+Which,nor our nature,nor our place,can beare;
+
+CER, keep punc  : 0.024489795918367346
+CER, keep punc, allow f->s: 0.024489795918367346
+CER, remove punc: 0.02586206896551724
+CER, remove punc, allow f->s: 0.02586206896551724
+WER, keep punc  : 0.125
+WER, keep punc, allow f->s: 0.125
+WER, remove punc: 0.125
+WER, remove punc, allow f->s: 0.125
