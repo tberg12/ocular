@@ -65,7 +65,8 @@ public class DecoderEM {
 		
 		DecodeState[][] allDecodeStates = new DecodeState[pixels.length][0];
 
-		int totalNanoTime = 0;
+		long totalDecodeNanoTime = 0;
+		long totalEmitNanoTime = 0;
 		double totalJointLogProb = 0.0;
 		int numBatches = (int) Math.ceil(pixels.length / (double) decodeBatchSize);
 		for (int b = 0; b < numBatches; ++b) {
@@ -86,18 +87,20 @@ public class DecoderEM {
 			final EmissionModel batchEmissionModel = emissionModelFactory.make(templates, batchPixels);
 			System.out.println("Rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//long emissionCacheNanoTime = System.nanoTime();
+			long nanoTime = System.nanoTime();
 			batchEmissionModel.rebuildCache();
+			totalEmitNanoTime += (System.nanoTime() - nanoTime);
 			System.out.println("Done rebuilding cache    " + (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Calendar.getInstance().getTime())));
 			//overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 
-			long nanoTime = System.nanoTime();
+			nanoTime = System.nanoTime();
 			System.out.println("Constructing forwardTransitionModel");
 			SparseTransitionModel forwardTransitionModel = constructTransitionModel(lm, gsm);
 			BeamingSemiMarkovDP dp = new BeamingSemiMarkovDP(batchEmissionModel, forwardTransitionModel, backwardTransitionModel);
 			System.out.println("Ready to run decoder");
 			Tuple2<Tuple2<TransitionState[][], int[][]>, Double> decodeStatesAndWidthsAndJointLogProb = dp.decode(beamSize, numDecodeThreads);
 			System.out.println("Done running decoder");
-			totalNanoTime += (System.nanoTime() - nanoTime);
+			totalDecodeNanoTime += (System.nanoTime() - nanoTime);
 			final TransitionState[][] batchDecodeStates = decodeStatesAndWidthsAndJointLogProb._1._1;
 			final int[][] batchDecodeWidths = decodeStatesAndWidthsAndJointLogProb._1._2;
 			totalJointLogProb += decodeStatesAndWidthsAndJointLogProb._2;
@@ -122,7 +125,8 @@ public class DecoderEM {
 				incrementCounts(batchEmissionModel, batchDecodeStates, batchDecodeWidths);
 			}
 		}
-		System.out.println("Decode: " + (totalNanoTime / 1000000) + "ms");
+		System.out.println("Emission cache: " + (totalEmitNanoTime / 1000000) + "ms");
+		System.out.println("Decode: " + (totalDecodeNanoTime / 1000000) + "ms");
 		double avgLogProb = totalJointLogProb / numBatches;
 		return Tuple2(allDecodeStates, avgLogProb);
 	}
