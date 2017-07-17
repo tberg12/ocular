@@ -64,7 +64,7 @@ Continued development of Ocular is supported in part by a [Digital Humanities Im
 
 ### Obtaining Ocular
 
-The easiest way to get the Ocular software is to download the self-contained jar from http://www.cs.utexas.edu/~dhg/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.3-SNAPSHOT/ocular-0.3-SNAPSHOT-with_dependencies.jar
+The easiest way to get the Ocular software is to download the self-contained jar from http://www.dhgarrette.com/maven-repository/snapshots/edu/berkeley/cs/nlp/ocular/0.3-SNAPSHOT/ocular-0.3-SNAPSHOT-with_dependencies.jar
 
 Once you have this jar, you will be able to run Ocular according to the instructions below in the [Using Ocular](#using-ocular) section; the code in this repository is not a requirement if all you'd like to do is run the software.
 
@@ -98,7 +98,7 @@ Alternatively, if you do not wish to create the entire jar, you can run `make_ru
 
   To incorporate Ocular into a larger project, you may use a dependency management system like Maven or SBT with the following information:
 
-    Repository location: http://www.cs.utexas.edu/~dhg/maven-repository/snapshots
+    Repository location: http://www.dhgarrette.com/maven-repository/snapshots
     Group ID: edu.berkeley.cs.nlp
     Artifact ID: ocular
     Version: 0.3-SNAPSHOT
