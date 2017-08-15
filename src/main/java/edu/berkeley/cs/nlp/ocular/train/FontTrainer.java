@@ -207,8 +207,12 @@ public class FontTrainer {
 							charRegion[j] = lineImages[d][t+j];
 						}
 						
-						f.writeString("/Users/tberg/Desktop/output/extraction_doc_"+doc.baseName()+"_line_"+d+"_char_"+i+".txt", "char:\t"+charIndexer.getObject(state.ts.getGlyphChar().templateCharIndex)+"\n"+"exposure:\t"+state.exposure+"\n"+"offset:\t"+state.verticalOffset+"\n");
-						f.writeImage("/Users/tberg/Desktop/output/extraction_doc_"+doc.baseName()+"_line_"+d+"_char_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
+						f.writeString("/Users/tberg/Desktop/output/extraction_doc_"+docNum+"_line_"+d+"_char_"+i+".txt", "char:\t"+charIndexer.getObject(state.ts.getGlyphChar().templateCharIndex)+"\n"
+								+"log prob:\t"+templates[state.ts.getGlyphChar().templateCharIndex].emissionLogProb(lineImages[d], t, t+state.charWidth, state.exposure, state.verticalOffset)+"\n"
+								+"exposure:\t"+state.exposure+"\n"
+								+"offset:\t"+state.verticalOffset+"\n"
+								+"doc:\t"+doc.baseName());
+						f.writeImage("/Users/tberg/Desktop/output/extraction_doc_"+docNum+"_line_"+d+"_char_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
 						
 						t += state.charAndPadWidth;
 					}
