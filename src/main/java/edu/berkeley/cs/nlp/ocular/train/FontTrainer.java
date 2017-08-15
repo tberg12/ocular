@@ -25,6 +25,9 @@ import edu.berkeley.cs.nlp.ocular.eval.SingleDocumentEvaluatorAndOutputPrinter;
 import edu.berkeley.cs.nlp.ocular.font.Font;
 import edu.berkeley.cs.nlp.ocular.gsm.BasicGlyphSubstitutionModel.BasicGlyphSubstitutionModelFactory;
 import edu.berkeley.cs.nlp.ocular.gsm.GlyphSubstitutionModel;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
+import edu.berkeley.cs.nlp.ocular.image.Visualizer;
+import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.CorpusCounter;
@@ -46,6 +49,7 @@ import edu.berkeley.cs.nlp.ocular.util.CollectionHelper;
 import edu.berkeley.cs.nlp.ocular.util.StringHelper;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
 import edu.berkeley.cs.nlp.ocular.util.Tuple3;
+import tberg.murphy.fileio.f;
 import tberg.murphy.indexer.Indexer;
 import tberg.murphy.threading.BetterThreader;
 
@@ -189,6 +193,27 @@ public class FontTrainer {
 				accumulatedTranscriptions.add(decodeStates);
 				List<DecodeState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 				gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
+				
+				PixelType[][][] lineImages = doc.loadLineImages();
+				
+				// write char region template images
+				for (int d=0; d<decodeStates.length; ++d) {
+					int t=0;
+					for (int i=0; i<decodeStates[i].length; ++i) {
+						DecodeState state = decodeStates[d][i];
+						
+						PixelType[][] charRegion = new PixelType[state.charWidth][];
+						for (int j=0; j<state.charWidth; ++j) {
+							charRegion[j] = lineImages[d][t+j];
+						}
+						
+						System.out.println("XXX");
+						f.writeImage("/Users/tberg/Desktop/output/char"+d+"_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
+						
+						
+						t += state.charAndPadWidth;
+					}
+				}
 				
 				// write transcriptions and evaluate
 				Tuple2<Map<String, EvalSuffStats>,Map<String, EvalSuffStats>> evals = documentEvaluatorAndOutputPrinter.evaluateAndPrintTranscription(iter, 0, doc, decodeStates, inputDocPath, outputPath, outputFormats, lm);
