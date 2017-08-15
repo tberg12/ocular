@@ -199,7 +199,7 @@ public class FontTrainer {
 				// write char region template images
 				for (int d=0; d<decodeStates.length; ++d) {
 					int t=0;
-					for (int i=0; i<decodeStates[i].length; ++i) {
+					for (int i=0; i<decodeStates[d].length; ++i) {
 						DecodeState state = decodeStates[d][i];
 						
 						PixelType[][] charRegion = new PixelType[state.charWidth][];
@@ -207,9 +207,8 @@ public class FontTrainer {
 							charRegion[j] = lineImages[d][t+j];
 						}
 						
-						System.out.println("XXX");
-						f.writeImage("/Users/tberg/Desktop/output/char"+d+"_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
-						
+						f.writeString("/Users/tberg/Desktop/output/extraction_doc_"+doc.baseName()+"_line_"+d+"_char_"+i+".txt", "char:\t"+charIndexer.getObject(state.ts.getGlyphChar().templateCharIndex)+"\n"+"exposure:\t"+state.exposure+"\n"+"offset:\t"+state.verticalOffset+"\n");
+						f.writeImage("/Users/tberg/Desktop/output/extraction_doc_"+doc.baseName()+"_line_"+d+"_char_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
 						
 						t += state.charAndPadWidth;
 					}
