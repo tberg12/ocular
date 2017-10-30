@@ -141,7 +141,7 @@ public class FixedAlignMultipleMain implements Runnable {
 //		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 	
 		List<String> paths = new ArrayList<String>();
-		paths.add("9.jpg");
+		paths.add("16.jpg");
 //		paths.add("16.jpg");
 //		paths.add("3.png");
 //		paths.add("4.png");

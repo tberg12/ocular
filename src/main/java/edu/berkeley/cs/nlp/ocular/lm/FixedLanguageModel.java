@@ -17,11 +17,8 @@ import edu.berkeley.cs.nlp.ocular.data.textreader.Charset;
 import edu.berkeley.cs.nlp.ocular.lm.SearchStateModel.SearchState;
 import edu.berkeley.cs.nlp.ocular.main.LMTrainMain;
 import edu.berkeley.cs.nlp.ocular.model.TransitionStateType;
-import edu.berkeley.cs.nlp.ocular.model.transition.FixedAlignTransition;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
-import javafx.util.Pair;
 import tberg.murphy.indexer.Indexer;
-import tberg.murphy.math.m;
 
 /**
  * @author Shruti Rijhwani
@@ -44,7 +41,7 @@ public class FixedLanguageModel {
 	private int spaceIndex;	
 
 	private static String lmDir = "/Users/shruti/Documents/HistoricalOcr/ocular/lm";
-	private static String lmBaseName = "nyt";
+	private static String lmBaseName = "sp";
 	
 	LanguageModel lm;
 	HashMap<Integer, Integer> lmMapping;
@@ -53,9 +50,8 @@ public class FixedLanguageModel {
 
 		double eps = 1e-15;		
 		double fixedProb = 1-eps;
-		noInsert = 1-1e-15;
-		double subProb = (1-fixedProb)/(charIndexer.size()-1);
-		System.out.println(subProb);	
+		noInsert = 1-eps;
+		double subProb = eps/(charIndexer.size()-1);	
 
 		int sCharIndex = charIndexer.contains("s") ? charIndexer.getIndex("s") : -1;
 		int longsIndex = charIndexer.getIndex(Charset.LONG_S);
@@ -77,7 +73,7 @@ public class FixedLanguageModel {
 		
 		for (int c : fixedText) {
 			counts[c] += 1;
-		}	
+		}
 		
 		this.insertProb = new double[charIndexer.size()];
 		double insProb = (1-noInsert)/charIndexer.size();
@@ -103,8 +99,7 @@ public class FixedLanguageModel {
 	      while (in.ready()) {
 	        String line = in.readLine();
 	        for (int i = 0; i < line.length(); i++) {
-	        	String toAdd = Character.toString(line.charAt(i));
-	        	
+	        	String toAdd = Character.toString(line.charAt(i));	        	
 	        	int index = charIndexer.getIndex(toAdd);
 	        	fixedText.add(index);
 	        }
@@ -223,15 +218,12 @@ public class FixedLanguageModel {
 		double numInserts = 0;
 		int numChars = 0;
 		
-//		List<List<TransitionState>> flattened = new ArrayList<List<TransitionState>>();
 		List<Transcription> docs = new ArrayList<Transcription>();
 				
 		for (TransitionState[][] decodeState : nDecodeStates) {	
 			int prevPos = -1;
 			
 			List<Integer> curDoc = new ArrayList<Integer>();
-			
-//			List<TransitionState> curDoc = new ArrayList<TransitionState>();
 			
 			for(TransitionState[] line : decodeState) {
 				for(TransitionState state : line) {
@@ -266,12 +258,10 @@ public class FixedLanguageModel {
 					numChars += 1;
 					prevPos += 1;
 					substituteProb[this.spaceIndex][this.spaceIndex] += 1;
-					
-					TransitionState spaceState = new TempTransitionState(prevPos, spaceIndex, TransitionStateType.TMPL);											
+															
 					curDoc.add(this.spaceIndex);					
 				}
 			}
-//			flattened.add(curDoc);
 			docs.add(new Transcription(curDoc));
 		}		
 		

@@ -13,7 +13,6 @@ import java.util.Map;
 import tberg.murphy.arrays.a;
 import edu.berkeley.cs.nlp.ocular.data.Document;
 import edu.berkeley.cs.nlp.ocular.data.LazyRawImageLoader;
-import edu.berkeley.cs.nlp.ocular.data.TextAndLineImagesLoader;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator;
 import edu.berkeley.cs.nlp.ocular.eval.Evaluator.EvalSuffStats;
 import edu.berkeley.cs.nlp.ocular.font.Font;
@@ -21,10 +20,7 @@ import edu.berkeley.cs.nlp.ocular.image.ImageUtils;
 import edu.berkeley.cs.nlp.ocular.image.ImageUtils.PixelType;
 import edu.berkeley.cs.nlp.ocular.image.Visualizer;
 import edu.berkeley.cs.nlp.ocular.lm.BasicCodeSwitchLanguageModel;
-import edu.berkeley.cs.nlp.ocular.lm.CodeSwitchLanguageModel;
 import edu.berkeley.cs.nlp.ocular.lm.FixedLanguageModel;
-import edu.berkeley.cs.nlp.ocular.lm.NgramLanguageModel;
-import edu.berkeley.cs.nlp.ocular.lm.SingleLanguageModel;
 import edu.berkeley.cs.nlp.ocular.model.CharacterTemplate;
 import edu.berkeley.cs.nlp.ocular.model.em.BeamingSemiMarkovDP;
 import edu.berkeley.cs.nlp.ocular.model.em.CUDAInnerLoop;
@@ -35,10 +31,7 @@ import edu.berkeley.cs.nlp.ocular.model.em.JOCLInnerLoop;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModel;
 import edu.berkeley.cs.nlp.ocular.model.emission.CachingEmissionModelExplicitOffset;
 import edu.berkeley.cs.nlp.ocular.model.emission.EmissionModel;
-import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModel;
-import edu.berkeley.cs.nlp.ocular.model.transition.CharacterNgramTransitionModelMarkovOffset;
 import edu.berkeley.cs.nlp.ocular.model.transition.FixedAlignTransition;
-import edu.berkeley.cs.nlp.ocular.model.transition.ForcedAlignmentTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel;
 import edu.berkeley.cs.nlp.ocular.model.transition.SparseTransitionModel.TransitionState;
 import edu.berkeley.cs.nlp.ocular.util.Tuple2;
@@ -62,13 +55,13 @@ public class CollationMain implements Runnable {
 	
 	
 	@Option(gloss = "")
-	public static String fontPath = "/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser";
+	public static String fontPath = "/Users/shruti/Documents/HistoricalOcr/ocular/font/spfont.fontser";
 	
 	@Option(gloss = "")
 	public static String lmDir = "/Users/shruti/Documents/HistoricalOcr/ocular/lm";
 	
 	@Option(gloss = "")
-	public static String lmBaseName = "spanish";
+	public static String lmBaseName = "sp";
 	
 	
 	@Option(gloss = "")
@@ -136,12 +129,12 @@ public class CollationMain implements Runnable {
 		
 		List<Tuple2<String,Map<String,EvalSuffStats>>> allEvals = new ArrayList<Tuple2<String,Map<String,EvalSuffStats>>>();
 		
-		String lmFileName = "test.txt";
+		String lmFileName = "testsp.txt";
 		
 //		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 	
 		List<String> paths = new ArrayList<String>();
-		paths.add("9.jpg");
+//		paths.add("9.jpg");
 		paths.add("16.jpg");
 //		paths.add("3.png");
 //		paths.add("4.png");
@@ -156,12 +149,12 @@ public class CollationMain implements Runnable {
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		
 		System.out.println("Loading font initializer..");
-		Font font = InitializeFont.readFont(fontPath);
 		final CharacterTemplate[][] templatesArray = new CharacterTemplate[documents.size()][charIndexer.size()];
 		
-		for (int d=0; d<documents.size(); d++) {
-			for (int c=0; c<templatesArray.length; ++c) {
-				templatesArray[d][c] = font.get(charIndexer.getObject(c));
+		for(int d=0; d<documents.size(); d++) {
+			Font font = InitializeFont.readFont(fontPath);
+			for (int c=0; c<templatesArray[d].length; ++c) {
+					templatesArray[d][c] = font.get(charIndexer.getObject(c));
 			}
 		}				
 		
@@ -170,7 +163,6 @@ public class CollationMain implements Runnable {
 
 		final BasicCodeSwitchLanguageModel lm2 = LMTrainMain.readLM(lmDir+"/"+lmBaseName+".lmser");
 		
-
 		for (int iter=0; iter<numEMIters; ++iter) {
 			
 			List<TransitionState[][]> nDecodeStates = new ArrayList<TransitionState[][]>();
@@ -233,9 +225,9 @@ public class CollationMain implements Runnable {
 						threader2.run();
 					}
 					System.out.println("Update parameters: " + (System.nanoTime() - nanoTime)/1000000 + "ms");
-					emissionCacheNanoTime = System.nanoTime();
-					emissionModel.rebuildCache();
-					overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
+//					emissionCacheNanoTime = System.nanoTime();
+//					emissionModel.rebuildCache();
+//					overallEmissionCacheNanoTime += (System.nanoTime() - emissionCacheNanoTime);
 				}
 			}
 
