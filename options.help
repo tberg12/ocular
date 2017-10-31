@@ -7,9 +7,9 @@ log.forcePrint                 < bool> : Force printing from logs* [false] {}
 log.maxPrintErrors             <  int> : Maximum number of errors (via error()) to print [10000] {}
 CollationMain.inputPath        <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/names.txt] {}
 CollationMain.outputRelPath    <  str> :  [] {}
-CollationMain.fontPath         <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser] {}
+CollationMain.fontPath         <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/font/spfont.fontser] {}
 CollationMain.lmDir            <  str> :  [/Users/shruti/Documents/HistoricalOcr/ocular/lm] {}
-CollationMain.lmBaseName       <  str> :  [spanish] {}
+CollationMain.lmBaseName       <  str> :  [sp] {}
 CollationMain.paddingMinWidth  <  int> :  [1] {}
 CollationMain.paddingMaxWidth  <  int> :  [5] {}
 CollationMain.markovVerticalOffset < bool> :  [false] {}

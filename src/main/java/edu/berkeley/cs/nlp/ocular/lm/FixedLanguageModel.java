@@ -202,8 +202,6 @@ public class FixedLanguageModel {
 			text += this.lm.getCharacterIndexer().getObject(searchState.getContext()[searchState.getContext().length-1]);
 		}
 		
-		System.out.println(text);
-		
 		return text;		
 	}
 	
@@ -290,9 +288,36 @@ public class FixedLanguageModel {
 			deleteProb[i] /= counts[i];
 		}
 		
-		this.updateModern(docs);
+		String newFixedText = this.updateModern(docs);
+		this.fixedText = new ArrayList<Integer>();
+		
+		for (int i = 0; i < newFixedText.length(); i++) {
+        	String toAdd = Character.toString(newFixedText.charAt(i));	        	
+        	int index = charIndexer.getIndex(toAdd);
+        	fixedText.add(index);
+        }		
+		
 		this.printFixedText();
 		this.langModelInit();
+	}
+	
+	public String testLM () {
+		List<Transcription> docs = new ArrayList<Transcription>();
+		String[] testStrings = {"rey mato", "rey matoo"};
+		
+		for (String string : testStrings) {
+			List<Integer> cur = new ArrayList<>();
+			
+			for (int i=0; i < string.length(); i++) {
+				cur.add(this.getCharacterIndexer().getIndex(Character.toString(string.charAt(i))));
+			}
+			
+			docs.add(new Transcription(cur));
+		}
+		
+		String text = this.updateModern(docs);
+		return text;
+		
 	}
 	
 }

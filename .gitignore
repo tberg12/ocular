@@ -13,6 +13,10 @@
 /sample_images/
 /texts
 /replace
+*big-lm.txt
+*nyt_all_1M.txt
+*spanish_100k.txt
+/lm/*
 
 *.class
 *.log

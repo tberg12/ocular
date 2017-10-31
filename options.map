@@ -7,9 +7,9 @@ log.forcePrint	false
 log.maxPrintErrors	10000
 CollationMain.inputPath	/Users/shruti/Documents/HistoricalOcr/ocular/names.txt
 CollationMain.outputRelPath	
-CollationMain.fontPath	/Users/shruti/Documents/HistoricalOcr/ocular/font/font-init.fontser
+CollationMain.fontPath	/Users/shruti/Documents/HistoricalOcr/ocular/font/spfont.fontser
 CollationMain.lmDir	/Users/shruti/Documents/HistoricalOcr/ocular/lm
-CollationMain.lmBaseName	spanish
+CollationMain.lmBaseName	sp
 CollationMain.paddingMinWidth	1
 CollationMain.paddingMaxWidth	5
 CollationMain.markovVerticalOffset	false

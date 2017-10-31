@@ -131,10 +131,15 @@ public class CollationMain implements Runnable {
 		
 		String lmFileName = "testsp.txt";
 		
+		final FixedLanguageModel lm = new FixedLanguageModel(lmFileName);
+		System.out.println(lm.testLM());
+		
+		System.exit(0);
+		
 //		List<Document> documents = TextAndLineImagesLoader.loadDocuments(inputPath, CharacterTemplate.LINE_HEIGHT);
 	
 		List<String> paths = new ArrayList<String>();
-//		paths.add("9.jpg");
+		paths.add("16.jpg");
 		paths.add("16.jpg");
 //		paths.add("3.png");
 //		paths.add("4.png");
@@ -145,7 +150,6 @@ public class CollationMain implements Runnable {
 		
 		System.out.println("Loading LM..");
 		
-		final FixedLanguageModel lm = new FixedLanguageModel(lmFileName);
 		final Indexer<String> charIndexer = lm.getCharacterIndexer();
 		
 		System.out.println("Loading font initializer..");
