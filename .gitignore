@@ -17,6 +17,9 @@
 *nyt_all_1M.txt
 *spanish_100k.txt
 /lm/*
+/null/*
+/font/*
+/lm_files/*
 
 *.class
 *.log

@@ -208,15 +208,16 @@ public class FixedLanguageModel {
 	public void updateProbs(List<TransitionState[][]> nDecodeStates) {
 		
 		for (int i = 0; i<this.substituteProb.length; i++) {
-			Arrays.fill(this.substituteProb[i], 0.0);
+			Arrays.fill(this.substituteProb[i], 0.1);
 		}		
-		Arrays.fill(insertProb, 0.0);
-		Arrays.fill(deleteProb, 0.0);
+		Arrays.fill(insertProb, 0.1);
+		Arrays.fill(deleteProb, 0.1);
 		
 		double numInserts = 0;
 		int numChars = 0;
 		
 		List<Transcription> docs = new ArrayList<Transcription>();
+		List<String> testStrings = new ArrayList<>();
 				
 		for (TransitionState[][] decodeState : nDecodeStates) {	
 			int prevPos = -1;
@@ -260,8 +261,27 @@ public class FixedLanguageModel {
 					curDoc.add(this.spaceIndex);					
 				}
 			}
-			docs.add(new Transcription(curDoc));
-		}		
+//			docs.add(new Transcription(curDoc));
+			
+			String text = "";
+			
+			for (Integer integer : curDoc) {
+				text += this.getCharacterIndexer().getObject(integer);
+			}
+			
+			System.out.println(text);
+			testStrings.add(text);
+		}	
+		
+		for (String string : testStrings) {
+			List<Integer> cur = new ArrayList<>();
+			
+			for (int i=0; i < string.length(); i++) {
+				cur.add(this.getCharacterIndexer().getIndex(Character.toString(string.charAt(i))));
+			}
+			
+			docs.add(new Transcription(cur));
+		}
 		
 		for (int i = 0; i<this.substituteProb.length; i++) {
 
@@ -289,6 +309,7 @@ public class FixedLanguageModel {
 		}
 		
 		String newFixedText = this.updateModern(docs);
+//		String newFixedText = this.testLM();
 		this.fixedText = new ArrayList<Integer>();
 		
 		for (int i = 0; i < newFixedText.length(); i++) {
@@ -298,12 +319,12 @@ public class FixedLanguageModel {
         }		
 		
 		this.printFixedText();
-		this.langModelInit();
+//		this.langModelInit();
 	}
 	
 	public String testLM () {
 		List<Transcription> docs = new ArrayList<Transcription>();
-		String[] testStrings = {"rey mato", "rey matoo"};
+		String[] testStrings = {"ltey mato. Todo lo qual te eſlentaiy hace libTe de todo reſpectory obligacion; y aſi, puedes decir de la hiſtoriae todo aquello qe te pareciere, ſin temor que te calumien por el mala ni te premien por el bien que diyeres d ella. Solo qiuſiera dartela mondaa y deſnuda, ſin el hornato de Prologo, ni de la inumerabilidadry catalogo,de los acoſtumbrados sonetos, bpigramaSs y blogios que al principio de los libros ſuele ponerſe. Porque te ſe dqtuequd ", "rey mat. Todo lo cual te esenta y hace libre de todo respecto y obligacion; y aſi, puedes decir de la hiſtorie todo aquello que te pareciere, ſin temor que te calunien por el mal ni te premien por el bien que diyeres d ella. Solo qisiera dartela monda y desnuda, ſin el ornato de prologo, ni de la inumerabilidad y catalogo de los acoſtumbrados sonetos, epigramas y elogios ue al principio de los libros ſuele ponerſe. Porque te ſe que  qu "};
 		
 		for (String string : testStrings) {
 			List<Integer> cur = new ArrayList<>();
