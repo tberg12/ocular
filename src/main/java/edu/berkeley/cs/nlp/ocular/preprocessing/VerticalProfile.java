@@ -164,6 +164,10 @@ public class VerticalProfile {
 				currScore = alphas[currIdx][state];
 			}
 		}
+                if (currState == -1) {
+                    System.out.println("warning: vertical segmentation failed");
+                    currIdx = -1;
+                }
 		while (currIdx > 0) {
 			// Loop over lengths, since that's the only ambiguity
 			int bestSize = -1;
