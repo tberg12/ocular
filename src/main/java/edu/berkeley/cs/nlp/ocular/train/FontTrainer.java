@@ -211,8 +211,10 @@ public class FontTrainer {
 								+"log prob:\t"+templates[state.ts.getGlyphChar().templateCharIndex].emissionLogProb(lineImages[d], t, t+state.charWidth, state.exposure, state.verticalOffset)+"\n"
 								+"exposure:\t"+state.exposure+"\n"
 								+"offset:\t"+state.verticalOffset+"\n"
+								+"begin:\t"+t+"\n"
+								+"end:\t"+(t+state.charWidth)+"\n"
 								+"doc:\t"+doc.baseName());
-						f.writeImage("/Users/tberg/Desktop/output/extraction_doc_"+docNum+"_line_"+d+"_char_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
+//						f.writeImage("/Users/tberg/Desktop/output/extraction_doc_"+docNum+"_line_"+d+"_char_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
 						
 						t += state.charAndPadWidth;
 					}

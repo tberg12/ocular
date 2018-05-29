@@ -80,10 +80,13 @@ public abstract class LazyRawImageDocument implements Document {
 	private PixelType[][][] doLoadObservationsFromFile() {
 		BufferedImage bi = doLoadBufferedImage();
 		double[][] levels = ImageUtils.getLevels(bi);
-		double[][] rotLevels = Straightener.straighten(levels);
-		double[][] cropLevels = crop ? Cropper.crop(rotLevels, binarizeThreshold) : rotLevels;
-		Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
-		List<double[][]> lines = LineExtractor.extractLines(cropLevels);
+		Binarizer.binarizeGlobal(binarizeThreshold, levels);
+		List<double[][]> lines = new ArrayList<double[][]>();
+		lines.add(levels);
+//		double[][] rotLevels = Straightener.straighten(levels);
+//		double[][] cropLevels = crop ? Cropper.crop(rotLevels, binarizeThreshold) : rotLevels;
+//		Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
+//		List<double[][]> lines = LineExtractor.extractLines(cropLevels);
 		PixelType[][][] loadedObservations = new PixelType[lines.size()][][];
 		for (int i = 0; i < lines.size(); ++i) {
 			loadedObservations[i] = imageToObservation(ImageUtils.makeImage(lines.get(i)));
