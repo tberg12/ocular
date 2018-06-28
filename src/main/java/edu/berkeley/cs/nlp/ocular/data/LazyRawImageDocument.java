@@ -81,12 +81,12 @@ public abstract class LazyRawImageDocument implements Document {
 		BufferedImage bi = doLoadBufferedImage();
 		double[][] levels = ImageUtils.getLevels(bi);
 		Binarizer.binarizeGlobal(binarizeThreshold, levels);
-		List<double[][]> lines = new ArrayList<double[][]>();
-		lines.add(levels);
-//		double[][] rotLevels = Straightener.straighten(levels);
-//		double[][] cropLevels = crop ? Cropper.crop(rotLevels, binarizeThreshold) : rotLevels;
-//		Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
-//		List<double[][]> lines = LineExtractor.extractLines(cropLevels);
+//		List<double[][]> lines = new ArrayList<double[][]>();
+//		lines.add(levels);
+		double[][] rotLevels = Straightener.straighten(levels);
+		double[][] cropLevels = crop ? Cropper.crop(rotLevels, binarizeThreshold) : rotLevels;
+		Binarizer.binarizeGlobal(binarizeThreshold, cropLevels);
+		List<double[][]> lines = LineExtractor.extractLines(cropLevels);
 		PixelType[][][] loadedObservations = new PixelType[lines.size()][][];
 		for (int i = 0; i < lines.size(); ++i) {
 			loadedObservations[i] = imageToObservation(ImageUtils.makeImage(lines.get(i)));
@@ -96,7 +96,7 @@ public abstract class LazyRawImageDocument implements Document {
 	
 	private PixelType[][][] doLoadObservationsFromLineExtractionFiles() {
 		System.out.println("Loading pre-extracted line images from " + leLineDir());
-		final Pattern pattern = Pattern.compile("line(\\d+)\\." + ext());
+		final Pattern pattern = Pattern.compile(preext() + "_line(\\d+)\\." + ext());
 		File[] lineImageFiles = new File(leLineDir()).listFiles(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				return pattern.matcher(name).matches();
@@ -113,7 +113,13 @@ public abstract class LazyRawImageDocument implements Document {
 			String lineImageFile = fullLeLinePath(i);
 			System.out.println("    Loading pre-extracted line from " + lineImageFile);
 			try {
-				loadedObservations[i] = imageToObservation(f.readImage(lineImageFile));
+				BufferedImage bi = f.readImage(lineImageFile);
+				double[][] levels = ImageUtils.getLevels(bi);
+				Binarizer.binarizeGlobal(binarizeThreshold, levels);
+				List<double[][]> lines = new ArrayList<double[][]>();
+				lines.add(levels);
+				loadedObservations[i] = imageToObservation(ImageUtils.makeImage(lines.get(0)));
+//				loadedObservations[i] = imageToObservation(f.readImage(lineImageFile));
 			}
 			catch (Exception e) {
 				throw new RuntimeException("Couldn't read line image from: " + lineImageFile, e);
@@ -161,7 +167,7 @@ public abstract class LazyRawImageDocument implements Document {
 	
 	private boolean extractionFilesPresent() {
 		File f = new File(fullLeLinePath(0));
-		System.out.println("Looking for extractions in ["+f+"]. "+(f.exists() ? "Found" : "Not found")+".");
+		System.out.println("Looking for extractions in ["+f+"]. "+(f.exists() ? "Found" : "Not found")+".");		
 		return f.exists();
 	}
 	
@@ -237,10 +243,10 @@ public abstract class LazyRawImageDocument implements Document {
 	}
 
 	private String multilineExtractionImagePath() { return fullLePreExt() + "." + ext(); }
-	private String leLineDir() { return fullLePreExt() + "_" + ext(); }
+	private String leLineDir() { return extractedLinesPath; }
 	private String fileParent() { return FileUtil.removeCommonPathPrefixOfParents(new File(inputPath), file())._2; }
-	private String fullLePreExt() { return extractedLinesPath + "/" + fileParent() + "/" + preext() + "-line_extract"; }
-	private String fullLeLinePath(int lineNum) { return String.format(leLineDir() + "/line%02d." + ext(), lineNum); }
+	private String fullLePreExt() { return extractedLinesPath + "/" + fileParent() + "/" + preext(); }
+	private String fullLeLinePath(int lineNum) { return String.format(fullLePreExt() + "_line%02d." + ext(), lineNum); }
 	
 	abstract protected File file();
 	abstract protected BufferedImage doLoadBufferedImage();

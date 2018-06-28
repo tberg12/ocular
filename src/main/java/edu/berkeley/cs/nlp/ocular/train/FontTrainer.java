@@ -9,6 +9,7 @@ import static edu.berkeley.cs.nlp.ocular.train.ModelPathMaker.makeLmPath;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple2.Tuple2;
 import static edu.berkeley.cs.nlp.ocular.util.Tuple3.Tuple3;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -194,11 +195,19 @@ public class FontTrainer {
 				List<DecodeState> fullViterbiStateSeq = makeFullViterbiStateSeq(decodeStates, charIndexer);
 				gsmFactory.incrementCounts(gsmCounts, fullViterbiStateSeq);
 				
-				PixelType[][][] lineImages = doc.loadLineImages();
+				PixelType[][][] lineImages = doc.loadLineImages();	
 				
 				// write char region template images
 				for (int d=0; d<decodeStates.length; ++d) {
 					int t=0;
+					String lineOutPath = "output/extraction_doc_"+doc.baseName()+"_line_"+d+".txt";
+					
+					PixelType[][] curLine = lineImages[d];
+					BufferedImage lineImage = Visualizer.renderLineExtraction(curLine);
+					double mult = 83.0/30;					
+
+					String lineOut = "Scale factor: " + Double.toString(mult) + "\n\n";
+					
 					for (int i=0; i<decodeStates[d].length; ++i) {
 						DecodeState state = decodeStates[d][i];
 						
@@ -207,17 +216,24 @@ public class FontTrainer {
 							charRegion[j] = lineImages[d][t+j];
 						}
 						
-						f.writeString("/Users/tberg/Desktop/output/extraction_doc_"+docNum+"_line_"+d+"_char_"+i+".txt", "char:\t"+charIndexer.getObject(state.ts.getGlyphChar().templateCharIndex)+"\n"
+						lineOut += "char:\t"+charIndexer.getObject(state.ts.getGlyphChar().templateCharIndex)+"\n"
 								+"log prob:\t"+templates[state.ts.getGlyphChar().templateCharIndex].emissionLogProb(lineImages[d], t, t+state.charWidth, state.exposure, state.verticalOffset)+"\n"
 								+"exposure:\t"+state.exposure+"\n"
 								+"offset:\t"+state.verticalOffset+"\n"
 								+"begin:\t"+t+"\n"
-								+"end:\t"+(t+state.charWidth)+"\n"
-								+"doc:\t"+doc.baseName());
-//						f.writeImage("/Users/tberg/Desktop/output/extraction_doc_"+docNum+"_line_"+d+"_char_"+i+".png", Visualizer.renderObservations(new PixelType[][][] {charRegion}));
+								+"end:\t"+(t+state.charWidth)+"\n\n";
+						
+//						f.writeString("output/extraction_doc_"+docNum+"_line_"+d+"_char_"+i+".txt", "char:\t"+charIndexer.getObject(state.ts.getGlyphChar().templateCharIndex)+"\n"
+//								+"log prob:\t"+templates[state.ts.getGlyphChar().templateCharIndex].emissionLogProb(lineImages[d], t, t+state.charWidth, state.exposure, state.verticalOffset)+"\n"
+//								+"exposure:\t"+state.exposure+"\n"
+//								+"offset:\t"+state.verticalOffset+"\n"
+//								+"begin:\t"+t+"\n"
+//								+"end:\t"+(t+state.charWidth)+"\n"
+//								+"doc:\t"+doc.baseName());
 						
 						t += state.charAndPadWidth;
 					}
+					f.writeString(lineOutPath, lineOut);
 				}
 				
 				// write transcriptions and evaluate
